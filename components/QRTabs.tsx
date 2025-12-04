@@ -1,0 +1,57 @@
+import React from 'react';
+import { QRType } from '../types';
+import { 
+  Type, Link, Wifi, User, Phone, Mail, 
+  MapPin, Calendar, Share2, Sparkles, Layers
+} from 'lucide-react';
+
+interface Props {
+  activeTab: QRType;
+  onChange: (tab: QRType) => void;
+}
+
+export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
+  const tabs: { id: QRType; icon: any; label: string }[] = [
+    { id: 'text', icon: Type, label: 'Text' },
+    { id: 'url', icon: Link, label: 'URL' },
+    { id: 'contact', icon: User, label: 'Contact' },
+    { id: 'wifi', icon: Wifi, label: 'WiFi' },
+    { id: 'phone', icon: Phone, label: 'Phone' },
+    { id: 'email', icon: Mail, label: 'Email' },
+    { id: 'event', icon: Calendar, label: 'Event' },
+    { id: 'geo', icon: MapPin, label: 'Geo' },
+    { id: 'social', icon: Share2, label: 'Social' },
+    { id: 'ai', icon: Sparkles, label: 'AI Magic' },
+    { id: 'bulk', icon: Layers, label: 'Bulk QR' },
+  ];
+
+  return (
+    <div className="w-full overflow-x-auto no-scrollbar pb-2 mb-6">
+      <div className="flex gap-2 min-w-max px-1">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onChange(tab.id)}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                ${isActive 
+                  ? 'bg-gray-800 text-white shadow-lg transform scale-105' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+              `}
+            >
+              <div className={`
+                w-6 h-6 rounded-full flex items-center justify-center text-xs
+                ${isActive ? 'bg-white/20' : 'bg-white'}
+              `}>
+                <tab.icon size={14} />
+              </div>
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,7 @@
+{
+  "name": "Nexus QR - Advanced AI Generator",
+  "description": "A professional-grade QR code generator with AI capabilities, custom styling, encryption, and bulk generation features.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
