@@ -1,6 +1,6 @@
 import React from 'react';
 import { QRStyleConfig } from '../types';
-import { Palette, Grid, Sliders, Image as ImageIcon, Zap, Monitor, Printer, Tv } from 'lucide-react';
+import { Palette, Grid, Sliders, Image as ImageIcon, Zap, Monitor, Tv, Film, Maximize } from 'lucide-react';
 
 interface Props {
   config: QRStyleConfig;
@@ -26,9 +26,10 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
   const qualityPresets = [
     { label: 'Draft', sub: '300px', size: 300, icon: Zap },
-    { label: 'HD', sub: '1000px', size: 1000, icon: Monitor },
+    { label: 'HD', sub: '1280px', size: 1280, icon: Monitor },
     { label: 'Full HD', sub: '1920px', size: 1920, icon: Tv },
-    { label: '4K', sub: '3840px', size: 3840, icon: ImageIcon },
+    { label: '2K', sub: '2560px', size: 2560, icon: Film },
+    { label: '4K', sub: '3840px', size: 3840, icon: Maximize },
   ];
 
   return (
@@ -46,7 +47,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
             {/* Resolution Presets */}
             <div>
                 <label className="text-xs font-medium text-gray-500 mb-2 block">Quality Presets</label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                     {qualityPresets.map((preset) => (
                         <button
                             key={preset.label}
