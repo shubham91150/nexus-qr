@@ -1,15 +1,17 @@
+
 import React, { useState } from 'react';
 import { QRType, QRContentData, QRStyleConfig } from './types';
 import { QRTabs } from './components/QRTabs';
 import { QRInputs } from './components/QRInputs';
 import { QRStyling } from './components/QRStyling';
+import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
 import { LayoutGrid, Lock } from 'lucide-react';
 
 const INITIAL_STYLE: QRStyleConfig = {
-  size: 500,
-  padding: 20, // Default padding
+  size: 1000, // Default to HD
+  padding: 20,
   errorCorrectionLevel: 'M',
   fgColor: '#000000',
   bgColor: '#ffffff',
@@ -113,7 +115,8 @@ const App: React.FC = () => {
                )}
             </div>
 
-            <QRStyling config={styleConfig} onChange={setStyleConfig} />
+            {/* Replaced QRStyling with QRStylePanel which contains the new features */}
+            <QRStylePanel config={styleConfig} onChange={setStyleConfig} />
           </div>
         </div>
 

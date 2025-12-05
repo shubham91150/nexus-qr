@@ -50,8 +50,7 @@ export class CustomSVGRenderer {
     const { gradientType, gradientRotation, fgColor, fgColor2 } = this.settings;
     let defs = '<defs>';
     const id = 'qrMainGradient';
-    const cornerId = 'qrCornerGradient';
-
+    
     const stops = `
       <stop offset="0%" stop-color="${fgColor}" stop-opacity="1"/>
       <stop offset="100%" stop-color="${fgColor2}" stop-opacity="1"/>
@@ -59,16 +58,14 @@ export class CustomSVGRenderer {
 
     if (gradientType === 'linear') {
       const rad = gradientRotation * (Math.PI / 180);
-      const x1 = 50 - 50 * Math.cos(rad);
-      const y1 = 50 - 50 * Math.sin(rad);
-      const x2 = 50 + 50 * Math.cos(rad);
-      const y2 = 50 + 50 * Math.sin(rad);
+      const x1 = 50 - 50 * Math.cos(rad + Math.PI/2);
+      const y1 = 50 - 50 * Math.sin(rad + Math.PI/2);
+      const x2 = 50 + 50 * Math.cos(rad + Math.PI/2);
+      const y2 = 50 + 50 * Math.sin(rad + Math.PI/2);
 
       defs += `<linearGradient id="${id}" x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%">${stops}</linearGradient>`;
-      defs += `<linearGradient id="${cornerId}" x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%">${stops}</linearGradient>`;
     } else {
       defs += `<radialGradient id="${id}" cx="50%" cy="50%" r="50%">${stops}</radialGradient>`;
-      defs += `<radialGradient id="${cornerId}" cx="50%" cy="50%" r="50%">${stops}</radialGradient>`;
     }
 
     defs += '</defs>';
@@ -78,11 +75,8 @@ export class CustomSVGRenderer {
   private isCornerSquare(row: number, col: number): boolean {
     const cornerSize = 7;
     const count = this.moduleCount;
-    // Top Left
     if (row < cornerSize && col < cornerSize) return true;
-    // Top Right
     if (row < cornerSize && col >= count - cornerSize) return true;
-    // Bottom Left
     if (row >= count - cornerSize && col < cornerSize) return true;
     return false;
   }
@@ -156,15 +150,12 @@ export class CustomSVGRenderer {
             let segX = x + (j * segmentWidth);
             
             if (j === 0) {
-                // Left rounded
                 svg += `<path d="M${segX + rx},${y} L${segX + actualSegWidth},${y} L${segX + actualSegWidth},${y + pillHeight} L${segX + rx},${y + pillHeight} Q${segX},${y + pillHeight} ${segX},${y + pillHeight - rx} L${segX},${y + rx} Q${segX},${y} ${segX + rx},${y} Z" fill="${fill}" />`;
             } else if (j === pill.length - 1) {
-                // Right rounded
                 segX += gapWidth;
                 const endX = segX + actualSegWidth;
                 svg += `<path d="M${segX},${y} L${endX - rx},${y} Q${endX},${y} ${endX},${y + rx} L${endX},${y + pillHeight - rx} Q${endX},${y + pillHeight} ${endX - rx},${y + pillHeight} L${segX},${y + pillHeight} Z" fill="${fill}" />`;
             } else {
-                // Middle
                 segX += gapWidth;
                 svg += `<rect x="${segX}" y="${y}" width="${actualSegWidth}" height="${pillHeight}" fill="${fill}" />`;
             }
@@ -219,8 +210,6 @@ export class CustomSVGRenderer {
     return svg;
   }
 
-  // --- Corner Logic ---
-
   private generateRoundedRectPath(x: number, y: number, w: number, h: number, radii: number[], fill: string): string {
     const [tl, tr, br, bl] = radii;
     return `<path d="
@@ -236,7 +225,7 @@ export class CustomSVGRenderer {
       Z" fill="${fill}" />`;
   }
 
-  private generateAdvancedCornerSVG(cellSize: number, padding: number): string {
+  private generateAdvancedCornerSVG(cellSize: number, padding: number, fillOverride?: string): string {
     let svg = '';
     const cornerSize = cellSize * 7;
     const count = this.moduleCount;
@@ -248,64 +237,58 @@ export class CustomSVGRenderer {
     ];
 
     const style = this.settings.cornerSquareType;
-    let fill = this.settings.fgColor;
-    if (this.settings.isGradient) fill = 'url(#qrCornerGradient)';
-    if (this.settings.customCornerColor) fill = this.settings.cornerSquareColor;
+    let fill = fillOverride;
+    
+    if (!fill) {
+        fill = this.settings.fgColor;
+        if (this.settings.customCornerColor) fill = this.settings.cornerSquareColor;
+    }
 
-    // Corner Dot Color Logic
-    let dotFill = fill;
-    if (this.settings.customCornerColor && this.settings.cornerDotColor) {
-        dotFill = this.settings.cornerSquareColor;
+    let dotFill = fillOverride; 
+    if (!dotFill) {
+        dotFill = this.settings.fgColor;
+        if (this.settings.customCornerColor && this.settings.cornerDotColor) {
+            dotFill = this.settings.cornerSquareColor;
+        }
     }
 
     corners.forEach(corner => {
       const x = (corner.c * cellSize) + padding;
       const y = (corner.r * cellSize) + padding;
       const radius = cornerSize * 0.15;
-      const bg = this.settings.bgTransparent ? 'none' : this.settings.bgColor;
-      const maskId = `mask-${corner.type}-${Date.now()}`;
+      const bg = fillOverride ? 'black' : (this.settings.bgTransparent ? 'none' : this.settings.bgColor);
+      const maskId = `mask-${corner.type}-${Math.random().toString(36).substr(2,9)}`;
 
-      // --- SQUARE STYLE ---
       if (style === 'square') {
-         if (this.settings.bgTransparent) {
+         if (this.settings.bgTransparent && !fillOverride) {
             svg += `<defs><mask id="${maskId}">`;
             svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" fill="white" />`;
             svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" fill="black" />`;
             svg += `</mask></defs>`;
-            
             svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" fill="${fill}" mask="url(#${maskId})" />`;
          } else {
             svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" fill="${fill}" />`;
             svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" fill="${bg}" />`;
          }
-         // Center Dot
          svg += `<rect x="${x + cellSize*2}" y="${y + cellSize*2}" width="${cornerSize - cellSize*4}" height="${cornerSize - cellSize*4}" fill="${dotFill}" />`;
-      
       } 
-      // --- CIRCLE STYLE ---
       else if (style === 'circle') {
           const cx = x + cornerSize/2;
           const cy = y + cornerSize/2;
-          
-          if (this.settings.bgTransparent) {
+          if (this.settings.bgTransparent && !fillOverride) {
              svg += `<defs><mask id="${maskId}">`;
              svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2}" fill="white" />`;
              svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize}" fill="black" />`;
              svg += `</mask></defs>`;
-             
              svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2}" fill="${fill}" mask="url(#${maskId})" />`;
           } else {
              svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2}" fill="${fill}" />`;
              svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize}" fill="${bg}" />`;
           }
-          // Center Dot
           svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize*2}" fill="${dotFill}" />`;
-
       } 
-      // --- ROUNDED / ADVANCED STYLES ---
       else {
           let rOut = [radius, radius, radius, radius];
-          
           if (style === 'three-sided') {
              if (corner.type === 'top-left') rOut = [0, radius, radius, radius];
              else if (corner.type === 'top-right') rOut = [radius, 0, radius, radius];
@@ -315,27 +298,24 @@ export class CustomSVGRenderer {
              else rOut = [radius, 0, radius, 0];
           }
 
-          if (this.settings.bgTransparent) {
+          if (this.settings.bgTransparent && !fillOverride) {
              svg += `<defs><mask id="${maskId}">`;
              svg += this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, 'white');
              const innerRadii = rOut.map(r => r > 0 ? r * 0.7 : 0);
              svg += this.generateRoundedRectPath(x + cellSize, y + cellSize, cornerSize - cellSize*2, cornerSize - cellSize*2, innerRadii, 'black');
              svg += `</mask></defs>`;
-
-             let outerPath = this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, fill);
+             let outerPath = this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, fill!);
              outerPath = outerPath.replace('fill=', `mask="url(#${maskId})" fill=`);
              svg += outerPath;
           } else {
-             svg += this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, fill);
+             svg += this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, fill!);
              const innerRadii = rOut.map(r => r > 0 ? r * 0.7 : 0);
              svg += this.generateRoundedRectPath(x + cellSize, y + cellSize, cornerSize - cellSize*2, cornerSize - cellSize*2, innerRadii, bg);
           }
-
           const centerRadii = rOut.map(r => r > 0 ? r * 0.4 : 0); 
-          svg += this.generateRoundedRectPath(x + cellSize*2, y + cellSize*2, cornerSize - cellSize*4, cornerSize - cellSize*4, centerRadii, dotFill);
+          svg += this.generateRoundedRectPath(x + cellSize*2, y + cellSize*2, cornerSize - cellSize*4, cornerSize - cellSize*4, centerRadii, dotFill!);
       }
     });
-
     return svg;
   }
 
@@ -345,12 +325,10 @@ export class CustomSVGRenderer {
     const logoSize = size * this.settings.logoSize;
     const x = (size - logoSize) / 2;
     const y = (size - logoSize) / 2;
-    
     let svg = '';
     if (this.settings.logoBackground === 'solid') {
        svg += `<circle cx="${size/2}" cy="${size/2}" r="${logoSize/2 + 5}" fill="white" />`;
     }
-    
     svg += `<image x="${x}" y="${y}" width="${logoSize}" height="${logoSize}" href="${this.settings.logoImage}" preserveAspectRatio="xMidYMid meet" />`;
     return svg;
   }
@@ -372,20 +350,39 @@ export class CustomSVGRenderer {
 
     svg += this.generateGradientDefs();
 
-    let patternSvg = '';
-    if (this.settings.dotsType === 'uniform-pills') {
-        const pills = this.findPillGroups(matrix);
-        const fill = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
-        patternSvg = this.generatePillsSVG(pills, cellSize, padding, fill);
+    if (this.settings.isGradient) {
+        const maskId = `qr-mask-${Math.random().toString(36).substr(2,9)}`;
+        svg += `<defs><mask id="${maskId}">`;
+        svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="black" />`;
+        
+        const whiteFill = 'white';
+        if (this.settings.dotsType === 'uniform-pills') {
+            const pills = this.findPillGroups(matrix);
+            svg += this.generatePillsSVG(pills, cellSize, padding, whiteFill);
+        } else {
+            svg += this.generateStandardPatternSVG(matrix, cellSize, padding, this.settings.dotsType, whiteFill);
+        }
+
+        if (!this.settings.customCornerColor) {
+            svg += this.generateAdvancedCornerSVG(cellSize, padding, 'white');
+        }
+        svg += `</mask></defs>`;
+        svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="url(#qrMainGradient)" mask="url(#${maskId})" />`;
+
+        if (this.settings.customCornerColor) {
+            svg += this.generateAdvancedCornerSVG(cellSize, padding);
+        }
     } else {
-        const fill = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
-        patternSvg = this.generateStandardPatternSVG(matrix, cellSize, padding, this.settings.dotsType, fill);
+        if (this.settings.dotsType === 'uniform-pills') {
+            const pills = this.findPillGroups(matrix);
+            svg += this.generatePillsSVG(pills, cellSize, padding, this.settings.fgColor);
+        } else {
+            svg += this.generateStandardPatternSVG(matrix, cellSize, padding, this.settings.dotsType, this.settings.fgColor);
+        }
+        svg += this.generateAdvancedCornerSVG(cellSize, padding);
     }
 
-    svg += patternSvg;
-    svg += this.generateAdvancedCornerSVG(cellSize, padding);
     svg += this.generateLogoSVG();
-
     svg += '</svg>';
     return svg;
   }
