@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRType, QRContentData, QRStyleConfig } from './types';
 import { QRTabs } from './components/QRTabs';
 import { QRInputs } from './components/QRInputs';
@@ -7,7 +7,10 @@ import { QRStyling } from './components/QRStyling';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, LogIn } from 'lucide-react';
+import { AuthProvider, useAuth } from './lib/AuthContext';
+import { AuthModal } from './components/auth/AuthModal';
+import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
 
 const INITIAL_STYLE: QRStyleConfig = {
   size: 1000, // Default to HD
@@ -37,11 +40,12 @@ const INITIAL_CONTENT: QRContentData = {
   value: 'Welcome to Nexus QR'
 };
 
-const App: React.FC = () => {
+// Main QR Generator Component
+const QRGenerator: React.FC<{ onDynamicClick: () => void }> = ({ onDynamicClick }) => {
   const [activeTab, setActiveTab] = useState<QRType>('text');
   const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
   const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(INITIAL_STYLE);
-  
+
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
 
@@ -63,14 +67,25 @@ const App: React.FC = () => {
   return (
     <div className="max-w-[1000px] mx-auto pt-6 pb-20">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-8 px-4">
-         <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
-            <LayoutGrid size={20} />
+      <div className="flex items-center justify-between mb-8 px-4">
+         <div className="flex items-center gap-3">
+           <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
+              <LayoutGrid size={20} />
+           </div>
+           <div>
+              <h1 className="text-xl font-bold text-gray-800">Nexus QR</h1>
+              <p className="text-xs text-gray-500 font-medium">Professional AI Generator</p>
+           </div>
          </div>
-         <div>
-            <h1 className="text-xl font-bold text-gray-800">Nexus QR</h1>
-            <p className="text-xs text-gray-500 font-medium">Professional AI Generator</p>
-         </div>
+
+         {/* Dynamic QR Button */}
+         <button
+           onClick={onDynamicClick}
+           className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200"
+         >
+           <Zap size={16} />
+           Dynamic QR
+         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 px-2 md:px-4">
@@ -139,6 +154,80 @@ const App: React.FC = () => {
 
       </div>
     </div>
+  );
+};
+
+// Main App Component with Routing
+const AppContent: React.FC = () => {
+  const { user, loading } = useAuth();
+  const [view, setView] = useState<'generator' | 'dynamic'>('generator');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Handle URL-based routing for redirect
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/dashboard')) {
+      if (user) {
+        setView('dynamic');
+      } else {
+        setShowAuthModal(true);
+      }
+    }
+  }, [user]);
+
+  const handleDynamicClick = () => {
+    if (user) {
+      setView('dynamic');
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleBackToGenerator = () => {
+    setView('generator');
+    window.history.pushState({}, '', '/');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (view === 'dynamic' && user) {
+    return (
+      <div>
+        {/* Back button */}
+        <button
+          onClick={handleBackToGenerator}
+          className="fixed top-4 left-4 z-50 bg-white shadow-lg rounded-xl px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+        >
+          ← Back to Generator
+        </button>
+        <DynamicQRDashboard />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <QRGenerator onDynamicClick={handleDynamicClick} />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
+    </>
+  );
+};
+
+// Root App with AuthProvider
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 
