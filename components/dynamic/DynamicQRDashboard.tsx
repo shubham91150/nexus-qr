@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, QrCode, BarChart3, Edit2, Trash2, ExternalLink,
+  QrCode, BarChart3, Edit2, Trash2, ExternalLink,
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
-  Smartphone, Monitor, Globe, Calendar, Users, Eye,
-  Download, Share2, ChevronLeft
+  Smartphone, Globe, Calendar, Users, Eye,
+  Download
 } from 'lucide-react';
 import { supabase, DynamicQRCode, QRScan } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
@@ -411,16 +411,7 @@ export function DynamicQRDashboard() {
             <div className="bg-white rounded-2xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900">Your QR Codes</h2>
-                <button
-                  onClick={() => {
-                    setEditingQR(null);
-                    setIsFormOpen(true);
-                  }}
-                  className="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 transition-colors"
-                  title="Create New"
-                >
-                  <Plus size={20} />
-                </button>
+                <span className="text-xs text-gray-400">{qrCodes.length} total</span>
               </div>
 
               {loading ? (
@@ -430,13 +421,10 @@ export function DynamicQRDashboard() {
               ) : qrCodes.length === 0 ? (
                 <div className="text-center py-12">
                   <QrCode className="mx-auto text-gray-300 mb-3" size={48} />
-                  <p className="text-gray-500 mb-4">No Dynamic QR codes yet</p>
-                  <button
-                    onClick={() => setIsFormOpen(true)}
-                    className="text-indigo-600 font-medium hover:underline"
-                  >
-                    Create your first one
-                  </button>
+                  <p className="text-gray-500 mb-2">No Dynamic QR codes yet</p>
+                  <p className="text-xs text-gray-400">
+                    Use the main generator with "Dynamic QR" enabled to create trackable QR codes
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[60vh] overflow-y-auto">
@@ -690,21 +678,17 @@ export function DynamicQRDashboard() {
               <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
                 <QrCode className="mx-auto text-gray-300 mb-4" size={64} />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {qrCodes.length === 0 ? 'Create Your First Dynamic QR' : 'Select a QR Code'}
+                  {qrCodes.length === 0 ? 'No Dynamic QR Codes Yet' : 'Select a QR Code'}
                 </h3>
-                <p className="text-gray-500 mb-6">
+                <p className="text-gray-500 mb-2">
                   {qrCodes.length === 0
                     ? 'Dynamic QR codes let you change the destination URL anytime and track scans'
                     : 'Click on a QR code from the list to view its details and analytics'}
                 </p>
                 {qrCodes.length === 0 && (
-                  <button
-                    onClick={() => setIsFormOpen(true)}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
-                  >
-                    <Plus size={20} />
-                    Create Dynamic QR
-                  </button>
+                  <p className="text-sm text-gray-400">
+                    Go back to the main generator and enable "Dynamic QR" to create your first trackable QR code.
+                  </p>
                 )}
               </div>
             )}

@@ -7,7 +7,7 @@ import { QRStyling } from './components/QRStyling';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock, Zap, LogIn } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, BarChart3 } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
@@ -41,13 +41,33 @@ const INITIAL_CONTENT: QRContentData = {
 };
 
 // Main QR Generator Component
-const QRGenerator: React.FC<{ onDynamicClick: () => void }> = ({ onDynamicClick }) => {
+const QRGenerator: React.FC<{
+  onDashboardClick: () => void;
+  onAuthRequired: () => void;
+}> = ({ onDashboardClick, onAuthRequired }) => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<QRType>('text');
   const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
   const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(INITIAL_STYLE);
 
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
+
+  // Dynamic QR states
+  const [isDynamic, setIsDynamic] = useState(false);
+  const [dynamicTitle, setDynamicTitle] = useState('');
+
+  // Handle Dynamic QR toggle
+  const handleDynamicToggle = (checked: boolean) => {
+    if (checked && !user) {
+      onAuthRequired();
+      return;
+    }
+    setIsDynamic(checked);
+    if (!checked) {
+      setDynamicTitle('');
+    }
+  };
 
   const handleTabChange = (type: QRType) => {
     setActiveTab(type);
@@ -78,14 +98,16 @@ const QRGenerator: React.FC<{ onDynamicClick: () => void }> = ({ onDynamicClick 
            </div>
          </div>
 
-         {/* Dynamic QR Button */}
-         <button
-           onClick={onDynamicClick}
-           className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200"
-         >
-           <Zap size={16} />
-           Dynamic QR
-         </button>
+         {/* Dashboard Button - only show when logged in */}
+         {user && (
+           <button
+             onClick={onDashboardClick}
+             className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200"
+           >
+             <BarChart3 size={16} />
+             Dashboard
+           </button>
+         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 px-2 md:px-4">
@@ -110,7 +132,7 @@ const QRGenerator: React.FC<{ onDynamicClick: () => void }> = ({ onDynamicClick 
             <div className="mt-6 pt-6 border-t border-gray-100">
                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                     <Lock size={14} className={isEncrypted ? "text-green-600" : "text-gray-400"} /> 
+                     <Lock size={14} className={isEncrypted ? "text-green-600" : "text-gray-400"} />
                      Password Protection
                   </h3>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -118,15 +140,53 @@ const QRGenerator: React.FC<{ onDynamicClick: () => void }> = ({ onDynamicClick 
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
                   </label>
                </div>
-               
+
                {isEncrypted && (
-                   <input 
-                      type="password" 
-                      placeholder="Enter Password" 
+                   <input
+                      type="password"
+                      placeholder="Enter Password"
                       value={encryptionKey}
                       onChange={e => setEncryptionKey(e.target.value)}
                       className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-gray-400 transition-colors"
                    />
+               )}
+            </div>
+
+            {/* Dynamic QR Toggle */}
+            <div className="mt-6 pt-6 border-t border-gray-100">
+               <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                     <Zap size={14} className={isDynamic ? "text-indigo-600" : "text-gray-400"} />
+                     Dynamic QR
+                     <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-medium">
+                       Trackable
+                     </span>
+                  </h3>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={isDynamic}
+                      onChange={e => handleDynamicToggle(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
+               </div>
+
+               {isDynamic && (
+                  <div className="space-y-3">
+                     <p className="text-xs text-gray-500">
+                       Create a trackable QR with analytics. You can edit the destination anytime.
+                     </p>
+                     <input
+                        type="text"
+                        placeholder="QR Code Title (e.g., My Business Card)"
+                        value={dynamicTitle}
+                        onChange={e => setDynamicTitle(e.target.value)}
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors"
+                        maxLength={255}
+                     />
+                  </div>
                )}
             </div>
 
@@ -138,16 +198,33 @@ const QRGenerator: React.FC<{ onDynamicClick: () => void }> = ({ onDynamicClick 
         {/* Right Column: Preview (Sticky on Desktop) */}
         <div className="md:col-span-5 relative">
            <div className="sticky top-6">
-              <QRPreview 
-                 data={getPayload()} 
-                 config={styleConfig} 
+              <QRPreview
+                 data={getPayload()}
+                 config={styleConfig}
                  bulkItems={isBulk ? contentData.bulk?.items : undefined}
                  onConfigChange={setStyleConfig}
+                 isDynamic={isDynamic}
+                 dynamicTitle={dynamicTitle}
+                 contentData={contentData}
+                 isEncrypted={isEncrypted}
+                 onDynamicSuccess={() => {
+                   setIsDynamic(false);
+                   setDynamicTitle('');
+                 }}
               />
-              
+
               <div className="mt-6 text-center text-xs text-gray-400 font-medium">
-                 Generated securely on your device.
-                 <br/>No data is stored on our servers.
+                 {isDynamic ? (
+                   <>
+                     This QR will be trackable with analytics.
+                     <br/>View stats in your Dashboard.
+                   </>
+                 ) : (
+                   <>
+                     Generated securely on your device.
+                     <br/>No data is stored on our servers.
+                   </>
+                 )}
               </div>
            </div>
         </div>
@@ -175,12 +252,16 @@ const AppContent: React.FC = () => {
     }
   }, [user]);
 
-  const handleDynamicClick = () => {
+  const handleDashboardClick = () => {
     if (user) {
       setView('dynamic');
     } else {
       setShowAuthModal(true);
     }
+  };
+
+  const handleAuthRequired = () => {
+    setShowAuthModal(true);
   };
 
   const handleBackToGenerator = () => {
@@ -213,7 +294,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <QRGenerator onDynamicClick={handleDynamicClick} />
+      <QRGenerator onDashboardClick={handleDashboardClick} onAuthRequired={handleAuthRequired} />
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
