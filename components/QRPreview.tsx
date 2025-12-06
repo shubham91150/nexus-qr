@@ -4,6 +4,7 @@ import { CustomSVGRenderer } from '../services/customSvgRenderer';
 import { supabase, generateShortCode } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink } from 'lucide-react';
+import { AnalyticsOptions } from '../App';
 
 interface Props {
   data: string;
@@ -16,6 +17,7 @@ interface Props {
   dynamicTitle?: string;
   contentData?: QRContentData;
   isEncrypted?: boolean;
+  analyticsOptions?: AnalyticsOptions;
   onDynamicSuccess?: () => void;
 }
 
@@ -29,6 +31,7 @@ export const QRPreview: React.FC<Props> = ({
   dynamicTitle = '',
   contentData,
   isEncrypted = false,
+  analyticsOptions,
   onDynamicSuccess
 }) => {
   const { user } = useAuth();
@@ -217,6 +220,13 @@ export const QRPreview: React.FC<Props> = ({
         contentData,
         isEncrypted,
         payload: data,
+        analyticsOptions: analyticsOptions || {
+          trackLocation: true,
+          trackDevice: true,
+          trackBrowser: true,
+          trackTime: true,
+          trackReferrer: true,
+        },
       };
 
       // Generate unique short code
