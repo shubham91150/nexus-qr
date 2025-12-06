@@ -44,57 +44,87 @@ const DEFAULT_QR_STYLE: QRStyleConfig = {
   logoBackground: 'transparent',
 };
 
-// QR Code Preview Component
-const QRCodePreview: React.FC<{ url: string; title: string }> = ({ url, title }) => {
+// QR Code Preview Component - Now accepts saved style
+const QRCodePreview: React.FC<{
+  qrCode: DynamicQRCode;
+  title: string;
+}> = ({ qrCode, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
+  // Get the saved style or use default
+  const getSavedStyle = (): QRStyleConfig => {
+    const savedData = qrCode.qr_style as Record<string, unknown>;
+    if (savedData?.styleConfig) {
+      return { ...(savedData.styleConfig as QRStyleConfig), size: 280, padding: 15 };
+    }
+    return DEFAULT_QR_STYLE;
+  };
+
+  // Get the payload to render
+  const getPayload = (): string => {
+    const savedData = qrCode.qr_style as Record<string, unknown>;
+    if (savedData?.payload) {
+      return savedData.payload as string;
+    }
+    return qrCode.destination_url;
+  };
+
   useEffect(() => {
-    if (containerRef.current && url) {
+    if (containerRef.current) {
       try {
-        const renderer = new CustomSVGRenderer(DEFAULT_QR_STYLE);
-        const svgString = renderer.render(url);
+        const style = getSavedStyle();
+        const payload = getPayload();
+        const renderer = new CustomSVGRenderer(style);
+        const svgString = renderer.render(payload);
         containerRef.current.innerHTML = svgString;
       } catch (err) {
         console.error('Error rendering QR:', err);
         containerRef.current.innerHTML = '<p class="text-red-500 text-sm">Error generating QR</p>';
       }
     }
-  }, [url]);
+  }, [qrCode]);
 
   const downloadQR = async (format: 'png' | 'svg') => {
-    if (!containerRef.current) return;
     setDownloading(true);
 
     try {
-      const svgElement = containerRef.current.querySelector('svg');
-      if (!svgElement) return;
+      // Generate high-quality QR for download using saved style
+      const savedData = qrCode.qr_style as Record<string, unknown>;
+      const baseStyle = savedData?.styleConfig as QRStyleConfig || DEFAULT_QR_STYLE;
+      const payload = (savedData?.payload as string) || qrCode.destination_url;
+
+      // Use original saved size or default to 1024 for high quality
+      const downloadSize = baseStyle.size || 1024;
+      const downloadStyle = { ...baseStyle, size: downloadSize, padding: baseStyle.padding || 20 };
+
+      const renderer = new CustomSVGRenderer(downloadStyle);
+      const svgString = renderer.render(payload);
 
       if (format === 'svg') {
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `${title.replace(/\s+/g, '_')}_QR.svg`;
         a.click();
         URL.revokeObjectURL(url);
+        setDownloading(false);
       } else {
         // PNG download
-        const svgData = new XMLSerializer().serializeToString(svgElement);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
 
-        const size = 1024; // High quality PNG
-        canvas.width = size;
-        canvas.height = size;
+        canvas.width = downloadSize;
+        canvas.height = downloadSize;
 
         img.onload = () => {
           if (ctx) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, size, size);
-            ctx.drawImage(img, 0, 0, size, size);
+            // Use saved background color or white
+            ctx.fillStyle = downloadStyle.bgTransparent ? 'transparent' : (downloadStyle.bgColor || '#ffffff');
+            ctx.fillRect(0, 0, downloadSize, downloadSize);
+            ctx.drawImage(img, 0, 0, downloadSize, downloadSize);
 
             canvas.toBlob((blob) => {
               if (blob) {
@@ -110,12 +140,11 @@ const QRCodePreview: React.FC<{ url: string; title: string }> = ({ url, title })
           }
         };
 
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
       }
     } catch (err) {
       console.error('Download error:', err);
-    } finally {
-      if (format === 'svg') setDownloading(false);
+      setDownloading(false);
     }
   };
 
@@ -511,7 +540,7 @@ export function DynamicQRDashboard() {
                   {/* QR Code Preview */}
                   <div className="md:col-span-1">
                     <QRCodePreview
-                      url={getShortUrl(selectedQR)}
+                      qrCode={selectedQR}
                       title={selectedQR.title}
                     />
                   </div>
