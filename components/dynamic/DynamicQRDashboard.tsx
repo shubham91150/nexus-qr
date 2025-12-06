@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, QrCode, BarChart3, Edit2, Trash2, ExternalLink,
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
-  Smartphone, Monitor, Globe, Calendar, Users, Eye
+  Smartphone, Monitor, Globe, Calendar, Users, Eye,
+  Download, Share2, ChevronLeft
 } from 'lucide-react';
 import { supabase, DynamicQRCode, QRScan } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
 import { DynamicQRForm } from './DynamicQRForm';
+import { CustomSVGRenderer } from '../../services/customSvgRenderer';
+import { QRStyleConfig } from '../../types';
 
 interface AnalyticsData {
   totalScans: number;
@@ -16,6 +19,172 @@ interface AnalyticsData {
   deviceBreakdown: { device: string; count: number }[];
   recentScans: QRScan[];
 }
+
+// Default style for Dynamic QR codes
+const DEFAULT_QR_STYLE: QRStyleConfig = {
+  size: 280,
+  padding: 15,
+  errorCorrectionLevel: 'M',
+  fgColor: '#000000',
+  bgColor: '#ffffff',
+  isGradient: false,
+  gradientType: 'linear',
+  fgColor2: '#000000',
+  gradientRotation: 0,
+  bgTransparent: false,
+  customCornerColor: false,
+  cornerSquareColor: '#000000',
+  cornerDotColor: '#000000',
+  dotsType: 'square',
+  cornerSquareType: 'square',
+  cornerDotType: 'square',
+  logoImage: null,
+  logoSize: 0.25,
+  logoPadding: 0,
+  logoBackground: 'transparent',
+};
+
+// QR Code Preview Component - Now accepts saved style
+const QRCodePreview: React.FC<{
+  qrCode: DynamicQRCode;
+  title: string;
+}> = ({ qrCode, title }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  // Get the saved style or use default
+  const getSavedStyle = (): QRStyleConfig => {
+    const savedData = qrCode.qr_style as Record<string, unknown>;
+    if (savedData?.styleConfig) {
+      return { ...(savedData.styleConfig as QRStyleConfig), size: 280, padding: 15 };
+    }
+    return DEFAULT_QR_STYLE;
+  };
+
+  // Get the payload to render
+  const getPayload = (): string => {
+    const savedData = qrCode.qr_style as Record<string, unknown>;
+    if (savedData?.payload) {
+      return savedData.payload as string;
+    }
+    return qrCode.destination_url;
+  };
+
+  useEffect(() => {
+    if (containerRef.current) {
+      try {
+        const style = getSavedStyle();
+        const payload = getPayload();
+        const renderer = new CustomSVGRenderer(style);
+        const svgString = renderer.render(payload);
+        containerRef.current.innerHTML = svgString;
+      } catch (err) {
+        console.error('Error rendering QR:', err);
+        containerRef.current.innerHTML = '<p class="text-red-500 text-sm">Error generating QR</p>';
+      }
+    }
+  }, [qrCode]);
+
+  const downloadQR = async (format: 'png' | 'svg') => {
+    setDownloading(true);
+
+    try {
+      // Generate high-quality QR for download using saved style
+      const savedData = qrCode.qr_style as Record<string, unknown>;
+      const baseStyle = savedData?.styleConfig as QRStyleConfig || DEFAULT_QR_STYLE;
+      const payload = (savedData?.payload as string) || qrCode.destination_url;
+
+      // Use original saved size or default to 1024 for high quality
+      const downloadSize = baseStyle.size || 1024;
+      const downloadStyle = { ...baseStyle, size: downloadSize, padding: baseStyle.padding || 20 };
+
+      const renderer = new CustomSVGRenderer(downloadStyle);
+      const svgString = renderer.render(payload);
+
+      if (format === 'svg') {
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/\s+/g, '_')}_QR.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setDownloading(false);
+      } else {
+        // PNG download
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        canvas.width = downloadSize;
+        canvas.height = downloadSize;
+
+        img.onload = () => {
+          if (ctx) {
+            // Use saved background color or white
+            ctx.fillStyle = downloadStyle.bgTransparent ? 'transparent' : (downloadStyle.bgColor || '#ffffff');
+            ctx.fillRect(0, 0, downloadSize, downloadSize);
+            ctx.drawImage(img, 0, 0, downloadSize, downloadSize);
+
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title.replace(/\s+/g, '_')}_QR.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }
+              setDownloading(false);
+            }, 'image/png');
+          }
+        };
+
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+      }
+    } catch (err) {
+      console.error('Download error:', err);
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-6">
+      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <QrCode size={18} />
+        QR Code
+      </h3>
+
+      {/* QR Code Display */}
+      <div className="flex justify-center mb-4">
+        <div
+          ref={containerRef}
+          className="bg-white p-2 rounded-xl border-2 border-gray-100"
+        />
+      </div>
+
+      {/* Download Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => downloadQR('png')}
+          disabled={downloading}
+          className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white py-2.5 px-4 rounded-xl font-medium text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+        >
+          {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          PNG
+        </button>
+        <button
+          onClick={() => downloadQR('svg')}
+          disabled={downloading}
+          className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+        >
+          <Download size={16} />
+          SVG
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export function DynamicQRDashboard() {
   const { user, signOut } = useAuth();
@@ -43,6 +212,11 @@ export function DynamicQRDashboard() {
 
       if (error) throw error;
       setQRCodes(data || []);
+
+      // Auto-select first QR if none selected
+      if (data && data.length > 0 && !selectedQR) {
+        setSelectedQR(data[0]);
+      }
     } catch (err) {
       console.error('Error fetching QR codes:', err);
     } finally {
@@ -207,6 +381,8 @@ export function DynamicQRDashboard() {
     });
   };
 
+  const getShortUrl = (qr: DynamicQRCode) => `${baseUrl}/r/${qr.short_code}`;
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -217,7 +393,7 @@ export function DynamicQRDashboard() {
             <h1 className="text-xl font-bold text-gray-900">Dynamic QR Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">{user?.email}</span>
+            <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
             <button
               onClick={signOut}
               className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
@@ -229,9 +405,9 @@ export function DynamicQRDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* QR List */}
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* QR List - Left Column */}
+          <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900">Your QR Codes</h2>
@@ -241,6 +417,7 @@ export function DynamicQRDashboard() {
                     setIsFormOpen(true);
                   }}
                   className="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 transition-colors"
+                  title="Create New"
                 >
                   <Plus size={20} />
                 </button>
@@ -262,24 +439,21 @@ export function DynamicQRDashboard() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                   {qrCodes.map((qr) => (
                     <div
                       key={qr.id}
                       onClick={() => setSelectedQR(qr)}
-                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      className={`p-3 rounded-xl cursor-pointer transition-all ${
                         selectedQR?.id === qr.id
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                          ? 'bg-indigo-50 border-2 border-indigo-500'
+                          : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 truncate">{qr.title}</h3>
-                          <p className="text-xs text-gray-500 truncate">{qr.destination_url}</p>
-                        </div>
+                      <div className="flex items-start justify-between mb-1">
+                        <h3 className="font-medium text-gray-900 truncate text-sm">{qr.title}</h3>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${
+                          className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
                             qr.is_active
                               ? 'bg-green-100 text-green-700'
                               : 'bg-gray-200 text-gray-600'
@@ -288,67 +462,7 @@ export function DynamicQRDashboard() {
                           {qr.is_active ? 'Active' : 'Paused'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(qr);
-                          }}
-                          className="p-1.5 hover:bg-white rounded-lg transition-colors"
-                          title="Copy URL"
-                        >
-                          {copiedId === qr.id ? (
-                            <Check size={16} className="text-green-600" />
-                          ) : (
-                            <Copy size={16} className="text-gray-500" />
-                          )}
-                        </button>
-                        <a
-                          href={`${baseUrl}/r/${qr.short_code}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 hover:bg-white rounded-lg transition-colors"
-                          title="Open URL"
-                        >
-                          <ExternalLink size={16} className="text-gray-500" />
-                        </a>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingQR(qr);
-                            setIsFormOpen(true);
-                          }}
-                          className="p-1.5 hover:bg-white rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 size={16} className="text-gray-500" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleActive(qr);
-                          }}
-                          className="p-1.5 hover:bg-white rounded-lg transition-colors"
-                          title={qr.is_active ? 'Pause' : 'Activate'}
-                        >
-                          {qr.is_active ? (
-                            <PowerOff size={16} className="text-gray-500" />
-                          ) : (
-                            <Power size={16} className="text-green-600" />
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(qr);
-                          }}
-                          className="p-1.5 hover:bg-white rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} className="text-red-500" />
-                        </button>
-                      </div>
+                      <p className="text-xs text-gray-500 truncate">/r/{qr.short_code}</p>
                     </div>
                   ))}
                 </div>
@@ -356,103 +470,172 @@ export function DynamicQRDashboard() {
             </div>
           </div>
 
-          {/* Analytics */}
-          <div className="lg:col-span-2">
+          {/* Main Content - Middle & Right */}
+          <div className="lg:col-span-9">
             {selectedQR ? (
               <div className="space-y-6">
-                {/* Stats Cards */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-white rounded-2xl shadow-sm p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-indigo-100 rounded-xl">
-                        <Eye className="text-indigo-600" size={20} />
-                      </div>
-                      <span className="text-sm text-gray-500">Total Scans</span>
+                {/* Selected QR Info Bar */}
+                <div className="bg-white rounded-2xl shadow-sm p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg font-bold text-gray-900">{selectedQR.title}</h2>
+                      <p className="text-sm text-gray-500 truncate">
+                        Redirects to: {selectedQR.destination_url}
+                      </p>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {analyticsLoading ? '...' : analytics?.totalScans || 0}
-                    </p>
-                  </div>
-
-                  <div className="bg-white rounded-2xl shadow-sm p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-green-100 rounded-xl">
-                        <TrendingUp className="text-green-600" size={20} />
-                      </div>
-                      <span className="text-sm text-gray-500">Today</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => copyToClipboard(selectedQR)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Copy URL"
+                      >
+                        {copiedId === selectedQR.id ? (
+                          <Check size={18} className="text-green-600" />
+                        ) : (
+                          <Copy size={18} className="text-gray-500" />
+                        )}
+                      </button>
+                      <a
+                        href={getShortUrl(selectedQR)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Open URL"
+                      >
+                        <ExternalLink size={18} className="text-gray-500" />
+                      </a>
+                      <button
+                        onClick={() => {
+                          setEditingQR(selectedQR);
+                          setIsFormOpen(true);
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 size={18} className="text-gray-500" />
+                      </button>
+                      <button
+                        onClick={() => handleToggleActive(selectedQR)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title={selectedQR.is_active ? 'Pause' : 'Activate'}
+                      >
+                        {selectedQR.is_active ? (
+                          <PowerOff size={18} className="text-orange-500" />
+                        ) : (
+                          <Power size={18} className="text-green-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(selectedQR)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={18} className="text-red-500" />
+                      </button>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {analyticsLoading ? '...' : analytics?.todayScans || 0}
-                    </p>
-                  </div>
-
-                  <div className="bg-white rounded-2xl shadow-sm p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-purple-100 rounded-xl">
-                        <Calendar className="text-purple-600" size={20} />
-                      </div>
-                      <span className="text-sm text-gray-500">This Week</span>
-                    </div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {analyticsLoading ? '...' : analytics?.weekScans || 0}
-                    </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Device Breakdown */}
-                  <div className="bg-white rounded-2xl shadow-sm p-4">
-                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <Smartphone size={18} />
-                      Devices
-                    </h3>
-                    {analyticsLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="animate-spin text-gray-400" size={24} />
-                      </div>
-                    ) : analytics?.deviceBreakdown.length ? (
-                      <div className="space-y-3">
-                        {analytics.deviceBreakdown.map((item) => (
-                          <div key={item.device} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {item.device.toLowerCase().includes('mobile') ? (
-                                <Smartphone size={16} className="text-gray-400" />
-                              ) : (
-                                <Monitor size={16} className="text-gray-400" />
-                              )}
-                              <span className="text-sm text-gray-700">{item.device}</span>
-                            </div>
-                            <span className="text-sm font-medium text-gray-900">{item.count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 text-sm text-center py-8">No data yet</p>
-                    )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* QR Code Preview */}
+                  <div className="md:col-span-1">
+                    <QRCodePreview
+                      qrCode={selectedQR}
+                      title={selectedQR.title}
+                    />
                   </div>
 
-                  {/* Top Countries */}
-                  <div className="bg-white rounded-2xl shadow-sm p-4">
-                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <Globe size={18} />
-                      Top Countries
-                    </h3>
-                    {analyticsLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="animate-spin text-gray-400" size={24} />
-                      </div>
-                    ) : analytics?.topCountries.length ? (
-                      <div className="space-y-3">
-                        {analytics.topCountries.map((item) => (
-                          <div key={item.country} className="flex items-center justify-between">
-                            <span className="text-sm text-gray-700">{item.country}</span>
-                            <span className="text-sm font-medium text-gray-900">{item.count}</span>
+                  {/* Stats */}
+                  <div className="md:col-span-2 space-y-4">
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white rounded-2xl shadow-sm p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-2 bg-indigo-100 rounded-xl">
+                            <Eye className="text-indigo-600" size={18} />
                           </div>
-                        ))}
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {analyticsLoading ? '...' : analytics?.totalScans || 0}
+                        </p>
+                        <p className="text-xs text-gray-500">Total Scans</p>
                       </div>
-                    ) : (
-                      <p className="text-gray-400 text-sm text-center py-8">No data yet</p>
-                    )}
+
+                      <div className="bg-white rounded-2xl shadow-sm p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-2 bg-green-100 rounded-xl">
+                            <TrendingUp className="text-green-600" size={18} />
+                          </div>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {analyticsLoading ? '...' : analytics?.todayScans || 0}
+                        </p>
+                        <p className="text-xs text-gray-500">Today</p>
+                      </div>
+
+                      <div className="bg-white rounded-2xl shadow-sm p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-2 bg-purple-100 rounded-xl">
+                            <Calendar className="text-purple-600" size={18} />
+                          </div>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {analyticsLoading ? '...' : analytics?.weekScans || 0}
+                        </p>
+                        <p className="text-xs text-gray-500">This Week</p>
+                      </div>
+                    </div>
+
+                    {/* Device & Country */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Device Breakdown */}
+                      <div className="bg-white rounded-2xl shadow-sm p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+                          <Smartphone size={16} />
+                          Devices
+                        </h3>
+                        {analyticsLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="animate-spin text-gray-400" size={20} />
+                          </div>
+                        ) : analytics?.deviceBreakdown.length ? (
+                          <div className="space-y-2">
+                            {analytics.deviceBreakdown.map((item) => (
+                              <div key={item.device} className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">{item.device}</span>
+                                <span className="font-medium text-gray-900">{item.count}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-400 text-xs text-center py-4">No data yet</p>
+                        )}
+                      </div>
+
+                      {/* Top Countries */}
+                      <div className="bg-white rounded-2xl shadow-sm p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+                          <Globe size={16} />
+                          Countries
+                        </h3>
+                        {analyticsLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="animate-spin text-gray-400" size={20} />
+                          </div>
+                        ) : analytics?.topCountries.length ? (
+                          <div className="space-y-2">
+                            {analytics.topCountries.slice(0, 4).map((item) => (
+                              <div key={item.country} className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">{item.country}</span>
+                                <span className="font-medium text-gray-900">{item.count}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-400 text-xs text-center py-4">No data yet</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -505,11 +688,24 @@ export function DynamicQRDashboard() {
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-                <BarChart3 className="mx-auto text-gray-300 mb-4" size={64} />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a QR Code</h3>
-                <p className="text-gray-500">
-                  Click on a QR code from the list to view its analytics
+                <QrCode className="mx-auto text-gray-300 mb-4" size={64} />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {qrCodes.length === 0 ? 'Create Your First Dynamic QR' : 'Select a QR Code'}
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  {qrCodes.length === 0
+                    ? 'Dynamic QR codes let you change the destination URL anytime and track scans'
+                    : 'Click on a QR code from the list to view its details and analytics'}
                 </p>
+                {qrCodes.length === 0 && (
+                  <button
+                    onClick={() => setIsFormOpen(true)}
+                    className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Plus size={20} />
+                    Create Dynamic QR
+                  </button>
+                )}
               </div>
             )}
           </div>
