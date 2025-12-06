@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { QRType, QRContentData, QRStyleConfig } from './types';
 import { QRTabs } from './components/QRTabs';
 import { QRInputs } from './components/QRInputs';
-import { QRStyling } from './components/QRStyling';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
@@ -11,6 +10,17 @@ import { LayoutGrid, Lock, Zap, BarChart3 } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
+import { ErrorBoundary, OfflineBanner } from './components/ErrorBoundary';
+import { ProfileMenu } from './components/ProfileMenu';
+
+// Analytics tracking options type
+export interface AnalyticsOptions {
+  trackLocation: boolean;
+  trackDevice: boolean;
+  trackBrowser: boolean;
+  trackTime: boolean;
+  trackReferrer: boolean;
+}
 
 const INITIAL_STYLE: QRStyleConfig = {
   size: 1000, // Default to HD
@@ -56,6 +66,13 @@ const QRGenerator: React.FC<{
   // Dynamic QR states
   const [isDynamic, setIsDynamic] = useState(false);
   const [dynamicTitle, setDynamicTitle] = useState('');
+  const [analyticsOptions, setAnalyticsOptions] = useState<AnalyticsOptions>({
+    trackLocation: true,
+    trackDevice: true,
+    trackBrowser: true,
+    trackTime: true,
+    trackReferrer: true,
+  });
 
   // Handle Dynamic QR toggle
   const handleDynamicToggle = (checked: boolean) => {
@@ -98,16 +115,19 @@ const QRGenerator: React.FC<{
            </div>
          </div>
 
-         {/* Dashboard Button - only show when logged in */}
-         {user && (
-           <button
-             onClick={onDashboardClick}
-             className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200"
-           >
-             <BarChart3 size={16} />
-             Dashboard
-           </button>
-         )}
+         {/* Right side: Dashboard button + Profile */}
+         <div className="flex items-center gap-3">
+           {user && (
+             <button
+               onClick={onDashboardClick}
+               className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
+             >
+               <BarChart3 size={16} />
+               <span className="hidden sm:inline">Dashboard</span>
+             </button>
+           )}
+           <ProfileMenu onLoginClick={onAuthRequired} />
+         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 px-2 md:px-4">
@@ -174,7 +194,7 @@ const QRGenerator: React.FC<{
                </div>
 
                {isDynamic && (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                      <p className="text-xs text-gray-500">
                        Create a trackable QR with analytics. You can edit the destination anytime.
                      </p>
@@ -186,6 +206,51 @@ const QRGenerator: React.FC<{
                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors"
                         maxLength={255}
                      />
+
+                     {/* Analytics Options */}
+                     <div className="bg-indigo-50/50 rounded-xl p-4">
+                        <p className="text-xs font-semibold text-indigo-900 mb-3">
+                          Track Analytics For:
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                           {[
+                             { key: 'trackLocation', label: 'Location', icon: '📍' },
+                             { key: 'trackDevice', label: 'Device', icon: '📱' },
+                             { key: 'trackBrowser', label: 'Browser', icon: '🌐' },
+                             { key: 'trackTime', label: 'Scan Time', icon: '🕐' },
+                             { key: 'trackReferrer', label: 'Referrer', icon: '🔗' },
+                           ].map((option) => (
+                             <label
+                               key={option.key}
+                               className={`flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-all ${
+                                 analyticsOptions[option.key as keyof AnalyticsOptions]
+                                   ? 'bg-white border-2 border-indigo-500 shadow-sm'
+                                   : 'bg-white/50 border-2 border-transparent hover:bg-white'
+                               }`}
+                             >
+                               <input
+                                 type="checkbox"
+                                 checked={analyticsOptions[option.key as keyof AnalyticsOptions]}
+                                 onChange={(e) =>
+                                   setAnalyticsOptions({
+                                     ...analyticsOptions,
+                                     [option.key]: e.target.checked,
+                                   })
+                                 }
+                                 className="sr-only"
+                               />
+                               <span className="text-sm">{option.icon}</span>
+                               <span className={`text-xs font-medium ${
+                                 analyticsOptions[option.key as keyof AnalyticsOptions]
+                                   ? 'text-indigo-700'
+                                   : 'text-gray-500'
+                               }`}>
+                                 {option.label}
+                               </span>
+                             </label>
+                           ))}
+                        </div>
+                     </div>
                   </div>
                )}
             </div>
@@ -207,9 +272,17 @@ const QRGenerator: React.FC<{
                  dynamicTitle={dynamicTitle}
                  contentData={contentData}
                  isEncrypted={isEncrypted}
+                 analyticsOptions={analyticsOptions}
                  onDynamicSuccess={() => {
                    setIsDynamic(false);
                    setDynamicTitle('');
+                   setAnalyticsOptions({
+                     trackLocation: true,
+                     trackDevice: true,
+                     trackBrowser: true,
+                     trackTime: true,
+                     trackReferrer: true,
+                   });
                  }}
               />
 
@@ -303,12 +376,15 @@ const AppContent: React.FC = () => {
   );
 };
 
-// Root App with AuthProvider
+// Root App with AuthProvider and ErrorBoundary
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <OfflineBanner />
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 
