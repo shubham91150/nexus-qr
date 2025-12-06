@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { QRStyleConfig } from '../types';
+import { QRStyleConfig, QRContentData } from '../types';
 import { CustomSVGRenderer } from '../services/customSvgRenderer';
-import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp } from 'lucide-react';
+import { supabase, generateShortCode } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
+import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink } from 'lucide-react';
 
 interface Props {
   data: string;
@@ -9,15 +11,40 @@ interface Props {
   className?: string;
   bulkItems?: Array<{name: string, value: string}>;
   onConfigChange?: (config: QRStyleConfig) => void;
+  // Dynamic QR props
+  isDynamic?: boolean;
+  dynamicTitle?: string;
+  contentData?: QRContentData;
+  isEncrypted?: boolean;
+  onDynamicSuccess?: () => void;
 }
 
-export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems, onConfigChange }) => {
+export const QRPreview: React.FC<Props> = ({
+  data,
+  config,
+  className,
+  bulkItems,
+  onConfigChange,
+  isDynamic = false,
+  dynamicTitle = '',
+  contentData,
+  isEncrypted = false,
+  onDynamicSuccess
+}) => {
+  const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const renderer = useRef<CustomSVGRenderer | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeEditTab, setActiveEditTab] = useState<'pattern' | 'corner'>('pattern');
   const [isAdjustmentsOpen, setIsAdjustmentsOpen] = useState(false);
+
+  // Dynamic QR states
+  const [creatingDynamic, setCreatingDynamic] = useState(false);
+  const [dynamicError, setDynamicError] = useState<string | null>(null);
+  const [createdShortUrl, setCreatedShortUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   useEffect(() => {
     renderer.current = new CustomSVGRenderer(config);
@@ -163,6 +190,96 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
     }
   };
 
+  // Create Dynamic QR
+  const handleCreateDynamic = async () => {
+    if (!user || !isDynamic) return;
+
+    setDynamicError(null);
+    setCreatingDynamic(true);
+
+    try {
+      // Validate
+      if (!data || data.length < 1) {
+        setDynamicError('Please enter valid content for the QR code');
+        setCreatingDynamic(false);
+        return;
+      }
+
+      if (!dynamicTitle.trim()) {
+        setDynamicError('Please enter a title for your QR code');
+        setCreatingDynamic(false);
+        return;
+      }
+
+      // Prepare QR style data
+      const qrStyleData = {
+        styleConfig: config,
+        contentData,
+        isEncrypted,
+        payload: data,
+      };
+
+      // Generate unique short code
+      let shortCode = generateShortCode();
+      let attempts = 0;
+      const maxAttempts = 5;
+
+      while (attempts < maxAttempts) {
+        const { data: newQR, error: insertError } = await supabase
+          .from('dynamic_qr_codes')
+          .insert({
+            user_id: user.id,
+            short_code: shortCode,
+            title: dynamicTitle.trim(),
+            destination_url: data,
+            qr_style: qrStyleData,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          if (insertError.code === '23505') {
+            shortCode = generateShortCode();
+            attempts++;
+            continue;
+          }
+          throw insertError;
+        }
+
+        // Success
+        setCreatedShortUrl(`${baseUrl}/r/${newQR.short_code}`);
+        break;
+      }
+
+      if (attempts >= maxAttempts) {
+        throw new Error('Failed to generate unique code. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error creating dynamic QR:', err);
+      setDynamicError(err instanceof Error ? err.message : 'Failed to create QR code');
+    } finally {
+      setCreatingDynamic(false);
+    }
+  };
+
+  // Copy short URL
+  const copyShortUrl = async () => {
+    if (!createdShortUrl) return;
+    try {
+      await navigator.clipboard.writeText(createdShortUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Reset dynamic success state
+  const handleDynamicDone = () => {
+    setCreatedShortUrl(null);
+    onDynamicSuccess?.();
+  };
+
   const isBulkMode = bulkItems && bulkItems.length > 0;
   const checkerboardStyle = config.bgTransparent ? {
       backgroundImage: `linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)`,
@@ -283,9 +400,57 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
           </div>
       </div>
 
-      <div className="w-full space-y-4">
+      {/* Dynamic QR Success View */}
+      {createdShortUrl ? (
+        <div className="w-full space-y-4">
+          <div className="bg-green-50 rounded-xl p-4 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Check className="text-green-600" size={24} />
+            </div>
+            <h3 className="font-semibold text-green-800 mb-1">Dynamic QR Created!</h3>
+            <p className="text-xs text-green-600 mb-3">Your trackable QR is ready</p>
+
+            <div className="bg-white rounded-lg p-3 mb-3">
+              <p className="text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Short URL</p>
+              <div className="flex items-center gap-2 justify-center">
+                <code className="text-indigo-600 font-medium text-sm break-all">{createdShortUrl}</code>
+                <button onClick={copyShortUrl} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Copy URL">
+                  {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-gray-500" />}
+                </button>
+                <a href={createdShortUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Open URL">
+                  <ExternalLink size={14} className="text-gray-500" />
+                </a>
+              </div>
+            </div>
+
+            {/* Download buttons after creation */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                onClick={() => handleDownload('png')}
+                className="py-2.5 bg-gray-900 text-white rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+              >
+                <Download size={14} /> PNG
+              </button>
+              <button
+                onClick={() => handleDownload('svg')}
+                className="py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+              >
+                <Download size={14} /> SVG
+              </button>
+            </div>
+
+            <button
+              onClick={handleDynamicDone}
+              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full space-y-4">
           <div className="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden transition-all duration-300">
-              <button 
+              <button
                 onClick={() => setIsAdjustmentsOpen(!isAdjustmentsOpen)}
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
               >
@@ -295,7 +460,7 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
                   </div>
                   {isAdjustmentsOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
               </button>
-              
+
               {isAdjustmentsOpen && (
                   <div className="p-4 pt-0 space-y-4 animate-fadeIn">
                       <div className="pt-2">
@@ -303,7 +468,7 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
                               <span>Size</span>
                               <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{config.size}px</span>
                           </div>
-                          <input 
+                          <input
                               type="range" min="200" max="4096" step="50"
                               value={config.size}
                               onChange={(e) => handleConfigUpdate('size', Number(e.target.value))}
@@ -316,7 +481,7 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
                               <span>Padding</span>
                               <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{config.padding}px</span>
                           </div>
-                          <input 
+                          <input
                               type="range" min="0" max="100" step="5"
                               value={config.padding}
                               onChange={(e) => handleConfigUpdate('padding', Number(e.target.value))}
@@ -327,8 +492,34 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
               )}
           </div>
 
-          {isBulkMode ? (
-              <button 
+          {/* Error message */}
+          {dynamicError && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">
+              {dynamicError}
+            </div>
+          )}
+
+          {/* Dynamic QR Create Button */}
+          {isDynamic ? (
+            <button
+               onClick={handleCreateDynamic}
+               disabled={creatingDynamic || !dynamicTitle.trim()}
+               className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+               {creatingDynamic ? (
+                  <>
+                     <Loader2 size={18} className="animate-spin" />
+                     Creating...
+                  </>
+               ) : (
+                  <>
+                     <Zap size={18} />
+                     Create Dynamic QR
+                  </>
+               )}
+            </button>
+          ) : isBulkMode ? (
+              <button
                  onClick={handleBulkDownload}
                  disabled={downloading}
                  className="w-full py-3.5 bg-indigo-900 text-white rounded-xl font-semibold shadow-lg shadow-indigo-100 hover:bg-indigo-800 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-80"
@@ -346,7 +537,7 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
                  )}
               </button>
           ) : (
-              <button 
+              <button
                  onClick={() => handleDownload('png')}
                  className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold shadow-lg shadow-gray-200 hover:bg-gray-800 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
@@ -354,16 +545,16 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
                  {downloading ? "Downloaded!" : "Download PNG"}
               </button>
           )}
-          
-          {!isBulkMode && (
+
+          {!isBulkMode && !isDynamic && (
               <div className="grid grid-cols-2 gap-3">
-                 <button 
+                 <button
                     onClick={() => handleDownload('svg')}
                     className="py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                  >
                     <Download size={16} /> SVG
                  </button>
-                 <button 
+                 <button
                     onClick={handlePrint}
                     className="py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                  >
@@ -371,7 +562,8 @@ export const QRPreview: React.FC<Props> = ({ data, config, className, bulkItems,
                  </button>
               </div>
           )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
