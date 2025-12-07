@@ -3,7 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://tyuambzppjfvwxkmpgma.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dWFtYnpwcGpmdnd4a21wZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NDU3MDksImV4cCI6MjA4MDUyMTcwOX0.4-OxuDsfxDf4M5_Xe06x9TC_7hgodZJZp-xzO0U68bA';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    // Flow type that's more resilient to timing issues
+    flowType: 'pkce',
+  },
+});
 
 // Conditional Redirect Rule
 export interface ConditionalRule {
