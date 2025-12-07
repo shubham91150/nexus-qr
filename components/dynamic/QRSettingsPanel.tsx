@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
   Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
-  Calendar, Timer, X
+  Calendar, Timer, X, Lock, Navigation, Shield, Tag
 } from 'lucide-react';
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
+  PasswordProtection, GeofenceSettings, GeofenceLocation, IPRestriction, UTMParameters,
   supabase
 } from '../../lib/supabase';
 
@@ -14,7 +15,7 @@ interface QRSettingsPanelProps {
   onUpdate: () => void;
 }
 
-type SettingsTab = 'url' | 'expiry' | 'conditions' | 'language' | 'ab-testing';
+type SettingsTab = 'url' | 'expiry' | 'conditions' | 'language' | 'ab-testing' | 'security' | 'utm';
 
 // Generate unique ID
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -51,6 +52,26 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     qrCode.ab_variants || []
   );
 
+  // Password Protection
+  const [passwordProtection, setPasswordProtection] = useState<PasswordProtection>(
+    qrCode.password_protection || { enabled: false, password: '', hint: '' }
+  );
+
+  // Geofencing
+  const [geofenceSettings, setGeofenceSettings] = useState<GeofenceSettings>(
+    qrCode.geofence_settings || { enabled: false, locations: [], blockOutside: true, blockedRedirectUrl: '' }
+  );
+
+  // IP Restriction
+  const [ipRestriction, setIpRestriction] = useState<IPRestriction>(
+    qrCode.ip_restriction || { enabled: false, maxScansPerIP: 1, timeWindowMinutes: 60, blockedRedirectUrl: '' }
+  );
+
+  // UTM Parameters
+  const [utmParameters, setUtmParameters] = useState<UTMParameters>(
+    qrCode.utm_parameters || { enabled: false, source: '', medium: '', campaign: '', term: '', content: '' }
+  );
+
   // Reset on QR change
   useEffect(() => {
     setDestinationUrl(qrCode.destination_url);
@@ -62,6 +83,10 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     setDefaultLanguage(qrCode.default_language || 'en');
     setAbTestingEnabled(qrCode.ab_testing_enabled || false);
     setAbVariants(qrCode.ab_variants || []);
+    setPasswordProtection(qrCode.password_protection || { enabled: false, password: '', hint: '' });
+    setGeofenceSettings(qrCode.geofence_settings || { enabled: false, locations: [], blockOutside: true, blockedRedirectUrl: '' });
+    setIpRestriction(qrCode.ip_restriction || { enabled: false, maxScansPerIP: 1, timeWindowMinutes: 60, blockedRedirectUrl: '' });
+    setUtmParameters(qrCode.utm_parameters || { enabled: false, source: '', medium: '', campaign: '', term: '', content: '' });
   }, [qrCode.id]);
 
   // Save settings
@@ -81,6 +106,10 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         default_language: defaultLanguage,
         ab_testing_enabled: abTestingEnabled,
         ab_variants: abVariants,
+        password_protection: passwordProtection,
+        geofence_settings: geofenceSettings,
+        ip_restriction: ipRestriction,
+        utm_parameters: utmParameters,
         updated_at: new Date().toISOString(),
       };
 
@@ -176,6 +205,8 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     { id: 'url' as SettingsTab, label: 'URL', icon: Link },
     { id: 'expiry' as SettingsTab, label: 'Expiry', icon: Timer },
     { id: 'conditions' as SettingsTab, label: 'Conditions', icon: MapPin },
+    { id: 'security' as SettingsTab, label: 'Security', icon: Shield },
+    { id: 'utm' as SettingsTab, label: 'UTM', icon: Tag },
     { id: 'language' as SettingsTab, label: 'Language', icon: Languages },
     { id: 'ab-testing' as SettingsTab, label: 'A/B Test', icon: FlaskConical },
   ];
@@ -567,6 +598,340 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Security Tab - Password, Geofencing, IP Restriction */}
+        {activeTab === 'security' && (
+          <div className="space-y-6">
+            {/* Password Protection */}
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Lock size={18} className="text-indigo-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Password Protection</h4>
+                    <p className="text-xs text-gray-500">Require password to access content</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={passwordProtection.enabled}
+                    onChange={(e) => setPasswordProtection({ ...passwordProtection, enabled: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              {passwordProtection.enabled && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Password</label>
+                    <input
+                      type="text"
+                      value={passwordProtection.password}
+                      onChange={(e) => setPasswordProtection({ ...passwordProtection, password: e.target.value })}
+                      placeholder="Enter password"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Hint (Optional)</label>
+                    <input
+                      type="text"
+                      value={passwordProtection.hint || ''}
+                      onChange={(e) => setPasswordProtection({ ...passwordProtection, hint: e.target.value })}
+                      placeholder="Password hint for users"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Geofencing */}
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Navigation size={18} className="text-green-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Geofencing</h4>
+                    <p className="text-xs text-gray-500">Restrict access by location</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={geofenceSettings.enabled}
+                    onChange={(e) => setGeofenceSettings({ ...geofenceSettings, enabled: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                </label>
+              </div>
+
+              {geofenceSettings.enabled && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-500">Access:</label>
+                    <select
+                      value={geofenceSettings.blockOutside ? 'inside' : 'outside'}
+                      onChange={(e) => setGeofenceSettings({ ...geofenceSettings, blockOutside: e.target.value === 'inside' })}
+                      className="px-2 py-1 bg-gray-50 border border-gray-200 rounded text-xs"
+                    >
+                      <option value="inside">Only Inside Zones</option>
+                      <option value="outside">Only Outside Zones</option>
+                    </select>
+                  </div>
+
+                  {geofenceSettings.locations.map((loc, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <input
+                          type="text"
+                          value={loc.name || ''}
+                          onChange={(e) => {
+                            const newLocs = [...geofenceSettings.locations];
+                            newLocs[index] = { ...loc, name: e.target.value };
+                            setGeofenceSettings({ ...geofenceSettings, locations: newLocs });
+                          }}
+                          placeholder="Location Name"
+                          className="text-sm font-medium bg-transparent border-none outline-none"
+                        />
+                        <button
+                          onClick={() => {
+                            const newLocs = geofenceSettings.locations.filter((_, i) => i !== index);
+                            setGeofenceSettings({ ...geofenceSettings, locations: newLocs });
+                          }}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] text-gray-400">Latitude</label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={loc.latitude}
+                            onChange={(e) => {
+                              const newLocs = [...geofenceSettings.locations];
+                              newLocs[index] = { ...loc, latitude: parseFloat(e.target.value) || 0 };
+                              setGeofenceSettings({ ...geofenceSettings, locations: newLocs });
+                            }}
+                            className="w-full px-2 py-1 bg-white border border-gray-200 rounded text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-400">Longitude</label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={loc.longitude}
+                            onChange={(e) => {
+                              const newLocs = [...geofenceSettings.locations];
+                              newLocs[index] = { ...loc, longitude: parseFloat(e.target.value) || 0 };
+                              setGeofenceSettings({ ...geofenceSettings, locations: newLocs });
+                            }}
+                            className="w-full px-2 py-1 bg-white border border-gray-200 rounded text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-400">Radius (m)</label>
+                          <input
+                            type="number"
+                            value={loc.radius}
+                            onChange={(e) => {
+                              const newLocs = [...geofenceSettings.locations];
+                              newLocs[index] = { ...loc, radius: parseInt(e.target.value) || 100 };
+                              setGeofenceSettings({ ...geofenceSettings, locations: newLocs });
+                            }}
+                            className="w-full px-2 py-1 bg-white border border-gray-200 rounded text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => {
+                      setGeofenceSettings({
+                        ...geofenceSettings,
+                        locations: [...geofenceSettings.locations, { latitude: 0, longitude: 0, radius: 500, name: '' }]
+                      });
+                    }}
+                    className="flex items-center gap-2 text-green-600 text-sm font-medium hover:underline"
+                  >
+                    <Plus size={14} /> Add Location
+                  </button>
+
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Blocked Redirect URL</label>
+                    <input
+                      type="url"
+                      value={geofenceSettings.blockedRedirectUrl || ''}
+                      onChange={(e) => setGeofenceSettings({ ...geofenceSettings, blockedRedirectUrl: e.target.value })}
+                      placeholder="https://example.com/not-available"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* IP Restriction */}
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Shield size={18} className="text-orange-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">IP Restriction</h4>
+                    <p className="text-xs text-gray-500">Limit scans per IP address</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ipRestriction.enabled}
+                    onChange={(e) => setIpRestriction({ ...ipRestriction, enabled: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                </label>
+              </div>
+
+              {ipRestriction.enabled && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Max Scans per IP</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={ipRestriction.maxScansPerIP}
+                        onChange={(e) => setIpRestriction({ ...ipRestriction, maxScansPerIP: parseInt(e.target.value) || 1 })}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Time Window (minutes)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={ipRestriction.timeWindowMinutes}
+                        onChange={(e) => setIpRestriction({ ...ipRestriction, timeWindowMinutes: parseInt(e.target.value) || 60 })}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    Example: {ipRestriction.maxScansPerIP} scan(s) allowed per IP every {ipRestriction.timeWindowMinutes} minutes
+                  </p>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Blocked Redirect URL</label>
+                    <input
+                      type="url"
+                      value={ipRestriction.blockedRedirectUrl || ''}
+                      onChange={(e) => setIpRestriction({ ...ipRestriction, blockedRedirectUrl: e.target.value })}
+                      placeholder="https://example.com/limit-reached"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* UTM Parameters Tab */}
+        {activeTab === 'utm' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">UTM Parameters</h4>
+                <p className="text-xs text-gray-500">Add tracking parameters for Google Analytics</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={utmParameters.enabled}
+                  onChange={(e) => setUtmParameters({ ...utmParameters, enabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            {utmParameters.enabled && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Campaign Source (utm_source) *</label>
+                  <input
+                    type="text"
+                    value={utmParameters.source || ''}
+                    onChange={(e) => setUtmParameters({ ...utmParameters, source: e.target.value })}
+                    placeholder="e.g., google, newsletter, qr_code"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Campaign Medium (utm_medium) *</label>
+                  <input
+                    type="text"
+                    value={utmParameters.medium || ''}
+                    onChange={(e) => setUtmParameters({ ...utmParameters, medium: e.target.value })}
+                    placeholder="e.g., cpc, email, qr"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Campaign Name (utm_campaign) *</label>
+                  <input
+                    type="text"
+                    value={utmParameters.campaign || ''}
+                    onChange={(e) => setUtmParameters({ ...utmParameters, campaign: e.target.value })}
+                    placeholder="e.g., summer_sale, product_launch"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Campaign Term (utm_term)</label>
+                  <input
+                    type="text"
+                    value={utmParameters.term || ''}
+                    onChange={(e) => setUtmParameters({ ...utmParameters, term: e.target.value })}
+                    placeholder="e.g., running+shoes"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Campaign Content (utm_content)</label>
+                  <input
+                    type="text"
+                    value={utmParameters.content || ''}
+                    onChange={(e) => setUtmParameters({ ...utmParameters, content: e.target.value })}
+                    placeholder="e.g., banner_ad, text_link"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+
+                {/* Preview */}
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <label className="text-xs text-gray-500 mb-1 block">Preview URL</label>
+                  <code className="text-xs text-indigo-600 break-all">
+                    {destinationUrl}
+                    {utmParameters.source ? `?utm_source=${encodeURIComponent(utmParameters.source)}` : ''}
+                    {utmParameters.medium ? `&utm_medium=${encodeURIComponent(utmParameters.medium)}` : ''}
+                    {utmParameters.campaign ? `&utm_campaign=${encodeURIComponent(utmParameters.campaign)}` : ''}
+                    {utmParameters.term ? `&utm_term=${encodeURIComponent(utmParameters.term)}` : ''}
+                    {utmParameters.content ? `&utm_content=${encodeURIComponent(utmParameters.content)}` : ''}
+                  </code>
+                </div>
               </div>
             )}
           </div>

@@ -16,7 +16,12 @@ ADD COLUMN IF NOT EXISTS multi_language_enabled BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS language_contents JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS default_language TEXT DEFAULT 'en',
 ADD COLUMN IF NOT EXISTS analytics_options JSONB DEFAULT '{"trackLocation": true, "trackDevice": true, "trackBrowser": true, "trackTime": true, "trackReferrer": true}',
-ADD COLUMN IF NOT EXISTS scan_count INTEGER DEFAULT 0;
+ADD COLUMN IF NOT EXISTS scan_count INTEGER DEFAULT 0,
+-- NEW: Security & UTM Features
+ADD COLUMN IF NOT EXISTS password_protection JSONB DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS geofence_settings JSONB DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS ip_restriction JSONB DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS utm_parameters JSONB DEFAULT NULL;
 
 -- =====================================================
 -- 2. ADD NEW COLUMNS TO qr_scans TABLE
