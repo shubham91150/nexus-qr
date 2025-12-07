@@ -62,6 +62,46 @@ export interface AnalyticsOptions {
   trackReferrer: boolean;
 }
 
+// Password Protection
+export interface PasswordProtection {
+  enabled: boolean;
+  password: string;
+  hint?: string;
+}
+
+// Geofencing
+export interface GeofenceLocation {
+  latitude: number;
+  longitude: number;
+  radius: number; // in meters
+  name?: string;
+}
+
+export interface GeofenceSettings {
+  enabled: boolean;
+  locations: GeofenceLocation[];
+  blockOutside: boolean; // true = only allow inside, false = only allow outside
+  blockedRedirectUrl?: string;
+}
+
+// IP Restriction
+export interface IPRestriction {
+  enabled: boolean;
+  maxScansPerIP: number;
+  timeWindowMinutes: number; // e.g., 60 = 1 scan per hour per IP
+  blockedRedirectUrl?: string;
+}
+
+// UTM Parameters
+export interface UTMParameters {
+  enabled: boolean;
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  term?: string;
+  content?: string;
+}
+
 // Extended Dynamic QR Code with all features
 export interface DynamicQRCode {
   id: string;
@@ -95,6 +135,18 @@ export interface DynamicQRCode {
 
   // Scan Count (for quick access)
   scan_count?: number;
+
+  // NEW: Password Protection
+  password_protection?: PasswordProtection;
+
+  // NEW: Geofencing
+  geofence_settings?: GeofenceSettings;
+
+  // NEW: IP Restriction
+  ip_restriction?: IPRestriction;
+
+  // NEW: UTM Parameters
+  utm_parameters?: UTMParameters;
 }
 
 // QR Scan Record
