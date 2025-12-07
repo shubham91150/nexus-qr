@@ -14,45 +14,52 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper to handle OAuth callback with clock skew tolerance
+// Helper to handle OAuth callback with PKCE flow support
 async function handleOAuthCallback(): Promise<void> {
-  // Check if we're handling an OAuth callback (URL has access_token or code)
+  const url = new URL(window.location.href);
+  const code = url.searchParams.get('code');
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const queryParams = new URLSearchParams(window.location.search);
+  const accessToken = hashParams.get('access_token');
 
-  const hasOAuthParams = hashParams.has('access_token') ||
-                         hashParams.has('refresh_token') ||
-                         queryParams.has('code');
-
-  if (hasOAuthParams) {
+  // Handle PKCE flow (code in query params)
+  if (code) {
     try {
-      // Try to exchange the code/tokens for a session
-      const { error } = await supabase.auth.getSession();
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
-        // Check if it's a clock skew error
+        console.error('Code exchange error:', error.message);
+
+        // Check for clock skew error
         if (error.message?.includes('issued in the future') ||
             error.message?.includes('clock') ||
             error.message?.includes('skew')) {
-          console.warn('Clock skew detected, clearing URL and retrying...');
-
-          // Clear the hash/query params to prevent repeated errors
-          const cleanUrl = window.location.origin + window.location.pathname;
-          window.history.replaceState({}, document.title, cleanUrl);
-
-          // Wait a moment and try to get session again
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await supabase.auth.getSession();
+          console.warn('Clock skew detected, waiting and retrying...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          await supabase.auth.exchangeCodeForSession(code);
         }
       }
 
-      // Clean up URL after successful auth
-      if (window.location.hash || window.location.search.includes('code')) {
-        const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-      }
+      // Clean up URL after auth
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
     } catch (err) {
       console.error('OAuth callback handling error:', err);
+      // Clean URL even on error
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }
+
+  // Handle implicit flow (tokens in hash - fallback)
+  else if (accessToken) {
+    try {
+      await supabase.auth.getSession();
+
+      // Clean up URL after auth
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    } catch (err) {
+      console.error('Hash token handling error:', err);
     }
   }
 }
