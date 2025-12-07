@@ -14,24 +14,83 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to handle OAuth callback with clock skew tolerance
+async function handleOAuthCallback(): Promise<void> {
+  // Check if we're handling an OAuth callback (URL has access_token or code)
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const queryParams = new URLSearchParams(window.location.search);
+
+  const hasOAuthParams = hashParams.has('access_token') ||
+                         hashParams.has('refresh_token') ||
+                         queryParams.has('code');
+
+  if (hasOAuthParams) {
+    try {
+      // Try to exchange the code/tokens for a session
+      const { error } = await supabase.auth.getSession();
+
+      if (error) {
+        // Check if it's a clock skew error
+        if (error.message?.includes('issued in the future') ||
+            error.message?.includes('clock') ||
+            error.message?.includes('skew')) {
+          console.warn('Clock skew detected, clearing URL and retrying...');
+
+          // Clear the hash/query params to prevent repeated errors
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+
+          // Wait a moment and try to get session again
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await supabase.auth.getSession();
+        }
+      }
+
+      // Clean up URL after successful auth
+      if (window.location.hash || window.location.search.includes('code')) {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    } catch (err) {
+      console.error('OAuth callback handling error:', err);
+    }
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    // Handle OAuth callback first (if applicable)
+    handleOAuthCallback().then(() => {
+      // Get initial session
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        if (error) {
+          console.warn('Session retrieval error:', error.message);
+          // On error, ensure we still set loading to false
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, session) => {
+        // Handle potential errors in auth state changes
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setSession(session);
+          setUser(session?.user ?? null);
+        } else if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
         setLoading(false);
       }
     );

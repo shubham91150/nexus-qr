@@ -49,19 +49,31 @@ export const QRPreview: React.FC<Props> = ({
   const [copied, setCopied] = useState(false);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
+  // Track what content is encoded in the QR code
+  // After creating dynamic QR, this becomes the short URL
+  const [qrEncodedContent, setQrEncodedContent] = useState<string | null>(null);
+
   useEffect(() => {
     renderer.current = new CustomSVGRenderer(config);
   }, []);
 
+  // Reset qrEncodedContent when data changes (new QR being created)
+  useEffect(() => {
+    setQrEncodedContent(null);
+    setCreatedShortUrl(null);
+  }, [data]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-        if (!data || !renderer.current || !containerRef.current) return;
+        // Use qrEncodedContent (short URL) if set, otherwise use original data
+        const contentToRender = qrEncodedContent || data;
+        if (!contentToRender || !renderer.current || !containerRef.current) return;
         renderer.current.updateConfig(config);
-        const svgString = renderer.current.render(data);
+        const svgString = renderer.current.render(contentToRender);
         containerRef.current.innerHTML = svgString;
     }, 100);
     return () => clearTimeout(timer);
-  }, [data, config]);
+  }, [data, config, qrEncodedContent]);
 
   const handleConfigUpdate = (key: keyof QRStyleConfig, value: any) => {
     if (onConfigChange) {
@@ -256,8 +268,11 @@ export const QRPreview: React.FC<Props> = ({
           throw insertError;
         }
 
-        // Success
-        setCreatedShortUrl(`${baseUrl}/r/${newQR.short_code}`);
+        // Success - set both the display URL and the QR encoded content
+        const shortUrl = `${baseUrl}/r/${newQR.short_code}`;
+        setCreatedShortUrl(shortUrl);
+        // Update QR code to encode the short URL instead of destination
+        setQrEncodedContent(shortUrl);
         break;
       }
 
@@ -287,6 +302,7 @@ export const QRPreview: React.FC<Props> = ({
   // Reset dynamic success state
   const handleDynamicDone = () => {
     setCreatedShortUrl(null);
+    setQrEncodedContent(null);
     onDynamicSuccess?.();
   };
 
