@@ -13,7 +13,7 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|r/).*)",
+      "source": "/((?!api/|r/|assets/).*)",
       "destination": "/index.html"
     }
   ],
