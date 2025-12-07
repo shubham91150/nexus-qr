@@ -37,6 +37,8 @@ export const QRPreview: React.FC<Props> = ({
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const renderer = useRef<CustomSVGRenderer | null>(null);
+  const isMountedRef = useRef(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeEditTab, setActiveEditTab] = useState<'pattern' | 'corner'>('pattern');
@@ -53,8 +55,19 @@ export const QRPreview: React.FC<Props> = ({
   // After creating dynamic QR, this becomes the short URL
   const [qrEncodedContent, setQrEncodedContent] = useState<string | null>(null);
 
+  // Store rendered SVG string in state to avoid direct DOM manipulation conflicts
+  const [renderedSvg, setRenderedSvg] = useState<string>('');
+
   useEffect(() => {
     renderer.current = new CustomSVGRenderer(config);
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, []);
 
   // Reset qrEncodedContent when data changes (new QR being created)
@@ -63,17 +76,41 @@ export const QRPreview: React.FC<Props> = ({
     setCreatedShortUrl(null);
   }, [data]);
 
+  // Render QR code to SVG string
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    timerRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return;
+
         // Use qrEncodedContent (short URL) if set, otherwise use original data
         const contentToRender = qrEncodedContent || data;
-        if (!contentToRender || !renderer.current || !containerRef.current) return;
+        if (!contentToRender || !renderer.current) return;
+
         renderer.current.updateConfig(config);
         const svgString = renderer.current.render(contentToRender);
-        containerRef.current.innerHTML = svgString;
+
+        if (isMountedRef.current) {
+          setRenderedSvg(svgString);
+        }
     }, 100);
-    return () => clearTimeout(timer);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, [data, config, qrEncodedContent]);
+
+  // Update DOM only when renderedSvg changes
+  useEffect(() => {
+    if (renderedSvg && containerRef.current && isMountedRef.current) {
+      containerRef.current.innerHTML = renderedSvg;
+    }
+  }, [renderedSvg]);
 
   const handleConfigUpdate = (key: keyof QRStyleConfig, value: any) => {
     if (onConfigChange) {
