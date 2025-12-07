@@ -1,0 +1,743 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
+  Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
+  Calendar, Timer, X
+} from 'lucide-react';
+import {
+  DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
+  supabase
+} from '../../lib/supabase';
+
+interface QRSettingsPanelProps {
+  qrCode: DynamicQRCode;
+  onUpdate: () => void;
+}
+
+type SettingsTab = 'url' | 'expiry' | 'conditions' | 'language' | 'ab-testing';
+
+// Generate unique ID
+const generateId = () => Math.random().toString(36).substring(2, 9);
+
+export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpdate }) => {
+  const [activeTab, setActiveTab] = useState<SettingsTab>('url');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // URL Settings
+  const [destinationUrl, setDestinationUrl] = useState(qrCode.destination_url);
+
+  // Expiry Settings
+  const [expiresAt, setExpiresAt] = useState(qrCode.expires_at || '');
+  const [expiredRedirectUrl, setExpiredRedirectUrl] = useState(qrCode.expired_redirect_url || '');
+
+  // Conditional Rules
+  const [conditionalRules, setConditionalRules] = useState<ConditionalRule[]>(
+    qrCode.conditional_rules || []
+  );
+  const [expandedRule, setExpandedRule] = useState<string | null>(null);
+
+  // Multi-language
+  const [multiLanguageEnabled, setMultiLanguageEnabled] = useState(qrCode.multi_language_enabled || false);
+  const [languageContents, setLanguageContents] = useState<LanguageContent[]>(
+    qrCode.language_contents || []
+  );
+  const [defaultLanguage, setDefaultLanguage] = useState(qrCode.default_language || 'en');
+
+  // A/B Testing
+  const [abTestingEnabled, setAbTestingEnabled] = useState(qrCode.ab_testing_enabled || false);
+  const [abVariants, setAbVariants] = useState<ABTestVariant[]>(
+    qrCode.ab_variants || []
+  );
+
+  // Reset on QR change
+  useEffect(() => {
+    setDestinationUrl(qrCode.destination_url);
+    setExpiresAt(qrCode.expires_at || '');
+    setExpiredRedirectUrl(qrCode.expired_redirect_url || '');
+    setConditionalRules(qrCode.conditional_rules || []);
+    setMultiLanguageEnabled(qrCode.multi_language_enabled || false);
+    setLanguageContents(qrCode.language_contents || []);
+    setDefaultLanguage(qrCode.default_language || 'en');
+    setAbTestingEnabled(qrCode.ab_testing_enabled || false);
+    setAbVariants(qrCode.ab_variants || []);
+  }, [qrCode.id]);
+
+  // Save settings
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const updateData: Record<string, unknown> = {
+        destination_url: destinationUrl,
+        expires_at: expiresAt || null,
+        expired_redirect_url: expiredRedirectUrl || null,
+        conditional_rules: conditionalRules,
+        multi_language_enabled: multiLanguageEnabled,
+        language_contents: languageContents,
+        default_language: defaultLanguage,
+        ab_testing_enabled: abTestingEnabled,
+        ab_variants: abVariants,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: updateError } = await supabase
+        .from('dynamic_qr_codes')
+        .update(updateData)
+        .eq('id', qrCode.id);
+
+      if (updateError) throw updateError;
+
+      setSuccess('Settings saved successfully!');
+      onUpdate();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Add new conditional rule
+  const addConditionalRule = (type: ConditionalRule['type']) => {
+    const newRule: ConditionalRule = {
+      id: generateId(),
+      type,
+      condition: {},
+      destinationUrl: '',
+      priority: conditionalRules.length,
+    };
+    setConditionalRules([...conditionalRules, newRule]);
+    setExpandedRule(newRule.id);
+  };
+
+  // Update conditional rule
+  const updateConditionalRule = (id: string, updates: Partial<ConditionalRule>) => {
+    setConditionalRules(rules =>
+      rules.map(r => (r.id === id ? { ...r, ...updates } : r))
+    );
+  };
+
+  // Remove conditional rule
+  const removeConditionalRule = (id: string) => {
+    setConditionalRules(rules => rules.filter(r => r.id !== id));
+  };
+
+  // Add language content
+  const addLanguageContent = () => {
+    setLanguageContents([
+      ...languageContents,
+      { language: '', destinationUrl: '', label: '' },
+    ]);
+  };
+
+  // Update language content
+  const updateLanguageContent = (index: number, updates: Partial<LanguageContent>) => {
+    setLanguageContents(contents =>
+      contents.map((c, i) => (i === index ? { ...c, ...updates } : c))
+    );
+  };
+
+  // Remove language content
+  const removeLanguageContent = (index: number) => {
+    setLanguageContents(contents => contents.filter((_, i) => i !== index));
+  };
+
+  // Add A/B variant
+  const addABVariant = () => {
+    const newVariant: ABTestVariant = {
+      id: generateId(),
+      name: `Variant ${String.fromCharCode(65 + abVariants.length)}`, // A, B, C...
+      destinationUrl: '',
+      weight: 50,
+      scans: 0,
+      conversions: 0,
+    };
+    setAbVariants([...abVariants, newVariant]);
+  };
+
+  // Update A/B variant
+  const updateABVariant = (id: string, updates: Partial<ABTestVariant>) => {
+    setAbVariants(variants =>
+      variants.map(v => (v.id === id ? { ...v, ...updates } : v))
+    );
+  };
+
+  // Remove A/B variant
+  const removeABVariant = (id: string) => {
+    setAbVariants(variants => variants.filter(v => v.id !== id));
+  };
+
+  const tabs = [
+    { id: 'url' as SettingsTab, label: 'URL', icon: Link },
+    { id: 'expiry' as SettingsTab, label: 'Expiry', icon: Timer },
+    { id: 'conditions' as SettingsTab, label: 'Conditions', icon: MapPin },
+    { id: 'language' as SettingsTab, label: 'Language', icon: Languages },
+    { id: 'ab-testing' as SettingsTab, label: 'A/B Test', icon: FlaskConical },
+  ];
+
+  const LANGUAGES = [
+    { code: 'en', name: 'English' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'zh', name: 'Chinese' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ar', name: 'Arabic' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'ru', name: 'Russian' },
+  ];
+
+  const DAYS_OF_WEEK = [
+    { value: 0, label: 'Sun' },
+    { value: 1, label: 'Mon' },
+    { value: 2, label: 'Tue' },
+    { value: 3, label: 'Wed' },
+    { value: 4, label: 'Thu' },
+    { value: 5, label: 'Fri' },
+    { value: 6, label: 'Sat' },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      {/* Tabs */}
+      <div className="flex overflow-x-auto border-b border-gray-100">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === tab.id
+                ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <tab.icon size={16} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        {/* Messages */}
+        {error && (
+          <div className="mb-4 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 bg-green-50 text-green-600 px-4 py-3 rounded-xl text-sm">
+            {success}
+          </div>
+        )}
+
+        {/* URL Tab */}
+        {activeTab === 'url' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Destination URL
+              </label>
+              <input
+                type="url"
+                value={destinationUrl}
+                onChange={(e) => setDestinationUrl(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 outline-none transition-all"
+                placeholder="https://example.com"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                You can change this URL anytime. All printed QR codes will redirect to the new URL.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Expiry Tab */}
+        {activeTab === 'expiry' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Expiry Date & Time
+              </label>
+              <input
+                type="datetime-local"
+                value={expiresAt ? expiresAt.slice(0, 16) : ''}
+                onChange={(e) => setExpiresAt(e.target.value ? new Date(e.target.value).toISOString() : '')}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 outline-none transition-all"
+              />
+              {expiresAt && (
+                <button
+                  onClick={() => setExpiresAt('')}
+                  className="text-xs text-red-500 mt-1 hover:underline"
+                >
+                  Remove expiry
+                </button>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Redirect URL After Expiry (Optional)
+              </label>
+              <input
+                type="url"
+                value={expiredRedirectUrl}
+                onChange={(e) => setExpiredRedirectUrl(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 outline-none transition-all"
+                placeholder="https://example.com/expired"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Users will be redirected here after the QR expires. Leave empty to show the original URL.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Conditions Tab */}
+        {activeTab === 'conditions' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-gray-600">
+                Add rules to show different content based on conditions.
+              </p>
+            </div>
+
+            {/* Add Rule Buttons */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              <button
+                onClick={() => addConditionalRule('time')}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+              >
+                <Clock size={14} /> Time
+              </button>
+              <button
+                onClick={() => addConditionalRule('location')}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
+              >
+                <MapPin size={14} /> Location
+              </button>
+              <button
+                onClick={() => addConditionalRule('device')}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-100 transition-colors"
+              >
+                <Smartphone size={14} /> Device
+              </button>
+              <button
+                onClick={() => addConditionalRule('language')}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-orange-50 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-100 transition-colors"
+              >
+                <Globe size={14} /> Language
+              </button>
+            </div>
+
+            {/* Rules List */}
+            {conditionalRules.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <MapPin size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No conditional rules yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {conditionalRules.map((rule, index) => (
+                  <div
+                    key={rule.id}
+                    className="border border-gray-200 rounded-xl overflow-hidden"
+                  >
+                    <div
+                      className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer"
+                      onClick={() => setExpandedRule(expandedRule === rule.id ? null : rule.id)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+                          #{index + 1}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          rule.type === 'time' ? 'bg-blue-100 text-blue-600' :
+                          rule.type === 'location' ? 'bg-green-100 text-green-600' :
+                          rule.type === 'device' ? 'bg-purple-100 text-purple-600' :
+                          'bg-orange-100 text-orange-600'
+                        }`}>
+                          {rule.type.charAt(0).toUpperCase() + rule.type.slice(1)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeConditionalRule(rule.id);
+                          }}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        {expandedRule === rule.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </div>
+                    </div>
+
+                    {expandedRule === rule.id && (
+                      <div className="p-3 space-y-3 animate-fadeIn">
+                        {/* Time-based conditions */}
+                        {rule.type === 'time' && (
+                          <>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">Start Time</label>
+                                <input
+                                  type="time"
+                                  value={rule.condition.startTime || ''}
+                                  onChange={(e) => updateConditionalRule(rule.id, {
+                                    condition: { ...rule.condition, startTime: e.target.value }
+                                  })}
+                                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">End Time</label>
+                                <input
+                                  type="time"
+                                  value={rule.condition.endTime || ''}
+                                  onChange={(e) => updateConditionalRule(rule.id, {
+                                    condition: { ...rule.condition, endTime: e.target.value }
+                                  })}
+                                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500 mb-1 block">Days of Week</label>
+                              <div className="flex flex-wrap gap-1">
+                                {DAYS_OF_WEEK.map((day) => (
+                                  <button
+                                    key={day.value}
+                                    onClick={() => {
+                                      const days = rule.condition.daysOfWeek || [];
+                                      const newDays = days.includes(day.value)
+                                        ? days.filter(d => d !== day.value)
+                                        : [...days, day.value];
+                                      updateConditionalRule(rule.id, {
+                                        condition: { ...rule.condition, daysOfWeek: newDays }
+                                      });
+                                    }}
+                                    className={`px-2 py-1 text-xs rounded ${
+                                      rule.condition.daysOfWeek?.includes(day.value)
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                  >
+                                    {day.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* Location-based conditions */}
+                        {rule.type === 'location' && (
+                          <>
+                            <div>
+                              <label className="text-xs text-gray-500 mb-1 block">Countries (comma separated)</label>
+                              <input
+                                type="text"
+                                value={rule.condition.countries?.join(', ') || ''}
+                                onChange={(e) => updateConditionalRule(rule.id, {
+                                  condition: {
+                                    ...rule.condition,
+                                    countries: e.target.value.split(',').map(c => c.trim()).filter(Boolean)
+                                  }
+                                })}
+                                placeholder="India, USA, UK"
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500 mb-1 block">Cities (comma separated)</label>
+                              <input
+                                type="text"
+                                value={rule.condition.cities?.join(', ') || ''}
+                                onChange={(e) => updateConditionalRule(rule.id, {
+                                  condition: {
+                                    ...rule.condition,
+                                    cities: e.target.value.split(',').map(c => c.trim()).filter(Boolean)
+                                  }
+                                })}
+                                placeholder="Mumbai, Delhi, New York"
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {/* Device-based conditions */}
+                        {rule.type === 'device' && (
+                          <>
+                            <div>
+                              <label className="text-xs text-gray-500 mb-1 block">Device Type</label>
+                              <div className="flex gap-2">
+                                {(['mobile', 'tablet', 'desktop'] as const).map((device) => (
+                                  <button
+                                    key={device}
+                                    onClick={() => {
+                                      const devices = rule.condition.devices || [];
+                                      const newDevices = devices.includes(device)
+                                        ? devices.filter(d => d !== device)
+                                        : [...devices, device];
+                                      updateConditionalRule(rule.id, {
+                                        condition: { ...rule.condition, devices: newDevices }
+                                      });
+                                    }}
+                                    className={`px-3 py-1.5 text-xs rounded-lg font-medium ${
+                                      rule.condition.devices?.includes(device)
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                  >
+                                    {device.charAt(0).toUpperCase() + device.slice(1)}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500 mb-1 block">OS (comma separated)</label>
+                              <input
+                                type="text"
+                                value={rule.condition.os?.join(', ') || ''}
+                                onChange={(e) => updateConditionalRule(rule.id, {
+                                  condition: {
+                                    ...rule.condition,
+                                    os: e.target.value.split(',').map(c => c.trim()).filter(Boolean)
+                                  }
+                                })}
+                                placeholder="iOS, Android, Windows"
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {/* Language-based conditions */}
+                        {rule.type === 'language' && (
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Languages</label>
+                            <div className="flex flex-wrap gap-1">
+                              {LANGUAGES.slice(0, 6).map((lang) => (
+                                <button
+                                  key={lang.code}
+                                  onClick={() => {
+                                    const langs = rule.condition.languages || [];
+                                    const newLangs = langs.includes(lang.code)
+                                      ? langs.filter(l => l !== lang.code)
+                                      : [...langs, lang.code];
+                                    updateConditionalRule(rule.id, {
+                                      condition: { ...rule.condition, languages: newLangs }
+                                    });
+                                  }}
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    rule.condition.languages?.includes(lang.code)
+                                      ? 'bg-indigo-600 text-white'
+                                      : 'bg-gray-100 text-gray-600'
+                                  }`}
+                                >
+                                  {lang.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Destination URL */}
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Redirect To</label>
+                          <input
+                            type="url"
+                            value={rule.destinationUrl}
+                            onChange={(e) => updateConditionalRule(rule.id, { destinationUrl: e.target.value })}
+                            placeholder="https://example.com/special"
+                            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Language Tab */}
+        {activeTab === 'language' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">Multi-Language Support</h4>
+                <p className="text-xs text-gray-500">Show different URLs based on user's language</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={multiLanguageEnabled}
+                  onChange={(e) => setMultiLanguageEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            {multiLanguageEnabled && (
+              <>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Default Language</label>
+                  <select
+                    value={defaultLanguage}
+                    onChange={(e) => setDefaultLanguage(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  >
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code}>{lang.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  {languageContents.map((content, index) => (
+                    <div key={index} className="flex gap-2 items-start">
+                      <select
+                        value={content.language}
+                        onChange={(e) => updateLanguageContent(index, { language: e.target.value })}
+                        className="w-28 px-2 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      >
+                        <option value="">Select</option>
+                        {LANGUAGES.map((lang) => (
+                          <option key={lang.code} value={lang.code}>{lang.name}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="url"
+                        value={content.destinationUrl}
+                        onChange={(e) => updateLanguageContent(index, { destinationUrl: e.target.value })}
+                        placeholder="https://example.com/hi"
+                        className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                      <button
+                        onClick={() => removeLanguageContent(index)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={addLanguageContent}
+                  className="flex items-center gap-2 text-indigo-600 text-sm font-medium hover:underline"
+                >
+                  <Plus size={14} /> Add Language
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* A/B Testing Tab */}
+        {activeTab === 'ab-testing' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">A/B Testing</h4>
+                <p className="text-xs text-gray-500">Split traffic between different URLs</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={abTestingEnabled}
+                  onChange={(e) => setAbTestingEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            {abTestingEnabled && (
+              <>
+                <div className="space-y-3">
+                  {abVariants.map((variant) => (
+                    <div key={variant.id} className="border border-gray-200 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <input
+                          type="text"
+                          value={variant.name}
+                          onChange={(e) => updateABVariant(variant.id, { name: e.target.value })}
+                          className="font-medium text-gray-900 bg-transparent border-none outline-none"
+                        />
+                        <button
+                          onClick={() => removeABVariant(variant.id)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <input
+                        type="url"
+                        value={variant.destinationUrl}
+                        onChange={(e) => updateABVariant(variant.id, { destinationUrl: e.target.value })}
+                        placeholder="https://example.com/variant-a"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">Weight:</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={variant.weight}
+                          onChange={(e) => updateABVariant(variant.id, { weight: Number(e.target.value) })}
+                          className="flex-1"
+                        />
+                        <span className="text-sm font-medium w-12">{variant.weight}%</span>
+                      </div>
+                      {variant.scans > 0 && (
+                        <div className="flex gap-4 text-xs text-gray-500">
+                          <span>Scans: {variant.scans}</span>
+                          <span>Conversions: {variant.conversions}</span>
+                          <span>Rate: {((variant.conversions / variant.scans) * 100).toFixed(1)}%</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={addABVariant}
+                  className="flex items-center gap-2 text-indigo-600 text-sm font-medium hover:underline"
+                >
+                  <Plus size={14} /> Add Variant
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Save Button */}
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
