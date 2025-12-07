@@ -3,11 +3,12 @@ import {
   QrCode, BarChart3, Edit2, Trash2, ExternalLink,
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
   Smartphone, Globe, Calendar, Users, Eye,
-  Download
+  Download, Settings, Timer, AlertTriangle
 } from 'lucide-react';
-import { supabase, DynamicQRCode, QRScan } from '../../lib/supabase';
+import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
 import { DynamicQRForm } from './DynamicQRForm';
+import { QRSettingsPanel } from './QRSettingsPanel';
 import { CustomSVGRenderer } from '../../services/customSvgRenderer';
 import { QRStyleConfig } from '../../types';
 
@@ -197,7 +198,39 @@ export function DynamicQRDashboard() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // New states for settings
+  const [showSettings, setShowSettings] = useState(false);
+  const [activeView, setActiveView] = useState<'analytics' | 'settings'>('analytics');
+
+  // Real-time scan count
+  const [liveScansToday, setLiveScansToday] = useState(0);
+
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+  // Subscribe to real-time scan updates
+  useEffect(() => {
+    if (!selectedQR) return;
+
+    const channel = subscribeToScans(selectedQR.id, (newScan) => {
+      // Update live scan count
+      setLiveScansToday(prev => prev + 1);
+
+      // Update analytics with new scan
+      setAnalytics(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          totalScans: prev.totalScans + 1,
+          todayScans: prev.todayScans + 1,
+          recentScans: [newScan, ...prev.recentScans.slice(0, 9)],
+        };
+      });
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [selectedQR?.id]);
 
   // Fetch QR codes
   const fetchQRCodes = async () => {
@@ -462,11 +495,42 @@ export function DynamicQRDashboard() {
           <div className="lg:col-span-9">
             {selectedQR ? (
               <div className="space-y-6">
+                {/* Expiry Warning */}
+                {isQRExpired(selectedQR) && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-3">
+                    <AlertTriangle className="text-red-500" size={20} />
+                    <div>
+                      <p className="text-sm font-medium text-red-800">This QR code has expired</p>
+                      <p className="text-xs text-red-600">
+                        Expired on {new Date(selectedQR.expires_at!).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Selected QR Info Bar */}
                 <div className="bg-white rounded-2xl shadow-sm p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-lg font-bold text-gray-900">{selectedQR.title}</h2>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-gray-900">{selectedQR.title}</h2>
+                        {selectedQR.expires_at && !isQRExpired(selectedQR) && (
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Timer size={10} />
+                            Expires {new Date(selectedQR.expires_at).toLocaleDateString()}
+                          </span>
+                        )}
+                        {selectedQR.ab_testing_enabled && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                            A/B Test
+                          </span>
+                        )}
+                        {selectedQR.multi_language_enabled && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                            Multi-lang
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 truncate">
                         Redirects to: {selectedQR.destination_url}
                       </p>
@@ -493,12 +557,23 @@ export function DynamicQRDashboard() {
                         <ExternalLink size={18} className="text-gray-500" />
                       </a>
                       <button
+                        onClick={() => setActiveView(activeView === 'settings' ? 'analytics' : 'settings')}
+                        className={`p-2 rounded-lg transition-colors ${
+                          activeView === 'settings'
+                            ? 'bg-indigo-100 text-indigo-600'
+                            : 'hover:bg-gray-100 text-gray-500'
+                        }`}
+                        title="Settings"
+                      >
+                        <Settings size={18} />
+                      </button>
+                      <button
                         onClick={() => {
                           setEditingQR(selectedQR);
                           setIsFormOpen(true);
                         }}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Edit"
+                        title="Edit QR Content"
                       >
                         <Edit2 size={18} className="text-gray-500" />
                       </button>
