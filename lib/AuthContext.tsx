@@ -22,14 +22,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session - Supabase automatically handles OAuth callback from URL
     const initSession = async () => {
       try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get('code');
+
+        // If we have an OAuth code, exchange it for a session
+        if (code) {
+          console.log('OAuth code found, exchanging for session...');
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (error) {
+            console.error('Code exchange error:', error.message);
+            // Code might already be used, try getting existing session
+          } else if (data.session) {
+            console.log('Session obtained from code exchange');
+            if (mounted) {
+              setSession(data.session);
+              setUser(data.session.user);
+              setLoading(false);
+            }
+          }
+
+          // Clean URL after code exchange attempt
+          window.history.replaceState({}, '', url.origin + url.pathname);
+          return;
+        }
+
+        // No code in URL, get existing session
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
         if (error) {
           console.warn('Session error:', error.message);
-          // Clear corrupted session
           if (error.message?.includes('Refresh Token') || error.message?.includes('invalid')) {
             await supabase.auth.signOut();
           }
@@ -39,12 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
           setLoading(false);
-        }
-
-        // Clean URL if it has auth params
-        const url = new URL(window.location.href);
-        if (url.searchParams.has('code') || url.hash.includes('access_token')) {
-          window.history.replaceState({}, '', url.origin + url.pathname);
         }
       } catch (err) {
         console.error('Auth init error:', err);
