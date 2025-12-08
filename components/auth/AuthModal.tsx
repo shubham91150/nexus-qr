@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -14,10 +15,47 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user } = useAuth();
 
-  if (!isOpen) return null;
+  // Create modal container on mount
+  useEffect(() => {
+    const modalRoot = document.createElement('div');
+    modalRoot.id = 'auth-modal-root';
+    document.body.appendChild(modalRoot);
+    modalRef.current = modalRoot;
+
+    return () => {
+      if (modalRef.current && document.body.contains(modalRef.current)) {
+        document.body.removeChild(modalRef.current);
+      }
+    };
+  }, []);
+
+  // Handle visibility
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+    } else {
+      // Delay hiding to prevent DOM conflicts
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Auto-close when user logs in successfully
+  useEffect(() => {
+    if (user && isOpen) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [user, isOpen, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,15 +93,19 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       const { error } = await signInWithGoogle();
       if (error) {
         setError(error.message);
+        setLoading(false);
       }
+      // Don't set loading to false here - page will redirect
     } catch (err) {
       setError('Failed to sign in with Google');
-    } finally {
       setLoading(false);
     }
   };
 
-  return (
+  // Don't render if not visible or modal root not ready
+  if (!isVisible || !modalRef.current) return null;
+
+  const modalContent = (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
         {/* Close button */}
@@ -200,4 +242,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       </div>
     </div>
   );
+
+  // Use createPortal to render outside main React tree - prevents DOM conflicts
+  return createPortal(modalContent, modalRef.current);
 }
