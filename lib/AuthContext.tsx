@@ -15,53 +15,80 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper to handle OAuth callback with PKCE flow support
-async function handleOAuthCallback(): Promise<void> {
+async function handleOAuthCallback(): Promise<{ success: boolean }> {
   const url = new URL(window.location.href);
   const code = url.searchParams.get('code');
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
   const accessToken = hashParams.get('access_token');
 
+  // Clean URL helper
+  const cleanUrl = () => {
+    const clean = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, clean);
+  };
+
   // Handle PKCE flow (code in query params)
   if (code) {
     try {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      // Check if we have a code verifier in storage (required for PKCE)
+      const codeVerifier = sessionStorage.getItem('supabase.auth.code_verifier') ||
+                          localStorage.getItem('supabase.auth.code_verifier');
 
-      if (error) {
-        console.error('Code exchange error:', error.message);
-
-        // Check for clock skew error
-        if (error.message?.includes('issued in the future') ||
-            error.message?.includes('clock') ||
-            error.message?.includes('skew')) {
-          console.warn('Clock skew detected, waiting and retrying...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          await supabase.auth.exchangeCodeForSession(code);
-        }
+      if (!codeVerifier) {
+        console.warn('No code verifier found, checking existing session...');
+        // Code verifier missing - might already be exchanged, check session
+        const { data: { session } } = await supabase.auth.getSession();
+        cleanUrl();
+        return { success: !!session };
       }
 
-      // Clean up URL after auth
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        // If code already used or invalid, try getting existing session
+        if (error.message?.includes('invalid') ||
+            error.message?.includes('expired') ||
+            error.message?.includes('non-empty')) {
+          console.warn('Code exchange failed, checking existing session...');
+          const { data: { session } } = await supabase.auth.getSession();
+          cleanUrl();
+          return { success: !!session };
+        }
+
+        console.error('Code exchange error:', error.message);
+        cleanUrl();
+        return { success: false };
+      }
+
+      cleanUrl();
+      return { success: !!data.session };
     } catch (err) {
-      console.error('OAuth callback handling error:', err);
-      // Clean URL even on error
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
+      console.error('OAuth callback error:', err);
+      cleanUrl();
+      // Try to get existing session on error
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        return { success: !!session };
+      } catch {
+        return { success: false };
+      }
     }
   }
 
   // Handle implicit flow (tokens in hash - fallback)
-  else if (accessToken) {
+  if (accessToken) {
     try {
-      await supabase.auth.getSession();
-
-      // Clean up URL after auth
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
+      const { data: { session } } = await supabase.auth.getSession();
+      cleanUrl();
+      return { success: !!session };
     } catch (err) {
       console.error('Hash token handling error:', err);
+      cleanUrl();
+      return { success: false };
     }
   }
+
+  return { success: false };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -70,39 +97,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Handle OAuth callback first (if applicable)
-    handleOAuthCallback().then(() => {
-      // Get initial session
-      supabase.auth.getSession().then(({ data: { session }, error }) => {
-        if (error) {
-          console.warn('Session retrieval error:', error.message);
-          // On error, ensure we still set loading to false
+    let isMounted = true;
+
+    const initAuth = async () => {
+      try {
+        // Check if there's an OAuth callback to handle
+        const url = new URL(window.location.href);
+        const hasAuthCode = url.searchParams.has('code');
+        const hasHashToken = window.location.hash.includes('access_token');
+
+        if (hasAuthCode || hasHashToken) {
+          // Handle OAuth callback
+          await handleOAuthCallback();
         }
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
-    });
+
+        // Get current session
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          // If refresh token error, clear and start fresh
+          if (error.message?.includes('Refresh Token') ||
+              error.message?.includes('refresh_token')) {
+            console.warn('Invalid refresh token, signing out...');
+            await supabase.auth.signOut();
+            if (isMounted) {
+              setSession(null);
+              setUser(null);
+              setLoading(false);
+            }
+            return;
+          }
+          console.warn('Session retrieval error:', error.message);
+        }
+
+        if (isMounted) {
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        if (isMounted) {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    initAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Handle potential errors in auth state changes
+      async (event, newSession) => {
+        if (!isMounted) return;
+
+        console.log('Auth state changed:', event);
+
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          setSession(session);
-          setUser(session?.user ?? null);
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
         } else if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
+        } else if (event === 'USER_UPDATED') {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
         } else {
-          setSession(session);
-          setUser(session?.user ?? null);
+          // For other events, just update if we have a session
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
         }
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

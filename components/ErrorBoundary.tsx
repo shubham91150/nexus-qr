@@ -19,19 +19,45 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Don't catch auth-related errors - let them be handled gracefully
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('auth') ||
+        errorMessage.includes('session') ||
+        errorMessage.includes('token') ||
+        errorMessage.includes('login') ||
+        errorMessage.includes('sign')) {
+      console.warn('Auth error caught, not showing error boundary:', error);
+      return { hasError: false, error: null, errorInfo: null };
+    }
     return { hasError: true, error, errorInfo: null };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Skip auth-related errors
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('auth') ||
+        errorMessage.includes('session') ||
+        errorMessage.includes('token')) {
+      return;
+    }
     console.error('Error caught by boundary:', error, errorInfo);
     this.setState({ error, errorInfo });
   }
 
   handleRetry = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
+    // Force re-render
+    window.location.reload();
   };
 
   handleGoHome = () => {
+    // Clear any corrupted auth state
+    try {
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+    } catch (e) {
+      // Ignore storage errors
+    }
     window.location.href = '/';
   };
 
@@ -48,10 +74,10 @@ export class ErrorBoundary extends Component<Props, State> {
               <AlertTriangle className="text-red-600" size={32} />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">
-              Something went wrong
+              कुछ गलत हो गया
             </h2>
             <p className="text-gray-500 mb-6 text-sm">
-              An unexpected error occurred. Please try again or refresh the page.
+              एक अनपेक्षित त्रुटि हुई। कृपया पुनः प्रयास करें या पेज रीफ्रेश करें।
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -68,14 +94,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
               >
                 <RefreshCw size={18} />
-                Try Again
+                पुनः प्रयास करें
               </button>
               <button
                 onClick={this.handleGoHome}
                 className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
               >
                 <Home size={18} />
-                Go Home
+                घर जाओ
               </button>
             </div>
           </div>
