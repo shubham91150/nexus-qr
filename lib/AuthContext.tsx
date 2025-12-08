@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
@@ -14,6 +14,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Module-level flag to prevent double code exchange in StrictMode
+let codeExchangeAttempted = false;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -27,29 +30,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const url = new URL(window.location.href);
         const code = url.searchParams.get('code');
 
-        // If we have an OAuth code, exchange it for a session
-        if (code) {
+        // Handle OAuth code exchange (with StrictMode protection)
+        if (code && !codeExchangeAttempted) {
+          codeExchangeAttempted = true; // Prevent double execution
+
+          // Clean URL immediately to prevent issues
+          window.history.replaceState({}, '', url.origin + url.pathname);
+
           console.log('OAuth code found, exchanging for session...');
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) {
             console.error('Code exchange error:', error.message);
-            // Code might already be used, try getting existing session
-          } else if (data.session) {
+            // Fall through to getSession below
+          } else if (data.session && mounted) {
             console.log('Session obtained from code exchange');
-            if (mounted) {
-              setSession(data.session);
-              setUser(data.session.user);
-              setLoading(false);
-            }
+            setSession(data.session);
+            setUser(data.session.user);
+            setLoading(false);
+            return;
           }
-
-          // Clean URL after code exchange attempt
-          window.history.replaceState({}, '', url.origin + url.pathname);
-          return;
         }
 
-        // No code in URL, get existing session
+        // Get existing session (or after failed code exchange)
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
         if (error) {
