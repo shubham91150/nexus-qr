@@ -3,9 +3,9 @@ import {
   QrCode, BarChart3, Edit2, Trash2, ExternalLink,
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
   Smartphone, Globe, Calendar, Users, Eye,
-  Download, Settings, Timer, AlertTriangle
+  Download, Settings, Timer, AlertTriangle, Files, Plus
 } from 'lucide-react';
-import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired } from '../../lib/supabase';
+import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired, generateShortCode } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
 import { DynamicQRForm } from './DynamicQRForm';
 import { QRSettingsPanel } from './QRSettingsPanel';
@@ -201,6 +201,13 @@ export function DynamicQRDashboard() {
   // New states for settings
   const [showSettings, setShowSettings] = useState(false);
   const [activeView, setActiveView] = useState<'analytics' | 'settings'>('analytics');
+
+  // Clone and Bulk Generation states
+  const [cloning, setCloning] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkUrls, setBulkUrls] = useState('');
+  const [bulkPrefix, setBulkPrefix] = useState('QR');
 
   // Real-time scan count
   const [liveScansToday, setLiveScansToday] = useState(0);
@@ -399,6 +406,107 @@ export function DynamicQRDashboard() {
     }
   };
 
+  // Clone QR Code
+  const handleClone = async (qr: DynamicQRCode) => {
+    if (!user) return;
+    setCloning(true);
+
+    try {
+      const newShortCode = generateShortCode();
+      const clonedQR = {
+        user_id: user.id,
+        short_code: newShortCode,
+        title: `${qr.title} (Copy)`,
+        destination_url: qr.destination_url,
+        qr_style: qr.qr_style,
+        is_active: true,
+        // Clone all advanced settings
+        expires_at: null, // Reset expiry for clone
+        expired_redirect_url: qr.expired_redirect_url,
+        conditional_rules: qr.conditional_rules,
+        ab_testing_enabled: qr.ab_testing_enabled,
+        ab_variants: qr.ab_variants,
+        multi_language_enabled: qr.multi_language_enabled,
+        language_contents: qr.language_contents,
+        default_language: qr.default_language,
+        password_protection: qr.password_protection,
+        geofence_settings: qr.geofence_settings,
+        ip_restriction: qr.ip_restriction,
+        utm_parameters: qr.utm_parameters,
+      };
+
+      const { data, error } = await supabase
+        .from('dynamic_qr_codes')
+        .insert(clonedQR)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await fetchQRCodes();
+      if (data) {
+        setSelectedQR(data);
+      }
+      alert(`QR Code "${qr.title}" cloned successfully!`);
+    } catch (err) {
+      console.error('Error cloning QR:', err);
+      alert('Failed to clone QR code');
+    } finally {
+      setCloning(false);
+    }
+  };
+
+  // Bulk Generate QR Codes
+  const handleBulkGenerate = async () => {
+    if (!user || !bulkUrls.trim()) return;
+    setBulkGenerating(true);
+
+    try {
+      const urls = bulkUrls
+        .split('\n')
+        .map(url => url.trim())
+        .filter(url => url.length > 0 && (url.startsWith('http://') || url.startsWith('https://')));
+
+      if (urls.length === 0) {
+        alert('Please enter at least one valid URL (starting with http:// or https://)');
+        setBulkGenerating(false);
+        return;
+      }
+
+      if (urls.length > 50) {
+        alert('Maximum 50 URLs allowed at once');
+        setBulkGenerating(false);
+        return;
+      }
+
+      const qrCodesToInsert = urls.map((url, index) => ({
+        user_id: user.id,
+        short_code: generateShortCode(),
+        title: `${bulkPrefix} ${index + 1}`,
+        destination_url: url,
+        qr_style: {},
+        is_active: true,
+      }));
+
+      const { error } = await supabase
+        .from('dynamic_qr_codes')
+        .insert(qrCodesToInsert);
+
+      if (error) throw error;
+
+      await fetchQRCodes();
+      setShowBulkModal(false);
+      setBulkUrls('');
+      setBulkPrefix('QR');
+      alert(`Successfully created ${urls.length} QR codes!`);
+    } catch (err) {
+      console.error('Error bulk generating:', err);
+      alert('Failed to generate QR codes');
+    } finally {
+      setBulkGenerating(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -444,7 +552,14 @@ export function DynamicQRDashboard() {
             <div className="bg-white rounded-2xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900">Your QR Codes</h2>
-                <span className="text-xs text-gray-400">{qrCodes.length} total</span>
+                <button
+                  onClick={() => setShowBulkModal(true)}
+                  className="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg hover:bg-indigo-200 transition-colors flex items-center gap-1"
+                  title="Bulk Generate"
+                >
+                  <Plus size={12} />
+                  Bulk
+                </button>
               </div>
 
               {loading ? (
@@ -556,6 +671,18 @@ export function DynamicQRDashboard() {
                       >
                         <ExternalLink size={18} className="text-gray-500" />
                       </a>
+                      <button
+                        onClick={() => handleClone(selectedQR)}
+                        disabled={cloning}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                        title="Clone QR Code"
+                      >
+                        {cloning ? (
+                          <Loader2 size={18} className="text-gray-500 animate-spin" />
+                        ) : (
+                          <Files size={18} className="text-gray-500" />
+                        )}
+                      </button>
                       <button
                         onClick={() => setActiveView(activeView === 'settings' ? 'analytics' : 'settings')}
                         className={`p-2 rounded-lg transition-colors ${
@@ -781,6 +908,84 @@ export function DynamicQRDashboard() {
         onSuccess={fetchQRCodes}
         editingQR={editingQR}
       />
+
+      {/* Bulk Generation Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Plus size={20} className="text-indigo-600" />
+                Bulk Generate QR Codes
+              </h2>
+              <button
+                onClick={() => setShowBulkModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Create multiple Dynamic QR codes at once. Enter one URL per line (max 50).
+            </p>
+
+            <div className="space-y-4">
+              {/* Prefix Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title Prefix
+                </label>
+                <input
+                  type="text"
+                  value={bulkPrefix}
+                  onChange={(e) => setBulkPrefix(e.target.value)}
+                  placeholder="QR"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  QR codes will be named: "{bulkPrefix} 1", "{bulkPrefix} 2", etc.
+                </p>
+              </div>
+
+              {/* URLs Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  URLs (one per line)
+                </label>
+                <textarea
+                  value={bulkUrls}
+                  onChange={(e) => setBulkUrls(e.target.value)}
+                  placeholder={`https://example.com/page1\nhttps://example.com/page2\nhttps://example.com/page3`}
+                  rows={8}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors font-mono"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  {bulkUrls.split('\n').filter(u => u.trim().startsWith('http')).length} valid URLs entered
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowBulkModal(false)}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkGenerate}
+                  disabled={bulkGenerating || !bulkUrls.trim()}
+                  className="flex-1 py-3 px-4 bg-indigo-600 text-white rounded-xl font-medium text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {bulkGenerating && <Loader2 size={16} className="animate-spin" />}
+                  {bulkGenerating ? 'Generating...' : 'Generate All'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
