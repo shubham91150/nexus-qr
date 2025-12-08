@@ -21,6 +21,9 @@ export class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error): State {
     // Don't catch auth-related errors - let them be handled gracefully
     const errorMessage = error?.message?.toLowerCase() || '';
+    const errorName = error?.name?.toLowerCase() || '';
+
+    // Skip auth-related errors
     if (errorMessage.includes('auth') ||
         errorMessage.includes('session') ||
         errorMessage.includes('token') ||
@@ -29,17 +32,43 @@ export class ErrorBoundary extends Component<Props, State> {
       console.warn('Auth error caught, not showing error boundary:', error);
       return { hasError: false, error: null, errorInfo: null };
     }
+
+    // Skip React DOM manipulation errors (often caused by state changes during render)
+    if (errorMessage.includes('insertbefore') ||
+        errorMessage.includes('removechild') ||
+        errorMessage.includes('appendchild') ||
+        errorMessage.includes('not a child') ||
+        errorName.includes('notfounderror')) {
+      console.warn('DOM manipulation error caught, reloading...', error);
+      // Force a clean reload to fix DOM state
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      return { hasError: false, error: null, errorInfo: null };
+    }
+
     return { hasError: true, error, errorInfo: null };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Skip auth-related errors
     const errorMessage = error?.message?.toLowerCase() || '';
+    const errorName = error?.name?.toLowerCase() || '';
+
+    // Skip auth-related errors
     if (errorMessage.includes('auth') ||
         errorMessage.includes('session') ||
         errorMessage.includes('token')) {
       return;
     }
+
+    // Skip DOM manipulation errors
+    if (errorMessage.includes('insertbefore') ||
+        errorMessage.includes('removechild') ||
+        errorMessage.includes('not a child') ||
+        errorName.includes('notfounderror')) {
+      return;
+    }
+
     console.error('Error caught by boundary:', error, errorInfo);
     this.setState({ error, errorInfo });
   }

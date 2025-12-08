@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -14,10 +14,46 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [shouldRender, setShouldRender] = useState(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user } = useAuth();
 
-  if (!isOpen) return null;
+  // Handle visibility with delay to prevent DOM conflicts
+  useEffect(() => {
+    if (isOpen) {
+      // Clear any pending close timeout
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+      setShouldRender(true);
+    } else {
+      // Delay unmount to allow for animations/state settling
+      closeTimeoutRef.current = setTimeout(() => {
+        setShouldRender(false);
+      }, 50);
+    }
+
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, [isOpen]);
+
+  // Auto-close when user logs in
+  useEffect(() => {
+    if (user && isOpen) {
+      // Small delay to let auth state settle
+      const timeout = setTimeout(() => {
+        onClose();
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [user, isOpen, onClose]);
+
+  if (!shouldRender) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
