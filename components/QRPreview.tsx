@@ -351,36 +351,66 @@ export const QRPreview: React.FC<Props> = ({
       backgroundColor: '#fff' 
   } : {};
 
-  const renderThumbnail = (type: 'pattern' | 'corner', id: string, active: boolean) => {
-      const color = active ? "#fff" : "#374151";
-      const bgClass = active ? "bg-gray-900 shadow-md transform scale-105" : "bg-gray-100 hover:bg-gray-200";
-      
-      if (type === 'pattern') {
-          return (
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 ${bgClass}`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill={color}>
-                      {id === 'square' && <g><rect x="4" y="4" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/></g>}
-                      {id === 'circle' && <g><circle cx="7.5" cy="7.5" r="3.5"/><circle cx="16.5" cy="16.5" r="3.5"/><circle cx="7.5" cy="16.5" r="3.5"/><circle cx="16.5" cy="7.5" r="3.5"/></g>}
-                      {id === 'square-dots' && <g><rect x="5" y="5" width="5" height="5"/><rect x="14" y="14" width="5" height="5"/><rect x="5" y="14" width="5" height="5"/><rect x="14" y="5" width="5" height="5"/></g>}
-                      {id === 'uniform-pills' && <g><rect x="3" y="5" width="10" height="5" rx="2.5" /><rect x="14" y="5" width="7" height="5" rx="2.5" /><rect x="3" y="13" width="6" height="5" rx="2.5" /><rect x="10" y="13" width="11" height="5" rx="2.5" /></g>}
-                      {id === 'sharp-diamond' && <g><path d="M7.5 3L10.5 7.5L7.5 12L4.5 7.5Z" /><path d="M16.5 12L19.5 16.5L16.5 21L13.5 16.5Z" /><path d="M7.5 12L10.5 16.5L7.5 21L4.5 16.5Z" /><path d="M16.5 3L19.5 7.5L16.5 12L13.5 7.5Z" /></g>}
-                      {id === 'mixed' && <g><circle cx="7" cy="7" r="3.5"/><circle cx="17" cy="17" r="3.5"/><circle cx="17" cy="7" r="2"/><circle cx="7" cy="17" r="2"/></g>}
-                  </svg>
-              </div>
-          );
-      } else {
-          return (
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 ${bgClass}`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      {id === 'square' && <path d="M4 4H20V20H4V4Z" />}
-                      {id === 'circle' && <circle cx="12" cy="12" r="9" />}
-                      {id === 'rounded' && <rect x="4" y="4" width="16" height="16" rx="5" />}
-                      {id === 'three-sided' && <path d="M4 12C4 7.58 7.58 4 12 4H20V20H4V12Z" />}
-                      {id === 'two-sided' && <path d="M4 12C4 7.58 7.58 4 12 4H20V12C20 16.42 16.42 20 12 20H4V12Z" />}
-                  </svg>
-              </div>
-          );
+  // Render actual QR style thumbnail preview
+  const StyleThumbnail: React.FC<{
+    type: 'pattern' | 'corner';
+    styleId: string;
+    active: boolean;
+  }> = ({ type, styleId, active }) => {
+    const thumbRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!thumbRef.current) return;
+
+      // Create a mini config for this thumbnail
+      const thumbConfig: QRStyleConfig = {
+        ...config,
+        size: 150,
+        padding: 5,
+        dotsType: type === 'pattern' ? styleId : config.dotsType,
+        cornerSquareType: type === 'corner' ? styleId : config.cornerSquareType,
+      };
+
+      try {
+        const thumbRenderer = new CustomSVGRenderer(thumbConfig);
+        const svgString = thumbRenderer.render('STYLE');
+        thumbRef.current.innerHTML = svgString;
+      } catch (err) {
+        console.error('Error rendering style thumbnail:', err);
       }
+    }, [type, styleId, config.fgColor, config.bgColor, config.isGradient, config.fgColor2]);
+
+    const borderClass = active
+      ? "ring-2 ring-indigo-500 ring-offset-2"
+      : "border border-gray-200 hover:border-gray-300";
+
+    return (
+      <div className={`w-[75px] h-[75px] rounded-xl overflow-hidden bg-white ${borderClass} transition-all duration-200`}>
+        {type === 'corner' ? (
+          // Show top-left corner (corner eye pattern)
+          <div
+            ref={thumbRef}
+            className="w-[150px] h-[150px]"
+            style={{
+              transform: 'scale(0.5)',
+              transformOrigin: 'top left',
+            }}
+          />
+        ) : (
+          // Show bottom-right portion (dots pattern, no corner eye)
+          <div
+            ref={thumbRef}
+            className="w-[150px] h-[150px]"
+            style={{
+              transform: 'scale(0.5)',
+              transformOrigin: 'bottom right',
+              marginTop: '-75px',
+              marginLeft: '-75px',
+            }}
+          />
+        )}
+      </div>
+    );
   };
 
   return (
@@ -419,7 +449,7 @@ export const QRPreview: React.FC<Props> = ({
               </button>
           </div>
           
-          <div className="flex overflow-x-auto no-scrollbar gap-4 pb-2 px-2 justify-center">
+          <div className="flex overflow-x-auto no-scrollbar gap-3 pb-2 px-2 justify-center">
               {activeEditTab === 'pattern' ? (
                   <>
                     {[
@@ -430,13 +460,13 @@ export const QRPreview: React.FC<Props> = ({
                         {id: 'sharp-diamond', label: 'Diamond'},
                         {id: 'mixed', label: 'Mixed'}
                     ].map((item) => (
-                        <button 
+                        <button
                             key={item.id}
                             onClick={() => handleConfigUpdate('dotsType', item.id)}
-                            className="flex flex-col items-center gap-2 min-w-[60px] group focus:outline-none"
+                            className="flex flex-col items-center gap-1.5 group focus:outline-none"
                         >
-                            {renderThumbnail('pattern', item.id, config.dotsType === item.id)}
-                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.dotsType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
+                            <StyleThumbnail type="pattern" styleId={item.id} active={config.dotsType === item.id} />
+                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.dotsType === item.id ? 'text-indigo-600 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
                         </button>
                     ))}
                   </>
@@ -449,13 +479,13 @@ export const QRPreview: React.FC<Props> = ({
                        {id: 'three-sided', label: '3-Side'},
                        {id: 'two-sided', label: 'Leaf'}
                     ].map((item) => (
-                        <button 
+                        <button
                             key={item.id}
                             onClick={() => handleConfigUpdate('cornerSquareType', item.id)}
-                            className="flex flex-col items-center gap-2 min-w-[60px] group focus:outline-none"
+                            className="flex flex-col items-center gap-1.5 group focus:outline-none"
                         >
-                            {renderThumbnail('corner', item.id, config.cornerSquareType === item.id)}
-                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.cornerSquareType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
+                            <StyleThumbnail type="corner" styleId={item.id} active={config.cornerSquareType === item.id} />
+                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.cornerSquareType === item.id ? 'text-indigo-600 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
                         </button>
                     ))}
                   </>
