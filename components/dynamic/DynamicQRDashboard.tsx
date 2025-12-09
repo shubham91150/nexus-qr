@@ -51,14 +51,12 @@ const DEFAULT_QR_STYLE: QRStyleConfig = {
   logoBackground: 'transparent',
 };
 
-// Compact QR Code Preview Component for unified dashboard layout
+// Compact QR Code Preview Component for dashboard
 const CompactQRPreview: React.FC<{
   qrCode: DynamicQRCode;
   title: string;
 }> = ({ qrCode, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const cornerPreviewRef = useRef<HTMLDivElement>(null);
-  const dotsPreviewRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -72,52 +70,17 @@ const CompactQRPreview: React.FC<{
     return { ...DEFAULT_QR_STYLE, size: 160, padding: 10 };
   };
 
-  // Get style for thumbnail preview (300x300 for clipping)
-  const getThumbnailStyle = (): QRStyleConfig => {
-    const savedData = qrCode.qr_style as Record<string, unknown>;
-    if (savedData?.styleConfig) {
-      return { ...(savedData.styleConfig as QRStyleConfig), size: 300, padding: 10 };
-    }
-    return { ...DEFAULT_QR_STYLE, size: 300, padding: 10 };
-  };
-
   useEffect(() => {
-    const shortUrl = getShortRedirectUrl();
-
-    // Render main QR
     if (containerRef.current) {
       try {
         const style = getSavedStyle();
+        const shortUrl = getShortRedirectUrl();
         const renderer = new CustomSVGRenderer(style);
         const svgString = renderer.render(shortUrl);
         containerRef.current.innerHTML = svgString;
       } catch (err) {
         console.error('Error rendering QR:', err);
         containerRef.current.innerHTML = '<p class="text-red-500 text-xs">Error</p>';
-      }
-    }
-
-    // Render corner preview (top-left corner with eye pattern)
-    if (cornerPreviewRef.current) {
-      try {
-        const thumbStyle = getThumbnailStyle();
-        const renderer = new CustomSVGRenderer(thumbStyle);
-        const svgString = renderer.render(shortUrl);
-        cornerPreviewRef.current.innerHTML = svgString;
-      } catch (err) {
-        console.error('Error rendering corner preview:', err);
-      }
-    }
-
-    // Render dots preview (bottom-right corner without eye pattern)
-    if (dotsPreviewRef.current) {
-      try {
-        const thumbStyle = getThumbnailStyle();
-        const renderer = new CustomSVGRenderer(thumbStyle);
-        const svgString = renderer.render(shortUrl);
-        dotsPreviewRef.current.innerHTML = svgString;
-      } catch (err) {
-        console.error('Error rendering dots preview:', err);
       }
     }
   }, [qrCode]);
@@ -175,18 +138,6 @@ const CompactQRPreview: React.FC<{
     }
   };
 
-  // Check if QR has custom styling
-  const hasCustomStyle = (): boolean => {
-    const savedData = qrCode.qr_style as Record<string, unknown>;
-    if (!savedData?.styleConfig) return false;
-    const config = savedData.styleConfig as QRStyleConfig;
-    return config.isGradient ||
-           config.dotsType !== 'square' ||
-           config.cornerSquareType !== 'square' ||
-           config.fgColor !== '#000000' ||
-           config.logoImage !== null;
-  };
-
   return (
     <div className="flex flex-col items-center">
       {/* Main QR Code */}
@@ -194,51 +145,6 @@ const CompactQRPreview: React.FC<{
         ref={containerRef}
         className="bg-white p-1 rounded-lg border border-gray-100 mb-3"
       />
-
-      {/* Style Thumbnails - Below QR Code */}
-      {hasCustomStyle() && (
-        <div className="flex gap-2 mb-3">
-          {/* Corner Eye Pattern Preview (Top-Left portion) */}
-          <div className="flex flex-col items-center">
-            <div
-              className="w-[75px] h-[75px] rounded-lg border border-gray-200 overflow-hidden bg-white"
-              title="Corner Pattern"
-            >
-              <div
-                ref={cornerPreviewRef}
-                className="w-[300px] h-[300px]"
-                style={{
-                  transform: 'scale(0.5)',
-                  transformOrigin: 'top left',
-                  marginBottom: '-150px',
-                  marginRight: '-150px'
-                }}
-              />
-            </div>
-            <span className="text-[9px] text-gray-400 mt-1">Corner</span>
-          </div>
-
-          {/* Dots Pattern Preview (Bottom-Right portion) */}
-          <div className="flex flex-col items-center">
-            <div
-              className="w-[75px] h-[75px] rounded-lg border border-gray-200 overflow-hidden bg-white"
-              title="Dots Pattern"
-            >
-              <div
-                ref={dotsPreviewRef}
-                className="w-[300px] h-[300px]"
-                style={{
-                  transform: 'scale(0.5) translate(-100%, -100%)',
-                  transformOrigin: 'bottom right',
-                  marginTop: '-150px',
-                  marginLeft: '-150px'
-                }}
-              />
-            </div>
-            <span className="text-[9px] text-gray-400 mt-1">Pattern</span>
-          </div>
-        </div>
-      )}
 
       {/* Download Buttons */}
       <div className="flex gap-1.5">
