@@ -34,16 +34,13 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     // Skip React DOM manipulation errors (often caused by state changes during render)
+    // Don't reload - just ignore these errors, React will recover
     if (errorMessage.includes('insertbefore') ||
         errorMessage.includes('removechild') ||
         errorMessage.includes('appendchild') ||
         errorMessage.includes('not a child') ||
         errorName.includes('notfounderror')) {
-      console.warn('DOM manipulation error caught, reloading...', error);
-      // Force a clean reload to fix DOM state
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      console.warn('DOM manipulation error (ignored):', error.message);
       return { hasError: false, error: null, errorInfo: null };
     }
 
