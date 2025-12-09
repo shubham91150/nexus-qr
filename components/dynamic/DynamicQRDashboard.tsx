@@ -57,6 +57,7 @@ const CompactQRPreview: React.FC<{
   title: string;
 }> = ({ qrCode, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const stylePreviewRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -70,7 +71,17 @@ const CompactQRPreview: React.FC<{
     return { ...DEFAULT_QR_STYLE, size: 160, padding: 10 };
   };
 
+  // Get style for small thumbnail (100x100)
+  const getThumbnailStyle = (): QRStyleConfig => {
+    const savedData = qrCode.qr_style as Record<string, unknown>;
+    if (savedData?.styleConfig) {
+      return { ...(savedData.styleConfig as QRStyleConfig), size: 100, padding: 6 };
+    }
+    return { ...DEFAULT_QR_STYLE, size: 100, padding: 6 };
+  };
+
   useEffect(() => {
+    // Render main QR
     if (containerRef.current) {
       try {
         const style = getSavedStyle();
@@ -81,6 +92,19 @@ const CompactQRPreview: React.FC<{
       } catch (err) {
         console.error('Error rendering QR:', err);
         containerRef.current.innerHTML = '<p class="text-red-500 text-xs">Error</p>';
+      }
+    }
+
+    // Render small style thumbnail
+    if (stylePreviewRef.current) {
+      try {
+        const thumbStyle = getThumbnailStyle();
+        const renderer = new CustomSVGRenderer(thumbStyle);
+        // Use a simple text to show style preview
+        const svgString = renderer.render('STYLE');
+        stylePreviewRef.current.innerHTML = svgString;
+      } catch (err) {
+        console.error('Error rendering style preview:', err);
       }
     }
   }, [qrCode]);
@@ -138,12 +162,42 @@ const CompactQRPreview: React.FC<{
     }
   };
 
+  // Check if QR has custom styling
+  const hasCustomStyle = (): boolean => {
+    const savedData = qrCode.qr_style as Record<string, unknown>;
+    if (!savedData?.styleConfig) return false;
+    const config = savedData.styleConfig as QRStyleConfig;
+    return config.isGradient ||
+           config.dotsType !== 'square' ||
+           config.cornerSquareType !== 'square' ||
+           config.fgColor !== '#000000' ||
+           config.logoImage !== null;
+  };
+
   return (
     <div className="flex flex-col items-center">
-      <div
-        ref={containerRef}
-        className="bg-white p-1 rounded-lg border border-gray-100 mb-2"
-      />
+      {/* QR with style thumbnail */}
+      <div className="relative mb-2">
+        {/* Main QR Code */}
+        <div
+          ref={containerRef}
+          className="bg-white p-1 rounded-lg border border-gray-100"
+        />
+
+        {/* Small Style Thumbnail - Bottom Right Corner */}
+        {hasCustomStyle() && (
+          <div className="absolute -bottom-2 -right-2 bg-white rounded-lg shadow-lg border border-gray-200 p-0.5 overflow-hidden">
+            <div
+              ref={stylePreviewRef}
+              className="w-[50px] h-[50px] flex items-center justify-center"
+              style={{ transform: 'scale(0.5)', transformOrigin: 'center' }}
+              title="Style Preview"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Download Buttons */}
       <div className="flex gap-1.5">
         <button
           onClick={() => downloadQR('png')}
