@@ -45,13 +45,22 @@ const DEFAULT_QR_STYLE: QRStyleConfig = {
   logoBackground: 'transparent',
 };
 
-// QR Code Preview Component - Now accepts saved style
+// QR Code Preview Component - Dynamic QR should encode the SHORT URL, not the content
 const QRCodePreview: React.FC<{
   qrCode: DynamicQRCode;
   title: string;
 }> = ({ qrCode, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+
+  // Base URL for the short redirect
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+  // Dynamic QR always encodes the SHORT URL, not the content directly
+  // This allows content to be changed after QR is printed
+  const getShortRedirectUrl = (): string => {
+    return `${baseUrl}/r/${qrCode.short_code}`;
+  };
 
   // Get the saved style or use default
   const getSavedStyle = (): QRStyleConfig => {
@@ -62,22 +71,14 @@ const QRCodePreview: React.FC<{
     return DEFAULT_QR_STYLE;
   };
 
-  // Get the payload to render
-  const getPayload = (): string => {
-    const savedData = qrCode.qr_style as Record<string, unknown>;
-    if (savedData?.payload) {
-      return savedData.payload as string;
-    }
-    return qrCode.destination_url;
-  };
-
   useEffect(() => {
     if (containerRef.current) {
       try {
         const style = getSavedStyle();
-        const payload = getPayload();
+        // IMPORTANT: Encode short URL, not the destination content
+        const shortUrl = getShortRedirectUrl();
         const renderer = new CustomSVGRenderer(style);
-        const svgString = renderer.render(payload);
+        const svgString = renderer.render(shortUrl);
         containerRef.current.innerHTML = svgString;
       } catch (err) {
         console.error('Error rendering QR:', err);
@@ -93,14 +94,16 @@ const QRCodePreview: React.FC<{
       // Generate high-quality QR for download using saved style
       const savedData = qrCode.qr_style as Record<string, unknown>;
       const baseStyle = savedData?.styleConfig as QRStyleConfig || DEFAULT_QR_STYLE;
-      const payload = (savedData?.payload as string) || qrCode.destination_url;
+
+      // IMPORTANT: Download QR with short URL, not content
+      const shortUrl = getShortRedirectUrl();
 
       // Use original saved size or default to 1024 for high quality
       const downloadSize = baseStyle.size || 1024;
       const downloadStyle = { ...baseStyle, size: downloadSize, padding: baseStyle.padding || 20 };
 
       const renderer = new CustomSVGRenderer(downloadStyle);
-      const svgString = renderer.render(payload);
+      const svgString = renderer.render(shortUrl);
 
       if (format === 'svg') {
         const blob = new Blob([svgString], { type: 'image/svg+xml' });
