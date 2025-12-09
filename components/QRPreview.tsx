@@ -366,7 +366,7 @@ export const QRPreview: React.FC<Props> = ({
       const thumbConfig: QRStyleConfig = {
         ...config,
         size: 150,
-        padding: 5,
+        padding: 8,
         dotsType: type === 'pattern' ? styleId : config.dotsType,
         cornerSquareType: type === 'corner' ? styleId : config.cornerSquareType,
       };
@@ -385,15 +385,17 @@ export const QRPreview: React.FC<Props> = ({
       : "border border-gray-200 hover:border-gray-300";
 
     return (
-      <div className={`w-[75px] h-[75px] rounded-xl overflow-hidden bg-white ${borderClass} transition-all duration-200`}>
+      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200`}>
         {type === 'corner' ? (
-          // Show top-left corner (corner eye pattern)
+          // Show only ONE corner eye - zoom in more to show just the corner
           <div
             ref={thumbRef}
             className="w-[150px] h-[150px]"
             style={{
-              transform: 'scale(0.5)',
+              transform: 'scale(0.9)',
               transformOrigin: 'top left',
+              marginBottom: '-60px',
+              marginRight: '-60px',
             }}
           />
         ) : (
@@ -449,7 +451,8 @@ export const QRPreview: React.FC<Props> = ({
               </button>
           </div>
           
-          <div className="flex overflow-x-auto no-scrollbar gap-3 pb-2 px-2 justify-center">
+          <div className="w-full overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            <div className="flex gap-3 px-2 min-w-min mx-auto w-fit">
               {activeEditTab === 'pattern' ? (
                   <>
                     {[
@@ -463,7 +466,7 @@ export const QRPreview: React.FC<Props> = ({
                         <button
                             key={item.id}
                             onClick={() => handleConfigUpdate('dotsType', item.id)}
-                            className="flex flex-col items-center gap-1.5 group focus:outline-none"
+                            className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
                         >
                             <StyleThumbnail type="pattern" styleId={item.id} active={config.dotsType === item.id} />
                             <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.dotsType === item.id ? 'text-indigo-600 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
@@ -482,7 +485,7 @@ export const QRPreview: React.FC<Props> = ({
                         <button
                             key={item.id}
                             onClick={() => handleConfigUpdate('cornerSquareType', item.id)}
-                            className="flex flex-col items-center gap-1.5 group focus:outline-none"
+                            className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
                         >
                             <StyleThumbnail type="corner" styleId={item.id} active={config.cornerSquareType === item.id} />
                             <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.cornerSquareType === item.id ? 'text-indigo-600 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
@@ -490,6 +493,7 @@ export const QRPreview: React.FC<Props> = ({
                     ))}
                   </>
               )}
+            </div>
           </div>
       </div>
 
