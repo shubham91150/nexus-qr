@@ -16,9 +16,9 @@ import {
   WelcomeModal,
   TourController,
   generatorTourSteps,
-  hasCompletedOnboarding,
+  hasSeenWelcome,
+  markWelcomeShown,
   completeOnboarding,
-  FloatingHelpButton,
 } from './components/onboarding/OnboardingTour';
 
 // Analytics tracking options type
@@ -75,15 +75,21 @@ const QRGenerator: React.FC<{
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
-  // Check if first visit
+  // Check if first visit - only show welcome if user has NEVER seen it before
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!hasCompletedOnboarding()) {
+      if (!hasSeenWelcome()) {
         setShowWelcome(true);
       }
-    }, 500);
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
+
+  // Handler when welcome modal closes (user already explored)
+  const handleWelcomeClose = () => {
+    markWelcomeShown();
+    setShowWelcome(false);
+  };
 
   // Dynamic QR states
   const [isDynamic, setIsDynamic] = useState(false);
@@ -336,11 +342,14 @@ const QRGenerator: React.FC<{
 
       </div>
 
-      {/* Onboarding Welcome Modal */}
+      {/* Onboarding Welcome Modal - only shows on first ever visit */}
       <WelcomeModal
         isOpen={showWelcome}
-        onClose={() => setShowWelcome(false)}
-        onStartTour={() => setShowTour(true)}
+        onClose={handleWelcomeClose}
+        onStartTour={() => {
+          handleWelcomeClose();
+          setShowTour(true);
+        }}
       />
 
       {/* Guided Tour */}
@@ -402,16 +411,7 @@ const AppContent: React.FC = () => {
 
   if (view === 'dynamic' && user) {
     return (
-      <div>
-        {/* Back button */}
-        <button
-          onClick={handleBackToGenerator}
-          className="fixed top-4 left-4 z-50 bg-white shadow-lg rounded-xl px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
-        >
-          ← Back to Generator
-        </button>
-        <DynamicQRDashboard />
-      </div>
+      <DynamicQRDashboard onBackToGenerator={handleBackToGenerator} />
     );
   }
 

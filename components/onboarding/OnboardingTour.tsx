@@ -5,11 +5,23 @@ import {
   Download, Settings, Globe, Smartphone, Eye
 } from 'lucide-react';
 
-// Onboarding storage key
+// Onboarding storage keys
 const ONBOARDING_KEY = 'nexus_qr_onboarding_completed';
+const WELCOME_SHOWN_KEY = 'nexus_qr_welcome_shown';
 const DASHBOARD_ONBOARDING_KEY = 'nexus_qr_dashboard_onboarding_completed';
 
-// Check if user has completed onboarding
+// Check if user has seen the welcome modal (first visit)
+export const hasSeenWelcome = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem(WELCOME_SHOWN_KEY) === 'true';
+};
+
+// Mark welcome as shown
+export const markWelcomeShown = () => {
+  localStorage.setItem(WELCOME_SHOWN_KEY, 'true');
+};
+
+// Check if user has completed onboarding tour
 export const hasCompletedOnboarding = (): boolean => {
   if (typeof window === 'undefined') return true;
   return localStorage.getItem(ONBOARDING_KEY) === 'true';
@@ -23,6 +35,7 @@ export const hasCompletedDashboardOnboarding = (): boolean => {
 // Mark onboarding as complete
 export const completeOnboarding = () => {
   localStorage.setItem(ONBOARDING_KEY, 'true');
+  localStorage.setItem(WELCOME_SHOWN_KEY, 'true');
 };
 
 export const completeDashboardOnboarding = () => {
@@ -32,6 +45,7 @@ export const completeDashboardOnboarding = () => {
 // Reset onboarding (for testing)
 export const resetOnboarding = () => {
   localStorage.removeItem(ONBOARDING_KEY);
+  localStorage.removeItem(WELCOME_SHOWN_KEY);
   localStorage.removeItem(DASHBOARD_ONBOARDING_KEY);
 };
 
