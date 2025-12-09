@@ -196,7 +196,11 @@ const QRCodePreview: React.FC<{
   );
 };
 
-export function DynamicQRDashboard() {
+interface DynamicQRDashboardProps {
+  onBackToGenerator?: () => void;
+}
+
+export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProps) {
   const { user, signOut } = useAuth();
   const [qrCodes, setQRCodes] = useState<DynamicQRCode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -549,24 +553,37 @@ export function DynamicQRDashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <QrCode className="text-indigo-600" size={28} />
-            <h1 className="text-xl font-bold text-gray-900">Dynamic QR Dashboard</h1>
+            {onBackToGenerator && (
+              <button
+                onClick={onBackToGenerator}
+                className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 transition-colors mr-2"
+              >
+                <span className="text-lg">←</span>
+              </button>
+            )}
+            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+              <QrCode className="text-white" size={20} />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Dynamic QR Dashboard</h1>
+              <p className="text-xs text-gray-500 hidden sm:block">Manage your trackable QR codes</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 hidden md:block">{user?.email}</span>
             <button
               onClick={() => setShowDashboardTour(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-indigo-600"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-indigo-600"
               title="Dashboard Tour"
             >
               <HelpCircle size={18} />
             </button>
             <button
               onClick={signOut}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 hover:bg-gray-100 rounded-lg transition-colors"
             >
               Sign Out
             </button>
