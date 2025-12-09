@@ -738,35 +738,41 @@ export function DynamicQRDashboard() {
                     />
                   </div>
 
-                  {/* Stats */}
+                  {/* Stats or Settings based on activeView */}
                   <div className="md:col-span-2 space-y-4">
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-white rounded-2xl shadow-sm p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="p-2 bg-indigo-100 rounded-xl">
-                            <Eye className="text-indigo-600" size={18} />
+                    {activeView === 'settings' ? (
+                      /* Settings Panel */
+                      <QRSettingsPanel qrCode={selectedQR} onUpdate={fetchQRCodes} />
+                    ) : (
+                      /* Analytics View */
+                      <>
+                        {/* Stats Cards */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="bg-white rounded-2xl shadow-sm p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="p-2 bg-indigo-100 rounded-xl">
+                                <Eye className="text-indigo-600" size={18} />
+                              </div>
+                            </div>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {analyticsLoading ? '...' : analytics?.totalScans || 0}
+                            </p>
+                            <p className="text-xs text-gray-500">Total Scans</p>
                           </div>
-                        </div>
-                        <p className="text-2xl font-bold text-gray-900">
-                          {analyticsLoading ? '...' : analytics?.totalScans || 0}
-                        </p>
-                        <p className="text-xs text-gray-500">Total Scans</p>
-                      </div>
 
-                      <div className="bg-white rounded-2xl shadow-sm p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="p-2 bg-green-100 rounded-xl">
-                            <TrendingUp className="text-green-600" size={18} />
+                          <div className="bg-white rounded-2xl shadow-sm p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="p-2 bg-green-100 rounded-xl">
+                                <TrendingUp className="text-green-600" size={18} />
+                              </div>
+                            </div>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {analyticsLoading ? '...' : analytics?.todayScans || 0}
+                            </p>
+                            <p className="text-xs text-gray-500">Today</p>
                           </div>
-                        </div>
-                        <p className="text-2xl font-bold text-gray-900">
-                          {analyticsLoading ? '...' : analytics?.todayScans || 0}
-                        </p>
-                        <p className="text-xs text-gray-500">Today</p>
-                      </div>
 
-                      <div className="bg-white rounded-2xl shadow-sm p-4">
+                          <div className="bg-white rounded-2xl shadow-sm p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="p-2 bg-purple-100 rounded-xl">
                             <Calendar className="text-purple-600" size={18} />
@@ -829,55 +835,59 @@ export function DynamicQRDashboard() {
                         )}
                       </div>
                     </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Recent Scans */}
-                <div className="bg-white rounded-2xl shadow-sm p-4">
-                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Users size={18} />
-                    Recent Scans
-                  </h3>
-                  {analyticsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="animate-spin text-gray-400" size={24} />
-                    </div>
-                  ) : analytics?.recentScans.length ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="text-left text-gray-500 border-b">
-                            <th className="pb-2 font-medium">Time</th>
-                            <th className="pb-2 font-medium">Location</th>
-                            <th className="pb-2 font-medium">Device</th>
-                            <th className="pb-2 font-medium">Browser</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {analytics.recentScans.map((scan) => (
-                            <tr key={scan.id} className="text-gray-700">
-                              <td className="py-2">
-                                <div>{formatDate(scan.scanned_at)}</div>
-                                <div className="text-xs text-gray-400">{formatTime(scan.scanned_at)}</div>
-                              </td>
-                              <td className="py-2">
-                                {scan.city && scan.country
-                                  ? `${scan.city}, ${scan.country}`
-                                  : scan.country || 'Unknown'}
-                              </td>
-                              <td className="py-2">{scan.device_type || 'Unknown'}</td>
-                              <td className="py-2">{scan.browser || 'Unknown'}</td>
+                {/* Recent Scans - only show in analytics view */}
+                {activeView === 'analytics' && (
+                  <div className="bg-white rounded-2xl shadow-sm p-4">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Users size={18} />
+                      Recent Scans
+                    </h3>
+                    {analyticsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="animate-spin text-gray-400" size={24} />
+                      </div>
+                    ) : analytics?.recentScans.length ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-left text-gray-500 border-b">
+                              <th className="pb-2 font-medium">Time</th>
+                              <th className="pb-2 font-medium">Location</th>
+                              <th className="pb-2 font-medium">Device</th>
+                              <th className="pb-2 font-medium">Browser</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-gray-400 text-sm text-center py-8">
-                      No scans yet. Share your QR code to start tracking!
-                    </p>
-                  )}
-                </div>
+                          </thead>
+                          <tbody className="divide-y">
+                            {analytics.recentScans.map((scan) => (
+                              <tr key={scan.id} className="text-gray-700">
+                                <td className="py-2">
+                                  <div>{formatDate(scan.scanned_at)}</div>
+                                  <div className="text-xs text-gray-400">{formatTime(scan.scanned_at)}</div>
+                                </td>
+                                <td className="py-2">
+                                  {scan.city && scan.country
+                                    ? `${scan.city}, ${scan.country}`
+                                    : scan.country || 'Unknown'}
+                                </td>
+                                <td className="py-2">{scan.device_type || 'Unknown'}</td>
+                                <td className="py-2">{scan.browser || 'Unknown'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-sm text-center py-8">
+                        No scans yet. Share your QR code to start tracking!
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
