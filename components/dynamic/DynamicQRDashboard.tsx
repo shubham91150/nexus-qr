@@ -57,7 +57,8 @@ const CompactQRPreview: React.FC<{
   title: string;
 }> = ({ qrCode, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stylePreviewRef = useRef<HTMLDivElement>(null);
+  const cornerPreviewRef = useRef<HTMLDivElement>(null);
+  const dotsPreviewRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -71,21 +72,22 @@ const CompactQRPreview: React.FC<{
     return { ...DEFAULT_QR_STYLE, size: 160, padding: 10 };
   };
 
-  // Get style for small thumbnail (100x100)
+  // Get style for thumbnail preview (300x300 for clipping)
   const getThumbnailStyle = (): QRStyleConfig => {
     const savedData = qrCode.qr_style as Record<string, unknown>;
     if (savedData?.styleConfig) {
-      return { ...(savedData.styleConfig as QRStyleConfig), size: 100, padding: 6 };
+      return { ...(savedData.styleConfig as QRStyleConfig), size: 300, padding: 10 };
     }
-    return { ...DEFAULT_QR_STYLE, size: 100, padding: 6 };
+    return { ...DEFAULT_QR_STYLE, size: 300, padding: 10 };
   };
 
   useEffect(() => {
+    const shortUrl = getShortRedirectUrl();
+
     // Render main QR
     if (containerRef.current) {
       try {
         const style = getSavedStyle();
-        const shortUrl = getShortRedirectUrl();
         const renderer = new CustomSVGRenderer(style);
         const svgString = renderer.render(shortUrl);
         containerRef.current.innerHTML = svgString;
@@ -95,16 +97,27 @@ const CompactQRPreview: React.FC<{
       }
     }
 
-    // Render small style thumbnail
-    if (stylePreviewRef.current) {
+    // Render corner preview (top-left corner with eye pattern)
+    if (cornerPreviewRef.current) {
       try {
         const thumbStyle = getThumbnailStyle();
         const renderer = new CustomSVGRenderer(thumbStyle);
-        // Use a simple text to show style preview
-        const svgString = renderer.render('STYLE');
-        stylePreviewRef.current.innerHTML = svgString;
+        const svgString = renderer.render(shortUrl);
+        cornerPreviewRef.current.innerHTML = svgString;
       } catch (err) {
-        console.error('Error rendering style preview:', err);
+        console.error('Error rendering corner preview:', err);
+      }
+    }
+
+    // Render dots preview (bottom-right corner without eye pattern)
+    if (dotsPreviewRef.current) {
+      try {
+        const thumbStyle = getThumbnailStyle();
+        const renderer = new CustomSVGRenderer(thumbStyle);
+        const svgString = renderer.render(shortUrl);
+        dotsPreviewRef.current.innerHTML = svgString;
+      } catch (err) {
+        console.error('Error rendering dots preview:', err);
       }
     }
   }, [qrCode]);
@@ -176,26 +189,56 @@ const CompactQRPreview: React.FC<{
 
   return (
     <div className="flex flex-col items-center">
-      {/* QR with style thumbnail */}
-      <div className="relative mb-2">
-        {/* Main QR Code */}
-        <div
-          ref={containerRef}
-          className="bg-white p-1 rounded-lg border border-gray-100"
-        />
+      {/* Main QR Code */}
+      <div
+        ref={containerRef}
+        className="bg-white p-1 rounded-lg border border-gray-100 mb-3"
+      />
 
-        {/* Small Style Thumbnail - Bottom Right Corner */}
-        {hasCustomStyle() && (
-          <div className="absolute -bottom-2 -right-2 bg-white rounded-lg shadow-lg border border-gray-200 p-0.5 overflow-hidden">
+      {/* Style Thumbnails - Below QR Code */}
+      {hasCustomStyle() && (
+        <div className="flex gap-2 mb-3">
+          {/* Corner Eye Pattern Preview (Top-Left portion) */}
+          <div className="flex flex-col items-center">
             <div
-              ref={stylePreviewRef}
-              className="w-[50px] h-[50px] flex items-center justify-center"
-              style={{ transform: 'scale(0.5)', transformOrigin: 'center' }}
-              title="Style Preview"
-            />
+              className="w-[75px] h-[75px] rounded-lg border border-gray-200 overflow-hidden bg-white"
+              title="Corner Pattern"
+            >
+              <div
+                ref={cornerPreviewRef}
+                className="w-[300px] h-[300px]"
+                style={{
+                  transform: 'scale(0.5)',
+                  transformOrigin: 'top left',
+                  marginBottom: '-150px',
+                  marginRight: '-150px'
+                }}
+              />
+            </div>
+            <span className="text-[9px] text-gray-400 mt-1">Corner</span>
           </div>
-        )}
-      </div>
+
+          {/* Dots Pattern Preview (Bottom-Right portion) */}
+          <div className="flex flex-col items-center">
+            <div
+              className="w-[75px] h-[75px] rounded-lg border border-gray-200 overflow-hidden bg-white"
+              title="Dots Pattern"
+            >
+              <div
+                ref={dotsPreviewRef}
+                className="w-[300px] h-[300px]"
+                style={{
+                  transform: 'scale(0.5) translate(-100%, -100%)',
+                  transformOrigin: 'bottom right',
+                  marginTop: '-150px',
+                  marginLeft: '-150px'
+                }}
+              />
+            </div>
+            <span className="text-[9px] text-gray-400 mt-1">Pattern</span>
+          </div>
+        </div>
+      )}
 
       {/* Download Buttons */}
       <div className="flex gap-1.5">
