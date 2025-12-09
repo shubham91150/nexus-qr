@@ -2,12 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Copy, Check, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase, generateShortCode, DynamicQRCode } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
-import { QRType, QRContentData, QRStyleConfig } from '../../types';
-import { QRTabs } from '../QRTabs';
-import { QRInputs } from '../QRInputs';
+import { QRContentData, QRStyleConfig } from '../../types';
 import { QRStylePanel } from '../QRStylePanel';
 import { CustomSVGRenderer } from '../../services/customSvgRenderer';
-import { generatePayload, encryptPayload } from '../../services/qrUtils';
 
 interface DynamicQRFormProps {
   isOpen: boolean;
@@ -48,11 +45,8 @@ const INITIAL_CONTENT: QRContentData = {
 export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: DynamicQRFormProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
-  const [activeTab, setActiveTab] = useState<QRType>('url');
   const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
   const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(INITIAL_STYLE);
-  const [isEncrypted, setIsEncrypted] = useState(false);
-  const [encryptionKey, setEncryptionKey] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,72 +62,61 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
     if (isOpen) {
       if (editingQR) {
         setTitle(editingQR.title);
-        // Load saved style and content from database
+        // Load saved URL from destination_url
+        setContentData({
+          type: 'url',
+          url: editingQR.destination_url,
+          value: editingQR.destination_url,
+        });
+        // Load saved style
         const savedStyle = editingQR.qr_style as Record<string, unknown>;
-        if (savedStyle) {
-          if (savedStyle.styleConfig) {
-            setStyleConfig(savedStyle.styleConfig as QRStyleConfig);
-          }
-          if (savedStyle.contentData) {
-            const content = savedStyle.contentData as QRContentData;
-            setContentData(content);
-            setActiveTab(content.type);
-          }
-          if (savedStyle.isEncrypted !== undefined) {
-            setIsEncrypted(savedStyle.isEncrypted as boolean);
-          }
+        if (savedStyle?.styleConfig) {
+          setStyleConfig(savedStyle.styleConfig as QRStyleConfig);
         }
       } else {
         setTitle('');
-        setActiveTab('url');
         setContentData(INITIAL_CONTENT);
         setStyleConfig(INITIAL_STYLE);
-        setIsEncrypted(false);
-        setEncryptionKey('');
       }
       setError(null);
       setCreatedQR(null);
     }
   }, [editingQR, isOpen]);
 
-  // Handle tab change
-  const handleTabChange = (type: QRType) => {
-    if (type === 'bulk' || type === 'ai') {
-      // Skip bulk and AI for dynamic QR as they don't make sense
-      return;
-    }
-    setActiveTab(type);
-    setContentData({ ...contentData, type });
-  };
-
-  // Generate QR payload
+  // Get destination URL (simple - just return the URL)
   const getPayload = () => {
-    let raw = generatePayload(contentData);
-    if (isEncrypted && encryptionKey) {
-      raw = `ENCRYPTED:AES:${encryptPayload(raw, encryptionKey, 'AES')}`;
-    }
-    return raw;
+    return contentData.url || contentData.value || '';
   };
 
   // Update QR preview
   useEffect(() => {
     if (previewRef.current && isOpen) {
       try {
-        const payload = getPayload();
-        if (payload) {
+        // If QR is created, show the SHORT URL in preview (this is what users will scan)
+        if (createdQR) {
+          const shortUrl = `${baseUrl}/r/${createdQR.short_code}`;
           const previewStyle = { ...styleConfig, size: 200, padding: 10 };
           const renderer = new CustomSVGRenderer(previewStyle);
-          const svgString = renderer.render(payload);
+          const svgString = renderer.render(shortUrl);
           previewRef.current.innerHTML = svgString;
         } else {
-          previewRef.current.innerHTML = '<div class="text-gray-400 text-sm text-center p-8">Enter content to preview QR</div>';
+          // During creation, show preview of content (just for reference)
+          const payload = getPayload();
+          if (payload) {
+            const previewStyle = { ...styleConfig, size: 200, padding: 10 };
+            const renderer = new CustomSVGRenderer(previewStyle);
+            const svgString = renderer.render(payload);
+            previewRef.current.innerHTML = svgString;
+          } else {
+            previewRef.current.innerHTML = '<div class="text-gray-400 text-sm text-center p-8">Enter content to preview QR</div>';
+          }
         }
       } catch (err) {
         console.error('Preview error:', err);
         previewRef.current.innerHTML = '<div class="text-red-400 text-sm text-center p-8">Preview error</div>';
       }
     }
-  }, [contentData, styleConfig, isEncrypted, encryptionKey, isOpen]);
+  }, [contentData, styleConfig, isOpen, createdQR]);
 
   if (!isOpen) return null;
 
@@ -238,9 +221,6 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
 
   const shortUrl = createdQR ? `${baseUrl}/r/${createdQR.short_code}` : '';
 
-  // Filter out bulk and AI tabs for dynamic QR
-  const filteredTabs: QRType[] = ['text', 'url', 'wifi', 'contact', 'email', 'phone', 'geo', 'event', 'social'];
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full my-4 relative max-h-[95vh] overflow-hidden flex flex-col">
@@ -258,7 +238,7 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
         </div>
 
         {createdQR ? (
-          // Success view
+          // Success view - show QR with SHORT URL encoded
           <div className="p-6 text-center overflow-y-auto">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="text-green-600" size={32} />
@@ -266,13 +246,21 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Dynamic QR Created Successfully!
             </h3>
-            <p className="text-gray-500 mb-6">
-              Your QR code is ready. Share this short URL:
+            <p className="text-gray-500 mb-4">
+              This QR encodes your short URL. You can change the destination anytime!
             </p>
+
+            {/* QR Code Preview - encodes SHORT URL */}
+            <div className="flex justify-center mb-4">
+              <div
+                ref={previewRef}
+                className="bg-white p-3 rounded-xl border-2 border-gray-200"
+              />
+            </div>
 
             {/* Short URL display */}
             <div className="bg-gray-100 rounded-xl p-4 mb-4 max-w-md mx-auto">
-              <p className="text-sm text-gray-500 mb-1">Short URL</p>
+              <p className="text-sm text-gray-500 mb-1">Short URL (encoded in QR)</p>
               <div className="flex items-center gap-2 justify-center">
                 <code className="text-indigo-600 font-medium text-sm break-all">
                   {shortUrl}
@@ -296,6 +284,10 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
               </div>
             </div>
 
+            <p className="text-xs text-gray-400 mb-4">
+              Currently redirects to: {createdQR.destination_url}
+            </p>
+
             <button
               onClick={onClose}
               className="bg-indigo-600 text-white py-3 px-8 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
@@ -304,10 +296,18 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
             </button>
           </div>
         ) : (
-          // Form view
+          // Form view - Simplified for Dynamic QR (URL-focused)
           <div className="flex-1 overflow-y-auto">
             <form onSubmit={handleSubmit}>
               <div className="p-4 space-y-4">
+                {/* Info Banner */}
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                  <p className="text-sm text-indigo-700">
+                    <strong>Dynamic QR</strong> = QR code that can be updated anytime.
+                    Perfect for URLs, PDFs, videos, or any link that might change.
+                  </p>
+                </div>
+
                 {/* Title Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -318,71 +318,46 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full px-4 py-3 bg-gray-100 border border-transparent rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
-                    placeholder="My Business Card QR"
+                    placeholder="e.g., Product Brochure, Menu, Event Info"
                     required
                     maxLength={255}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  {/* Left: Content Type & Inputs */}
+                  {/* Left: URL Input */}
                   <div className="lg:col-span-2 space-y-4">
-                    {/* QR Type Tabs */}
+                    {/* Destination URL */}
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Content Type
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Destination URL *
                       </label>
-                      <div className="flex flex-wrap gap-2">
-                        {filteredTabs.map((type) => (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => handleTabChange(type)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                              activeTab === type
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                          </button>
-                        ))}
-                      </div>
+                      <input
+                        type="url"
+                        value={contentData.url || ''}
+                        onChange={(e) => setContentData({ ...contentData, type: 'url', url: e.target.value, value: e.target.value })}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
+                        placeholder="https://example.com/my-page"
+                        required
+                      />
+                      <p className="text-xs text-gray-400 mt-2">
+                        This URL can be changed anytime from the dashboard after QR is created.
+                      </p>
                     </div>
 
-                    {/* Content Inputs */}
+                    {/* Use Cases */}
                     <div className="bg-gray-50 rounded-xl p-4">
                       <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Content Details
+                        Common Use Cases
                       </label>
-                      <QRInputs type={activeTab} data={contentData} onChange={setContentData} />
-                    </div>
-
-                    {/* Password Protection */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="text-sm font-medium text-gray-700">
-                          Password Protection
-                        </label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={isEncrypted}
-                            onChange={(e) => setIsEncrypted(e.target.checked)}
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                        </label>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-white p-2 rounded-lg text-gray-600">📄 PDF Documents</div>
+                        <div className="bg-white p-2 rounded-lg text-gray-600">🎥 Video Links</div>
+                        <div className="bg-white p-2 rounded-lg text-gray-600">🍽️ Restaurant Menus</div>
+                        <div className="bg-white p-2 rounded-lg text-gray-600">📱 App Download Links</div>
+                        <div className="bg-white p-2 rounded-lg text-gray-600">🎫 Event Pages</div>
+                        <div className="bg-white p-2 rounded-lg text-gray-600">🛒 Product Pages</div>
                       </div>
-                      {isEncrypted && (
-                        <input
-                          type="password"
-                          placeholder="Enter Password"
-                          value={encryptionKey}
-                          onChange={(e) => setEncryptionKey(e.target.value)}
-                          className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-500 transition-colors"
-                        />
-                      )}
                     </div>
 
                     {/* Styling Section (Collapsible) */}
