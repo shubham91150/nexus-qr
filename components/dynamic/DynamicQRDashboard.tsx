@@ -51,63 +51,48 @@ const DEFAULT_QR_STYLE: QRStyleConfig = {
   logoBackground: 'transparent',
 };
 
-// QR Code Preview Component - Dynamic QR should encode the SHORT URL, not the content
-const QRCodePreview: React.FC<{
+// Compact QR Code Preview Component for unified dashboard layout
+const CompactQRPreview: React.FC<{
   qrCode: DynamicQRCode;
   title: string;
 }> = ({ qrCode, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
-  // Base URL for the short redirect
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const getShortRedirectUrl = (): string => `${baseUrl}/r/${qrCode.short_code}`;
 
-  // Dynamic QR always encodes the SHORT URL, not the content directly
-  // This allows content to be changed after QR is printed
-  const getShortRedirectUrl = (): string => {
-    return `${baseUrl}/r/${qrCode.short_code}`;
-  };
-
-  // Get the saved style or use default
   const getSavedStyle = (): QRStyleConfig => {
     const savedData = qrCode.qr_style as Record<string, unknown>;
     if (savedData?.styleConfig) {
-      return { ...(savedData.styleConfig as QRStyleConfig), size: 280, padding: 15 };
+      return { ...(savedData.styleConfig as QRStyleConfig), size: 160, padding: 10 };
     }
-    return DEFAULT_QR_STYLE;
+    return { ...DEFAULT_QR_STYLE, size: 160, padding: 10 };
   };
 
   useEffect(() => {
     if (containerRef.current) {
       try {
         const style = getSavedStyle();
-        // IMPORTANT: Encode short URL, not the destination content
         const shortUrl = getShortRedirectUrl();
         const renderer = new CustomSVGRenderer(style);
         const svgString = renderer.render(shortUrl);
         containerRef.current.innerHTML = svgString;
       } catch (err) {
         console.error('Error rendering QR:', err);
-        containerRef.current.innerHTML = '<p class="text-red-500 text-sm">Error generating QR</p>';
+        containerRef.current.innerHTML = '<p class="text-red-500 text-xs">Error</p>';
       }
     }
   }, [qrCode]);
 
   const downloadQR = async (format: 'png' | 'svg') => {
     setDownloading(true);
-
     try {
-      // Generate high-quality QR for download using saved style
       const savedData = qrCode.qr_style as Record<string, unknown>;
       const baseStyle = savedData?.styleConfig as QRStyleConfig || DEFAULT_QR_STYLE;
-
-      // IMPORTANT: Download QR with short URL, not content
       const shortUrl = getShortRedirectUrl();
-
-      // Use original saved size or default to 1024 for high quality
       const downloadSize = baseStyle.size || 1024;
       const downloadStyle = { ...baseStyle, size: downloadSize, padding: baseStyle.padding || 20 };
-
       const renderer = new CustomSVGRenderer(downloadStyle);
       const svgString = renderer.render(shortUrl);
 
@@ -121,21 +106,17 @@ const QRCodePreview: React.FC<{
         URL.revokeObjectURL(url);
         setDownloading(false);
       } else {
-        // PNG download
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
-
         canvas.width = downloadSize;
         canvas.height = downloadSize;
 
         img.onload = () => {
           if (ctx) {
-            // Use saved background color or white
             ctx.fillStyle = downloadStyle.bgTransparent ? 'transparent' : (downloadStyle.bgColor || '#ffffff');
             ctx.fillRect(0, 0, downloadSize, downloadSize);
             ctx.drawImage(img, 0, 0, downloadSize, downloadSize);
-
             canvas.toBlob((blob) => {
               if (blob) {
                 const url = URL.createObjectURL(blob);
@@ -149,7 +130,6 @@ const QRCodePreview: React.FC<{
             }, 'image/png');
           }
         };
-
         img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
       }
     } catch (err) {
@@ -159,36 +139,26 @@ const QRCodePreview: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6">
-      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <QrCode size={18} />
-        QR Code
-      </h3>
-
-      {/* QR Code Display */}
-      <div className="flex justify-center mb-4">
-        <div
-          ref={containerRef}
-          className="bg-white p-2 rounded-xl border-2 border-gray-100"
-        />
-      </div>
-
-      {/* Download Buttons */}
-      <div className="flex gap-2">
+    <div className="flex flex-col items-center">
+      <div
+        ref={containerRef}
+        className="bg-white p-1 rounded-lg border border-gray-100 mb-2"
+      />
+      <div className="flex gap-1.5">
         <button
           onClick={() => downloadQR('png')}
           disabled={downloading}
-          className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white py-2.5 px-4 rounded-xl font-medium text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 bg-indigo-600 text-white py-1.5 px-3 rounded-lg font-medium text-xs hover:bg-indigo-700 transition-colors disabled:opacity-50"
         >
-          {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
           PNG
         </button>
         <button
           onClick={() => downloadQR('svg')}
           disabled={downloading}
-          className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 bg-gray-100 text-gray-600 py-1.5 px-3 rounded-lg font-medium text-xs hover:bg-gray-200 transition-colors disabled:opacity-50"
         >
-          <Download size={16} />
+          <Download size={12} />
           SVG
         </button>
       </div>
@@ -645,253 +615,174 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
           {/* Main Content - Middle & Right */}
           <div className="lg:col-span-9">
             {selectedQR ? (
-              <div className="space-y-6">
-                {/* Expiry Warning */}
+              <div className="space-y-4">
+                {/* Expiry Warning - Only show if expired */}
                 {isQRExpired(selectedQR) && (
                   <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-3">
-                    <AlertTriangle className="text-red-500" size={20} />
+                    <AlertTriangle className="text-red-500 flex-shrink-0" size={18} />
                     <div>
-                      <p className="text-sm font-medium text-red-800">This QR code has expired</p>
-                      <p className="text-xs text-red-600">
-                        Expired on {new Date(selectedQR.expires_at!).toLocaleDateString()}
-                      </p>
+                      <p className="text-sm font-medium text-red-800">QR Code Expired</p>
+                      <p className="text-xs text-red-600">Expired {new Date(selectedQR.expires_at!).toLocaleDateString()}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Selected QR Info Bar */}
-                <div className="bg-white rounded-2xl shadow-sm p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-gray-900">{selectedQR.title}</h2>
-                        {selectedQR.expires_at && !isQRExpired(selectedQR) && (
-                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Timer size={10} />
-                            Expires {new Date(selectedQR.expires_at).toLocaleDateString()}
-                          </span>
-                        )}
-                        {selectedQR.ab_testing_enabled && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                            A/B Test
-                          </span>
-                        )}
-                        {selectedQR.multi_language_enabled && (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                            Multi-lang
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">
-                        Redirects to: {selectedQR.destination_url}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0" data-tour="qr-actions">
-                      <button
-                        onClick={() => copyToClipboard(selectedQR)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Copy URL"
-                      >
-                        {copiedId === selectedQR.id ? (
-                          <Check size={18} className="text-green-600" />
-                        ) : (
-                          <Copy size={18} className="text-gray-500" />
-                        )}
-                      </button>
-                      <a
-                        href={getShortUrl(selectedQR)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Open URL"
-                      >
-                        <ExternalLink size={18} className="text-gray-500" />
-                      </a>
-                      <button
-                        onClick={() => handleClone(selectedQR)}
-                        disabled={cloning}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                        title="Clone QR Code"
-                      >
-                        {cloning ? (
-                          <Loader2 size={18} className="text-gray-500 animate-spin" />
-                        ) : (
-                          <Files size={18} className="text-gray-500" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setActiveView(activeView === 'settings' ? 'analytics' : 'settings')}
-                        className={`p-2 rounded-lg transition-colors ${
-                          activeView === 'settings'
-                            ? 'bg-indigo-100 text-indigo-600'
-                            : 'hover:bg-gray-100 text-gray-500'
-                        }`}
-                        title="Settings"
-                      >
-                        <Settings size={18} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingQR(selectedQR);
-                          setIsFormOpen(true);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Edit QR Content"
-                      >
-                        <Edit2 size={18} className="text-gray-500" />
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(selectedQR)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title={selectedQR.is_active ? 'Pause' : 'Activate'}
-                      >
-                        {selectedQR.is_active ? (
-                          <PowerOff size={18} className="text-orange-500" />
-                        ) : (
-                          <Power size={18} className="text-green-600" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(selectedQR)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={18} className="text-red-500" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* QR Code Preview */}
-                  <div className="md:col-span-1">
-                    <QRCodePreview
-                      qrCode={selectedQR}
-                      title={selectedQR.title}
-                    />
-                  </div>
-
-                  {/* Stats or Settings based on activeView */}
-                  <div className="md:col-span-2">
-                    {activeView === 'settings' ? (
-                      /* Settings Panel */
-                      <QRSettingsPanel qrCode={selectedQR} onUpdate={fetchQRCodes} />
-                    ) : (
-                      /* Analytics View - Single consolidated card */
-                      <div className="bg-white rounded-2xl shadow-sm p-4" data-tour="analytics">
-                        {/* Stats Row */}
-                        <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-gray-100">
-                          <div className="text-center">
-                            <div className="flex items-center justify-center mb-1">
-                              <div className="p-1.5 bg-indigo-100 rounded-lg">
-                                <Eye className="text-indigo-600" size={14} />
-                              </div>
-                            </div>
-                            <p className="text-xl font-bold text-gray-900">
-                              {analyticsLoading ? '...' : analytics?.totalScans || 0}
-                            </p>
-                            <p className="text-[10px] text-gray-500">Total</p>
-                          </div>
-                          <div className="text-center border-x border-gray-100">
-                            <div className="flex items-center justify-center mb-1">
-                              <div className="p-1.5 bg-green-100 rounded-lg">
-                                <TrendingUp className="text-green-600" size={14} />
-                              </div>
-                            </div>
-                            <p className="text-xl font-bold text-gray-900">
-                              {analyticsLoading ? '...' : analytics?.todayScans || 0}
-                            </p>
-                            <p className="text-[10px] text-gray-500">Today</p>
-                          </div>
-                          <div className="text-center">
-                            <div className="flex items-center justify-center mb-1">
-                              <div className="p-1.5 bg-purple-100 rounded-lg">
-                                <Calendar className="text-purple-600" size={14} />
-                              </div>
-                            </div>
-                            <p className="text-xl font-bold text-gray-900">
-                              {analyticsLoading ? '...' : analytics?.weekScans || 0}
-                            </p>
-                            <p className="text-[10px] text-gray-500">This Week</p>
-                          </div>
-                        </div>
-
-                        {/* Device & Country in same card */}
-                        <div className="grid grid-cols-2 gap-4" data-tour="device-stats">
-                          {/* Device Breakdown */}
-                          <div>
-                            <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-1.5 text-xs">
-                              <Smartphone size={12} className="text-gray-400" />
-                              Devices
-                            </h3>
-                            {analyticsLoading ? (
-                              <div className="flex items-center justify-center py-3">
-                                <Loader2 className="animate-spin text-gray-400" size={16} />
-                              </div>
-                            ) : analytics?.deviceBreakdown.length ? (
-                              <div className="space-y-1.5">
-                                {analytics.deviceBreakdown.slice(0, 3).map((item) => (
-                                  <div key={item.device} className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-500">{item.device}</span>
-                                    <span className="font-medium text-gray-900">{item.count}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-gray-400 text-[10px] py-2">No data</p>
-                            )}
-                          </div>
-
-                          {/* Top Countries */}
-                          <div className="border-l border-gray-100 pl-4">
-                            <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-1.5 text-xs">
-                              <Globe size={12} className="text-gray-400" />
-                              Countries
-                            </h3>
-                            {analyticsLoading ? (
-                              <div className="flex items-center justify-center py-3">
-                                <Loader2 className="animate-spin text-gray-400" size={16} />
-                              </div>
-                            ) : analytics?.topCountries.length ? (
-                              <div className="space-y-1.5">
-                                {analytics.topCountries.slice(0, 3).map((item) => (
-                                  <div key={item.country} className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-500">{item.country}</span>
-                                    <span className="font-medium text-gray-900">{item.count}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-gray-400 text-[10px] py-2">No data</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Recent Scans - compact list in analytics view */}
-                {activeView === 'analytics' && analytics?.recentScans.length > 0 && (
-                  <div className="bg-white rounded-2xl shadow-sm p-4">
-                    <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-sm">
-                      <Users size={14} />
-                      Recent Activity
-                    </h3>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {analytics.recentScans.slice(0, 5).map((scan) => (
-                        <div key={scan.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-xs text-gray-400 w-16 flex-shrink-0">{formatTime(scan.scanned_at)}</span>
-                            <span className="text-xs text-gray-600 truncate">
-                              {scan.country || 'Unknown'} • {scan.device_type || 'Unknown'}
+                {/* Unified Main Card - QR Info + Preview + Analytics */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {/* Header with title and actions */}
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-lg font-bold text-gray-900">{selectedQR.title}</h2>
+                          {selectedQR.is_active ? (
+                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Active</span>
+                          ) : (
+                            <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">Paused</span>
+                          )}
+                          {selectedQR.expires_at && !isQRExpired(selectedQR) && (
+                            <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Timer size={10} />
+                              {new Date(selectedQR.expires_at).toLocaleDateString()}
                             </span>
-                          </div>
+                          )}
                         </div>
-                      ))}
+                        <p className="text-xs text-gray-400 truncate mt-0.5">→ {selectedQR.destination_url}</p>
+                      </div>
+                      <div className="flex items-center gap-1" data-tour="qr-actions">
+                        <button onClick={() => copyToClipboard(selectedQR)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Copy URL">
+                          {copiedId === selectedQR.id ? <Check size={16} className="text-green-600" /> : <Copy size={16} className="text-gray-400" />}
+                        </button>
+                        <a href={getShortUrl(selectedQR)} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Open">
+                          <ExternalLink size={16} className="text-gray-400" />
+                        </a>
+                        <button onClick={() => handleClone(selectedQR)} disabled={cloning} className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50" title="Clone">
+                          {cloning ? <Loader2 size={16} className="text-gray-400 animate-spin" /> : <Files size={16} className="text-gray-400" />}
+                        </button>
+                        <button
+                          onClick={() => setActiveView(activeView === 'settings' ? 'analytics' : 'settings')}
+                          className={`p-2 rounded-lg transition-colors ${activeView === 'settings' ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 text-gray-400'}`}
+                          title="Settings"
+                        >
+                          <Settings size={16} />
+                        </button>
+                        <button onClick={() => { setEditingQR(selectedQR); setIsFormOpen(true); }} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Edit">
+                          <Edit2 size={16} className="text-gray-400" />
+                        </button>
+                        <button onClick={() => handleToggleActive(selectedQR)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title={selectedQR.is_active ? 'Pause' : 'Activate'}>
+                          {selectedQR.is_active ? <PowerOff size={16} className="text-orange-500" /> : <Power size={16} className="text-green-600" />}
+                        </button>
+                        <button onClick={() => handleDelete(selectedQR)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Delete">
+                          <Trash2 size={16} className="text-red-400" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                )}
+
+                  {/* Content: Settings or Analytics */}
+                  {activeView === 'settings' ? (
+                    <div className="p-5">
+                      <QRSettingsPanel qrCode={selectedQR} onUpdate={fetchQRCodes} />
+                    </div>
+                  ) : (
+                    <div className="p-5" data-tour="analytics">
+                      {/* Unified layout: QR on left, Stats + Details on right */}
+                      <div className="flex flex-col md:flex-row gap-6">
+                        {/* Left: QR Preview */}
+                        <div className="flex-shrink-0 flex justify-center md:justify-start">
+                          <CompactQRPreview qrCode={selectedQR} title={selectedQR.title} />
+                        </div>
+
+                        {/* Right: Analytics Data */}
+                        <div className="flex-1 min-w-0">
+                          {/* Stats Row - Prominent */}
+                          <div className="grid grid-cols-3 gap-4 mb-5">
+                            <div className="text-center bg-indigo-50 rounded-xl p-3">
+                              <p className="text-2xl font-bold text-indigo-600">
+                                {analyticsLoading ? '...' : analytics?.totalScans || 0}
+                              </p>
+                              <p className="text-[11px] text-indigo-500 font-medium">Total Scans</p>
+                            </div>
+                            <div className="text-center bg-green-50 rounded-xl p-3">
+                              <p className="text-2xl font-bold text-green-600">
+                                {analyticsLoading ? '...' : analytics?.todayScans || 0}
+                              </p>
+                              <p className="text-[11px] text-green-500 font-medium">Today</p>
+                            </div>
+                            <div className="text-center bg-purple-50 rounded-xl p-3">
+                              <p className="text-2xl font-bold text-purple-600">
+                                {analyticsLoading ? '...' : analytics?.weekScans || 0}
+                              </p>
+                              <p className="text-[11px] text-purple-500 font-medium">This Week</p>
+                            </div>
+                          </div>
+
+                          {/* Device & Country breakdown */}
+                          <div className="grid grid-cols-2 gap-4" data-tour="device-stats">
+                            <div className="bg-gray-50 rounded-xl p-3">
+                              <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-1.5 text-xs">
+                                <Smartphone size={12} />
+                                Devices
+                              </h3>
+                              {analyticsLoading ? (
+                                <Loader2 className="animate-spin text-gray-400 mx-auto" size={16} />
+                              ) : analytics?.deviceBreakdown.length ? (
+                                <div className="space-y-1">
+                                  {analytics.deviceBreakdown.slice(0, 3).map((item) => (
+                                    <div key={item.device} className="flex items-center justify-between text-xs">
+                                      <span className="text-gray-500">{item.device}</span>
+                                      <span className="font-semibold text-gray-800">{item.count}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-400 text-xs">No scans yet</p>
+                              )}
+                            </div>
+                            <div className="bg-gray-50 rounded-xl p-3">
+                              <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-1.5 text-xs">
+                                <Globe size={12} />
+                                Countries
+                              </h3>
+                              {analyticsLoading ? (
+                                <Loader2 className="animate-spin text-gray-400 mx-auto" size={16} />
+                              ) : analytics?.topCountries.length ? (
+                                <div className="space-y-1">
+                                  {analytics.topCountries.slice(0, 3).map((item) => (
+                                    <div key={item.country} className="flex items-center justify-between text-xs">
+                                      <span className="text-gray-500">{item.country}</span>
+                                      <span className="font-semibold text-gray-800">{item.count}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-400 text-xs">No scans yet</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Recent Activity - Inline, compact */}
+                          {analytics && analytics.recentScans.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-100">
+                              <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-1.5 text-xs">
+                                <Users size={12} />
+                                Recent Activity
+                              </h3>
+                              <div className="space-y-1">
+                                {analytics.recentScans.slice(0, 4).map((scan) => (
+                                  <div key={scan.id} className="flex items-center gap-2 text-xs text-gray-500">
+                                    <span className="text-gray-400 w-14 flex-shrink-0">{formatTime(scan.scanned_at)}</span>
+                                    <span className="truncate">{scan.country || 'Unknown'} • {scan.device_type || 'Unknown'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
