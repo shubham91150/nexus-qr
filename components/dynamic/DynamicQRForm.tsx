@@ -142,12 +142,11 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
         return;
       }
 
-      // Prepare QR style data to save
+      // Prepare QR style data to save (for styling only, not encryption)
+      // Dynamic QR uses backend password protection via Supabase, not client-side encryption
       const qrStyleData = {
         styleConfig,
         contentData,
-        isEncrypted,
-        payload, // Store the actual payload
       };
 
       if (editingQR) {
