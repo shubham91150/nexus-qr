@@ -3,7 +3,7 @@ import {
   QrCode, BarChart3, Edit2, Trash2, ExternalLink,
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
   Smartphone, Globe, Calendar, Users, Eye,
-  Download, Settings, Timer, AlertTriangle, Files, Plus
+  Download, Settings, Timer, AlertTriangle, Files, Plus, HelpCircle
 } from 'lucide-react';
 import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired, generateShortCode } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
@@ -11,6 +11,12 @@ import { DynamicQRForm } from './DynamicQRForm';
 import { QRSettingsPanel } from './QRSettingsPanel';
 import { CustomSVGRenderer } from '../../services/customSvgRenderer';
 import { QRStyleConfig } from '../../types';
+import {
+  TourController,
+  dashboardTourSteps,
+  hasCompletedDashboardOnboarding,
+  completeDashboardOnboarding,
+} from '../onboarding/OnboardingTour';
 
 interface AnalyticsData {
   totalScans: number;
@@ -215,7 +221,20 @@ export function DynamicQRDashboard() {
   // Real-time scan count
   const [liveScansToday, setLiveScansToday] = useState(0);
 
+  // Dashboard Tour state
+  const [showDashboardTour, setShowDashboardTour] = useState(false);
+
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+  // Check if first visit to dashboard
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!hasCompletedDashboardOnboarding() && qrCodes.length > 0) {
+        setShowDashboardTour(true);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [qrCodes.length]);
 
   // Subscribe to real-time scan updates
   useEffect(() => {
@@ -539,6 +558,13 @@ export function DynamicQRDashboard() {
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
             <button
+              onClick={() => setShowDashboardTour(true)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-indigo-600"
+              title="Dashboard Tour"
+            >
+              <HelpCircle size={18} />
+            </button>
+            <button
               onClick={signOut}
               className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
@@ -551,7 +577,7 @@ export function DynamicQRDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* QR List - Left Column */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3" data-tour="qr-list">
             <div className="bg-white rounded-2xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900">Your QR Codes</h2>
@@ -653,7 +679,7 @@ export function DynamicQRDashboard() {
                         Redirects to: {selectedQR.destination_url}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0" data-tour="qr-actions">
                       <button
                         onClick={() => copyToClipboard(selectedQR)}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -747,7 +773,7 @@ export function DynamicQRDashboard() {
                       /* Analytics View */
                       <>
                         {/* Stats Cards */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-4" data-tour="analytics">
                           <div className="bg-white rounded-2xl shadow-sm p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <div className="p-2 bg-indigo-100 rounded-xl">
@@ -786,7 +812,7 @@ export function DynamicQRDashboard() {
                     </div>
 
                     {/* Device & Country */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4" data-tour="device-stats">
                       {/* Device Breakdown */}
                       <div className="bg-white rounded-2xl shadow-sm p-4">
                         <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
@@ -999,6 +1025,17 @@ export function DynamicQRDashboard() {
           </div>
         </div>
       )}
+
+      {/* Dashboard Tour */}
+      <TourController
+        isActive={showDashboardTour}
+        onComplete={() => {
+          setShowDashboardTour(false);
+          completeDashboardOnboarding();
+        }}
+        steps={dashboardTourSteps}
+        storageKey="nexus_qr_dashboard_onboarding_completed"
+      />
     </div>
   );
 }

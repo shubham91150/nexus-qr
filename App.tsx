@@ -6,12 +6,20 @@ import { QRInputs } from './components/QRInputs';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock, Zap, BarChart3 } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
 import { ErrorBoundary, OfflineBanner } from './components/ErrorBoundary';
 import { ProfileMenu } from './components/ProfileMenu';
+import {
+  WelcomeModal,
+  TourController,
+  generatorTourSteps,
+  hasCompletedOnboarding,
+  completeOnboarding,
+  FloatingHelpButton,
+} from './components/onboarding/OnboardingTour';
 
 // Analytics tracking options type
 export interface AnalyticsOptions {
@@ -62,6 +70,20 @@ const QRGenerator: React.FC<{
 
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
+
+  // Onboarding states
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+
+  // Check if first visit
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!hasCompletedOnboarding()) {
+        setShowWelcome(true);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Dynamic QR states
   const [isDynamic, setIsDynamic] = useState(false);
@@ -126,6 +148,14 @@ const QRGenerator: React.FC<{
                <span className="hidden sm:inline">Dashboard</span>
              </button>
            )}
+           {/* Help button to restart tour */}
+           <button
+             onClick={() => setShowTour(true)}
+             className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500 hover:text-indigo-600"
+             title="App Tour"
+           >
+             <HelpCircle size={20} />
+           </button>
            <ProfileMenu onLoginClick={onAuthRequired} />
          </div>
       </div>
@@ -135,21 +165,21 @@ const QRGenerator: React.FC<{
         {/* Left Column: Input & Styling */}
         <div className="md:col-span-7 space-y-6">
           <div className="bg-white rounded-[24px] shadow-card p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6" data-tour="content-type">
                <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
                   <LayoutGrid size={14} />
                </div>
                <h2 className="text-sm font-semibold text-gray-800">Pick a Content Type</h2>
             </div>
-            
+
             <QRTabs activeTab={activeTab} onChange={handleTabChange} />
-            
-            <div className="min-h-[150px]">
+
+            <div className="min-h-[150px]" data-tour="qr-input">
                <QRInputs type={activeTab} data={contentData} onChange={setContentData} />
             </div>
             
             {/* Encryption Toggle */}
-            <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="mt-6 pt-6 border-t border-gray-100" data-tour="encryption">
                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                      <Lock size={14} className={isEncrypted ? "text-green-600" : "text-gray-400"} />
@@ -173,7 +203,7 @@ const QRGenerator: React.FC<{
             </div>
 
             {/* Dynamic QR Toggle */}
-            <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="mt-6 pt-6 border-t border-gray-100" data-tour="dynamic-qr">
                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                      <Zap size={14} className={isDynamic ? "text-indigo-600" : "text-gray-400"} />
@@ -256,12 +286,14 @@ const QRGenerator: React.FC<{
             </div>
 
             {/* Replaced QRStyling with QRStylePanel which contains the new features */}
-            <QRStylePanel config={styleConfig} onChange={setStyleConfig} />
+            <div data-tour="style-panel">
+              <QRStylePanel config={styleConfig} onChange={setStyleConfig} />
+            </div>
           </div>
         </div>
 
         {/* Right Column: Preview (Sticky on Desktop) */}
-        <div className="md:col-span-5 relative">
+        <div className="md:col-span-5 relative" data-tour="qr-preview">
            <div className="sticky top-6">
               <QRPreview
                  data={getPayload()}
@@ -303,6 +335,24 @@ const QRGenerator: React.FC<{
         </div>
 
       </div>
+
+      {/* Onboarding Welcome Modal */}
+      <WelcomeModal
+        isOpen={showWelcome}
+        onClose={() => setShowWelcome(false)}
+        onStartTour={() => setShowTour(true)}
+      />
+
+      {/* Guided Tour */}
+      <TourController
+        isActive={showTour}
+        onComplete={() => {
+          setShowTour(false);
+          completeOnboarding();
+        }}
+        steps={generatorTourSteps}
+        storageKey="nexus_qr_onboarding_completed"
+      />
     </div>
   );
 };
