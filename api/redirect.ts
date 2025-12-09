@@ -702,6 +702,15 @@ export default async function handler(
     const language = getLanguage(req);
     const { device, browser, os } = parseUserAgent(userAgent);
 
+    // Check if this is an internal request (from dashboard/same origin) - don't count as scan
+    const isInternalRequest = referer && (
+      referer.includes('/dashboard') ||
+      referer.includes('/dynamic') ||
+      referer.includes('localhost:') ||
+      // Check if referer is from same origin (app itself)
+      (typeof referer === 'string' && referer.includes(req.headers.host || ''))
+    );
+
     // Get geolocation (don't wait too long)
     const geo = await getGeoLocation(clientIP);
 
@@ -769,26 +778,31 @@ export default async function handler(
     }
 
     // Record the scan asynchronously (don't block redirect)
-    supabase
-      .from('qr_scans')
-      .insert({
-        qr_id: qrCode.id,
-        ip_address: clientIP || null,
-        country: geo?.country || null,
-        city: geo?.city || null,
-        device_type: device,
-        browser: browser,
-        os: os,
-        referrer: referer,
-        language: language,
-        user_agent: userAgent,
-        ab_variant_id: abVariantId || null,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error('Error recording scan:', error);
-        }
-      });
+    // Skip recording for internal requests (from dashboard, same origin, etc.)
+    if (!isInternalRequest) {
+      supabase
+        .from('qr_scans')
+        .insert({
+          qr_id: qrCode.id,
+          ip_address: clientIP || null,
+          country: geo?.country || null,
+          city: geo?.city || null,
+          device_type: device,
+          browser: browser,
+          os: os,
+          referrer: referer,
+          language: language,
+          user_agent: userAgent,
+          ab_variant_id: abVariantId || null,
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error recording scan:', error);
+          }
+        });
+    } else {
+      console.log('Skipping scan record for internal request');
+    }
 
     // Redirect to final destination
     res.redirect(302, redirectUrl);
