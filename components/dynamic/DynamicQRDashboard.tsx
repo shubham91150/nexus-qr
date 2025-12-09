@@ -225,20 +225,10 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
   // Real-time scan count
   const [liveScansToday, setLiveScansToday] = useState(0);
 
-  // Dashboard Tour state
+  // Dashboard Tour state - only show when user clicks help button
   const [showDashboardTour, setShowDashboardTour] = useState(false);
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-
-  // Check if first visit to dashboard
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!hasCompletedDashboardOnboarding() && qrCodes.length > 0) {
-        setShowDashboardTour(true);
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [qrCodes.length]);
 
   // Subscribe to real-time scan updates
   useEffect(() => {
@@ -782,153 +772,124 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                   </div>
 
                   {/* Stats or Settings based on activeView */}
-                  <div className="md:col-span-2 space-y-4">
+                  <div className="md:col-span-2">
                     {activeView === 'settings' ? (
                       /* Settings Panel */
                       <QRSettingsPanel qrCode={selectedQR} onUpdate={fetchQRCodes} />
                     ) : (
-                      /* Analytics View */
-                      <>
-                        {/* Stats Cards */}
-                        <div className="grid grid-cols-3 gap-4" data-tour="analytics">
-                          <div className="bg-white rounded-2xl shadow-sm p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="p-2 bg-indigo-100 rounded-xl">
-                                <Eye className="text-indigo-600" size={18} />
+                      /* Analytics View - Single consolidated card */
+                      <div className="bg-white rounded-2xl shadow-sm p-4" data-tour="analytics">
+                        {/* Stats Row */}
+                        <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-gray-100">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <div className="p-1.5 bg-indigo-100 rounded-lg">
+                                <Eye className="text-indigo-600" size={14} />
                               </div>
                             </div>
-                            <p className="text-2xl font-bold text-gray-900">
+                            <p className="text-xl font-bold text-gray-900">
                               {analyticsLoading ? '...' : analytics?.totalScans || 0}
                             </p>
-                            <p className="text-xs text-gray-500">Total Scans</p>
+                            <p className="text-[10px] text-gray-500">Total</p>
                           </div>
-
-                          <div className="bg-white rounded-2xl shadow-sm p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="p-2 bg-green-100 rounded-xl">
-                                <TrendingUp className="text-green-600" size={18} />
+                          <div className="text-center border-x border-gray-100">
+                            <div className="flex items-center justify-center mb-1">
+                              <div className="p-1.5 bg-green-100 rounded-lg">
+                                <TrendingUp className="text-green-600" size={14} />
                               </div>
                             </div>
-                            <p className="text-2xl font-bold text-gray-900">
+                            <p className="text-xl font-bold text-gray-900">
                               {analyticsLoading ? '...' : analytics?.todayScans || 0}
                             </p>
-                            <p className="text-xs text-gray-500">Today</p>
+                            <p className="text-[10px] text-gray-500">Today</p>
                           </div>
-
-                          <div className="bg-white rounded-2xl shadow-sm p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="p-2 bg-purple-100 rounded-xl">
-                            <Calendar className="text-purple-600" size={18} />
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <div className="p-1.5 bg-purple-100 rounded-lg">
+                                <Calendar className="text-purple-600" size={14} />
+                              </div>
+                            </div>
+                            <p className="text-xl font-bold text-gray-900">
+                              {analyticsLoading ? '...' : analytics?.weekScans || 0}
+                            </p>
+                            <p className="text-[10px] text-gray-500">This Week</p>
                           </div>
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">
-                          {analyticsLoading ? '...' : analytics?.weekScans || 0}
-                        </p>
-                        <p className="text-xs text-gray-500">This Week</p>
-                      </div>
-                    </div>
 
-                    {/* Device & Country */}
-                    <div className="grid grid-cols-2 gap-4" data-tour="device-stats">
-                      {/* Device Breakdown */}
-                      <div className="bg-white rounded-2xl shadow-sm p-4">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
-                          <Smartphone size={16} />
-                          Devices
-                        </h3>
-                        {analyticsLoading ? (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 className="animate-spin text-gray-400" size={20} />
-                          </div>
-                        ) : analytics?.deviceBreakdown.length ? (
-                          <div className="space-y-2">
-                            {analytics.deviceBreakdown.map((item) => (
-                              <div key={item.device} className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600">{item.device}</span>
-                                <span className="font-medium text-gray-900">{item.count}</span>
+                        {/* Device & Country in same card */}
+                        <div className="grid grid-cols-2 gap-4" data-tour="device-stats">
+                          {/* Device Breakdown */}
+                          <div>
+                            <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-1.5 text-xs">
+                              <Smartphone size={12} className="text-gray-400" />
+                              Devices
+                            </h3>
+                            {analyticsLoading ? (
+                              <div className="flex items-center justify-center py-3">
+                                <Loader2 className="animate-spin text-gray-400" size={16} />
                               </div>
-                            ))}
+                            ) : analytics?.deviceBreakdown.length ? (
+                              <div className="space-y-1.5">
+                                {analytics.deviceBreakdown.slice(0, 3).map((item) => (
+                                  <div key={item.device} className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500">{item.device}</span>
+                                    <span className="font-medium text-gray-900">{item.count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-400 text-[10px] py-2">No data</p>
+                            )}
                           </div>
-                        ) : (
-                          <p className="text-gray-400 text-xs text-center py-4">No data yet</p>
-                        )}
-                      </div>
 
-                      {/* Top Countries */}
-                      <div className="bg-white rounded-2xl shadow-sm p-4">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
-                          <Globe size={16} />
-                          Countries
-                        </h3>
-                        {analyticsLoading ? (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 className="animate-spin text-gray-400" size={20} />
-                          </div>
-                        ) : analytics?.topCountries.length ? (
-                          <div className="space-y-2">
-                            {analytics.topCountries.slice(0, 4).map((item) => (
-                              <div key={item.country} className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600">{item.country}</span>
-                                <span className="font-medium text-gray-900">{item.count}</span>
+                          {/* Top Countries */}
+                          <div className="border-l border-gray-100 pl-4">
+                            <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-1.5 text-xs">
+                              <Globe size={12} className="text-gray-400" />
+                              Countries
+                            </h3>
+                            {analyticsLoading ? (
+                              <div className="flex items-center justify-center py-3">
+                                <Loader2 className="animate-spin text-gray-400" size={16} />
                               </div>
-                            ))}
+                            ) : analytics?.topCountries.length ? (
+                              <div className="space-y-1.5">
+                                {analytics.topCountries.slice(0, 3).map((item) => (
+                                  <div key={item.country} className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500">{item.country}</span>
+                                    <span className="font-medium text-gray-900">{item.count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-400 text-[10px] py-2">No data</p>
+                            )}
                           </div>
-                        ) : (
-                          <p className="text-gray-400 text-xs text-center py-4">No data yet</p>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                      </>
                     )}
                   </div>
                 </div>
 
-                {/* Recent Scans - only show in analytics view */}
-                {activeView === 'analytics' && (
+                {/* Recent Scans - compact list in analytics view */}
+                {activeView === 'analytics' && analytics?.recentScans.length > 0 && (
                   <div className="bg-white rounded-2xl shadow-sm p-4">
-                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <Users size={18} />
-                      Recent Scans
+                    <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-sm">
+                      <Users size={14} />
+                      Recent Activity
                     </h3>
-                    {analyticsLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="animate-spin text-gray-400" size={24} />
-                      </div>
-                    ) : analytics?.recentScans.length ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-gray-500 border-b">
-                              <th className="pb-2 font-medium">Time</th>
-                              <th className="pb-2 font-medium">Location</th>
-                              <th className="pb-2 font-medium">Device</th>
-                              <th className="pb-2 font-medium">Browser</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y">
-                            {analytics.recentScans.map((scan) => (
-                              <tr key={scan.id} className="text-gray-700">
-                                <td className="py-2">
-                                  <div>{formatDate(scan.scanned_at)}</div>
-                                  <div className="text-xs text-gray-400">{formatTime(scan.scanned_at)}</div>
-                                </td>
-                                <td className="py-2">
-                                  {scan.city && scan.country
-                                    ? `${scan.city}, ${scan.country}`
-                                    : scan.country || 'Unknown'}
-                                </td>
-                                <td className="py-2">{scan.device_type || 'Unknown'}</td>
-                                <td className="py-2">{scan.browser || 'Unknown'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 text-sm text-center py-8">
-                        No scans yet. Share your QR code to start tracking!
-                      </p>
-                    )}
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {analytics.recentScans.slice(0, 5).map((scan) => (
+                        <div key={scan.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xs text-gray-400 w-16 flex-shrink-0">{formatTime(scan.scanned_at)}</span>
+                            <span className="text-xs text-gray-600 truncate">
+                              {scan.country || 'Unknown'} • {scan.device_type || 'Unknown'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
