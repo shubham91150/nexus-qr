@@ -358,6 +358,72 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
         </InputWrapper>
       );
 
+    case 'whatsapp':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#25D366">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              WhatsApp Number
+            </label>
+            <DebouncedInput placeholder="Phone with country code (e.g., 919876543210)" value={data.whatsapp?.phone || ''} onChange={(v) => updateNested('whatsapp', 'phone', v)} />
+          </div>
+          <DebouncedInput isArea placeholder="Pre-filled message (optional)" value={data.whatsapp?.message || ''} onChange={(v) => updateNested('whatsapp', 'message', v)} />
+        </InputWrapper>
+      );
+
+    case 'youtube':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#FF0000">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              YouTube Video URL
+            </label>
+            <DebouncedInput placeholder="https://youtube.com/watch?v=..." value={data.youtube?.url || ''} onChange={(v) => updateNested('youtube', 'url', v)} />
+          </div>
+        </InputWrapper>
+      );
+
+    case 'bitcoin':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#F7931A">
+                <path d="M23.638 14.904c-1.602 6.43-8.113 10.34-14.542 8.736C2.67 22.05-1.244 15.525.362 9.105 1.962 2.67 8.475-1.243 14.9.358c6.43 1.605 10.342 8.115 8.738 14.546z"/>
+                <path fill="#fff" d="M14.6 10.592c.338-2.255-1.38-3.47-3.73-4.28l.762-3.055-1.86-.464-.742 2.975c-.49-.122-.993-.237-1.493-.351l.747-2.993-1.86-.464-.762 3.054c-.405-.092-.803-.183-1.19-.279l.002-.01-2.566-.64-.495 1.987s1.38.316 1.35.336c.753.188.89.687.867 1.082l-.868 3.482c.052.013.119.032.193.062l-.197-.049-1.217 4.88c-.092.229-.326.572-.854.442.019.027-1.35-.337-1.35-.337l-.923 2.127 2.423.603c.45.113.892.231 1.327.341l-.77 3.09 1.858.463.763-3.058c.508.138 1.001.265 1.483.386l-.76 3.044 1.86.464.77-3.086c3.17.6 5.553.358 6.556-2.51.81-2.31-.04-3.644-1.71-4.514 1.216-.28 2.133-1.08 2.377-2.73zm-4.254 5.964c-.574 2.31-4.461 1.062-5.72.749l1.021-4.092c1.26.314 5.3.936 4.7 3.343zm.575-5.996c-.524 2.1-3.76.962-4.81.718l.926-3.712c1.05.263 4.43.752 3.884 2.994z"/>
+              </svg>
+              Bitcoin Address
+            </label>
+            <DebouncedInput placeholder="bc1q... or 1A1zP1..." value={data.bitcoin?.address || ''} onChange={(v) => updateNested('bitcoin', 'address', v)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <DebouncedInput placeholder="Amount (BTC)" value={data.bitcoin?.amount || ''} onChange={(v) => updateNested('bitcoin', 'amount', v)} />
+            <DebouncedInput placeholder="Label (optional)" value={data.bitcoin?.label || ''} onChange={(v) => updateNested('bitcoin', 'label', v)} />
+          </div>
+        </InputWrapper>
+      );
+
+    case 'coupon':
+      return (
+        <InputWrapper>
+          <DebouncedInput placeholder="Coupon Code (e.g., SAVE20)" value={data.coupon?.code || ''} onChange={(v) => updateNested('coupon', 'code', v)} />
+          <DebouncedInput placeholder="Discount (e.g., 20% OFF or $10 OFF)" value={data.coupon?.discount || ''} onChange={(v) => updateNested('coupon', 'discount', v)} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500 ml-1">Expiry Date</label>
+              <DebouncedInput type="date" value={data.coupon?.expiry || ''} onChange={(v) => updateNested('coupon', 'expiry', v)} />
+            </div>
+          </div>
+          <DebouncedInput isArea placeholder="Terms & Conditions (optional)" value={data.coupon?.terms || ''} onChange={(v) => updateNested('coupon', 'terms', v)} />
+        </InputWrapper>
+      );
+
     default:
       return <InputWrapper><DebouncedInput placeholder="Enter Value" value={data.value} onChange={(v) => update('value', v)} /></InputWrapper>;
   }

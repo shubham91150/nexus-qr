@@ -59,6 +59,42 @@ export const generatePayload = (data: QRContentData): string => {
       // Dynamic QR can handle device detection server-side
       return data.appstore.iosUrl || data.appstore.androidUrl || '';
 
+    case 'whatsapp':
+      if (!data.whatsapp) return '';
+      const waPhone = data.whatsapp.phone?.replace(/[^0-9]/g, '') || '';
+      const waMessage = data.whatsapp.message || '';
+      if (waMessage) {
+        return `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`;
+      }
+      return `https://wa.me/${waPhone}`;
+
+    case 'youtube':
+      if (!data.youtube) return '';
+      return data.youtube.url || '';
+
+    case 'bitcoin':
+      if (!data.bitcoin) return '';
+      const btcAddress = data.bitcoin.address || '';
+      const btcAmount = data.bitcoin.amount;
+      const btcLabel = data.bitcoin.label;
+      let btcUri = `bitcoin:${btcAddress}`;
+      const btcParams: string[] = [];
+      if (btcAmount) btcParams.push(`amount=${btcAmount}`);
+      if (btcLabel) btcParams.push(`label=${encodeURIComponent(btcLabel)}`);
+      if (btcParams.length > 0) btcUri += `?${btcParams.join('&')}`;
+      return btcUri;
+
+    case 'coupon':
+      if (!data.coupon) return '';
+      const couponCode = data.coupon.code || '';
+      const couponDiscount = data.coupon.discount || '';
+      const couponExpiry = data.coupon.expiry || '';
+      const couponTerms = data.coupon.terms || '';
+      let couponText = `COUPON: ${couponCode}\n${couponDiscount}`;
+      if (couponExpiry) couponText += `\nValid till: ${couponExpiry}`;
+      if (couponTerms) couponText += `\n${couponTerms}`;
+      return couponText;
+
     default:
       return data.value;
   }
