@@ -9,6 +9,7 @@ import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired, generat
 import { useAuth } from '../../lib/AuthContext';
 import { DynamicQRForm } from './DynamicQRForm';
 import { QRSettingsPanel } from './QRSettingsPanel';
+import { ScanHeatmap } from './ScanHeatmap';
 import { CustomSVGRenderer } from '../../services/customSvgRenderer';
 import { QRStyleConfig } from '../../types';
 import {
@@ -783,6 +784,13 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                           )}
                         </div>
                       </div>
+
+                      {/* GPS Location Heatmap */}
+                      {selectedQR.gps_tracking_config?.enabled && selectedQR.gps_tracking_config?.store_for_heatmap && (
+                        <div className="mt-6">
+                          <ScanHeatmap qrId={selectedQR.id} height="350px" />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
