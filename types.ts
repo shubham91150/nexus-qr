@@ -1,4 +1,4 @@
-export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore';
+export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore' | 'whatsapp' | 'youtube' | 'bitcoin' | 'coupon';
 
 export interface QRStyleConfig {
   size: number;
@@ -52,6 +52,10 @@ export interface QRContentData {
     huaweiUrl?: string;
     appName?: string;
   };
+  whatsapp?: { phone: string; message: string };
+  youtube?: { url: string };
+  bitcoin?: { address: string; amount?: string; label?: string };
+  coupon?: { code: string; discount: string; expiry?: string; terms?: string };
 }
 
 // Global types for libraries loaded via script tags
