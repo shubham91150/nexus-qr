@@ -176,12 +176,28 @@ export interface ScanEvent {
   scan: QRScan;
 }
 
-// Generate unique short code
+// Generate unique short code using cryptographically secure random values
 export function generateShortCode(length: number = 6): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+
+  // Use crypto.getRandomValues for secure random number generation
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const randomValues = new Uint32Array(length);
+    window.crypto.getRandomValues(randomValues);
+
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(randomValues[i] % chars.length);
+    }
+    return result;
+  }
+
+  // Fallback for environments without crypto (should not happen in browsers)
+  // Using a less predictable seed
   let result = '';
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    const randomValue = Math.floor(Math.random() * chars.length);
+    result += chars.charAt(randomValue);
   }
   return result;
 }

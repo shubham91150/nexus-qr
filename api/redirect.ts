@@ -1,12 +1,68 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'crypto';
 
-// Initialize Supabase client
-const supabaseUrl = 'https://tyuambzppjfvwxkmpgma.supabase.co';
+// Initialize Supabase client using environment variables
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
 
 // Use service key for server-side operations (bypasses RLS)
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// ==================== Security Helper Functions ====================
+
+/**
+ * Escape HTML to prevent XSS attacks
+ */
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Hash password using SHA-256 for secure comparison
+ * Note: In production, use bcrypt with salt. This is a basic implementation.
+ */
+function hashPassword(password: string): string {
+  return createHash('sha256').update(password).digest('hex');
+}
+
+/**
+ * Validate URL to prevent open redirect attacks
+ * Only allows http:// and https:// URLs
+ */
+function isValidRedirectUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+    // Block javascript: and data: URIs that might bypass protocol check
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('javascript:') || lowerUrl.includes('data:')) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sanitize URL for safe redirect - returns fallback if invalid
+ */
+function sanitizeRedirectUrl(url: string, fallback: string = '/'): string {
+  if (!url || !isValidRedirectUrl(url)) {
+    console.warn(`[SECURITY] Invalid redirect URL blocked: ${url}`);
+    return fallback;
+  }
+  return url;
+}
 
 // ==================== Types ====================
 
@@ -163,7 +219,7 @@ function getLanguage(req: VercelRequest): string {
   return 'en';
 }
 
-// Fetch geolocation data from IP (using free API)
+// Fetch geolocation data from IP (using free API over HTTPS)
 async function getGeoLocation(ip: string): Promise<{ country: string; city: string; lat?: number; lon?: number } | null> {
   // Skip for localhost/private IPs
   if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
@@ -171,20 +227,22 @@ async function getGeoLocation(ip: string): Promise<{ country: string; city: stri
   }
 
   try {
-    const response = await fetch(`http://ip-api.com/json/${ip}?fields=country,city,lat,lon`, {
+    // Use HTTPS for secure communication
+    const response = await fetch(`https://ipapi.co/${ip}/json/`, {
       signal: AbortSignal.timeout(2000),
     });
 
     if (!response.ok) return null;
 
     const data = await response.json();
-    if (data.status === 'fail') return null;
+    // ipapi.co returns error field on failure
+    if (data.error) return null;
 
     return {
-      country: data.country || null,
+      country: data.country_name || data.country || null,
       city: data.city || null,
-      lat: data.lat,
-      lon: data.lon,
+      lat: data.latitude,
+      lon: data.longitude,
     };
   } catch {
     return null;
@@ -273,12 +331,17 @@ function appendUTMParameters(url: string, utm: UTMParameters): string {
 
 // Generate password protection page HTML
 function getPasswordPage(code: string, hint?: string): string {
+  // Escape hint and code to prevent XSS
+  const safeHint = hint ? escapeHtml(hint) : '';
+  const safeCode = escapeHtml(code);
+
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <title>Password Protected</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
       <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
@@ -299,8 +362,8 @@ function getPasswordPage(code: string, hint?: string): string {
       <div class="card">
         <div class="icon">🔒</div>
         <h1>Password Protected</h1>
-        <p class="hint">${hint ? `Hint: ${hint}` : 'Enter the password to continue'}</p>
-        <form method="POST" action="/api/redirect?code=${code}">
+        <p class="hint">${safeHint ? `Hint: ${safeHint}` : 'Enter the password to continue'}</p>
+        <form method="POST" action="/api/redirect?code=${safeCode}">
           <input type="password" name="password" placeholder="Enter password" required autocomplete="off" />
           <div class="error" id="error">Incorrect password. Please try again.</div>
           <button type="submit">Unlock</button>
@@ -317,16 +380,20 @@ function getPasswordPage(code: string, hint?: string): string {
 }
 
 // Generate geofence blocked page HTML
-function getGeofenceBlockedPage(redirectUrl?: string): string {
-  if (redirectUrl) {
-    return `<script>window.location.href="${redirectUrl}";</script>`;
+// Returns null if redirect should be performed, otherwise returns HTML
+function getGeofenceBlockedPage(redirectUrl?: string): { html: string | null; redirect: string | null } {
+  if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
+    // Return validated redirect URL for server-side redirect
+    return { html: null, redirect: sanitizeRedirectUrl(redirectUrl) };
   }
-  return `
+  return {
+    html: `
     <!DOCTYPE html>
     <html>
     <head>
       <title>Access Restricted</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'">
       <style>
         body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
         .card { background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 400px; margin: 20px; }
@@ -343,20 +410,26 @@ function getGeofenceBlockedPage(redirectUrl?: string): string {
       </div>
     </body>
     </html>
-  `;
+  `,
+    redirect: null
+  };
 }
 
 // Generate IP blocked page HTML
-function getIPBlockedPage(redirectUrl?: string): string {
-  if (redirectUrl) {
-    return `<script>window.location.href="${redirectUrl}";</script>`;
+// Returns null if redirect should be performed, otherwise returns HTML
+function getIPBlockedPage(redirectUrl?: string): { html: string | null; redirect: string | null } {
+  if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
+    // Return validated redirect URL for server-side redirect
+    return { html: null, redirect: sanitizeRedirectUrl(redirectUrl) };
   }
-  return `
+  return {
+    html: `
     <!DOCTYPE html>
     <html>
     <head>
       <title>Rate Limited</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'">
       <style>
         body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
         .card { background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 400px; margin: 20px; }
@@ -373,7 +446,9 @@ function getIPBlockedPage(redirectUrl?: string): string {
       </div>
     </body>
     </html>
-  `;
+  `,
+    redirect: null
+  };
 }
 
 // Check if QR code is expired
@@ -531,12 +606,43 @@ function getRedirectUrl(
 
 // ==================== Password Verification Handler ====================
 
+/**
+ * Securely compare password using constant-time comparison
+ * to prevent timing attacks
+ */
+function secureComparePassword(inputPassword: string, storedPassword: string): boolean {
+  // Hash the input password for comparison
+  const hashedInput = hashPassword(inputPassword);
+
+  // If stored password looks like a hash (64 hex chars for SHA-256), compare hashes
+  // Otherwise, hash the stored password too for comparison (legacy support)
+  const hashedStored = storedPassword.length === 64 && /^[a-f0-9]+$/i.test(storedPassword)
+    ? storedPassword
+    : hashPassword(storedPassword);
+
+  // Constant-time comparison to prevent timing attacks
+  if (hashedInput.length !== hashedStored.length) return false;
+
+  let result = 0;
+  for (let i = 0; i < hashedInput.length; i++) {
+    result |= hashedInput.charCodeAt(i) ^ hashedStored.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 async function handlePasswordVerification(
   req: VercelRequest,
   res: VercelResponse,
   code: string
 ): Promise<void> {
   if (!code) {
+    res.redirect(302, '/');
+    return;
+  }
+
+  // Sanitize the code parameter
+  const safeCode = code.replace(/[^a-zA-Z0-9-_]/g, '');
+  if (safeCode !== code) {
     res.redirect(302, '/');
     return;
   }
@@ -554,7 +660,7 @@ async function handlePasswordVerification(
   const { data: qrCode, error } = await supabase
     .from('dynamic_qr_codes')
     .select('password_protection, destination_url')
-    .eq('short_code', code)
+    .eq('short_code', safeCode)
     .single();
 
   if (error || !qrCode) {
@@ -565,18 +671,25 @@ async function handlePasswordVerification(
   const passwordProtection = qrCode.password_protection as PasswordProtection | null;
 
   if (!passwordProtection?.enabled) {
-    res.redirect(302, `/r/${code}`);
+    res.redirect(302, `/r/${safeCode}`);
     return;
   }
 
-  // Check password
-  if (password === passwordProtection.password) {
-    // Set a cookie to bypass password check
-    res.setHeader('Set-Cookie', `qr_auth_${code}=verified; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`);
-    res.redirect(302, `/r/${code}`);
+  // Secure password comparison using constant-time algorithm
+  if (secureComparePassword(password, passwordProtection.password)) {
+    // Determine if we should add Secure flag (production = HTTPS)
+    const isProduction = process.env.NODE_ENV === 'production' ||
+                         process.env.VERCEL_ENV === 'production';
+    const secureFlag = isProduction ? '; Secure' : '';
+
+    // Set a cookie to bypass password check with security flags
+    res.setHeader('Set-Cookie',
+      `qr_auth_${safeCode}=verified; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600${secureFlag}`
+    );
+    res.redirect(302, `/r/${safeCode}`);
   } else {
     // Redirect back with error
-    res.redirect(302, `/r/${code}?error=1`);
+    res.redirect(302, `/r/${safeCode}?error=1`);
   }
 }
 
@@ -739,7 +852,12 @@ export default async function handler(
       const shouldBlock = geofenceSettings.blockOutside ? !withinGeofence : withinGeofence;
 
       if (shouldBlock) {
-        res.status(403).send(getGeofenceBlockedPage(geofenceSettings.blockedRedirectUrl));
+        const geofenceResponse = getGeofenceBlockedPage(geofenceSettings.blockedRedirectUrl);
+        if (geofenceResponse.redirect) {
+          res.redirect(302, geofenceResponse.redirect);
+        } else {
+          res.status(403).send(geofenceResponse.html);
+        }
         return;
       }
     }
@@ -750,7 +868,12 @@ export default async function handler(
       const allowed = await checkIPRestriction(qrCode.id, clientIP, ipRestriction);
 
       if (!allowed) {
-        res.status(429).send(getIPBlockedPage(ipRestriction.blockedRedirectUrl));
+        const ipResponse = getIPBlockedPage(ipRestriction.blockedRedirectUrl);
+        if (ipResponse.redirect) {
+          res.redirect(302, ipResponse.redirect);
+        } else {
+          res.status(429).send(ipResponse.html);
+        }
         return;
       }
     }
@@ -775,6 +898,12 @@ export default async function handler(
     const utmParameters = qrCode.utm_parameters as UTMParameters | null;
     if (utmParameters?.enabled) {
       redirectUrl = appendUTMParameters(redirectUrl, utmParameters);
+    }
+
+    // Validate and sanitize the final redirect URL to prevent open redirect attacks
+    const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl);
+    if (safeRedirectUrl !== redirectUrl) {
+      console.warn(`[SECURITY] Redirect URL sanitized from "${redirectUrl}" to "${safeRedirectUrl}"`);
     }
 
     // Record the scan asynchronously (don't block redirect)
@@ -804,8 +933,8 @@ export default async function handler(
       console.log('Skipping scan record for internal request');
     }
 
-    // Redirect to final destination
-    res.redirect(302, redirectUrl);
+    // Redirect to final destination (validated)
+    res.redirect(302, safeRedirectUrl);
   } catch (err) {
     console.error('Redirect error:', err);
     res.redirect(302, '/');
