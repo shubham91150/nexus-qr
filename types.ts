@@ -1,4 +1,4 @@
-export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore' | 'whatsapp' | 'youtube' | 'bitcoin' | 'coupon' | 'upi' | 'paypal' | 'telegram' | 'spotify' | 'instagram' | 'twitter' | 'linkedin' | 'zoom' | 'facebook' | 'tiktok' | 'pinterest' | 'snapchat' | 'discord' | 'skype' | 'facetime' | 'googlemeet' | 'googlereview' | 'pdf' | 'menu';
+export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore' | 'whatsapp' | 'youtube' | 'bitcoin' | 'coupon' | 'upi' | 'paypal' | 'telegram' | 'spotify' | 'instagram' | 'twitter' | 'linkedin' | 'zoom' | 'facebook' | 'tiktok' | 'pinterest' | 'snapchat' | 'discord' | 'skype' | 'facetime' | 'googlemeet' | 'googlereview' | 'pdf' | 'menu' | 'audio' | 'video' | 'images' | 'document';
 
 export interface QRStyleConfig {
   size: number;
@@ -75,6 +75,11 @@ export interface QRContentData {
   googlereview?: { placeId: string; businessName?: string };
   pdf?: { url: string; title?: string };
   menu?: { url: string; restaurantName?: string };
+  // Media file types
+  audio?: { url: string; title?: string; artist?: string; isUploading?: boolean };
+  video?: { url: string; title?: string; isUploading?: boolean };
+  images?: { urls: string[]; title?: string; isUploading?: boolean };
+  document?: { url: string; title?: string; fileType?: string; isUploading?: boolean };
 }
 
 // Global types for libraries loaded via script tags
