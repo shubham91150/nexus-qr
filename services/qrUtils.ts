@@ -95,6 +95,161 @@ export const generatePayload = (data: QRContentData): string => {
       if (couponTerms) couponText += `\n${couponTerms}`;
       return couponText;
 
+    case 'upi':
+      if (!data.upi) return '';
+      const upiVpa = data.upi.vpa || '';
+      const upiName = data.upi.name || '';
+      const upiAmount = data.upi.amount || '';
+      const upiNote = data.upi.note || '';
+      // UPI deep link format
+      let upiUri = `upi://pay?pa=${encodeURIComponent(upiVpa)}`;
+      if (upiName) upiUri += `&pn=${encodeURIComponent(upiName)}`;
+      if (upiAmount) upiUri += `&am=${upiAmount}`;
+      if (upiNote) upiUri += `&tn=${encodeURIComponent(upiNote)}`;
+      upiUri += '&cu=INR';
+      return upiUri;
+
+    case 'paypal':
+      if (!data.paypal) return '';
+      const paypalEmail = data.paypal.email || '';
+      const paypalAmount = data.paypal.amount || '';
+      const paypalCurrency = data.paypal.currency || 'USD';
+      // PayPal.me link format
+      let paypalUrl = `https://paypal.me/${encodeURIComponent(paypalEmail)}`;
+      if (paypalAmount) paypalUrl += `/${paypalAmount}${paypalCurrency}`;
+      return paypalUrl;
+
+    case 'telegram':
+      if (!data.telegram) return '';
+      const tgUsername = data.telegram.username?.replace('@', '') || '';
+      const tgType = data.telegram.type || 'user';
+      // Telegram deep link
+      if (tgType === 'group' || tgType === 'channel') {
+        return `https://t.me/${tgUsername}`;
+      }
+      return `https://t.me/${tgUsername}`;
+
+    case 'spotify':
+      if (!data.spotify) return '';
+      // Return the Spotify URL directly
+      return data.spotify.url || '';
+
+    case 'instagram':
+      if (!data.instagram) return '';
+      const igUsername = data.instagram.username?.replace('@', '') || '';
+      return `https://instagram.com/${igUsername}`;
+
+    case 'twitter':
+      if (!data.twitter) return '';
+      const twUsername = data.twitter.username?.replace('@', '') || '';
+      return `https://twitter.com/${twUsername}`;
+
+    case 'linkedin':
+      if (!data.linkedin) return '';
+      const liUsername = data.linkedin.username || '';
+      const liType = data.linkedin.type || 'profile';
+      if (liType === 'company') {
+        return `https://linkedin.com/company/${liUsername}`;
+      }
+      // Handle both "in/username" and just "username" formats
+      if (liUsername.startsWith('in/')) {
+        return `https://linkedin.com/${liUsername}`;
+      }
+      return `https://linkedin.com/in/${liUsername}`;
+
+    case 'zoom':
+      if (!data.zoom) return '';
+      const zoomId = data.zoom.meetingId?.replace(/\s/g, '') || '';
+      const zoomPwd = data.zoom.password || '';
+      // Zoom join link format
+      let zoomUrl = `https://zoom.us/j/${zoomId}`;
+      if (zoomPwd) zoomUrl += `?pwd=${encodeURIComponent(zoomPwd)}`;
+      return zoomUrl;
+
+    case 'facebook':
+      if (!data.facebook) return '';
+      const fbUsername = data.facebook.username || '';
+      const fbType = data.facebook.type || 'profile';
+      if (fbType === 'page') {
+        return `https://facebook.com/${fbUsername}`;
+      } else if (fbType === 'group') {
+        return `https://facebook.com/groups/${fbUsername}`;
+      }
+      return `https://facebook.com/${fbUsername}`;
+
+    case 'tiktok':
+      if (!data.tiktok) return '';
+      const ttUsername = data.tiktok.username?.replace('@', '') || '';
+      return `https://tiktok.com/@${ttUsername}`;
+
+    case 'pinterest':
+      if (!data.pinterest) return '';
+      const pinUsername = data.pinterest.username || '';
+      const pinBoard = data.pinterest.board || '';
+      if (pinBoard) {
+        return `https://pinterest.com/${pinUsername}/${pinBoard}`;
+      }
+      return `https://pinterest.com/${pinUsername}`;
+
+    case 'snapchat':
+      if (!data.snapchat) return '';
+      const snapUsername = data.snapchat.username || '';
+      return `https://snapchat.com/add/${snapUsername}`;
+
+    case 'discord':
+      if (!data.discord) return '';
+      const discordCode = data.discord.inviteCode || '';
+      // Handle full URLs or just invite codes
+      if (discordCode.includes('discord.gg/') || discordCode.includes('discord.com/')) {
+        return discordCode;
+      }
+      return `https://discord.gg/${discordCode}`;
+
+    case 'skype':
+      if (!data.skype) return '';
+      const skypeUser = data.skype.username || '';
+      const skypeType = data.skype.type || 'chat';
+      // Skype URI scheme
+      if (skypeType === 'call') {
+        return `skype:${skypeUser}?call`;
+      }
+      return `skype:${skypeUser}?chat`;
+
+    case 'facetime':
+      if (!data.facetime) return '';
+      const ftContact = data.facetime.contact || '';
+      const ftType = data.facetime.type || 'video';
+      // FaceTime URI scheme
+      if (ftType === 'audio') {
+        return `facetime-audio:${ftContact}`;
+      }
+      return `facetime:${ftContact}`;
+
+    case 'googlemeet':
+      if (!data.googlemeet) return '';
+      const meetCode = data.googlemeet.meetingCode || '';
+      // Handle full URLs or just meeting codes
+      if (meetCode.includes('meet.google.com')) {
+        return meetCode;
+      }
+      return `https://meet.google.com/${meetCode}`;
+
+    case 'googlereview':
+      if (!data.googlereview) return '';
+      const placeId = data.googlereview.placeId || '';
+      // Google Review URL format
+      return `https://search.google.com/local/writereview?placeid=${placeId}`;
+
+    case 'pdf':
+      if (!data.pdf) return '';
+      // Return the PDF URL directly
+      return data.pdf.url || '';
+
+    case 'menu':
+      if (!data.menu) return '';
+      // Return the menu URL directly
+      return data.menu.url || '';
+
     default:
       return data.value;
   }
