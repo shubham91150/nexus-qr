@@ -168,8 +168,10 @@ export const generatePayload = (data: QRContentData): string => {
 
     case 'facebook':
       if (!data.facebook) return '';
-      const fbUsername = data.facebook.username || '';
+      // Sanitize username - allow alphanumeric, dots, and hyphens only
+      const fbUsername = (data.facebook.username || '').replace(/[^a-zA-Z0-9.-]/g, '');
       const fbType = data.facebook.type || 'profile';
+      if (!fbUsername) return '';
       if (fbType === 'page') {
         return `https://facebook.com/${fbUsername}`;
       } else if (fbType === 'group') {
@@ -179,13 +181,17 @@ export const generatePayload = (data: QRContentData): string => {
 
     case 'tiktok':
       if (!data.tiktok) return '';
-      const ttUsername = data.tiktok.username?.replace('@', '') || '';
+      // Sanitize username - allow alphanumeric, underscores, and dots only
+      const ttUsername = (data.tiktok.username || '').replace('@', '').replace(/[^a-zA-Z0-9_.]/g, '');
+      if (!ttUsername) return '';
       return `https://tiktok.com/@${ttUsername}`;
 
     case 'pinterest':
       if (!data.pinterest) return '';
-      const pinUsername = data.pinterest.username || '';
-      const pinBoard = data.pinterest.board || '';
+      // Sanitize username - allow alphanumeric and underscores only
+      const pinUsername = (data.pinterest.username || '').replace(/[^a-zA-Z0-9_]/g, '');
+      const pinBoard = (data.pinterest.board || '').replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!pinUsername) return '';
       if (pinBoard) {
         return `https://pinterest.com/${pinUsername}/${pinBoard}`;
       }
@@ -193,21 +199,35 @@ export const generatePayload = (data: QRContentData): string => {
 
     case 'snapchat':
       if (!data.snapchat) return '';
-      const snapUsername = data.snapchat.username || '';
+      // Sanitize username - allow alphanumeric, underscores, hyphens, and dots only
+      const snapUsername = (data.snapchat.username || '').replace(/[^a-zA-Z0-9_.-]/g, '');
+      if (!snapUsername) return '';
       return `https://snapchat.com/add/${snapUsername}`;
 
     case 'discord':
       if (!data.discord) return '';
-      const discordCode = data.discord.inviteCode || '';
-      // Handle full URLs or just invite codes
-      if (discordCode.includes('discord.gg/') || discordCode.includes('discord.com/')) {
+      const discordCode = data.discord.inviteCode?.trim() || '';
+      // Validate full URLs - must start with official Discord domains
+      if (discordCode.startsWith('https://discord.gg/') ||
+          discordCode.startsWith('https://discord.com/invite/') ||
+          discordCode.startsWith('http://discord.gg/') ||
+          discordCode.startsWith('http://discord.com/invite/')) {
         return discordCode;
       }
-      return `https://discord.gg/${discordCode}`;
+      // Extract invite code from URL if pasted incorrectly
+      const discordMatch = discordCode.match(/(?:discord\.gg|discord\.com\/invite)\/([a-zA-Z0-9-]+)/);
+      if (discordMatch) {
+        return `https://discord.gg/${discordMatch[1]}`;
+      }
+      // Treat as invite code - sanitize to alphanumeric and hyphens only
+      const sanitizedDiscordCode = discordCode.replace(/[^a-zA-Z0-9-]/g, '');
+      return `https://discord.gg/${sanitizedDiscordCode}`;
 
     case 'skype':
       if (!data.skype) return '';
-      const skypeUser = data.skype.username || '';
+      // Sanitize username - allow alphanumeric, underscores, dots, and hyphens only
+      const skypeUser = (data.skype.username || '').replace(/[^a-zA-Z0-9_.-]/g, '');
+      if (!skypeUser) return '';
       const skypeType = data.skype.type || 'chat';
       // Skype URI scheme
       if (skypeType === 'call') {
@@ -227,28 +247,48 @@ export const generatePayload = (data: QRContentData): string => {
 
     case 'googlemeet':
       if (!data.googlemeet) return '';
-      const meetCode = data.googlemeet.meetingCode || '';
-      // Handle full URLs or just meeting codes
-      if (meetCode.includes('meet.google.com')) {
+      const meetCode = data.googlemeet.meetingCode?.trim() || '';
+      // Validate full URLs - must start with official Google Meet domain
+      if (meetCode.startsWith('https://meet.google.com/') ||
+          meetCode.startsWith('http://meet.google.com/')) {
         return meetCode;
       }
-      return `https://meet.google.com/${meetCode}`;
+      // Extract meeting code from URL if pasted incorrectly
+      const meetMatch = meetCode.match(/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/i);
+      if (meetMatch) {
+        return `https://meet.google.com/${meetMatch[1]}`;
+      }
+      // Treat as meeting code - sanitize to valid format (xxx-xxxx-xxx)
+      const sanitizedMeetCode = meetCode.replace(/[^a-zA-Z-]/g, '').toLowerCase();
+      return `https://meet.google.com/${sanitizedMeetCode}`;
 
     case 'googlereview':
       if (!data.googlereview) return '';
-      const placeId = data.googlereview.placeId || '';
-      // Google Review URL format
-      return `https://search.google.com/local/writereview?placeid=${placeId}`;
+      // Sanitize place ID - Google Place IDs contain alphanumeric chars, underscores, and hyphens
+      const placeId = (data.googlereview.placeId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!placeId) return '';
+      // Google Review URL format - encode the place ID for safety
+      return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
 
     case 'pdf':
       if (!data.pdf) return '';
-      // Return the PDF URL directly
-      return data.pdf.url || '';
+      const pdfUrl = data.pdf.url?.trim() || '';
+      // Validate URL starts with http/https
+      if (pdfUrl.startsWith('https://') || pdfUrl.startsWith('http://')) {
+        return pdfUrl;
+      }
+      // Prepend https if no protocol
+      return pdfUrl ? `https://${pdfUrl}` : '';
 
     case 'menu':
       if (!data.menu) return '';
-      // Return the menu URL directly
-      return data.menu.url || '';
+      const menuUrl = data.menu.url?.trim() || '';
+      // Validate URL starts with http/https
+      if (menuUrl.startsWith('https://') || menuUrl.startsWith('http://')) {
+        return menuUrl;
+      }
+      // Prepend https if no protocol
+      return menuUrl ? `https://${menuUrl}` : '';
 
     default:
       return data.value;
