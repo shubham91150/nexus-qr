@@ -44,6 +44,21 @@ export const generatePayload = (data: QRContentData): string => {
       // Basic iCal format
       return `BEGIN:VEVENT\nSUMMARY:${title}\nLOCATION:${location}\nDTSTART:${start.replace(/[-:]/g, '')}\nDTEND:${end.replace(/[-:]/g, '')}\nEND:VEVENT`;
 
+    case 'sms':
+      if (!data.sms) return '';
+      const smsPhone = data.sms.phone || '';
+      const smsMessage = data.sms.message || '';
+      if (smsMessage) {
+        return `sms:${smsPhone}?body=${encodeURIComponent(smsMessage)}`;
+      }
+      return `sms:${smsPhone}`;
+
+    case 'appstore':
+      if (!data.appstore) return '';
+      // For static QR, use iOS URL as primary (most common), fallback to Android
+      // Dynamic QR can handle device detection server-side
+      return data.appstore.iosUrl || data.appstore.androidUrl || '';
+
     default:
       return data.value;
   }
