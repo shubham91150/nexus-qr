@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { QRContentData, QRType } from '../types';
 import { generateSmartQRContent } from '../services/geminiService';
-import { Loader2, Sparkles, MapPin, Upload, FileText, X } from 'lucide-react';
+import { uploadFile, uploadMultipleFiles, FILE_CONFIG, formatFileSize, MediaType } from '../services/fileUploadService';
+import { Loader2, Sparkles, MapPin, Upload, FileText, X, Headphones, Film, Images, File, Trash2, Plus, AlertCircle } from 'lucide-react';
 
 interface Props {
   type: QRType;
@@ -77,6 +78,109 @@ const DebouncedInput = ({
       value={localValue}
       onChange={handleChange}
     />
+  );
+};
+
+// Media Upload Zone Component
+const MediaUploadZone: React.FC<{
+  mediaType: MediaType;
+  icon: React.ReactNode;
+  accept: string;
+  isUploading: boolean;
+  multiple?: boolean;
+  compact?: boolean;
+  onUpload: (file: File) => void;
+}> = ({ mediaType, icon, accept, isUploading, multiple, compact, onUpload }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const files = Array.from(e.dataTransfer.files);
+      files.forEach(file => onUpload(file));
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => onUpload(file));
+    }
+  };
+
+  if (compact) {
+    return (
+      <div
+        className={`aspect-square rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors
+          ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50'}`}
+        onClick={() => inputRef.current?.click()}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          className="hidden"
+          onChange={handleChange}
+        />
+        {isUploading ? (
+          <Loader2 size={20} className="animate-spin text-gray-400" />
+        ) : (
+          <div className="text-gray-400">{icon}</div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`py-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors
+        ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50'}`}
+      onClick={() => inputRef.current?.click()}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        onChange={handleChange}
+      />
+      {isUploading ? (
+        <>
+          <Loader2 size={24} className="animate-spin text-gray-400 mb-2" />
+          <p className="text-sm text-gray-500">Uploading...</p>
+        </>
+      ) : (
+        <>
+          <div className="text-gray-400 mb-2">{icon}</div>
+          <p className="text-sm text-gray-600 font-medium">Click or drag to upload</p>
+          <p className="text-xs text-gray-400 mt-1">Max {formatFileSize(FILE_CONFIG[mediaType].maxSize)}</p>
+        </>
+      )}
+    </div>
   );
 };
 
@@ -867,6 +971,236 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
             <DebouncedInput placeholder="https://yourmenu.com/menu.pdf" value={data.menu?.url || ''} onChange={(v) => updateNested('menu', 'url', v)} />
           </div>
           <DebouncedInput placeholder="Restaurant Name (optional)" value={data.menu?.restaurantName || ''} onChange={(v) => updateNested('menu', 'restaurantName', v)} />
+        </InputWrapper>
+      );
+
+    case 'audio':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border border-purple-100 mb-2">
+            <h4 className="text-purple-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <Headphones size={16} />
+              Audio File
+            </h4>
+            <p className="text-xs text-purple-700">Upload MP3, WAV, OGG, or AAC files (max 10MB).</p>
+          </div>
+          {data.audio?.url ? (
+            <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl border border-purple-200">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Headphones size={20} className="text-purple-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{data.audio?.title || 'Audio File'}</p>
+                <p className="text-xs text-gray-500 truncate">{data.audio?.url}</p>
+              </div>
+              <button
+                onClick={() => onChange({ ...data, audio: { url: '', title: '', artist: '' } })}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ) : (
+            <MediaUploadZone
+              mediaType="audio"
+              icon={<Headphones size={24} />}
+              accept={FILE_CONFIG.audio.accept}
+              isUploading={data.audio?.isUploading || false}
+              onUpload={async (file) => {
+                updateNested('audio', 'isUploading', true);
+                const result = await uploadFile(file, 'audio');
+                if (result.success && result.url) {
+                  onChange({ ...data, audio: { url: result.url, title: file.name.replace(/\.[^/.]+$/, ''), isUploading: false } });
+                } else {
+                  updateNested('audio', 'isUploading', false);
+                  alert(result.error || 'Upload failed');
+                }
+              }}
+            />
+          )}
+          <DebouncedInput placeholder="Audio Title (optional)" value={data.audio?.title || ''} onChange={(v) => updateNested('audio', 'title', v)} />
+          <DebouncedInput placeholder="Artist Name (optional)" value={data.audio?.artist || ''} onChange={(v) => updateNested('audio', 'artist', v)} />
+          <p className="text-xs text-gray-400 px-1 flex items-center gap-1">
+            <AlertCircle size={12} />
+            Or paste a direct audio file URL above.
+          </p>
+        </InputWrapper>
+      );
+
+    case 'video':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-xl border border-red-100 mb-2">
+            <h4 className="text-red-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <Film size={16} />
+              Video File
+            </h4>
+            <p className="text-xs text-red-700">Upload MP4, WebM, or MOV files (max 50MB).</p>
+          </div>
+          {data.video?.url ? (
+            <div className="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-200">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Film size={20} className="text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{data.video?.title || 'Video File'}</p>
+                <p className="text-xs text-gray-500 truncate">{data.video?.url}</p>
+              </div>
+              <button
+                onClick={() => onChange({ ...data, video: { url: '', title: '' } })}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ) : (
+            <MediaUploadZone
+              mediaType="video"
+              icon={<Film size={24} />}
+              accept={FILE_CONFIG.video.accept}
+              isUploading={data.video?.isUploading || false}
+              onUpload={async (file) => {
+                updateNested('video', 'isUploading', true);
+                const result = await uploadFile(file, 'video');
+                if (result.success && result.url) {
+                  onChange({ ...data, video: { url: result.url, title: file.name.replace(/\.[^/.]+$/, ''), isUploading: false } });
+                } else {
+                  updateNested('video', 'isUploading', false);
+                  alert(result.error || 'Upload failed');
+                }
+              }}
+            />
+          )}
+          <DebouncedInput placeholder="Video Title (optional)" value={data.video?.title || ''} onChange={(v) => updateNested('video', 'title', v)} />
+          <p className="text-xs text-gray-400 px-1 flex items-center gap-1">
+            <AlertCircle size={12} />
+            Or paste a direct video file URL above.
+          </p>
+        </InputWrapper>
+      );
+
+    case 'images':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-green-50 to-teal-50 p-4 rounded-xl border border-green-100 mb-2">
+            <h4 className="text-green-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <Images size={16} />
+              Image Gallery
+            </h4>
+            <p className="text-xs text-green-700">Upload multiple images (JPEG, PNG, GIF, WebP - max 5MB each).</p>
+          </div>
+          {data.images?.urls && data.images.urls.length > 0 ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                {data.images.urls.map((url, idx) => (
+                  <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200">
+                    <img src={url} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => {
+                        const newUrls = data.images!.urls.filter((_, i) => i !== idx);
+                        onChange({ ...data, images: { ...data.images, urls: newUrls } });
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                <MediaUploadZone
+                  mediaType="images"
+                  icon={<Plus size={20} />}
+                  accept={FILE_CONFIG.images.accept}
+                  isUploading={data.images?.isUploading || false}
+                  multiple
+                  compact
+                  onUpload={async (file) => {
+                    updateNested('images', 'isUploading', true);
+                    const result = await uploadFile(file, 'images');
+                    if (result.success && result.url) {
+                      const newUrls = [...(data.images?.urls || []), result.url];
+                      onChange({ ...data, images: { ...data.images, urls: newUrls, isUploading: false } });
+                    } else {
+                      updateNested('images', 'isUploading', false);
+                      alert(result.error || 'Upload failed');
+                    }
+                  }}
+                />
+              </div>
+              <p className="text-xs text-gray-500">{data.images.urls.length} image(s) uploaded</p>
+            </div>
+          ) : (
+            <MediaUploadZone
+              mediaType="images"
+              icon={<Images size={24} />}
+              accept={FILE_CONFIG.images.accept}
+              isUploading={data.images?.isUploading || false}
+              multiple
+              onUpload={async (file) => {
+                updateNested('images', 'isUploading', true);
+                const result = await uploadFile(file, 'images');
+                if (result.success && result.url) {
+                  onChange({ ...data, images: { urls: [result.url], title: '', isUploading: false } });
+                } else {
+                  updateNested('images', 'isUploading', false);
+                  alert(result.error || 'Upload failed');
+                }
+              }}
+            />
+          )}
+          <DebouncedInput placeholder="Gallery Title (optional)" value={data.images?.title || ''} onChange={(v) => updateNested('images', 'title', v)} />
+        </InputWrapper>
+      );
+
+    case 'document':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 mb-2">
+            <h4 className="text-blue-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <File size={16} />
+              Document
+            </h4>
+            <p className="text-xs text-blue-700">Upload PDF, Word, Excel, PowerPoint, or Text files (max 20MB).</p>
+          </div>
+          {data.document?.url ? (
+            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <File size={20} className="text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{data.document?.title || 'Document'}</p>
+                <p className="text-xs text-gray-500 truncate">{data.document?.fileType || 'File'}</p>
+              </div>
+              <button
+                onClick={() => onChange({ ...data, document: { url: '', title: '', fileType: '' } })}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ) : (
+            <MediaUploadZone
+              mediaType="document"
+              icon={<File size={24} />}
+              accept={FILE_CONFIG.document.accept}
+              isUploading={data.document?.isUploading || false}
+              onUpload={async (file) => {
+                updateNested('document', 'isUploading', true);
+                const result = await uploadFile(file, 'document');
+                if (result.success && result.url) {
+                  const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+                  onChange({ ...data, document: { url: result.url, title: file.name.replace(/\.[^/.]+$/, ''), fileType: ext, isUploading: false } });
+                } else {
+                  updateNested('document', 'isUploading', false);
+                  alert(result.error || 'Upload failed');
+                }
+              }}
+            />
+          )}
+          <DebouncedInput placeholder="Document Title (optional)" value={data.document?.title || ''} onChange={(v) => updateNested('document', 'title', v)} />
+          <p className="text-xs text-gray-400 px-1 flex items-center gap-1">
+            <AlertCircle size={12} />
+            Or paste a direct document URL above.
+          </p>
         </InputWrapper>
       );
 

@@ -290,6 +290,40 @@ export const generatePayload = (data: QRContentData): string => {
       // Prepend https if no protocol
       return menuUrl ? `https://${menuUrl}` : '';
 
+    // Media file types - return direct URLs
+    case 'audio':
+      if (!data.audio) return '';
+      const audioUrl = data.audio.url?.trim() || '';
+      if (audioUrl.startsWith('https://') || audioUrl.startsWith('http://')) {
+        return audioUrl;
+      }
+      return audioUrl ? `https://${audioUrl}` : '';
+
+    case 'video':
+      if (!data.video) return '';
+      const videoUrl = data.video.url?.trim() || '';
+      if (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) {
+        return videoUrl;
+      }
+      return videoUrl ? `https://${videoUrl}` : '';
+
+    case 'images':
+      if (!data.images || !data.images.urls || data.images.urls.length === 0) return '';
+      // For image gallery, return the first image URL (or create a gallery page URL)
+      const firstImageUrl = data.images.urls[0]?.trim() || '';
+      if (firstImageUrl.startsWith('https://') || firstImageUrl.startsWith('http://')) {
+        return firstImageUrl;
+      }
+      return firstImageUrl ? `https://${firstImageUrl}` : '';
+
+    case 'document':
+      if (!data.document) return '';
+      const docUrl = data.document.url?.trim() || '';
+      if (docUrl.startsWith('https://') || docUrl.startsWith('http://')) {
+        return docUrl;
+      }
+      return docUrl ? `https://${docUrl}` : '';
+
     default:
       return data.value;
   }

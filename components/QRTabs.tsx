@@ -5,7 +5,8 @@ import {
   MapPin, Calendar, Share2, Sparkles, Layers,
   MessageSquare, Store, Youtube, Bitcoin, Ticket,
   IndianRupee, CreditCard, Send, Music, Camera, Twitter, Briefcase, Video,
-  Facebook, Ghost, FileText, UtensilsCrossed, Star, PhoneCall, VideoIcon
+  Facebook, Ghost, FileText, UtensilsCrossed, Star, PhoneCall, VideoIcon,
+  Headphones, Film, Images, File
 } from 'lucide-react';
 
 interface Props {
@@ -49,6 +50,11 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
     { id: 'paypal', icon: CreditCard, label: 'PayPal' },
     { id: 'bitcoin', icon: Bitcoin, label: 'Bitcoin' },
     { id: 'coupon', icon: Ticket, label: 'Coupon' },
+    // Media file types
+    { id: 'audio', icon: Headphones, label: 'Audio' },
+    { id: 'video', icon: Film, label: 'Video' },
+    { id: 'images', icon: Images, label: 'Gallery' },
+    { id: 'document', icon: File, label: 'Document' },
     { id: 'ai', icon: Sparkles, label: 'AI Magic' },
     { id: 'bulk', icon: Layers, label: 'Bulk QR' },
   ];
