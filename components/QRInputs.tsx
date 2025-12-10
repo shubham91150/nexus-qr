@@ -312,6 +312,48 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
         </InputWrapper>
       );
 
+    case 'sms':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-xl border border-green-100 mb-1">
+            <p className="text-xs text-green-700">Create a QR code that opens SMS app with pre-filled message</p>
+          </div>
+          <DebouncedInput placeholder="Phone Number (e.g., +91XXXXXXXXXX)" value={data.sms?.phone || ''} onChange={(v) => updateNested('sms', 'phone', v)} />
+          <DebouncedInput isArea placeholder="Message (optional)" value={data.sms?.message || ''} onChange={(v) => updateNested('sms', 'message', v)} />
+        </InputWrapper>
+      );
+
+    case 'appstore':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-xl border border-blue-100 mb-1">
+            <p className="text-xs text-blue-700">Create QR code that redirects to app stores based on user's device</p>
+          </div>
+          <DebouncedInput placeholder="App Name (for display)" value={data.appstore?.appName || ''} onChange={(v) => updateNested('appstore', 'appName', v)} />
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-1">
+              <span className="w-4 h-4 bg-gray-900 rounded flex items-center justify-center text-white text-[8px]"></span>
+              iOS App Store URL
+            </label>
+            <DebouncedInput placeholder="https://apps.apple.com/app/..." value={data.appstore?.iosUrl || ''} onChange={(v) => updateNested('appstore', 'iosUrl', v)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-1">
+              <span className="w-4 h-4 bg-green-600 rounded flex items-center justify-center text-white text-[8px]">▶</span>
+              Google Play Store URL
+            </label>
+            <DebouncedInput placeholder="https://play.google.com/store/apps/..." value={data.appstore?.androidUrl || ''} onChange={(v) => updateNested('appstore', 'androidUrl', v)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-1">
+              <span className="w-4 h-4 bg-red-500 rounded flex items-center justify-center text-white text-[8px]">H</span>
+              Huawei AppGallery URL (optional)
+            </label>
+            <DebouncedInput placeholder="https://appgallery.huawei.com/..." value={data.appstore?.huaweiUrl || ''} onChange={(v) => updateNested('appstore', 'huaweiUrl', v)} />
+          </div>
+        </InputWrapper>
+      );
+
     default:
       return <InputWrapper><DebouncedInput placeholder="Enter Value" value={data.value} onChange={(v) => update('value', v)} /></InputWrapper>;
   }

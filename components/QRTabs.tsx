@@ -1,8 +1,9 @@
 import React from 'react';
 import { QRType } from '../types';
-import { 
-  Type, Link, Wifi, User, Phone, Mail, 
-  MapPin, Calendar, Share2, Sparkles, Layers
+import {
+  Type, Link, Wifi, User, Phone, Mail,
+  MapPin, Calendar, Share2, Sparkles, Layers,
+  MessageSquare, Store
 } from 'lucide-react';
 
 interface Props {
@@ -21,6 +22,8 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
     { id: 'event', icon: Calendar, label: 'Event' },
     { id: 'geo', icon: MapPin, label: 'Geo' },
     { id: 'social', icon: Share2, label: 'Social' },
+    { id: 'sms', icon: MessageSquare, label: 'SMS' },
+    { id: 'appstore', icon: Store, label: 'App Store' },
     { id: 'ai', icon: Sparkles, label: 'AI Magic' },
     { id: 'bulk', icon: Layers, label: 'Bulk QR' },
   ];

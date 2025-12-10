@@ -1,4 +1,4 @@
-export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk';
+export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore';
 
 export interface QRStyleConfig {
   size: number;
@@ -44,6 +44,13 @@ export interface QRContentData {
   bulk?: {
     items: Array<{ name: string; value: string }>;
     rawInput: string;
+  };
+  sms?: { phone: string; message: string };
+  appstore?: {
+    iosUrl: string;
+    androidUrl: string;
+    huaweiUrl?: string;
+    appName?: string;
   };
 }
 
