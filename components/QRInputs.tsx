@@ -1093,7 +1093,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
             <div className="space-y-2">
               <div className="grid grid-cols-3 gap-2">
                 {data.images.urls.map((url, idx) => (
-                  <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200">
+                  <div key={`img-${url}-${idx}`} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200">
                     <img src={url} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
                     <button
                       onClick={() => {
@@ -1106,25 +1106,27 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                     </button>
                   </div>
                 ))}
-                <MediaUploadZone
-                  mediaType="images"
-                  icon={<Plus size={20} />}
-                  accept={FILE_CONFIG.images.accept}
-                  isUploading={data.images?.isUploading || false}
-                  multiple
-                  compact
-                  onUpload={async (file) => {
-                    updateNested('images', 'isUploading', true);
-                    const result = await uploadFile(file, 'images');
-                    if (result.success && result.url) {
-                      const newUrls = [...(data.images?.urls || []), result.url];
-                      onChange({ ...data, images: { ...data.images, urls: newUrls, isUploading: false } });
-                    } else {
-                      updateNested('images', 'isUploading', false);
-                      alert(result.error || 'Upload failed');
-                    }
-                  }}
-                />
+                <div key="upload-zone">
+                  <MediaUploadZone
+                    mediaType="images"
+                    icon={<Plus size={20} />}
+                    accept={FILE_CONFIG.images.accept}
+                    isUploading={data.images?.isUploading || false}
+                    multiple
+                    compact
+                    onUpload={async (file) => {
+                      updateNested('images', 'isUploading', true);
+                      const result = await uploadFile(file, 'images');
+                      if (result.success && result.url) {
+                        const newUrls = [...(data.images?.urls || []), result.url];
+                        onChange({ ...data, images: { ...data.images, urls: newUrls, isUploading: false } });
+                      } else {
+                        updateNested('images', 'isUploading', false);
+                        alert(result.error || 'Upload failed');
+                      }
+                    }}
+                  />
+                </div>
               </div>
               <p className="text-xs text-gray-500">{data.images.urls.length} image(s) uploaded</p>
             </div>
