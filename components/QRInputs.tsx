@@ -424,6 +424,209 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
         </InputWrapper>
       );
 
+    case 'upi':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-orange-50 to-green-50 p-4 rounded-xl border border-orange-100 mb-2">
+            <h4 className="text-orange-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              UPI Payment
+            </h4>
+            <p className="text-xs text-orange-700">Create a QR code for instant UPI payments.</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1">UPI ID (VPA) *</label>
+            <DebouncedInput placeholder="yourname@upi or 9876543210@paytm" value={data.upi?.vpa || ''} onChange={(v) => updateNested('upi', 'vpa', v)} />
+          </div>
+          <DebouncedInput placeholder="Payee Name (optional)" value={data.upi?.name || ''} onChange={(v) => updateNested('upi', 'name', v)} />
+          <div className="grid grid-cols-2 gap-3">
+            <DebouncedInput placeholder="Amount (optional)" value={data.upi?.amount || ''} onChange={(v) => updateNested('upi', 'amount', v)} />
+            <DebouncedInput placeholder="Note (optional)" value={data.upi?.note || ''} onChange={(v) => updateNested('upi', 'note', v)} />
+          </div>
+        </InputWrapper>
+      );
+
+    case 'paypal':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 mb-2">
+            <h4 className="text-blue-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#003087">
+                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .757-.65h6.16c2.048 0 3.474.526 4.238 1.564.357.485.58 1.038.669 1.643.092.628.042 1.375-.154 2.219l-.003.018c-.607 3.093-2.537 4.166-5.025 4.166H9.94a.95.95 0 0 0-.939.804l-.746 4.725a.64.64 0 0 1-.632.541h.453l-.846 3.587zm11.141-13.36c-.012.079-.027.158-.042.237-.752 3.862-3.323 5.201-6.609 5.201H9.883c-.391 0-.724.284-.788.67l-.916 5.804a.53.53 0 0 0 .525.617h3.679c.342 0 .633-.25.687-.587l.028-.146.547-3.459.035-.19a.69.69 0 0 1 .687-.587h.432c2.8 0 4.993-1.138 5.634-4.428.269-1.375.13-2.524-.581-3.332z"/>
+              </svg>
+              PayPal Payment
+            </h4>
+            <p className="text-xs text-blue-700">Accept payments via PayPal.me link.</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1">PayPal Username/Email *</label>
+            <DebouncedInput placeholder="your@email.com or username" value={data.paypal?.email || ''} onChange={(v) => updateNested('paypal', 'email', v)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <DebouncedInput placeholder="Amount (optional)" value={data.paypal?.amount || ''} onChange={(v) => updateNested('paypal', 'amount', v)} />
+            <select
+              className="w-full p-4 rounded-xl custom-input text-gray-700 text-sm font-medium appearance-none"
+              value={data.paypal?.currency || 'USD'}
+              onChange={(e) => updateNested('paypal', 'currency', e.target.value)}
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="INR">INR (₹)</option>
+              <option value="CAD">CAD ($)</option>
+              <option value="AUD">AUD ($)</option>
+            </select>
+          </div>
+          <DebouncedInput placeholder="Description (optional)" value={data.paypal?.description || ''} onChange={(v) => updateNested('paypal', 'description', v)} />
+        </InputWrapper>
+      );
+
+    case 'telegram':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0088cc">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+              </svg>
+              Telegram Username
+            </label>
+            <DebouncedInput placeholder="username (without @)" value={data.telegram?.username || ''} onChange={(v) => updateNested('telegram', 'username', v)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1">Link Type</label>
+            <select
+              className="w-full p-4 rounded-xl custom-input text-gray-700 text-sm font-medium appearance-none"
+              value={data.telegram?.type || 'user'}
+              onChange={(e) => updateNested('telegram', 'type', e.target.value)}
+            >
+              <option value="user">User Profile</option>
+              <option value="group">Group Invite</option>
+              <option value="channel">Channel</option>
+            </select>
+          </div>
+        </InputWrapper>
+      );
+
+    case 'spotify':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#1DB954">
+                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+              </svg>
+              Spotify URL
+            </label>
+            <DebouncedInput placeholder="https://open.spotify.com/track/..." value={data.spotify?.url || ''} onChange={(v) => updateNested('spotify', 'url', v)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1">Content Type</label>
+            <select
+              className="w-full p-4 rounded-xl custom-input text-gray-700 text-sm font-medium appearance-none"
+              value={data.spotify?.type || 'track'}
+              onChange={(e) => updateNested('spotify', 'type', e.target.value)}
+            >
+              <option value="track">Track</option>
+              <option value="album">Album</option>
+              <option value="playlist">Playlist</option>
+              <option value="artist">Artist</option>
+            </select>
+          </div>
+        </InputWrapper>
+      );
+
+    case 'instagram':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <defs>
+                  <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#FFDC80"/>
+                    <stop offset="50%" stopColor="#F77737"/>
+                    <stop offset="100%" stopColor="#C13584"/>
+                  </linearGradient>
+                </defs>
+                <path fill="url(#ig-grad)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              </svg>
+              Instagram Username
+            </label>
+            <DebouncedInput placeholder="username (without @)" value={data.instagram?.username || ''} onChange={(v) => updateNested('instagram', 'username', v)} />
+          </div>
+          <p className="text-xs text-gray-400 px-1">
+            Opens the Instagram profile when scanned.
+          </p>
+        </InputWrapper>
+      );
+
+    case 'twitter':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#000000">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              Twitter/X Username
+            </label>
+            <DebouncedInput placeholder="username (without @)" value={data.twitter?.username || ''} onChange={(v) => updateNested('twitter', 'username', v)} />
+          </div>
+          <p className="text-xs text-gray-400 px-1">
+            Opens the Twitter/X profile when scanned.
+          </p>
+        </InputWrapper>
+      );
+
+    case 'linkedin':
+      return (
+        <InputWrapper>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A66C2">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+              LinkedIn Username/ID
+            </label>
+            <DebouncedInput placeholder="in/username or company/name" value={data.linkedin?.username || ''} onChange={(v) => updateNested('linkedin', 'username', v)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1">Profile Type</label>
+            <select
+              className="w-full p-4 rounded-xl custom-input text-gray-700 text-sm font-medium appearance-none"
+              value={data.linkedin?.type || 'profile'}
+              onChange={(e) => updateNested('linkedin', 'type', e.target.value)}
+            >
+              <option value="profile">Personal Profile</option>
+              <option value="company">Company Page</option>
+            </select>
+          </div>
+        </InputWrapper>
+      );
+
+    case 'zoom':
+      return (
+        <InputWrapper>
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-xl border border-blue-100 mb-2">
+            <h4 className="text-blue-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#2D8CFF">
+                <path d="M4.585 13.607l-.27.012h-.006c-.767 0-1.397-.63-1.397-1.397V8.139c0-.767.63-1.397 1.397-1.397h6.774c.768 0 1.397.63 1.397 1.397v4.09l.015-.004c.377.384.9.622 1.479.622.578 0 1.102-.238 1.478-.621l3.378-3.445c.125-.118.292-.184.469-.184.365 0 .66.295.66.66v6.496c0 .365-.295.66-.66.66-.177 0-.344-.066-.469-.184l-3.378-3.445c-.376-.383-.9-.62-1.478-.62-.58 0-1.102.237-1.479.62l-.015-.003v4.09c0 .767-.63 1.396-1.397 1.396H4.309a1.397 1.397 0 01-1.397-1.396v-4.084c0-.767.63-1.396 1.397-1.396h.006l.27.012z"/>
+              </svg>
+              Zoom Meeting
+            </h4>
+            <p className="text-xs text-blue-700">Create a QR to join a Zoom meeting directly.</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 ml-1">Meeting ID *</label>
+            <DebouncedInput placeholder="123 456 7890" value={data.zoom?.meetingId || ''} onChange={(v) => updateNested('zoom', 'meetingId', v.replace(/\s/g, ''))} />
+          </div>
+          <DebouncedInput placeholder="Password (optional)" value={data.zoom?.password || ''} onChange={(v) => updateNested('zoom', 'password', v)} />
+        </InputWrapper>
+      );
+
     default:
       return <InputWrapper><DebouncedInput placeholder="Enter Value" value={data.value} onChange={(v) => update('value', v)} /></InputWrapper>;
   }

@@ -95,6 +95,77 @@ export const generatePayload = (data: QRContentData): string => {
       if (couponTerms) couponText += `\n${couponTerms}`;
       return couponText;
 
+    case 'upi':
+      if (!data.upi) return '';
+      const upiVpa = data.upi.vpa || '';
+      const upiName = data.upi.name || '';
+      const upiAmount = data.upi.amount || '';
+      const upiNote = data.upi.note || '';
+      // UPI deep link format
+      let upiUri = `upi://pay?pa=${encodeURIComponent(upiVpa)}`;
+      if (upiName) upiUri += `&pn=${encodeURIComponent(upiName)}`;
+      if (upiAmount) upiUri += `&am=${upiAmount}`;
+      if (upiNote) upiUri += `&tn=${encodeURIComponent(upiNote)}`;
+      upiUri += '&cu=INR';
+      return upiUri;
+
+    case 'paypal':
+      if (!data.paypal) return '';
+      const paypalEmail = data.paypal.email || '';
+      const paypalAmount = data.paypal.amount || '';
+      const paypalCurrency = data.paypal.currency || 'USD';
+      // PayPal.me link format
+      let paypalUrl = `https://paypal.me/${encodeURIComponent(paypalEmail)}`;
+      if (paypalAmount) paypalUrl += `/${paypalAmount}${paypalCurrency}`;
+      return paypalUrl;
+
+    case 'telegram':
+      if (!data.telegram) return '';
+      const tgUsername = data.telegram.username?.replace('@', '') || '';
+      const tgType = data.telegram.type || 'user';
+      // Telegram deep link
+      if (tgType === 'group' || tgType === 'channel') {
+        return `https://t.me/${tgUsername}`;
+      }
+      return `https://t.me/${tgUsername}`;
+
+    case 'spotify':
+      if (!data.spotify) return '';
+      // Return the Spotify URL directly
+      return data.spotify.url || '';
+
+    case 'instagram':
+      if (!data.instagram) return '';
+      const igUsername = data.instagram.username?.replace('@', '') || '';
+      return `https://instagram.com/${igUsername}`;
+
+    case 'twitter':
+      if (!data.twitter) return '';
+      const twUsername = data.twitter.username?.replace('@', '') || '';
+      return `https://twitter.com/${twUsername}`;
+
+    case 'linkedin':
+      if (!data.linkedin) return '';
+      const liUsername = data.linkedin.username || '';
+      const liType = data.linkedin.type || 'profile';
+      if (liType === 'company') {
+        return `https://linkedin.com/company/${liUsername}`;
+      }
+      // Handle both "in/username" and just "username" formats
+      if (liUsername.startsWith('in/')) {
+        return `https://linkedin.com/${liUsername}`;
+      }
+      return `https://linkedin.com/in/${liUsername}`;
+
+    case 'zoom':
+      if (!data.zoom) return '';
+      const zoomId = data.zoom.meetingId?.replace(/\s/g, '') || '';
+      const zoomPwd = data.zoom.password || '';
+      // Zoom join link format
+      let zoomUrl = `https://zoom.us/j/${zoomId}`;
+      if (zoomPwd) zoomUrl += `?pwd=${encodeURIComponent(zoomPwd)}`;
+      return zoomUrl;
+
     default:
       return data.value;
   }

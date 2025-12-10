@@ -1,4 +1,4 @@
-export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore' | 'whatsapp' | 'youtube' | 'bitcoin' | 'coupon';
+export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore' | 'whatsapp' | 'youtube' | 'bitcoin' | 'coupon' | 'upi' | 'paypal' | 'telegram' | 'spotify' | 'instagram' | 'twitter' | 'linkedin' | 'zoom';
 
 export interface QRStyleConfig {
   size: number;
@@ -56,6 +56,14 @@ export interface QRContentData {
   youtube?: { url: string };
   bitcoin?: { address: string; amount?: string; label?: string };
   coupon?: { code: string; discount: string; expiry?: string; terms?: string };
+  upi?: { vpa: string; name?: string; amount?: string; note?: string };
+  paypal?: { email: string; amount?: string; currency?: string; description?: string };
+  telegram?: { username: string; type: 'user' | 'group' | 'channel' };
+  spotify?: { url: string; type: 'track' | 'album' | 'playlist' | 'artist' };
+  instagram?: { username: string };
+  twitter?: { username: string };
+  linkedin?: { username: string; type: 'profile' | 'company' };
+  zoom?: { meetingId: string; password?: string };
 }
 
 // Global types for libraries loaded via script tags

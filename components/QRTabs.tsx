@@ -3,7 +3,8 @@ import { QRType } from '../types';
 import {
   Type, Link, Wifi, User, Phone, Mail,
   MapPin, Calendar, Share2, Sparkles, Layers,
-  MessageSquare, Store, Youtube, Bitcoin, Ticket
+  MessageSquare, Store, Youtube, Bitcoin, Ticket,
+  IndianRupee, CreditCard, Send, Music, Camera, Twitter, Briefcase, Video
 } from 'lucide-react';
 
 interface Props {
@@ -24,8 +25,16 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
     { id: 'social', icon: Share2, label: 'Social' },
     { id: 'sms', icon: MessageSquare, label: 'SMS' },
     { id: 'whatsapp', icon: MessageSquare, label: 'WhatsApp' },
+    { id: 'telegram', icon: Send, label: 'Telegram' },
+    { id: 'instagram', icon: Camera, label: 'Instagram' },
+    { id: 'twitter', icon: Twitter, label: 'Twitter/X' },
+    { id: 'linkedin', icon: Briefcase, label: 'LinkedIn' },
     { id: 'youtube', icon: Youtube, label: 'YouTube' },
+    { id: 'spotify', icon: Music, label: 'Spotify' },
+    { id: 'zoom', icon: Video, label: 'Zoom' },
     { id: 'appstore', icon: Store, label: 'App Store' },
+    { id: 'upi', icon: IndianRupee, label: 'UPI' },
+    { id: 'paypal', icon: CreditCard, label: 'PayPal' },
     { id: 'bitcoin', icon: Bitcoin, label: 'Bitcoin' },
     { id: 'coupon', icon: Ticket, label: 'Coupon' },
     { id: 'ai', icon: Sparkles, label: 'AI Magic' },
