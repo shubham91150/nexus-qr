@@ -135,6 +135,25 @@ interface UTMParameters {
   content?: string;
 }
 
+interface RetargetingConfig {
+  enabled: boolean;
+  gtm_id?: string;
+  facebook_pixel_id?: string;
+  google_ads_id?: string;
+  tiktok_pixel_id?: string;
+  custom_events?: {
+    scan: string;
+    conversion: string;
+  };
+}
+
+interface GPSTrackingConfig {
+  enabled: boolean;
+  require_permission: boolean;
+  track_precise_location: boolean;
+  store_for_heatmap: boolean;
+}
+
 interface DynamicQRCode {
   id: string;
   destination_url: string;
@@ -151,6 +170,8 @@ interface DynamicQRCode {
   geofence_settings: GeofenceSettings | null;
   ip_restriction: IPRestriction | null;
   utm_parameters: UTMParameters | null;
+  retargeting_config: RetargetingConfig | null;
+  gps_tracking_config: GPSTrackingConfig | null;
 }
 
 // ==================== Helper Functions ====================
@@ -457,6 +478,190 @@ function isQRExpired(qr: DynamicQRCode): boolean {
   return new Date(qr.expires_at) < new Date();
 }
 
+// Generate retargeting scripts
+function generateRetargetingScripts(config: RetargetingConfig, eventName: string = 'qr_scan'): string {
+  if (!config.enabled) return '';
+
+  let scripts = '';
+
+  // Google Tag Manager
+  if (config.gtm_id) {
+    const safeGtmId = escapeHtml(config.gtm_id);
+    scripts += `
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','${safeGtmId}');</script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({'event': '${escapeHtml(eventName)}'});
+    </script>
+    `;
+  }
+
+  // Facebook Pixel
+  if (config.facebook_pixel_id) {
+    const safeFbId = escapeHtml(config.facebook_pixel_id);
+    scripts += `
+    <!-- Facebook Pixel -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '${safeFbId}');
+      fbq('track', 'PageView');
+      fbq('trackCustom', '${escapeHtml(eventName)}');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=${safeFbId}&ev=PageView&noscript=1"/></noscript>
+    `;
+  }
+
+  // TikTok Pixel
+  if (config.tiktok_pixel_id) {
+    const safeTtId = escapeHtml(config.tiktok_pixel_id);
+    scripts += `
+    <!-- TikTok Pixel -->
+    <script>
+      !function (w, d, t) {
+        w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
+        ttq.load('${safeTtId}');
+        ttq.page();
+        ttq.track('${escapeHtml(eventName)}');
+      }(window, document, 'ttq');
+    </script>
+    `;
+  }
+
+  return scripts;
+}
+
+// Generate GPS tracking page with permission request
+function getGPSTrackingPage(
+  code: string,
+  redirectUrl: string,
+  qrId: string,
+  retargetingScripts: string,
+  highAccuracy: boolean = true
+): string {
+  const safeCode = escapeHtml(code);
+  const safeRedirectUrl = escapeHtml(redirectUrl);
+  const safeQrId = escapeHtml(qrId);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Loading...</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://*.facebook.net https://*.facebook.com https://analytics.tiktok.com https://*.supabase.co; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://*.googletagmanager.com https://*.facebook.net https://connect.facebook.net https://analytics.tiktok.com; img-src * data:; connect-src *">
+      <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card { background: white; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; margin: 20px; width: 100%; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        h1 { color: #333; margin: 0 0 8px 0; font-size: 24px; font-weight: 600; }
+        p { color: #666; font-size: 14px; margin: 0 0 20px 0; }
+        .btn { padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 10px; }
+        .btn-skip { background: #f5f5f5; color: #666; }
+        .status { font-size: 12px; color: #888; margin-top: 15px; }
+        .hidden { display: none; }
+      </style>
+      ${retargetingScripts}
+    </head>
+    <body>
+      <div class="card">
+        <div id="loading" class="hidden">
+          <div class="spinner"></div>
+          <h1>Redirecting...</h1>
+          <p>Please wait while we prepare your destination.</p>
+          <p class="status" id="status">Getting location...</p>
+        </div>
+        <div id="permission">
+          <div style="font-size: 48px; margin-bottom: 16px;">📍</div>
+          <h1>Allow Location?</h1>
+          <p>This helps us provide better analytics and personalized experience.</p>
+          <button class="btn" onclick="requestLocation()">Allow Location</button>
+          <button class="btn btn-skip" onclick="skipLocation()">Continue Without</button>
+        </div>
+      </div>
+      <script>
+        const redirectUrl = '${safeRedirectUrl}';
+        const qrId = '${safeQrId}';
+        const highAccuracy = ${highAccuracy};
+
+        function showLoading() {
+          document.getElementById('permission').classList.add('hidden');
+          document.getElementById('loading').classList.remove('hidden');
+        }
+
+        function updateStatus(msg) {
+          document.getElementById('status').textContent = msg;
+        }
+
+        function sendLocationAndRedirect(lat, lng, accuracy) {
+          updateStatus('Saving location...');
+
+          // Send location to API
+          fetch('/api/track-location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              qr_id: qrId,
+              latitude: lat,
+              longitude: lng,
+              accuracy: accuracy,
+              timestamp: new Date().toISOString()
+            })
+          }).finally(() => {
+            updateStatus('Redirecting...');
+            setTimeout(() => { window.location.href = redirectUrl; }, 500);
+          });
+        }
+
+        function requestLocation() {
+          showLoading();
+
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                sendLocationAndRedirect(
+                  position.coords.latitude,
+                  position.coords.longitude,
+                  position.coords.accuracy
+                );
+              },
+              (error) => {
+                updateStatus('Location unavailable, redirecting...');
+                setTimeout(() => { window.location.href = redirectUrl; }, 1000);
+              },
+              { enableHighAccuracy: highAccuracy, timeout: 10000, maximumAge: 0 }
+            );
+          } else {
+            updateStatus('Geolocation not supported, redirecting...');
+            setTimeout(() => { window.location.href = redirectUrl; }, 1000);
+          }
+        }
+
+        function skipLocation() {
+          showLoading();
+          updateStatus('Redirecting...');
+          setTimeout(() => { window.location.href = redirectUrl; }, 500);
+        }
+      </script>
+    </body>
+    </html>
+  `;
+}
+
 // Check if context matches a conditional rule
 function matchesCondition(
   rule: ConditionalRule,
@@ -745,7 +950,9 @@ export default async function handler(
         password_protection,
         geofence_settings,
         ip_restriction,
-        utm_parameters
+        utm_parameters,
+        retargeting_config,
+        gps_tracking_config
       `)
       .eq('short_code', code)
       .single();
@@ -906,6 +1113,15 @@ export default async function handler(
       console.warn(`[SECURITY] Redirect URL sanitized from "${redirectUrl}" to "${safeRedirectUrl}"`);
     }
 
+    // 5. Check Retargeting and GPS Tracking configurations
+    const retargetingConfig = qrCode.retargeting_config as RetargetingConfig | null;
+    const gpsTrackingConfig = qrCode.gps_tracking_config as GPSTrackingConfig | null;
+
+    // Generate retargeting scripts if enabled
+    const retargetingScripts = retargetingConfig?.enabled
+      ? generateRetargetingScripts(retargetingConfig, retargetingConfig.custom_events?.scan || 'qr_scan')
+      : '';
+
     // Record the scan asynchronously (don't block redirect)
     // Skip recording for internal requests (from dashboard, same origin, etc.)
     if (!isInternalRequest) {
@@ -931,6 +1147,75 @@ export default async function handler(
         });
     } else {
       console.log('Skipping scan record for internal request');
+    }
+
+    // 6. Check if GPS tracking with permission is enabled
+    // If GPS tracking is enabled and requires permission, show tracking page
+    if (gpsTrackingConfig?.enabled && gpsTrackingConfig?.require_permission && !isInternalRequest) {
+      // Check if user already submitted location (via cookie)
+      const cookies = req.headers.cookie || '';
+      const hasLocationCookie = cookies.includes(`qr_gps_${code}=tracked`);
+
+      if (!hasLocationCookie) {
+        // Show GPS tracking permission page
+        const trackingPage = getGPSTrackingPage(
+          code,
+          safeRedirectUrl,
+          qrCode.id,
+          retargetingScripts,
+          gpsTrackingConfig.track_precise_location
+        );
+
+        // Determine if we should add Secure flag (production = HTTPS)
+        const isProduction = process.env.NODE_ENV === 'production' ||
+                             process.env.VERCEL_ENV === 'production';
+        const secureFlag = isProduction ? '; Secure' : '';
+
+        // Set cookie to prevent showing again (1 hour expiry)
+        res.setHeader('Set-Cookie',
+          `qr_gps_${code}=tracked; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600${secureFlag}`
+        );
+
+        res.status(200).send(trackingPage);
+        return;
+      }
+    }
+
+    // 7. If retargeting is enabled but no GPS tracking, serve redirect page with scripts
+    if (retargetingConfig?.enabled && retargetingScripts) {
+      // Serve an HTML page with retargeting scripts and auto-redirect
+      const retargetingPage = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Redirecting...</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://*.facebook.net https://*.facebook.com https://analytics.tiktok.com; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://*.googletagmanager.com https://*.facebook.net https://connect.facebook.net https://analytics.tiktok.com; img-src * data:; connect-src *">
+          <style>
+            body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+            .card { text-align: center; }
+            .spinner { width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            p { color: #666; }
+          </style>
+          ${retargetingScripts}
+        </head>
+        <body>
+          <div class="card">
+            <div class="spinner"></div>
+            <p>Redirecting...</p>
+          </div>
+          <script>
+            setTimeout(function() {
+              window.location.href = '${escapeHtml(safeRedirectUrl)}';
+            }, 500);
+          </script>
+        </body>
+        </html>
+      `;
+
+      res.status(200).send(retargetingPage);
+      return;
     }
 
     // Redirect to final destination (validated)
