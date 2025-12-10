@@ -1,4 +1,4 @@
-export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore' | 'whatsapp' | 'youtube' | 'bitcoin' | 'coupon' | 'upi' | 'paypal' | 'telegram' | 'spotify' | 'instagram' | 'twitter' | 'linkedin' | 'zoom';
+export type QRType = 'text' | 'url' | 'wifi' | 'contact' | 'email' | 'phone' | 'geo' | 'event' | 'social' | 'ai' | 'bulk' | 'sms' | 'appstore' | 'whatsapp' | 'youtube' | 'bitcoin' | 'coupon' | 'upi' | 'paypal' | 'telegram' | 'spotify' | 'instagram' | 'twitter' | 'linkedin' | 'zoom' | 'facebook' | 'tiktok' | 'pinterest' | 'snapchat' | 'discord' | 'skype' | 'facetime' | 'googlemeet' | 'googlereview' | 'pdf' | 'menu';
 
 export interface QRStyleConfig {
   size: number;
@@ -64,6 +64,17 @@ export interface QRContentData {
   twitter?: { username: string };
   linkedin?: { username: string; type: 'profile' | 'company' };
   zoom?: { meetingId: string; password?: string };
+  facebook?: { username: string; type: 'profile' | 'page' | 'group' };
+  tiktok?: { username: string };
+  pinterest?: { username: string; board?: string };
+  snapchat?: { username: string };
+  discord?: { inviteCode: string };
+  skype?: { username: string; type: 'chat' | 'call' };
+  facetime?: { contact: string; type: 'video' | 'audio' };
+  googlemeet?: { meetingCode: string };
+  googlereview?: { placeId: string; businessName?: string };
+  pdf?: { url: string; title?: string };
+  menu?: { url: string; restaurantName?: string };
 }
 
 // Global types for libraries loaded via script tags

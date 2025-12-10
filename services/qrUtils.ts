@@ -166,6 +166,90 @@ export const generatePayload = (data: QRContentData): string => {
       if (zoomPwd) zoomUrl += `?pwd=${encodeURIComponent(zoomPwd)}`;
       return zoomUrl;
 
+    case 'facebook':
+      if (!data.facebook) return '';
+      const fbUsername = data.facebook.username || '';
+      const fbType = data.facebook.type || 'profile';
+      if (fbType === 'page') {
+        return `https://facebook.com/${fbUsername}`;
+      } else if (fbType === 'group') {
+        return `https://facebook.com/groups/${fbUsername}`;
+      }
+      return `https://facebook.com/${fbUsername}`;
+
+    case 'tiktok':
+      if (!data.tiktok) return '';
+      const ttUsername = data.tiktok.username?.replace('@', '') || '';
+      return `https://tiktok.com/@${ttUsername}`;
+
+    case 'pinterest':
+      if (!data.pinterest) return '';
+      const pinUsername = data.pinterest.username || '';
+      const pinBoard = data.pinterest.board || '';
+      if (pinBoard) {
+        return `https://pinterest.com/${pinUsername}/${pinBoard}`;
+      }
+      return `https://pinterest.com/${pinUsername}`;
+
+    case 'snapchat':
+      if (!data.snapchat) return '';
+      const snapUsername = data.snapchat.username || '';
+      return `https://snapchat.com/add/${snapUsername}`;
+
+    case 'discord':
+      if (!data.discord) return '';
+      const discordCode = data.discord.inviteCode || '';
+      // Handle full URLs or just invite codes
+      if (discordCode.includes('discord.gg/') || discordCode.includes('discord.com/')) {
+        return discordCode;
+      }
+      return `https://discord.gg/${discordCode}`;
+
+    case 'skype':
+      if (!data.skype) return '';
+      const skypeUser = data.skype.username || '';
+      const skypeType = data.skype.type || 'chat';
+      // Skype URI scheme
+      if (skypeType === 'call') {
+        return `skype:${skypeUser}?call`;
+      }
+      return `skype:${skypeUser}?chat`;
+
+    case 'facetime':
+      if (!data.facetime) return '';
+      const ftContact = data.facetime.contact || '';
+      const ftType = data.facetime.type || 'video';
+      // FaceTime URI scheme
+      if (ftType === 'audio') {
+        return `facetime-audio:${ftContact}`;
+      }
+      return `facetime:${ftContact}`;
+
+    case 'googlemeet':
+      if (!data.googlemeet) return '';
+      const meetCode = data.googlemeet.meetingCode || '';
+      // Handle full URLs or just meeting codes
+      if (meetCode.includes('meet.google.com')) {
+        return meetCode;
+      }
+      return `https://meet.google.com/${meetCode}`;
+
+    case 'googlereview':
+      if (!data.googlereview) return '';
+      const placeId = data.googlereview.placeId || '';
+      // Google Review URL format
+      return `https://search.google.com/local/writereview?placeid=${placeId}`;
+
+    case 'pdf':
+      if (!data.pdf) return '';
+      // Return the PDF URL directly
+      return data.pdf.url || '';
+
+    case 'menu':
+      if (!data.menu) return '';
+      // Return the menu URL directly
+      return data.menu.url || '';
+
     default:
       return data.value;
   }
