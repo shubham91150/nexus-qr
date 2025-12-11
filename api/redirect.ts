@@ -932,28 +932,11 @@ export default async function handler(
   }
 
   try {
-    // Look up the QR code with ALL necessary fields for advanced features
+    // Look up the QR code with ALL available fields
+    // Using * to select all columns - this prevents errors if new columns don't exist yet
     const { data: qrCode, error: qrError } = await supabase
       .from('dynamic_qr_codes')
-      .select(`
-        id,
-        destination_url,
-        is_active,
-        expires_at,
-        expired_redirect_url,
-        conditional_rules,
-        ab_testing_enabled,
-        ab_variants,
-        multi_language_enabled,
-        language_contents,
-        default_language,
-        password_protection,
-        geofence_settings,
-        ip_restriction,
-        utm_parameters,
-        retargeting_config,
-        gps_tracking_config
-      `)
+      .select('*')
       .eq('short_code', code)
       .single();
 
