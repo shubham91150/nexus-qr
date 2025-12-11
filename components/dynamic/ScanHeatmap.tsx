@@ -187,17 +187,8 @@ export const ScanHeatmap: React.FC<ScanHeatmapProps> = ({ qrId, height = '400px'
     setError(null);
 
     try {
-      // Get supabase client lazily
+      // Get supabase client
       const supabase = getSupabaseClient();
-
-      // Safety check for supabase client
-      if (!supabase) {
-        console.warn('Supabase client not available - showing empty state');
-        setCityData([]);
-        setTotalScans(0);
-        setLoading(false);
-        return;
-      }
 
       // Get all scans with city data
       const { data, error: fetchError } = await supabase

@@ -3,48 +3,20 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://tyuambzppjfvwxkmpgma.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dWFtYnpwcGpmdnd4a21wZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NDU3MDksImV4cCI6MjA4MDUyMTcwOX0.4-OxuDsfxDf4M5_Xe06x9TC_7hgodZJZp-xzO0U68bA';
 
-// Lazy initialization to prevent build-time errors
-let _supabaseClient: SupabaseClient | null = null;
-
-export function getSupabaseClient(): SupabaseClient | null {
-  if (_supabaseClient) return _supabaseClient;
-
-  try {
-    _supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce',
-      },
-    });
-    return _supabaseClient;
-  } catch (error) {
-    console.error('Failed to create Supabase client:', error);
-    return null;
-  }
-}
-
-// For backward compatibility - use Proxy to lazy initialize
-// This ensures the client is only created when actually accessed
-export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
-  get(_target, prop: string | symbol) {
-    const client = getSupabaseClient();
-    if (!client) {
-      console.error('Supabase client failed to initialize');
-      // Return no-op functions to prevent crashes
-      if (typeof prop === 'string') {
-        return () => Promise.resolve({ data: null, error: new Error('Client not initialized') });
-      }
-      return undefined;
-    }
-    const value = (client as Record<string | symbol, unknown>)[prop];
-    if (typeof value === 'function') {
-      return (value as Function).bind(client);
-    }
-    return value;
+// Create client directly - Supabase handles browser environment detection internally
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
   },
 });
+
+// Export getter for components that need null-safety
+export function getSupabaseClient(): SupabaseClient {
+  return supabase;
+}
 
 // Conditional Redirect Rule
 export interface ConditionalRule {
