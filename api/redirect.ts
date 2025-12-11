@@ -1,13 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 
-// Initialize Supabase client using environment variables
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
+// Lazy initialization of Supabase client
+let supabase: SupabaseClient | null = null;
 
-// Use service key for server-side operations (bypasses RLS)
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function getSupabaseClient(): SupabaseClient | null {
+  if (supabase) return supabase;
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Supabase environment variables not configured');
+    return null;
+  }
+
+  supabase = createClient(supabaseUrl, supabaseServiceKey);
+  return supabase;
+}
 
 // ==================== Security Helper Functions ====================
 
@@ -311,11 +322,14 @@ async function checkIPRestriction(
 ): Promise<boolean> {
   if (!clientIP) return true; // Can't check without IP
 
+  const db = getSupabaseClient();
+  if (!db) return true; // Allow on error
+
   const timeWindowStart = new Date();
   timeWindowStart.setMinutes(timeWindowStart.getMinutes() - restriction.timeWindowMinutes);
 
   // Count recent scans from this IP
-  const { count, error } = await supabase
+  const { count, error } = await db
     .from('qr_scans')
     .select('*', { count: 'exact', head: true })
     .eq('qr_id', qrId)
@@ -861,8 +875,15 @@ async function handlePasswordVerification(
     password = '';
   }
 
+  // Get Supabase client
+  const db = getSupabaseClient();
+  if (!db) {
+    res.redirect(302, '/');
+    return;
+  }
+
   // Look up the QR code
-  const { data: qrCode, error } = await supabase
+  const { data: qrCode, error } = await db
     .from('dynamic_qr_codes')
     .select('password_protection, destination_url')
     .eq('short_code', safeCode)
@@ -924,9 +945,10 @@ export default async function handler(
     return;
   }
 
-  // Check if service key is configured
-  if (!supabaseServiceKey) {
-    console.error('SUPABASE_SERVICE_KEY not configured');
+  // Get Supabase client (lazy initialization)
+  const db = getSupabaseClient();
+  if (!db) {
+    console.error('Supabase client not initialized - check environment variables');
     res.status(500).json({ error: 'Server configuration error' });
     return;
   }
@@ -934,7 +956,7 @@ export default async function handler(
   try {
     // Look up the QR code with ALL available fields
     // Using * to select all columns - this prevents errors if new columns don't exist yet
-    const { data: qrCode, error: qrError } = await supabase
+    const { data: qrCode, error: qrError } = await db
       .from('dynamic_qr_codes')
       .select('*')
       .eq('short_code', code)
@@ -1108,7 +1130,7 @@ export default async function handler(
     // Record the scan asynchronously (don't block redirect)
     // Skip recording for internal requests (from dashboard, same origin, etc.)
     if (!isInternalRequest) {
-      supabase
+      db
         .from('qr_scans')
         .insert({
           qr_id: qrCode.id,
