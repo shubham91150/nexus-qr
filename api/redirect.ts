@@ -158,13 +158,6 @@ interface RetargetingConfig {
   };
 }
 
-interface GPSTrackingConfig {
-  enabled: boolean;
-  require_permission: boolean;
-  track_precise_location: boolean;
-  store_for_heatmap: boolean;
-}
-
 interface DynamicQRCode {
   id: string;
   destination_url: string;
@@ -182,7 +175,6 @@ interface DynamicQRCode {
   ip_restriction: IPRestriction | null;
   utm_parameters: UTMParameters | null;
   retargeting_config: RetargetingConfig | null;
-  gps_tracking_config: GPSTrackingConfig | null;
 }
 
 // ==================== Helper Functions ====================
@@ -555,125 +547,6 @@ function generateRetargetingScripts(config: RetargetingConfig, eventName: string
   }
 
   return scripts;
-}
-
-// Generate GPS tracking page with permission request
-function getGPSTrackingPage(
-  code: string,
-  redirectUrl: string,
-  qrId: string,
-  retargetingScripts: string,
-  highAccuracy: boolean = true
-): string {
-  const safeCode = escapeHtml(code);
-  const safeRedirectUrl = escapeHtml(redirectUrl);
-  const safeQrId = escapeHtml(qrId);
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Loading...</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://*.facebook.net https://*.facebook.com https://analytics.tiktok.com https://*.supabase.co; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://*.googletagmanager.com https://*.facebook.net https://connect.facebook.net https://analytics.tiktok.com; img-src * data:; connect-src *">
-      <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .card { background: white; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; margin: 20px; width: 100%; }
-        .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        h1 { color: #333; margin: 0 0 8px 0; font-size: 24px; font-weight: 600; }
-        p { color: #666; font-size: 14px; margin: 0 0 20px 0; }
-        .btn { padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 10px; }
-        .btn-skip { background: #f5f5f5; color: #666; }
-        .status { font-size: 12px; color: #888; margin-top: 15px; }
-        .hidden { display: none; }
-      </style>
-      ${retargetingScripts}
-    </head>
-    <body>
-      <div class="card">
-        <div id="loading" class="hidden">
-          <div class="spinner"></div>
-          <h1>Redirecting...</h1>
-          <p>Please wait while we prepare your destination.</p>
-          <p class="status" id="status">Getting location...</p>
-        </div>
-        <div id="permission">
-          <div style="font-size: 48px; margin-bottom: 16px;">📍</div>
-          <h1>Allow Location?</h1>
-          <p>This helps us provide better analytics and personalized experience.</p>
-          <button class="btn" onclick="requestLocation()">Allow Location</button>
-          <button class="btn btn-skip" onclick="skipLocation()">Continue Without</button>
-        </div>
-      </div>
-      <script>
-        const redirectUrl = '${safeRedirectUrl}';
-        const qrId = '${safeQrId}';
-        const highAccuracy = ${highAccuracy};
-
-        function showLoading() {
-          document.getElementById('permission').classList.add('hidden');
-          document.getElementById('loading').classList.remove('hidden');
-        }
-
-        function updateStatus(msg) {
-          document.getElementById('status').textContent = msg;
-        }
-
-        function sendLocationAndRedirect(lat, lng, accuracy) {
-          updateStatus('Saving location...');
-
-          // Send location to API
-          fetch('/api/track-location', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              qr_id: qrId,
-              latitude: lat,
-              longitude: lng,
-              accuracy: accuracy,
-              timestamp: new Date().toISOString()
-            })
-          }).finally(() => {
-            updateStatus('Redirecting...');
-            setTimeout(() => { window.location.href = redirectUrl; }, 500);
-          });
-        }
-
-        function requestLocation() {
-          showLoading();
-
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                sendLocationAndRedirect(
-                  position.coords.latitude,
-                  position.coords.longitude,
-                  position.coords.accuracy
-                );
-              },
-              (error) => {
-                updateStatus('Location unavailable, redirecting...');
-                setTimeout(() => { window.location.href = redirectUrl; }, 1000);
-              },
-              { enableHighAccuracy: highAccuracy, timeout: 10000, maximumAge: 0 }
-            );
-          } else {
-            updateStatus('Geolocation not supported, redirecting...');
-            setTimeout(() => { window.location.href = redirectUrl; }, 1000);
-          }
-        }
-
-        function skipLocation() {
-          showLoading();
-          updateStatus('Redirecting...');
-          setTimeout(() => { window.location.href = redirectUrl; }, 500);
-        }
-      </script>
-    </body>
-    </html>
-  `;
 }
 
 // Check if context matches a conditional rule
@@ -1118,9 +991,8 @@ export default async function handler(
       console.warn(`[SECURITY] Redirect URL sanitized from "${redirectUrl}" to "${safeRedirectUrl}"`);
     }
 
-    // 5. Check Retargeting and GPS Tracking configurations
+    // 5. Check Retargeting configuration
     const retargetingConfig = qrCode.retargeting_config as RetargetingConfig | null;
-    const gpsTrackingConfig = qrCode.gps_tracking_config as GPSTrackingConfig | null;
 
     // Generate retargeting scripts if enabled
     const retargetingScripts = retargetingConfig?.enabled
@@ -1154,39 +1026,7 @@ export default async function handler(
       console.log('Skipping scan record for internal request');
     }
 
-    // 6. Check if GPS tracking with permission is enabled
-    // If GPS tracking is enabled and requires permission, show tracking page
-    if (gpsTrackingConfig?.enabled && gpsTrackingConfig?.require_permission && !isInternalRequest) {
-      // Check if user already submitted location (via cookie)
-      const cookies = req.headers.cookie || '';
-      const hasLocationCookie = cookies.includes(`qr_gps_${code}=tracked`);
-
-      if (!hasLocationCookie) {
-        // Show GPS tracking permission page
-        const trackingPage = getGPSTrackingPage(
-          code,
-          safeRedirectUrl,
-          qrCode.id,
-          retargetingScripts,
-          gpsTrackingConfig.track_precise_location
-        );
-
-        // Determine if we should add Secure flag (production = HTTPS)
-        const isProduction = process.env.NODE_ENV === 'production' ||
-                             process.env.VERCEL_ENV === 'production';
-        const secureFlag = isProduction ? '; Secure' : '';
-
-        // Set cookie to prevent showing again (1 hour expiry)
-        res.setHeader('Set-Cookie',
-          `qr_gps_${code}=tracked; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600${secureFlag}`
-        );
-
-        res.status(200).send(trackingPage);
-        return;
-      }
-    }
-
-    // 7. If retargeting is enabled but no GPS tracking, serve redirect page with scripts
+    // 6. If retargeting is enabled, serve redirect page with scripts
     if (retargetingConfig?.enabled && retargetingScripts) {
       // Serve an HTML page with retargeting scripts and auto-redirect
       const retargetingPage = `

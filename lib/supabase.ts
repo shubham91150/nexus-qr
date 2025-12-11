@@ -115,14 +115,6 @@ export interface RetargetingConfig {
   };
 }
 
-// GPS Tracking Configuration
-export interface GPSTrackingConfig {
-  enabled: boolean;
-  require_permission: boolean; // Ask user for permission
-  track_precise_location: boolean; // High accuracy GPS
-  store_for_heatmap: boolean; // Store for visualization
-}
-
 // Extended Dynamic QR Code with all features
 export interface DynamicQRCode {
   id: string;
@@ -171,9 +163,6 @@ export interface DynamicQRCode {
 
   // NEW: Retargeting (GTM/Facebook Pixel)
   retargeting_config?: RetargetingConfig;
-
-  // NEW: GPS Tracking
-  gps_tracking_config?: GPSTrackingConfig;
 }
 
 // QR Scan Record
@@ -195,12 +184,6 @@ export interface QRScan {
   // A/B Testing
   ab_variant_id?: string | null;
   converted?: boolean;
-
-  // GPS Tracking (precise location)
-  latitude?: number | null;
-  longitude?: number | null;
-  accuracy?: number | null; // GPS accuracy in meters
-  location_timestamp?: string | null; // When location was captured
 }
 
 // Real-time scan event
