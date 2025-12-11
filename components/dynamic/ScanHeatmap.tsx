@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Map, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { getSupabaseClient } from '../../lib/supabase';
 
 interface ScanHeatmapProps {
   qrId: string;
@@ -187,9 +187,12 @@ export const ScanHeatmap: React.FC<ScanHeatmapProps> = ({ qrId, height = '400px'
     setError(null);
 
     try {
+      // Get supabase client lazily
+      const supabase = getSupabaseClient();
+
       // Safety check for supabase client
-      if (!supabase || typeof supabase.from !== 'function') {
-        console.error('Supabase client not available');
+      if (!supabase) {
+        console.warn('Supabase client not available - showing empty state');
         setCityData([]);
         setTotalScans(0);
         setLoading(false);
