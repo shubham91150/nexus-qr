@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
   Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
-  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Radio
+  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target
 } from 'lucide-react';
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
   PasswordProtection, GeofenceSettings, GeofenceLocation, IPRestriction, UTMParameters,
-  RetargetingConfig, GPSTrackingConfig,
+  RetargetingConfig,
   supabase
 } from '../../lib/supabase';
 
@@ -78,11 +78,6 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     qrCode.retargeting_config || { enabled: false, gtm_id: '', facebook_pixel_id: '', google_ads_id: '', tiktok_pixel_id: '' }
   );
 
-  // GPS Tracking Config
-  const [gpsTrackingConfig, setGpsTrackingConfig] = useState<GPSTrackingConfig>(
-    qrCode.gps_tracking_config || { enabled: false, require_permission: true, track_precise_location: true, store_for_heatmap: true }
-  );
-
   // Reset on QR change
   useEffect(() => {
     setDestinationUrl(qrCode.destination_url);
@@ -99,7 +94,6 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     setIpRestriction(qrCode.ip_restriction || { enabled: false, maxScansPerIP: 1, timeWindowMinutes: 60, blockedRedirectUrl: '' });
     setUtmParameters(qrCode.utm_parameters || { enabled: false, source: '', medium: '', campaign: '', term: '', content: '' });
     setRetargetingConfig(qrCode.retargeting_config || { enabled: false, gtm_id: '', facebook_pixel_id: '', google_ads_id: '', tiktok_pixel_id: '' });
-    setGpsTrackingConfig(qrCode.gps_tracking_config || { enabled: false, require_permission: true, track_precise_location: true, store_for_heatmap: true });
   }, [qrCode.id]);
 
   // Save settings
@@ -124,7 +118,6 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         ip_restriction: ipRestriction,
         utm_parameters: utmParameters,
         retargeting_config: retargetingConfig,
-        gps_tracking_config: gpsTrackingConfig,
         updated_at: new Date().toISOString(),
       };
 
@@ -1028,82 +1021,6 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
               )}
             </div>
 
-            {/* GPS Tracking Section */}
-            <div className="border border-gray-200 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Radio size={18} className="text-blue-600" />
-                  <div>
-                    <h4 className="font-medium text-gray-900">GPS Location Tracking</h4>
-                    <p className="text-xs text-gray-500">Track exact scan locations for heatmap</p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={gpsTrackingConfig.enabled}
-                    onChange={(e) => setGpsTrackingConfig({ ...gpsTrackingConfig, enabled: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              {gpsTrackingConfig.enabled && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">Require Permission</p>
-                      <p className="text-xs text-gray-400">Ask users for location access</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={gpsTrackingConfig.require_permission}
-                        onChange={(e) => setGpsTrackingConfig({ ...gpsTrackingConfig, require_permission: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">High Accuracy GPS</p>
-                      <p className="text-xs text-gray-400">Use precise location (may take longer)</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={gpsTrackingConfig.track_precise_location}
-                        onChange={(e) => setGpsTrackingConfig({ ...gpsTrackingConfig, track_precise_location: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">Store for Heatmap</p>
-                      <p className="text-xs text-gray-400">Save coordinates for visualization</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={gpsTrackingConfig.store_for_heatmap}
-                        onChange={(e) => setGpsTrackingConfig({ ...gpsTrackingConfig, store_for_heatmap: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-xs text-blue-700">
-                      GPS data enables precise heatmap visualization of scan locations. Users will be asked for permission before tracking.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         )}
 

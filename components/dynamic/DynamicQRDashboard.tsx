@@ -785,12 +785,10 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                         </div>
                       </div>
 
-                      {/* GPS Location Heatmap */}
-                      {selectedQR.gps_tracking_config?.enabled && selectedQR.gps_tracking_config?.store_for_heatmap && (
-                        <div className="mt-6">
-                          <ScanHeatmap qrId={selectedQR.id} height="350px" />
-                        </div>
-                      )}
+                      {/* Location Heatmap (IP-based) */}
+                      <div className="mt-6">
+                        <ScanHeatmap qrId={selectedQR.id} height="350px" />
+                      </div>
                     </div>
                   )}
                 </div>
