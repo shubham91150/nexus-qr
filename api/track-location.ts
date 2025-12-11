@@ -1,11 +1,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
+// Lazy initialization of Supabase client
+let supabase: SupabaseClient | null = null;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function getSupabaseClient(): SupabaseClient | null {
+  if (supabase) return supabase;
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Supabase environment variables not configured');
+    return null;
+  }
+
+  supabase = createClient(supabaseUrl, supabaseServiceKey);
+  return supabase;
+}
 
 // Validate GPS coordinates
 function isValidCoordinate(lat: number, lng: number): boolean {
@@ -45,9 +57,10 @@ export default async function handler(
     return;
   }
 
-  // Check service key
-  if (!supabaseServiceKey) {
-    console.error('SUPABASE_SERVICE_KEY not configured');
+  // Get Supabase client
+  const db = getSupabaseClient();
+  if (!db) {
+    console.error('Supabase client not initialized');
     res.status(500).json({ error: 'Server configuration error' });
     return;
   }
@@ -86,7 +99,7 @@ export default async function handler(
     }
 
     // First, verify the QR code exists and has GPS tracking enabled
-    const { data: qrCode, error: qrError } = await supabase
+    const { data: qrCode, error: qrError } = await db
       .from('dynamic_qr_codes')
       .select('id, gps_tracking_config')
       .eq('id', qr_id)
@@ -120,7 +133,7 @@ export default async function handler(
       : req.headers['x-real-ip'] as string || '';
 
     // Try to update the most recent scan with GPS data
-    const { data: updatedScan, error: updateError } = await supabase
+    const { data: updatedScan, error: updateError } = await db
       .from('qr_scans')
       .update({
         latitude,
@@ -143,7 +156,7 @@ export default async function handler(
 
     // If no recent scan found, insert a new GPS-only record
     if (!updatedScan) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await db
         .from('qr_scans')
         .insert({
           qr_id,
