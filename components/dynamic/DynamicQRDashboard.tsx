@@ -785,12 +785,9 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                         </div>
                       </div>
 
-                      {/* Location Heatmap (IP-based) - Temporarily disabled for debugging */}
-                      {/* <div className="mt-6">
-                        <ScanHeatmap qrId={selectedQR.id} height="350px" />
-                      </div> */}
-                      <div className="mt-6 bg-gray-50 rounded-xl p-4 text-center text-gray-500 text-sm">
-                        Location heatmap coming soon
+                      {/* Scan Locations */}
+                      <div className="mt-6">
+                        <ScanHeatmap qrId={selectedQR.id} height="300px" />
                       </div>
                     </div>
                   )}
