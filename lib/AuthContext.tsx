@@ -17,8 +17,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Module-level flag to prevent double code exchange in StrictMode
+// Module-level flags to prevent double code exchange in StrictMode
 let codeExchangeAttempted = false;
+let oauthInProgress = false;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle OAuth code exchange (with StrictMode protection)
         if (code && !codeExchangeAttempted) {
           codeExchangeAttempted = true; // Prevent double execution
+          oauthInProgress = true;
           if (mounted) setAuthStatus('authenticating');
 
           // Clean URL immediately to prevent issues
@@ -47,15 +49,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (error) {
             console.error('Code exchange error:', error.message);
-            if (mounted) setAuthStatus('unauthenticated');
+            oauthInProgress = false;
+            if (mounted) {
+              setAuthStatus('unauthenticated');
+            }
             // Fall through to getSession below
           } else if (data.session && mounted) {
             console.log('Session obtained from code exchange');
             setAuthStatus('authenticated');
             setSession(data.session);
             setUser(data.session.user);
-            // Brief delay to show "Authenticated" state
-            await new Promise(resolve => setTimeout(resolve, 800));
+            // Brief delay to show "Authenticated" state with checkmark
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            oauthInProgress = false;
             setLoading(false);
             return;
           }
@@ -79,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.error('Auth init error:', err);
+        oauthInProgress = false;
         if (mounted) {
           setSession(null);
           setUser(null);
@@ -98,8 +105,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Auth event:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        setAuthStatus(newSession ? 'authenticated' : 'unauthenticated');
-        setLoading(false);
+
+        // Don't override loading state during OAuth flow
+        // This allows our custom loading screen to show
+        if (!oauthInProgress) {
+          setAuthStatus(newSession ? 'authenticated' : 'unauthenticated');
+          setLoading(false);
+        }
       }
     );
 
