@@ -869,8 +869,8 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium text-gray-900">UTM Parameters</h4>
-                <p className="text-xs text-gray-500">Add tracking parameters for Google Analytics</p>
+                <h4 className="font-medium text-gray-900">UTM Builder</h4>
+                <p className="text-xs text-gray-500">Auto-generate tracking parameters for Google Analytics</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -884,27 +884,103 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
             </div>
 
             {utmParameters.enabled && (
-              <div className="space-y-3">
+              <div className="space-y-4">
+                {/* Quick Templates */}
+                <div className="border border-gray-200 rounded-xl p-3">
+                  <label className="text-xs text-gray-500 mb-2 block font-medium">Quick Templates</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: 'QR Print', source: 'qr_code', medium: 'print', campaign: qrCode.title.toLowerCase().replace(/\s+/g, '_') },
+                      { label: 'Flyer', source: 'flyer', medium: 'print', campaign: qrCode.title.toLowerCase().replace(/\s+/g, '_') },
+                      { label: 'Billboard', source: 'billboard', medium: 'outdoor', campaign: qrCode.title.toLowerCase().replace(/\s+/g, '_') },
+                      { label: 'Product', source: 'product_packaging', medium: 'packaging', campaign: qrCode.title.toLowerCase().replace(/\s+/g, '_') },
+                      { label: 'Business Card', source: 'business_card', medium: 'print', campaign: 'contact' },
+                      { label: 'Event', source: 'event', medium: 'offline', campaign: qrCode.title.toLowerCase().replace(/\s+/g, '_') },
+                    ].map((template) => (
+                      <button
+                        key={template.label}
+                        type="button"
+                        onClick={() => setUtmParameters({
+                          ...utmParameters,
+                          source: template.source,
+                          medium: template.medium,
+                          campaign: template.campaign,
+                        })}
+                        className="px-3 py-1.5 text-xs bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+                      >
+                        {template.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Auto-fill from Title */}
+                <button
+                  type="button"
+                  onClick={() => setUtmParameters({
+                    ...utmParameters,
+                    source: 'qr_code',
+                    medium: 'qr',
+                    campaign: qrCode.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''),
+                  })}
+                  className="w-full px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Tag size={14} />
+                  Auto-fill from QR Title: "{qrCode.title}"
+                </button>
+
+                {/* Source with suggestions */}
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Campaign Source (utm_source) *</label>
-                  <input
-                    type="text"
-                    value={utmParameters.source || ''}
-                    onChange={(e) => setUtmParameters({ ...utmParameters, source: e.target.value })}
-                    placeholder="e.g., google, newsletter, qr_code"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={utmParameters.source || ''}
+                      onChange={(e) => setUtmParameters({ ...utmParameters, source: e.target.value })}
+                      placeholder="e.g., qr_code, flyer, billboard"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      list="utm-source-list"
+                    />
+                    <datalist id="utm-source-list">
+                      <option value="qr_code" />
+                      <option value="flyer" />
+                      <option value="billboard" />
+                      <option value="poster" />
+                      <option value="business_card" />
+                      <option value="product_packaging" />
+                      <option value="storefront" />
+                      <option value="event" />
+                      <option value="brochure" />
+                      <option value="menu" />
+                    </datalist>
+                  </div>
                 </div>
+
+                {/* Medium with suggestions */}
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Campaign Medium (utm_medium) *</label>
-                  <input
-                    type="text"
-                    value={utmParameters.medium || ''}
-                    onChange={(e) => setUtmParameters({ ...utmParameters, medium: e.target.value })}
-                    placeholder="e.g., cpc, email, qr"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={utmParameters.medium || ''}
+                      onChange={(e) => setUtmParameters({ ...utmParameters, medium: e.target.value })}
+                      placeholder="e.g., qr, print, outdoor"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      list="utm-medium-list"
+                    />
+                    <datalist id="utm-medium-list">
+                      <option value="qr" />
+                      <option value="print" />
+                      <option value="outdoor" />
+                      <option value="packaging" />
+                      <option value="offline" />
+                      <option value="display" />
+                      <option value="referral" />
+                    </datalist>
+                  </div>
                 </div>
+
+                {/* Campaign Name */}
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Campaign Name (utm_campaign) *</label>
                   <input
@@ -915,31 +991,41 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
                   />
                 </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Campaign Term (utm_term)</label>
-                  <input
-                    type="text"
-                    value={utmParameters.term || ''}
-                    onChange={(e) => setUtmParameters({ ...utmParameters, term: e.target.value })}
-                    placeholder="e.g., running+shoes"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Campaign Content (utm_content)</label>
-                  <input
-                    type="text"
-                    value={utmParameters.content || ''}
-                    onChange={(e) => setUtmParameters({ ...utmParameters, content: e.target.value })}
-                    placeholder="e.g., banner_ad, text_link"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
-                  />
-                </div>
+
+                {/* Optional Fields - Collapsible */}
+                <details className="group">
+                  <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-1">
+                    <ChevronDown size={12} className="group-open:rotate-180 transition-transform" />
+                    Advanced Options (optional)
+                  </summary>
+                  <div className="mt-3 space-y-3 pl-4 border-l-2 border-gray-100">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Campaign Term (utm_term)</label>
+                      <input
+                        type="text"
+                        value={utmParameters.term || ''}
+                        onChange={(e) => setUtmParameters({ ...utmParameters, term: e.target.value })}
+                        placeholder="e.g., running+shoes"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Campaign Content (utm_content)</label>
+                      <input
+                        type="text"
+                        value={utmParameters.content || ''}
+                        onChange={(e) => setUtmParameters({ ...utmParameters, content: e.target.value })}
+                        placeholder="e.g., banner_ad, text_link"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+                </details>
 
                 {/* Preview */}
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <label className="text-xs text-gray-500 mb-1 block">Preview URL</label>
-                  <code className="text-xs text-indigo-600 break-all">
+                <div className="bg-indigo-50 rounded-xl p-3">
+                  <label className="text-xs text-indigo-600 mb-1 block font-medium">Generated URL Preview</label>
+                  <code className="text-xs text-indigo-800 break-all block mt-1">
                     {destinationUrl}
                     {utmParameters.source ? `?utm_source=${encodeURIComponent(utmParameters.source)}` : ''}
                     {utmParameters.medium ? `&utm_medium=${encodeURIComponent(utmParameters.medium)}` : ''}
@@ -947,6 +1033,13 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                     {utmParameters.term ? `&utm_term=${encodeURIComponent(utmParameters.term)}` : ''}
                     {utmParameters.content ? `&utm_content=${encodeURIComponent(utmParameters.content)}` : ''}
                   </code>
+                </div>
+
+                {/* Info */}
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-xs text-blue-700">
+                    💡 UTM parameters will be automatically added to your destination URL when users scan this QR code. Track performance in Google Analytics under Acquisition → Campaigns.
+                  </p>
                 </div>
               </div>
             )}
