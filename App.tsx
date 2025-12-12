@@ -408,12 +408,17 @@ const AppContent: React.FC = () => {
     window.history.pushState({}, '', '/');
   };
 
-  // Show auth loading screen during OAuth callback
-  if (loading && (authStatus === 'authenticating' || authStatus === 'authenticated')) {
-    return <AuthLoadingScreen status={authStatus} />;
+  // Show auth loading screen immediately when login starts or during OAuth
+  if (authStatus === 'authenticating') {
+    return <AuthLoadingScreen status="authenticating" />;
   }
 
-  // Show initializing state
+  // Show authenticated state briefly after successful login
+  if (loading && authStatus === 'authenticated') {
+    return <AuthLoadingScreen status="authenticated" />;
+  }
+
+  // Show initializing state on first load
   if (loading && authStatus === 'initializing') {
     return <AuthLoadingScreen status="initializing" />;
   }

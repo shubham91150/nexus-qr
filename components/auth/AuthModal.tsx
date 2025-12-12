@@ -18,7 +18,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef<HTMLDivElement | null>(null);
 
-  const { signIn, signUp, signInWithGoogle, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user, setAuthStatus } = useAuth();
 
   // Create modal container on mount
   useEffect(() => {
@@ -65,10 +65,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       if (isLogin) {
+        // Show full-screen loading for sign in
+        setAuthStatus('authenticating');
         const { error } = await signIn(email, password);
         if (error) {
           setError(error.message);
+          setAuthStatus('unauthenticated');
         } else {
+          setAuthStatus('authenticated');
+          // Brief delay to show authenticated state
+          await new Promise(resolve => setTimeout(resolve, 800));
           onClose();
         }
       } else {
@@ -81,6 +87,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       }
     } catch (err) {
       setError('An unexpected error occurred');
+      setAuthStatus('unauthenticated');
     } finally {
       setLoading(false);
     }
@@ -89,16 +96,20 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleGoogleSignIn = async () => {
     setError(null);
     setLoading(true);
+    // Immediately show full-screen loading
+    setAuthStatus('authenticating');
     try {
       const { error } = await signInWithGoogle();
       if (error) {
         setError(error.message);
         setLoading(false);
+        setAuthStatus('unauthenticated');
       }
       // Don't set loading to false here - page will redirect
     } catch (err) {
       setError('Failed to sign in with Google');
       setLoading(false);
+      setAuthStatus('unauthenticated');
     }
   };
 
