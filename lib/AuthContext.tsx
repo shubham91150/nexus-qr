@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   authStatus: AuthStatus;
+  setAuthStatus: (status: AuthStatus) => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -156,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     authStatus,
+    setAuthStatus,
     signIn,
     signUp,
     signInWithGoogle,
