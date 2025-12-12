@@ -7,7 +7,7 @@ import {
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
   PasswordProtection, GeofenceSettings, GeofenceLocation, IPRestriction, UTMParameters,
-  RetargetingConfig,
+  RetargetingConfig, LocationTrackingConfig,
   supabase
 } from '../../lib/supabase';
 
@@ -78,6 +78,11 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     qrCode.retargeting_config || { enabled: false, gtm_id: '', facebook_pixel_id: '', google_ads_id: '', tiktok_pixel_id: '' }
   );
 
+  // Location Tracking Config
+  const [locationTrackingConfig, setLocationTrackingConfig] = useState<LocationTrackingConfig>(
+    qrCode.location_tracking_config || { enabled: false }
+  );
+
   // Reset on QR change
   useEffect(() => {
     setDestinationUrl(qrCode.destination_url);
@@ -94,6 +99,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     setIpRestriction(qrCode.ip_restriction || { enabled: false, maxScansPerIP: 1, timeWindowMinutes: 60, blockedRedirectUrl: '' });
     setUtmParameters(qrCode.utm_parameters || { enabled: false, source: '', medium: '', campaign: '', term: '', content: '' });
     setRetargetingConfig(qrCode.retargeting_config || { enabled: false, gtm_id: '', facebook_pixel_id: '', google_ads_id: '', tiktok_pixel_id: '' });
+    setLocationTrackingConfig(qrCode.location_tracking_config || { enabled: false });
   }, [qrCode.id]);
 
   // Save settings
@@ -118,6 +124,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         ip_restriction: ipRestriction,
         utm_parameters: utmParameters,
         retargeting_config: retargetingConfig,
+        location_tracking_config: locationTrackingConfig,
         updated_at: new Date().toISOString(),
       };
 
@@ -946,9 +953,42 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
           </div>
         )}
 
-        {/* Tracking Tab - Retargeting & GPS */}
+        {/* Tracking Tab - Location & Retargeting */}
         {activeTab === 'tracking' && (
           <div className="space-y-6">
+            {/* Location Tracking Section */}
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <MapPin size={18} className="text-blue-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Location Tracking</h4>
+                    <p className="text-xs text-gray-500">Track scan locations via IP</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Premium</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={locationTrackingConfig.enabled}
+                      onChange={(e) => setLocationTrackingConfig({ ...locationTrackingConfig, enabled: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 rounded-lg p-3">
+                <p className="text-xs text-blue-700">
+                  {locationTrackingConfig.enabled
+                    ? '✓ Location tracking enabled. City-wise scan data will be shown in analytics.'
+                    : 'Enable to track which cities your QR codes are being scanned from. Uses IP-based geolocation (no GPS permission required).'}
+                </p>
+              </div>
+            </div>
+
             {/* Retargeting Section */}
             <div className="border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-4">

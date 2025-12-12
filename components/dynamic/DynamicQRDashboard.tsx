@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   QrCode, BarChart3, Edit2, Trash2, ExternalLink,
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
-  Smartphone, Globe, Calendar, Users, Eye,
+  Smartphone, Globe, Calendar, Users, Eye, MapPin,
   Download, Settings, Timer, AlertTriangle, Files, Plus, HelpCircle
 } from 'lucide-react';
 import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired, generateShortCode } from '../../lib/supabase';
@@ -785,10 +785,18 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                         </div>
                       </div>
 
-                      {/* Scan Locations */}
-                      <div className="mt-6">
-                        <ScanHeatmap qrId={selectedQR.id} height="300px" />
-                      </div>
+                      {/* Scan Locations - Only show if location tracking is enabled */}
+                      {selectedQR.location_tracking_config?.enabled ? (
+                        <div className="mt-6">
+                          <ScanHeatmap qrId={selectedQR.id} height="300px" />
+                        </div>
+                      ) : (
+                        <div className="mt-6 bg-gray-50 rounded-xl p-4 text-center">
+                          <MapPin size={24} className="mx-auto text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-500">Location tracking disabled</p>
+                          <p className="text-xs text-gray-400 mt-1">Enable in Settings → Tracking to see scan locations</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

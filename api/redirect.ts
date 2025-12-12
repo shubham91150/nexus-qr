@@ -158,6 +158,10 @@ interface RetargetingConfig {
   };
 }
 
+interface LocationTrackingConfig {
+  enabled: boolean;
+}
+
 interface DynamicQRCode {
   id: string;
   destination_url: string;
@@ -175,6 +179,7 @@ interface DynamicQRCode {
   ip_restriction: IPRestriction | null;
   utm_parameters: UTMParameters | null;
   retargeting_config: RetargetingConfig | null;
+  location_tracking_config: LocationTrackingConfig | null;
 }
 
 // ==================== Helper Functions ====================
@@ -993,6 +998,7 @@ export default async function handler(
 
     // 5. Check Retargeting configuration
     const retargetingConfig = qrCode.retargeting_config as RetargetingConfig | null;
+    const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
 
     // Generate retargeting scripts if enabled
     const retargetingScripts = retargetingConfig?.enabled
@@ -1002,13 +1008,17 @@ export default async function handler(
     // Record the scan asynchronously (don't block redirect)
     // Skip recording for internal requests (from dashboard, same origin, etc.)
     if (!isInternalRequest) {
+      // Only include city/country if location tracking is enabled
+      const locationData = locationTrackingConfig?.enabled
+        ? { country: geo?.country || null, city: geo?.city || null }
+        : { country: null, city: null };
+
       db
         .from('qr_scans')
         .insert({
           qr_id: qrCode.id,
           ip_address: clientIP || null,
-          country: geo?.country || null,
-          city: geo?.city || null,
+          ...locationData,
           device_type: device,
           browser: browser,
           os: os,

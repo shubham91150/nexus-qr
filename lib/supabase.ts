@@ -120,6 +120,11 @@ export interface RetargetingConfig {
   };
 }
 
+// Location Tracking Configuration (IP-based)
+export interface LocationTrackingConfig {
+  enabled: boolean;
+}
+
 // Extended Dynamic QR Code with all features
 export interface DynamicQRCode {
   id: string;
@@ -168,6 +173,9 @@ export interface DynamicQRCode {
 
   // NEW: Retargeting (GTM/Facebook Pixel)
   retargeting_config?: RetargetingConfig;
+
+  // NEW: Location Tracking (IP-based)
+  location_tracking_config?: LocationTrackingConfig;
 }
 
 // QR Scan Record
