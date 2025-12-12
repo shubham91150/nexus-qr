@@ -9,6 +9,7 @@ import { generatePayload, encryptPayload } from './services/qrUtils';
 import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
+import { AuthLoadingScreen, DashboardSkeleton } from './components/auth/AuthLoadingScreen';
 import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
 import { ErrorBoundary, OfflineBanner } from './components/ErrorBoundary';
 import { ProfileMenu } from './components/ProfileMenu';
@@ -368,9 +369,10 @@ const QRGenerator: React.FC<{
 
 // Main App Component with Routing
 const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, authStatus } = useAuth();
   const [view, setView] = useState<'generator' | 'dynamic'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
 
   // Handle URL-based routing for redirect
   useEffect(() => {
@@ -386,7 +388,12 @@ const AppContent: React.FC = () => {
 
   const handleDashboardClick = () => {
     if (user) {
-      setView('dynamic');
+      setDashboardLoading(true);
+      // Small delay for smooth transition
+      setTimeout(() => {
+        setView('dynamic');
+        setDashboardLoading(false);
+      }, 300);
     } else {
       setShowAuthModal(true);
     }
@@ -401,12 +408,19 @@ const AppContent: React.FC = () => {
     window.history.pushState({}, '', '/');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+  // Show auth loading screen during OAuth callback
+  if (loading && (authStatus === 'authenticating' || authStatus === 'authenticated')) {
+    return <AuthLoadingScreen status={authStatus} />;
+  }
+
+  // Show initializing state
+  if (loading && authStatus === 'initializing') {
+    return <AuthLoadingScreen status="initializing" />;
+  }
+
+  // Show dashboard skeleton while loading
+  if (dashboardLoading) {
+    return <DashboardSkeleton />;
   }
 
   if (view === 'dynamic' && user) {

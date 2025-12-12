@@ -2,10 +2,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
+export type AuthStatus = 'initializing' | 'authenticating' | 'authenticated' | 'unauthenticated';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  authStatus: AuthStatus;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -21,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('initializing');
 
   useEffect(() => {
     let mounted = true;
@@ -33,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle OAuth code exchange (with StrictMode protection)
         if (code && !codeExchangeAttempted) {
           codeExchangeAttempted = true; // Prevent double execution
+          if (mounted) setAuthStatus('authenticating');
 
           // Clean URL immediately to prevent issues
           window.history.replaceState({}, '', url.origin + url.pathname);
@@ -42,11 +47,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (error) {
             console.error('Code exchange error:', error.message);
+            if (mounted) setAuthStatus('unauthenticated');
             // Fall through to getSession below
           } else if (data.session && mounted) {
             console.log('Session obtained from code exchange');
+            setAuthStatus('authenticated');
             setSession(data.session);
             setUser(data.session.user);
+            // Brief delay to show "Authenticated" state
+            await new Promise(resolve => setTimeout(resolve, 800));
             setLoading(false);
             return;
           }
@@ -65,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
+          setAuthStatus(currentSession ? 'authenticated' : 'unauthenticated');
           setLoading(false);
         }
       } catch (err) {
@@ -72,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           setSession(null);
           setUser(null);
+          setAuthStatus('unauthenticated');
           setLoading(false);
         }
       }
@@ -87,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Auth event:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        setAuthStatus(newSession ? 'authenticated' : 'unauthenticated');
         setLoading(false);
       }
     );
@@ -131,6 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
+    authStatus,
     signIn,
     signUp,
     signInWithGoogle,
