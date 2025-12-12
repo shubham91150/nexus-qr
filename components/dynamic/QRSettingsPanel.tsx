@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
   Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
-  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target
+  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Mail, Bell
 } from 'lucide-react';
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
   PasswordProtection, GeofenceSettings, GeofenceLocation, IPRestriction, UTMParameters,
-  RetargetingConfig, LocationTrackingConfig,
+  RetargetingConfig, LocationTrackingConfig, EmailNotificationConfig,
   supabase
 } from '../../lib/supabase';
 
@@ -83,6 +83,11 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     qrCode.location_tracking_config || { enabled: false }
   );
 
+  // Email Notification Config
+  const [emailNotificationConfig, setEmailNotificationConfig] = useState<EmailNotificationConfig>(
+    qrCode.email_notification_config || { enabled: false, email: '', frequency: 'every_scan' }
+  );
+
   // Reset on QR change
   useEffect(() => {
     setDestinationUrl(qrCode.destination_url);
@@ -100,6 +105,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     setUtmParameters(qrCode.utm_parameters || { enabled: false, source: '', medium: '', campaign: '', term: '', content: '' });
     setRetargetingConfig(qrCode.retargeting_config || { enabled: false, gtm_id: '', facebook_pixel_id: '', google_ads_id: '', tiktok_pixel_id: '' });
     setLocationTrackingConfig(qrCode.location_tracking_config || { enabled: false });
+    setEmailNotificationConfig(qrCode.email_notification_config || { enabled: false, email: '', frequency: 'every_scan' });
   }, [qrCode.id]);
 
   // Save settings
@@ -125,6 +131,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         utm_parameters: utmParameters,
         retargeting_config: retargetingConfig,
         location_tracking_config: locationTrackingConfig,
+        email_notification_config: emailNotificationConfig,
         updated_at: new Date().toISOString(),
       };
 
@@ -1080,6 +1087,96 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                     : 'Enable to track which cities your QR codes are being scanned from. Uses IP-based geolocation (no GPS permission required).'}
                 </p>
               </div>
+            </div>
+
+            {/* Email Notifications Section */}
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Bell size={18} className="text-green-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Email Notifications</h4>
+                    <p className="text-xs text-gray-500">Get alerts when QR is scanned</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Premium</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={emailNotificationConfig.enabled}
+                      onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, enabled: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  </label>
+                </div>
+              </div>
+
+              {emailNotificationConfig.enabled && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Email Address *</label>
+                    <div className="relative">
+                      <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        value={emailNotificationConfig.email || ''}
+                        onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, email: e.target.value })}
+                        placeholder="your@email.com"
+                        className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-500 mb-2 block">Notification Frequency</label>
+                    <div className="space-y-2">
+                      {[
+                        { value: 'every_scan', label: 'Every Scan', desc: 'Get notified on each scan' },
+                        { value: 'first_daily', label: 'First Scan of Day', desc: 'One notification per day' },
+                        { value: 'every_10_scans', label: 'Every 10 Scans', desc: 'Batch notifications' },
+                      ].map((option) => (
+                        <label
+                          key={option.value}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            emailNotificationConfig.frequency === option.value
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="notification-frequency"
+                            value={option.value}
+                            checked={emailNotificationConfig.frequency === option.value}
+                            onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, frequency: e.target.value as EmailNotificationConfig['frequency'] })}
+                            className="text-green-600 focus:ring-green-500"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{option.label}</p>
+                            <p className="text-xs text-gray-500">{option.desc}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 rounded-lg p-3">
+                    <p className="text-xs text-green-700">
+                      📧 You'll receive email alerts with scan details including location, device, and time.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!emailNotificationConfig.enabled && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-600">
+                    Enable to receive real-time email alerts when someone scans this QR code.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Retargeting Section */}

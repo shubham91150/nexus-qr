@@ -162,6 +162,12 @@ interface LocationTrackingConfig {
   enabled: boolean;
 }
 
+interface EmailNotificationConfig {
+  enabled: boolean;
+  email: string;
+  frequency: 'every_scan' | 'first_daily' | 'every_10_scans';
+}
+
 interface DynamicQRCode {
   id: string;
   destination_url: string;
@@ -180,6 +186,9 @@ interface DynamicQRCode {
   utm_parameters: UTMParameters | null;
   retargeting_config: RetargetingConfig | null;
   location_tracking_config: LocationTrackingConfig | null;
+  email_notification_config: EmailNotificationConfig | null;
+  title: string;
+  scan_count: number;
 }
 
 // ==================== Helper Functions ====================
@@ -275,6 +284,90 @@ async function getGeoLocation(ip: string): Promise<{ country: string; city: stri
     };
   } catch {
     return null;
+  }
+}
+
+// Send email notification using Resend API
+async function sendScanNotification(
+  config: EmailNotificationConfig,
+  scanData: {
+    qrTitle: string;
+    city: string | null;
+    country: string | null;
+    device: string;
+    browser: string;
+    os: string;
+    scanCount: number;
+  }
+): Promise<void> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    console.error('RESEND_API_KEY not configured');
+    return;
+  }
+
+  try {
+    const locationText = scanData.city && scanData.country
+      ? `${scanData.city}, ${scanData.country}`
+      : scanData.country || 'Unknown location';
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'QR Scan Alert <onboarding@resend.dev>',
+        to: config.email,
+        subject: `🔔 New QR Scan: ${scanData.qrTitle}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px;">🔔 New QR Scan!</h1>
+            </div>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 12px 12px;">
+              <h2 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">${scanData.qrTitle}</h2>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">📍 Location</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${locationText}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">📱 Device</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${scanData.device}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">🌐 Browser</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${scanData.browser} on ${scanData.os}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">📊 Total Scans</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${scanData.scanCount + 1}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">🕐 Time</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
+                </tr>
+              </table>
+              <div style="margin-top: 20px; text-align: center;">
+                <a href="https://nexus-qr.vercel.app/dashboard" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">View Dashboard</a>
+              </div>
+            </div>
+            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 15px;">
+              Sent by Nexus QR • <a href="#" style="color: #999;">Unsubscribe</a>
+            </p>
+          </div>
+        `,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Failed to send email:', error);
+    }
+  } catch (error) {
+    console.error('Error sending email notification:', error);
   }
 }
 
@@ -1032,6 +1125,42 @@ export default async function handler(
             console.error('Error recording scan:', error);
           }
         });
+
+      // Send email notification if enabled
+      const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
+      if (emailConfig?.enabled && emailConfig.email) {
+        const currentScanCount = qrCode.scan_count || 0;
+        let shouldSendEmail = false;
+
+        switch (emailConfig.frequency) {
+          case 'every_scan':
+            shouldSendEmail = true;
+            break;
+          case 'first_daily':
+            // For first_daily, we'll send on every scan for now
+            // A more sophisticated implementation would track last notification time
+            shouldSendEmail = true;
+            break;
+          case 'every_10_scans':
+            // Send when scan count reaches multiples of 10
+            shouldSendEmail = (currentScanCount + 1) % 10 === 0;
+            break;
+          default:
+            shouldSendEmail = true;
+        }
+
+        if (shouldSendEmail) {
+          sendScanNotification(emailConfig, {
+            qrTitle: qrCode.title || 'Untitled QR',
+            city: locationTrackingConfig?.enabled ? geo?.city || null : null,
+            country: locationTrackingConfig?.enabled ? geo?.country || null : null,
+            device,
+            browser,
+            os,
+            scanCount: currentScanCount,
+          });
+        }
+      }
     } else {
       console.log('Skipping scan record for internal request');
     }

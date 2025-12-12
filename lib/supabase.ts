@@ -125,6 +125,13 @@ export interface LocationTrackingConfig {
   enabled: boolean;
 }
 
+// Email Notification Configuration
+export interface EmailNotificationConfig {
+  enabled: boolean;
+  email: string;
+  frequency: 'every_scan' | 'first_daily' | 'every_10_scans';
+}
+
 // Extended Dynamic QR Code with all features
 export interface DynamicQRCode {
   id: string;
@@ -176,6 +183,9 @@ export interface DynamicQRCode {
 
   // NEW: Location Tracking (IP-based)
   location_tracking_config?: LocationTrackingConfig;
+
+  // NEW: Email Notifications
+  email_notification_config?: EmailNotificationConfig;
 }
 
 // QR Scan Record
