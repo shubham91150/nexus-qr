@@ -6,9 +6,9 @@
 ALTER TABLE dynamic_qr_codes
 ADD COLUMN IF NOT EXISTS retargeting_config JSONB DEFAULT NULL;
 
--- 2. Add gps_tracking_config column to dynamic_qr_codes (optional, not used currently)
+-- 2. Add location_tracking_config column to dynamic_qr_codes
 ALTER TABLE dynamic_qr_codes
-ADD COLUMN IF NOT EXISTS gps_tracking_config JSONB DEFAULT NULL;
+ADD COLUMN IF NOT EXISTS location_tracking_config JSONB DEFAULT NULL;
 
 -- 3. Add city and country columns to qr_scans (for IP-based tracking)
 ALTER TABLE qr_scans
