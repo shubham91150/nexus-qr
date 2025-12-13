@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
   Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
-  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Mail, Bell
+  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Mail, Bell,
+  BellRing, CalendarDays, BarChart3, Lightbulb, CheckCircle, Info
 } from 'lucide-react';
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
@@ -1043,9 +1044,10 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                 </div>
 
                 {/* Info */}
-                <div className="bg-blue-50 rounded-lg p-3">
+                <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
+                  <Info size={14} className="text-blue-600 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-700">
-                    💡 UTM parameters will be automatically added to your destination URL when users scan this QR code. Track performance in Google Analytics under Acquisition → Campaigns.
+                    UTM parameters will be automatically added to your destination URL when users scan this QR code. Track performance in Google Analytics under Acquisition → Campaigns.
                   </p>
                 </div>
               </div>
@@ -1083,11 +1085,21 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
               </div>
 
               <div className="mt-4 bg-white/60 backdrop-blur rounded-xl p-3">
-                <p className="text-xs text-gray-600">
-                  {locationTrackingConfig.enabled
-                    ? '✓ Location tracking enabled. City-wise scan data will be shown in analytics.'
-                    : 'Enable to track which cities your QR codes are being scanned from. Uses IP-based geolocation (no GPS permission required).'}
-                </p>
+                {locationTrackingConfig.enabled ? (
+                  <div className="flex items-start gap-2">
+                    <CheckCircle size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-gray-600">
+                      Location tracking enabled. City-wise scan data will be shown in analytics.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <Info size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-gray-600">
+                      Enable to track which cities your QR codes are being scanned from. Uses IP-based geolocation (no GPS permission required).
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1137,9 +1149,9 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                     <label className="text-xs font-medium text-gray-600 mb-2 block">Notification Frequency</label>
                     <div className="space-y-2">
                       {[
-                        { value: 'every_scan', label: 'Every Scan', desc: 'Get notified on each scan', icon: '🔔' },
-                        { value: 'first_daily', label: 'First Scan of Day', desc: 'One notification per day', icon: '📅' },
-                        { value: 'every_10_scans', label: 'Every 10 Scans', desc: 'Batch notifications', icon: '📊' },
+                        { value: 'every_scan', label: 'Every Scan', desc: 'Get notified on each scan', Icon: BellRing },
+                        { value: 'first_daily', label: 'First Scan of Day', desc: 'One notification per day', Icon: CalendarDays },
+                        { value: 'every_10_scans', label: 'Every 10 Scans', desc: 'Batch notifications', Icon: BarChart3 },
                       ].map((option) => (
                         <label
                           key={option.value}
@@ -1157,17 +1169,23 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                             onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, frequency: e.target.value as EmailNotificationConfig['frequency'] })}
                             className="sr-only"
                           />
-                          <span className="text-lg">{option.icon}</span>
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                            emailNotificationConfig.frequency === option.value
+                              ? 'bg-green-100'
+                              : 'bg-gray-100'
+                          }`}>
+                            <option.Icon size={18} className={
+                              emailNotificationConfig.frequency === option.value
+                                ? 'text-green-600'
+                                : 'text-gray-500'
+                            } />
+                          </div>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">{option.label}</p>
                             <p className="text-xs text-gray-500">{option.desc}</p>
                           </div>
                           {emailNotificationConfig.frequency === option.value && (
-                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
+                            <CheckCircle size={20} className="text-green-500" />
                           )}
                         </label>
                       ))}
@@ -1252,9 +1270,10 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                       />
                     </div>
                   </div>
-                  <div className="bg-white/60 backdrop-blur rounded-xl p-3">
+                  <div className="bg-white/60 backdrop-blur rounded-xl p-3 flex items-start gap-2">
+                    <Lightbulb size={14} className="text-purple-500 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-gray-600">
-                      💡 When enabled, tracking pixels will fire when users scan this QR code, allowing you to create retargeting audiences.
+                      When enabled, tracking pixels will fire when users scan this QR code, allowing you to create retargeting audiences.
                     </p>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, QrCode } from 'lucide-react';
 
 type AuthStatus = 'initializing' | 'authenticating' | 'authenticated' | 'loading';
 
@@ -11,15 +11,23 @@ interface AuthLoadingScreenProps {
 export function AuthLoadingScreen({ status = 'loading', message }: AuthLoadingScreenProps) {
   const [currentStatus, setCurrentStatus] = useState<AuthStatus>(status);
   const [showCheckmark, setShowCheckmark] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     setCurrentStatus(status);
     if (status === 'authenticated') {
-      // Small delay before showing checkmark for smooth animation
+      setProgress(100);
       const timer = setTimeout(() => setShowCheckmark(true), 100);
       return () => clearTimeout(timer);
+    } else if (status === 'authenticating') {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress(prev => Math.min(prev + Math.random() * 15, 85));
+      }, 200);
+      return () => clearInterval(interval);
     } else {
       setShowCheckmark(false);
+      setProgress(0);
     }
   }, [status]);
 
@@ -27,69 +35,146 @@ export function AuthLoadingScreen({ status = 'loading', message }: AuthLoadingSc
     if (message) return message;
     switch (currentStatus) {
       case 'initializing':
-        return 'Initializing...';
+        return 'Starting up...';
       case 'authenticating':
-        return 'Authenticating...';
+        return 'Signing you in...';
       case 'authenticated':
-        return 'Authenticated';
+        return 'Welcome back!';
       default:
         return 'Loading...';
+    }
+  };
+
+  const getSubText = () => {
+    switch (currentStatus) {
+      case 'initializing':
+        return 'Preparing your workspace';
+      case 'authenticating':
+        return 'Verifying your credentials';
+      case 'authenticated':
+        return 'Redirecting to dashboard';
+      default:
+        return 'Please wait';
     }
   };
 
   const isComplete = currentStatus === 'authenticated';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-      {/* Main Card */}
-      <div className="flex flex-col items-center">
-        {/* Icon Container */}
-        <div
-          className={`
-            w-16 h-16 rounded-full flex items-center justify-center mb-6
-            transition-all duration-500 ease-out
-            ${isComplete
-              ? 'bg-gray-900 scale-100'
-              : 'bg-gray-100 scale-100'
-            }
-          `}
-        >
-          {isComplete && showCheckmark ? (
-            <Check
-              className="text-white animate-scale-in"
-              size={32}
-              strokeWidth={3}
-            />
-          ) : (
-            <Loader2
-              className="text-gray-600 animate-spin"
-              size={28}
-            />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-50" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-100 rounded-full blur-3xl opacity-50" />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Logo/Icon Container */}
+        <div className="relative mb-8">
+          {/* Outer ring */}
+          <div
+            className={`
+              w-24 h-24 rounded-3xl flex items-center justify-center
+              transition-all duration-700 ease-out
+              ${isComplete
+                ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-200'
+                : 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-200'
+              }
+            `}
+          >
+            {isComplete && showCheckmark ? (
+              <Check
+                className="text-white animate-scale-in"
+                size={40}
+                strokeWidth={3}
+              />
+            ) : currentStatus === 'initializing' ? (
+              <QrCode className="text-white" size={36} />
+            ) : (
+              <Loader2
+                className="text-white animate-spin"
+                size={36}
+              />
+            )}
+          </div>
+
+          {/* Progress ring for authenticating */}
+          {currentStatus === 'authenticating' && (
+            <svg className="absolute inset-0 w-24 h-24 -rotate-90">
+              <circle
+                cx="48"
+                cy="48"
+                r="44"
+                fill="none"
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="4"
+              />
+              <circle
+                cx="48"
+                cy="48"
+                r="44"
+                fill="none"
+                stroke="white"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={276}
+                strokeDashoffset={276 - (276 * progress) / 100}
+                className="transition-all duration-300"
+              />
+            </svg>
           )}
         </div>
 
         {/* Status Text */}
-        <p
+        <h2
           className={`
-            text-lg font-medium transition-colors duration-300
-            ${isComplete ? 'text-gray-900' : 'text-gray-600'}
+            text-xl font-semibold transition-colors duration-300 mb-1
+            ${isComplete ? 'text-green-600' : 'text-gray-900'}
           `}
         >
           {getStatusText()}
+        </h2>
+
+        {/* Subtitle */}
+        <p className="text-sm text-gray-500">
+          {getSubText()}
         </p>
 
-        {/* Subtitle for authenticating state */}
+        {/* Progress bar for authenticating */}
         {currentStatus === 'authenticating' && (
-          <p className="text-sm text-gray-400 mt-2 animate-pulse">
-            Please wait...
-          </p>
+          <div className="mt-6 w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+
+        {/* Success indicator dots */}
+        {isComplete && (
+          <div className="mt-6 flex items-center gap-1.5">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
+                style={{ animationDelay: `${i * 100}ms` }}
+              />
+            ))}
+          </div>
         )}
       </div>
 
       {/* Branding */}
       <div className="absolute bottom-8 text-center">
-        <p className="text-xs text-gray-400 font-medium">
-          Nexus QR Authentication
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <div className="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <QrCode size={14} className="text-white" />
+          </div>
+          <span className="text-sm font-semibold text-gray-700">Nexus QR</span>
+        </div>
+        <p className="text-xs text-gray-400">
+          Secure Authentication
         </p>
       </div>
 
@@ -109,7 +194,7 @@ export function AuthLoadingScreen({ status = 'loading', message }: AuthLoadingSc
           }
         }
         .animate-scale-in {
-          animation: scale-in 0.4s ease-out forwards;
+          animation: scale-in 0.5s ease-out forwards;
         }
       `}</style>
     </div>
@@ -125,7 +210,7 @@ export function SkeletonPulse({ className = '' }: { className?: string }) {
 
 export function DashboardSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header Skeleton */}
       <div className="bg-white border-b border-gray-100 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
