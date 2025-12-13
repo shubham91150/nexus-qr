@@ -366,7 +366,7 @@ export const QRPreview: React.FC<Props> = ({
       const thumbConfig: QRStyleConfig = {
         ...config,
         size: 150,
-        padding: 8,
+        padding: type === 'corner' ? 4 : 8,
         dotsType: type === 'pattern' ? styleId : config.dotsType,
         cornerSquareType: type === 'corner' ? styleId : config.cornerSquareType,
       };
@@ -385,25 +385,30 @@ export const QRPreview: React.FC<Props> = ({
       : "border border-gray-200 hover:border-gray-300";
 
     return (
-      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200 flex items-center justify-center`}>
+      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200`}>
         {type === 'corner' ? (
-          // Show only ONE corner eye - zoom in more to show just the corner
-          <div
-            ref={thumbRef}
-            className="w-[150px] h-[150px] flex-shrink-0"
-            style={{
-              transform: 'scale(0.9) translate(-30%, -30%)',
-            }}
-          />
+          // Show corner eye with 4px padding - clip to show top-left corner
+          <div className="w-full h-full p-1 flex items-center justify-center">
+            <div
+              ref={thumbRef}
+              className="w-[150px] h-[150px] flex-shrink-0"
+              style={{
+                transform: 'scale(0.41)',
+                transformOrigin: 'top left',
+              }}
+            />
+          </div>
         ) : (
           // Show center portion (dots pattern)
-          <div
-            ref={thumbRef}
-            className="w-[150px] h-[150px] flex-shrink-0"
-            style={{
-              transform: 'scale(0.5)',
-            }}
-          />
+          <div className="w-full h-full flex items-center justify-center">
+            <div
+              ref={thumbRef}
+              className="w-[150px] h-[150px] flex-shrink-0"
+              style={{
+                transform: 'scale(0.5)',
+              }}
+            />
+          </div>
         )}
       </div>
     );
