@@ -302,9 +302,11 @@ async function sendScanNotification(
 ): Promise<void> {
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
-    console.error('RESEND_API_KEY not configured');
+    console.error('[EMAIL] RESEND_API_KEY not configured in environment variables');
     return;
   }
+
+  console.log(`[EMAIL] Sending notification to ${config.email} for QR: ${scanData.qrTitle}`);
 
   try {
     const locationText = scanData.city && scanData.country
@@ -364,10 +366,12 @@ async function sendScanNotification(
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Failed to send email:', error);
+      console.error('[EMAIL] Failed to send:', response.status, error);
+    } else {
+      console.log('[EMAIL] Successfully sent to', config.email);
     }
   } catch (error) {
-    console.error('Error sending email notification:', error);
+    console.error('[EMAIL] Error sending notification:', error);
   }
 }
 

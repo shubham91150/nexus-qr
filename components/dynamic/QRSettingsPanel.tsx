@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
   Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
-  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Mail, Bell,
-  BellRing, CalendarDays, BarChart3, Lightbulb, CheckCircle, Info
+  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Bell, CheckCircle
 } from 'lucide-react';
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
@@ -1057,224 +1056,150 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
 
         {/* Tracking Tab - Location & Retargeting */}
         {activeTab === 'tracking' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Location Tracking Section */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-100">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <MapPin size={20} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold text-gray-900">Location Tracking</h4>
-                      <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Premium</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Track scan locations via IP</p>
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <MapPin size={18} className="text-gray-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Location Tracking</h4>
+                    <p className="text-xs text-gray-500">Track scan locations via IP</p>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={locationTrackingConfig.enabled}
                     onChange={(e) => setLocationTrackingConfig({ ...locationTrackingConfig, enabled: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-12 h-7 bg-gray-300 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-[22px] after:w-[22px] after:transition-all after:shadow-sm peer-checked:bg-blue-500"></div>
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
-              <div className="mt-4 bg-white/60 backdrop-blur rounded-xl p-3">
-                {locationTrackingConfig.enabled ? (
-                  <div className="flex items-start gap-2">
-                    <CheckCircle size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-gray-600">
-                      Location tracking enabled. City-wise scan data will be shown in analytics.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-2">
-                    <Info size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-gray-600">
-                      Enable to track which cities your QR codes are being scanned from. Uses IP-based geolocation (no GPS permission required).
-                    </p>
-                  </div>
-                )}
-              </div>
+              {locationTrackingConfig.enabled && (
+                <div className="bg-green-50 rounded-lg p-3 flex items-start gap-2">
+                  <CheckCircle size={14} className="text-green-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-gray-600">
+                    Location tracking enabled. City-wise scan data will be shown in analytics.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Email Notifications Section */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-100">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Bell size={20} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold text-gray-900">Email Notifications</h4>
-                      <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Premium</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Get alerts when QR is scanned</p>
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Bell size={18} className="text-gray-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Email Notifications</h4>
+                    <p className="text-xs text-gray-500">Get alerts when QR is scanned</p>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={emailNotificationConfig.enabled}
                     onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, enabled: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-12 h-7 bg-gray-300 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-[22px] after:w-[22px] after:transition-all after:shadow-sm peer-checked:bg-green-500"></div>
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
               {emailNotificationConfig.enabled && (
-                <div className="mt-4 space-y-3">
-                  <div className="bg-white/80 backdrop-blur rounded-xl p-3">
-                    <label className="text-xs font-medium text-gray-600 mb-2 block">Email Address *</label>
-                    <div className="relative">
-                      <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="email"
-                        value={emailNotificationConfig.email || ''}
-                        onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, email: e.target.value })}
-                        placeholder="your@email.com"
-                        className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
-                      />
-                    </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Email Address *</label>
+                    <input
+                      type="email"
+                      value={emailNotificationConfig.email || ''}
+                      onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, email: e.target.value })}
+                      placeholder="your@email.com"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
                   </div>
 
-                  <div className="bg-white/80 backdrop-blur rounded-xl p-3">
-                    <label className="text-xs font-medium text-gray-600 mb-2 block">Notification Frequency</label>
-                    <div className="space-y-2">
-                      {[
-                        { value: 'every_scan', label: 'Every Scan', desc: 'Get notified on each scan', Icon: BellRing },
-                        { value: 'first_daily', label: 'First Scan of Day', desc: 'One notification per day', Icon: CalendarDays },
-                        { value: 'every_10_scans', label: 'Every 10 Scans', desc: 'Batch notifications', Icon: BarChart3 },
-                      ].map((option) => (
-                        <label
-                          key={option.value}
-                          className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                            emailNotificationConfig.frequency === option.value
-                              ? 'border-green-500 bg-green-50/50'
-                              : 'border-gray-100 bg-white hover:border-gray-200'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="notification-frequency"
-                            value={option.value}
-                            checked={emailNotificationConfig.frequency === option.value}
-                            onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, frequency: e.target.value as EmailNotificationConfig['frequency'] })}
-                            className="sr-only"
-                          />
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                            emailNotificationConfig.frequency === option.value
-                              ? 'bg-green-100'
-                              : 'bg-gray-100'
-                          }`}>
-                            <option.Icon size={18} className={
-                              emailNotificationConfig.frequency === option.value
-                                ? 'text-green-600'
-                                : 'text-gray-500'
-                            } />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{option.label}</p>
-                            <p className="text-xs text-gray-500">{option.desc}</p>
-                          </div>
-                          {emailNotificationConfig.frequency === option.value && (
-                            <CheckCircle size={20} className="text-green-500" />
-                          )}
-                        </label>
-                      ))}
-                    </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Notification Frequency</label>
+                    <select
+                      value={emailNotificationConfig.frequency}
+                      onChange={(e) => setEmailNotificationConfig({ ...emailNotificationConfig, frequency: e.target.value as EmailNotificationConfig['frequency'] })}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    >
+                      <option value="every_scan">Every Scan</option>
+                      <option value="first_daily">First Scan of Day</option>
+                      <option value="every_10_scans">Every 10 Scans</option>
+                    </select>
                   </div>
-                </div>
-              )}
-
-              {!emailNotificationConfig.enabled && (
-                <div className="mt-4 bg-white/60 backdrop-blur rounded-xl p-3">
-                  <p className="text-xs text-gray-600">
-                    Enable to receive real-time email alerts when someone scans this QR code.
-                  </p>
                 </div>
               )}
             </div>
 
             {/* Retargeting Section */}
-            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-5 border border-purple-100">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Target size={20} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900">Retargeting Pixels</h4>
-                    <p className="text-xs text-gray-500 mt-0.5">Track scanners with ad pixels</p>
+            <div className="border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Target size={18} className="text-gray-600" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Retargeting Pixels</h4>
+                    <p className="text-xs text-gray-500">Track scanners with ad pixels</p>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={retargetingConfig.enabled}
                     onChange={(e) => setRetargetingConfig({ ...retargetingConfig, enabled: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-12 h-7 bg-gray-300 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-[22px] after:w-[22px] after:transition-all after:shadow-sm peer-checked:bg-purple-500"></div>
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
               {retargetingConfig.enabled && (
-                <div className="mt-4 space-y-3">
-                  <div className="bg-white/80 backdrop-blur rounded-xl p-3 space-y-3">
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1.5 block">Google Tag Manager ID</label>
-                      <input
-                        type="text"
-                        value={retargetingConfig.gtm_id || ''}
-                        onChange={(e) => setRetargetingConfig({ ...retargetingConfig, gtm_id: e.target.value })}
-                        placeholder="GTM-XXXXXXX"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1.5 block">Facebook Pixel ID</label>
-                      <input
-                        type="text"
-                        value={retargetingConfig.facebook_pixel_id || ''}
-                        onChange={(e) => setRetargetingConfig({ ...retargetingConfig, facebook_pixel_id: e.target.value })}
-                        placeholder="123456789012345"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1.5 block">TikTok Pixel ID</label>
-                      <input
-                        type="text"
-                        value={retargetingConfig.tiktok_pixel_id || ''}
-                        onChange={(e) => setRetargetingConfig({ ...retargetingConfig, tiktok_pixel_id: e.target.value })}
-                        placeholder="XXXXXXXXXXXXXXXXXX"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1.5 block">Google Ads Conversion ID</label>
-                      <input
-                        type="text"
-                        value={retargetingConfig.google_ads_id || ''}
-                        onChange={(e) => setRetargetingConfig({ ...retargetingConfig, google_ads_id: e.target.value })}
-                        placeholder="AW-XXXXXXXXXX"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
-                      />
-                    </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Google Tag Manager ID</label>
+                    <input
+                      type="text"
+                      value={retargetingConfig.gtm_id || ''}
+                      onChange={(e) => setRetargetingConfig({ ...retargetingConfig, gtm_id: e.target.value })}
+                      placeholder="GTM-XXXXXXX"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
                   </div>
-                  <div className="bg-white/60 backdrop-blur rounded-xl p-3 flex items-start gap-2">
-                    <Lightbulb size={14} className="text-purple-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-gray-600">
-                      When enabled, tracking pixels will fire when users scan this QR code, allowing you to create retargeting audiences.
-                    </p>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Facebook Pixel ID</label>
+                    <input
+                      type="text"
+                      value={retargetingConfig.facebook_pixel_id || ''}
+                      onChange={(e) => setRetargetingConfig({ ...retargetingConfig, facebook_pixel_id: e.target.value })}
+                      placeholder="123456789012345"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">TikTok Pixel ID</label>
+                    <input
+                      type="text"
+                      value={retargetingConfig.tiktok_pixel_id || ''}
+                      onChange={(e) => setRetargetingConfig({ ...retargetingConfig, tiktok_pixel_id: e.target.value })}
+                      placeholder="XXXXXXXXXXXXXXXXXX"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Google Ads Conversion ID</label>
+                    <input
+                      type="text"
+                      value={retargetingConfig.google_ads_id || ''}
+                      onChange={(e) => setRetargetingConfig({ ...retargetingConfig, google_ads_id: e.target.value })}
+                      placeholder="AW-XXXXXXXXXX"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    />
                   </div>
                 </div>
               )}
