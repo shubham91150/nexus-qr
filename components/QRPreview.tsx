@@ -366,7 +366,7 @@ export const QRPreview: React.FC<Props> = ({
       const thumbConfig: QRStyleConfig = {
         ...config,
         size: 150,
-        padding: type === 'corner' ? 4 : 8,
+        padding: type === 'corner' ? 2 : 8,
         dotsType: type === 'pattern' ? styleId : config.dotsType,
         cornerSquareType: type === 'corner' ? styleId : config.cornerSquareType,
       };
@@ -384,16 +384,18 @@ export const QRPreview: React.FC<Props> = ({
       ? "ring-2 ring-gray-900 ring-offset-2"
       : "border border-gray-200 hover:border-gray-300";
 
+    // Container is 70x70, with 4px inner padding = 62x62 visible area
+    // For corner: show just the corner eye (approx 1/3 of QR = 50px), scale to fill 62px
     return (
       <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200`}>
         {type === 'corner' ? (
-          // Show corner eye with 4px padding - clip to show top-left corner
-          <div className="w-full h-full p-1 flex items-center justify-center">
+          // Show just the corner eye with 4px padding
+          <div className="w-full h-full overflow-hidden" style={{ padding: '4px' }}>
             <div
               ref={thumbRef}
-              className="w-[150px] h-[150px] flex-shrink-0"
+              className="w-[150px] h-[150px]"
               style={{
-                transform: 'scale(0.41)',
+                transform: 'scale(1.35)',
                 transformOrigin: 'top left',
               }}
             />
