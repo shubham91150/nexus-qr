@@ -384,18 +384,21 @@ export const QRPreview: React.FC<Props> = ({
       ? "ring-2 ring-gray-900 ring-offset-2"
       : "border border-gray-200 hover:border-gray-300";
 
-    // Container is 70x70, with 4px inner padding = 62x62 visible area
-    // For corner: show just the corner eye (approx 1/3 of QR = 50px), scale to fill 62px
+    // Container: 70x70, padding: 4px each side, visible: 62x62
+    // Corner eye is ~1/3 of QR (50px in 150px QR), need to scale to fill 62px
     return (
       <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200`}>
         {type === 'corner' ? (
-          // Show just the corner eye with 4px padding
-          <div className="w-full h-full overflow-hidden" style={{ padding: '4px' }}>
+          // Show just the corner eye centered with 4px padding
+          <div
+            className="w-[62px] h-[62px] overflow-hidden mx-auto my-auto"
+            style={{ margin: '4px' }}
+          >
             <div
               ref={thumbRef}
               className="w-[150px] h-[150px]"
               style={{
-                transform: 'scale(1.35)',
+                transform: 'scale(1.24) translate(-1px, -1px)',
                 transformOrigin: 'top left',
               }}
             />
