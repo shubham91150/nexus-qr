@@ -366,7 +366,7 @@ export const QRPreview: React.FC<Props> = ({
       const thumbConfig: QRStyleConfig = {
         ...config,
         size: 150,
-        padding: type === 'corner' ? 2 : 8,
+        padding: 8,
         dotsType: type === 'pattern' ? styleId : config.dotsType,
         cornerSquareType: type === 'corner' ? styleId : config.cornerSquareType,
       };
@@ -384,38 +384,64 @@ export const QRPreview: React.FC<Props> = ({
       ? "ring-2 ring-gray-900 ring-offset-2"
       : "border border-gray-200 hover:border-gray-300";
 
-    // Container: 70x70, padding: 4px each side, visible: 62x62
-    // Corner eye is ~1/3 of QR (50px in 150px QR), need to scale to fill 62px
     return (
-      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200`}>
-        {type === 'corner' ? (
-          // Show just the corner eye centered with 4px padding
-          <div
-            className="w-[62px] h-[62px] overflow-hidden mx-auto my-auto"
-            style={{ margin: '4px' }}
-          >
-            <div
-              ref={thumbRef}
-              className="w-[150px] h-[150px]"
-              style={{
-                transform: 'scale(1.24) translate(-1px, -1px)',
-                transformOrigin: 'top left',
-              }}
-            />
-          </div>
-        ) : (
-          // Show center portion (dots pattern)
-          <div className="w-full h-full flex items-center justify-center">
-            <div
-              ref={thumbRef}
-              className="w-[150px] h-[150px] flex-shrink-0"
-              style={{
-                transform: 'scale(0.5)',
-              }}
-            />
-          </div>
-        )}
+      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200 flex items-center justify-center`}>
+        <div
+          ref={thumbRef}
+          className="w-[150px] h-[150px] flex-shrink-0"
+          style={{
+            transform: 'scale(0.5)',
+          }}
+        />
       </div>
+    );
+  };
+
+  // Single corner eye thumbnail for corner selector
+  const CornerThumbnail: React.FC<{
+    styleId: string;
+    active: boolean;
+    onClick: () => void;
+    label: string;
+  }> = ({ styleId, active, onClick, label }) => {
+    const thumbRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!thumbRef.current) return;
+
+      const thumbConfig: QRStyleConfig = {
+        ...config,
+        size: 100,
+        padding: 4,
+        cornerSquareType: styleId,
+      };
+
+      try {
+        const thumbRenderer = new CustomSVGRenderer(thumbConfig);
+        const svgString = thumbRenderer.render('A');
+        thumbRef.current.innerHTML = svgString;
+      } catch (err) {
+        console.error('Error rendering corner thumbnail:', err);
+      }
+    }, [styleId, config.fgColor, config.bgColor, config.isGradient, config.fgColor2]);
+
+    return (
+      <button
+        onClick={onClick}
+        className="flex flex-col items-center gap-1 group focus:outline-none"
+      >
+        <div className={`w-[50px] h-[50px] rounded-lg overflow-hidden bg-white flex items-center justify-center transition-all duration-200 ${active ? 'ring-2 ring-gray-900' : 'border border-gray-200 hover:border-gray-400'}`}>
+          <div
+            ref={thumbRef}
+            className="w-[100px] h-[100px]"
+            style={{
+              transform: 'scale(0.95)',
+              transformOrigin: 'top left',
+            }}
+          />
+        </div>
+        <span className={`text-[9px] font-medium transition-colors ${active ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{label}</span>
+      </button>
     );
   };
 
@@ -478,24 +504,26 @@ export const QRPreview: React.FC<Props> = ({
                     ))}
                   </>
               ) : (
-                  <>
-                    {[
-                       {id: 'square', label: 'Square'},
-                       {id: 'circle', label: 'Circle'},
-                       {id: 'rounded', label: 'Round'},
-                       {id: 'three-sided', label: '3-Side'},
-                       {id: 'two-sided', label: 'Leaf'}
-                    ].map((item) => (
-                        <button
+                  // Single container with all corner styles
+                  <div className="w-full flex justify-center">
+                    <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-4">
+                      {[
+                         {id: 'square', label: 'Square'},
+                         {id: 'circle', label: 'Circle'},
+                         {id: 'rounded', label: 'Round'},
+                         {id: 'three-sided', label: '3-Side'},
+                         {id: 'two-sided', label: 'Leaf'}
+                      ].map((item) => (
+                          <CornerThumbnail
                             key={item.id}
+                            styleId={item.id}
+                            active={config.cornerSquareType === item.id}
                             onClick={() => handleConfigUpdate('cornerSquareType', item.id)}
-                            className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
-                        >
-                            <StyleThumbnail type="corner" styleId={item.id} active={config.cornerSquareType === item.id} />
-                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.cornerSquareType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
-                        </button>
-                    ))}
-                  </>
+                            label={item.label}
+                          />
+                      ))}
+                    </div>
+                  </div>
               )}
             </div>
           </div>
