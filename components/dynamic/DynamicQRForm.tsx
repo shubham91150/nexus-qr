@@ -30,6 +30,7 @@ const INITIAL_STYLE: QRStyleConfig = {
   dotsType: 'square',
   cornerSquareType: 'square',
   cornerDotType: 'square',
+  frameType: 'none',
   logoImage: null,
   logoSize: 0.25,
   logoPadding: 0,

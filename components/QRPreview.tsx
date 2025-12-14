@@ -3,7 +3,7 @@ import { QRStyleConfig, QRContentData } from '../types';
 import { CustomSVGRenderer } from '../services/customSvgRenderer';
 import { supabase, generateShortCode } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink } from 'lucide-react';
+import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
 
 interface Props {
@@ -41,7 +41,7 @@ export const QRPreview: React.FC<Props> = ({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [activeEditTab, setActiveEditTab] = useState<'pattern' | 'corner'>('pattern');
+  const [activeEditTab, setActiveEditTab] = useState<'pattern' | 'corner' | 'frame'>('pattern');
   const [isAdjustmentsOpen, setIsAdjustmentsOpen] = useState(false);
 
   // Dynamic QR states
@@ -362,7 +362,6 @@ export const QRPreview: React.FC<Props> = ({
     useEffect(() => {
       if (!thumbRef.current) return;
 
-      // Create a mini config for this thumbnail
       const thumbConfig: QRStyleConfig = {
         ...config,
         size: 150,
@@ -397,54 +396,6 @@ export const QRPreview: React.FC<Props> = ({
     );
   };
 
-  // Single corner eye thumbnail for corner selector
-  const CornerThumbnail: React.FC<{
-    styleId: string;
-    active: boolean;
-    onClick: () => void;
-    label: string;
-  }> = ({ styleId, active, onClick, label }) => {
-    const thumbRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      if (!thumbRef.current) return;
-
-      const thumbConfig: QRStyleConfig = {
-        ...config,
-        size: 100,
-        padding: 4,
-        cornerSquareType: styleId,
-      };
-
-      try {
-        const thumbRenderer = new CustomSVGRenderer(thumbConfig);
-        const svgString = thumbRenderer.render('A');
-        thumbRef.current.innerHTML = svgString;
-      } catch (err) {
-        console.error('Error rendering corner thumbnail:', err);
-      }
-    }, [styleId, config.fgColor, config.bgColor, config.isGradient, config.fgColor2]);
-
-    return (
-      <button
-        onClick={onClick}
-        className="flex flex-col items-center gap-1 group focus:outline-none"
-      >
-        <div className={`w-[50px] h-[50px] rounded-lg overflow-hidden bg-white flex items-center justify-center transition-all duration-200 ${active ? 'ring-2 ring-gray-900' : 'border border-gray-200 hover:border-gray-400'}`}>
-          <div
-            ref={thumbRef}
-            className="w-[100px] h-[100px]"
-            style={{
-              transform: 'scale(0.95)',
-              transformOrigin: 'top left',
-            }}
-          />
-        </div>
-        <span className={`text-[9px] font-medium transition-colors ${active ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{label}</span>
-      </button>
-    );
-  };
-
   return (
     <div className={`bg-white rounded-[24px] shadow-card p-6 md:p-8 flex flex-col items-center ${className}`}>
       <div className="mb-4 flex flex-col items-center w-full">
@@ -464,20 +415,27 @@ export const QRPreview: React.FC<Props> = ({
       </div>
 
       <div className="w-full mb-6">
-          <div className="flex justify-center gap-6 mb-4 border-b border-gray-100 pb-2">
-              <button 
+          <div className="flex justify-center gap-4 mb-4 border-b border-gray-100 pb-2">
+              <button
                 onClick={() => setActiveEditTab('pattern')}
-                className={`flex items-center gap-2 pb-1 transition-all border-b-2 ${activeEditTab === 'pattern' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                className={`flex items-center gap-1.5 pb-1 transition-all border-b-2 ${activeEditTab === 'pattern' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
               >
-                <Grid size={16} />
-                <span className="text-xs font-bold uppercase tracking-wider">Patterns</span>
+                <Grid size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Patterns</span>
               </button>
-              <button 
+              <button
                 onClick={() => setActiveEditTab('corner')}
-                className={`flex items-center gap-2 pb-1 transition-all border-b-2 ${activeEditTab === 'corner' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                className={`flex items-center gap-1.5 pb-1 transition-all border-b-2 ${activeEditTab === 'corner' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
               >
-                <Maximize size={16} />
-                <span className="text-xs font-bold uppercase tracking-wider">Corners</span>
+                <Maximize size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Corners</span>
+              </button>
+              <button
+                onClick={() => setActiveEditTab('frame')}
+                className={`flex items-center gap-1.5 pb-1 transition-all border-b-2 ${activeEditTab === 'frame' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              >
+                <Frame size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Frames</span>
               </button>
           </div>
           
@@ -503,27 +461,47 @@ export const QRPreview: React.FC<Props> = ({
                         </button>
                     ))}
                   </>
-              ) : (
-                  // Single container with all corner styles
-                  <div className="w-full flex justify-center">
-                    <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-4">
-                      {[
-                         {id: 'square', label: 'Square'},
-                         {id: 'circle', label: 'Circle'},
-                         {id: 'rounded', label: 'Round'},
-                         {id: 'three-sided', label: '3-Side'},
-                         {id: 'two-sided', label: 'Leaf'}
-                      ].map((item) => (
-                          <CornerThumbnail
+              ) : activeEditTab === 'corner' ? (
+                  <>
+                    {[
+                        {id: 'square', label: 'Square'},
+                        {id: 'circle', label: 'Circle'},
+                        {id: 'rounded', label: 'Round'},
+                        {id: 'three-sided', label: '3-Side'},
+                        {id: 'two-sided', label: 'Leaf'}
+                    ].map((item) => (
+                        <button
                             key={item.id}
-                            styleId={item.id}
-                            active={config.cornerSquareType === item.id}
                             onClick={() => handleConfigUpdate('cornerSquareType', item.id)}
-                            label={item.label}
-                          />
-                      ))}
-                    </div>
-                  </div>
+                            className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
+                        >
+                            <StyleThumbnail type="corner" styleId={item.id} active={config.cornerSquareType === item.id} />
+                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.cornerSquareType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
+                        </button>
+                    ))}
+                  </>
+              ) : (
+                  <>
+                    {[
+                        {id: 'none', label: 'None', icon: '○'},
+                        {id: 'simple', label: 'Simple', icon: '□'},
+                        {id: 'rounded', label: 'Rounded', icon: '▢'},
+                        {id: 'circle', label: 'Circle', icon: '◯'},
+                        {id: 'banner', label: 'Banner', icon: '▭'},
+                        {id: 'scan-me', label: 'Scan Me', icon: '⬚'}
+                    ].map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => handleConfigUpdate('frameType', item.id)}
+                            className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
+                        >
+                            <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 flex items-center justify-center text-2xl ${config.frameType === item.id ? 'ring-2 ring-gray-900 ring-offset-2' : 'border border-gray-200 hover:border-gray-300'} transition-all duration-200`}>
+                              {item.icon}
+                            </div>
+                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.frameType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
+                        </button>
+                    ))}
+                  </>
               )}
             </div>
           </div>
