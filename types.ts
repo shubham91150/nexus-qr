@@ -24,8 +24,13 @@ export interface QRStyleConfig {
   
   // Corners (Updated for Custom Engine)
   cornerSquareType: 'square' | 'circle' | 'rounded' | 'three-sided' | 'two-sided';
-  cornerDotType: 'square' | 'dot'; 
-  
+  cornerDotType: 'square' | 'dot';
+
+  // Frame
+  frameType: 'none' | 'simple' | 'rounded' | 'circle' | 'banner' | 'scan-me';
+  frameText?: string;
+  frameColor?: string;
+
   // Logo
   logoImage: string | null;
   logoSize: number;
