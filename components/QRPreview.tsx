@@ -505,76 +505,53 @@ export const QRPreview: React.FC<Props> = ({
     const renderFrameSvg = () => {
       const size = 56;
 
-      // Mini QR inside white container
-      const miniQrContent = `
-        <rect x="4" y="4" width="6" height="6" fill="${fgColor}" rx="0.5" />
-        <rect x="18" y="4" width="6" height="6" fill="${fgColor}" rx="0.5" />
-        <rect x="4" y="18" width="6" height="6" fill="${fgColor}" rx="0.5" />
-        <rect x="11" y="11" width="6" height="6" fill="${fgColor}" rx="0.5" />
-        <rect x="12" y="5" width="2" height="2" fill="${fgColor}" />
-        <rect x="5" y="12" width="2" height="2" fill="${fgColor}" />
-        <rect x="19" y="12" width="2" height="2" fill="${fgColor}" />
-        <rect x="12" y="19" width="2" height="2" fill="${fgColor}" />
-      `;
+      // Mini QR pattern
+      const miniQr = (
+        <g>
+          <rect x="3" y="3" width="5" height="5" fill={fgColor} />
+          <rect x="15" y="3" width="5" height="5" fill={fgColor} />
+          <rect x="3" y="15" width="5" height="5" fill={fgColor} />
+          <rect x="9" y="9" width="5" height="5" fill={fgColor} />
+          <rect x="10" y="4" width="2" height="2" fill={fgColor} />
+          <rect x="4" y="10" width="2" height="2" fill={fgColor} />
+          <rect x="16" y="10" width="2" height="2" fill={fgColor} />
+          <rect x="10" y="16" width="2" height="2" fill={fgColor} />
+        </g>
+      );
 
       switch (styleId) {
         case 'none':
           // Just QR without frame
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
-              <rect x="14" y="14" width="28" height="28" fill="#f9fafb" rx="2" />
-              <g transform="translate(16, 16)">{/* Mini QR */}
-                <rect x="2" y="2" width="5" height="5" fill={fgColor} rx="0.5" />
-                <rect x="17" y="2" width="5" height="5" fill={fgColor} rx="0.5" />
-                <rect x="2" y="17" width="5" height="5" fill={fgColor} rx="0.5" />
-                <rect x="9" y="9" width="6" height="6" fill={fgColor} rx="0.5" />
+              <rect x="12" y="12" width="32" height="32" fill="#f9fafb" rx="2" />
+              <g transform="translate(17, 17) scale(0.9)">
+                {miniQr}
               </g>
             </svg>
           );
 
         case 'circle':
-          // Circle frame with QR inside
+          // Circle frame matching the actual render
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
-              <circle cx="28" cy="28" r="26" fill={fgColor} />
-              <rect x="10" y="8" width="36" height="36" fill="white" rx="3" />
-              <g transform="translate(14, 11)">
-                <g dangerouslySetInnerHTML={{ __html: miniQrContent }} />
+              {/* Circle background - fills almost whole area */}
+              <circle cx="28" cy="28" r="27" fill={fgColor} />
+              {/* White container for QR (75% of size, slightly above center) */}
+              <rect x="7" y="5" width="42" height="42" fill="white" rx="2" />
+              {/* Mini QR inside */}
+              <g transform="translate(14, 11) scale(0.9)">
+                {miniQr}
               </g>
-              <text x="28" y="50" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN</text>
-            </svg>
-          );
-
-        case 'rounded-box':
-          // Rounded rectangle frame
-          return (
-            <svg width={size} height={size} viewBox="0 0 56 56">
-              <rect x="2" y="2" width="52" height="52" fill={fgColor} rx="6" />
-              <rect x="6" y="5" width="44" height="40" fill="white" rx="3" />
-              <g transform="translate(14, 9)">
-                <g dangerouslySetInnerHTML={{ __html: miniQrContent }} />
-              </g>
-              <text x="28" y="51" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN ME</text>
-            </svg>
-          );
-
-        case 'square-box':
-          // Square frame with slight radius
-          return (
-            <svg width={size} height={size} viewBox="0 0 56 56">
-              <rect x="2" y="2" width="52" height="52" fill={fgColor} rx="3" />
-              <rect x="6" y="5" width="44" height="40" fill="white" rx="2" />
-              <g transform="translate(14, 9)">
-                <g dangerouslySetInnerHTML={{ __html: miniQrContent }} />
-              </g>
-              <text x="28" y="51" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN ME</text>
+              {/* Text at bottom */}
+              <text x="28" y="52" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN ME</text>
             </svg>
           );
 
         default:
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
-              <rect x="14" y="14" width="28" height="28" fill="#f9fafb" rx="2" />
+              <rect x="12" y="12" width="32" height="32" fill="#f9fafb" rx="2" />
             </svg>
           );
       }
@@ -672,23 +649,37 @@ export const QRPreview: React.FC<Props> = ({
                     ))}
                   </>
               ) : (
-                  <>
-                    {[
-                        {id: 'none', label: 'None'},
-                        {id: 'circle', label: 'Circle'},
-                        {id: 'rounded-box', label: 'Rounded'},
-                        {id: 'square-box', label: 'Square'}
-                    ].map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => handleConfigUpdate('frameType', item.id)}
-                            className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
-                        >
-                            <FrameStyleThumbnail styleId={item.id} active={config.frameType === item.id} />
-                            <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.frameType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
-                        </button>
-                    ))}
-                  </>
+                  <div className="flex flex-col items-center gap-3 w-full">
+                    <div className="flex gap-3">
+                      {[
+                          {id: 'none', label: 'None'},
+                          {id: 'circle', label: 'Circle'}
+                      ].map((item) => (
+                          <button
+                              key={item.id}
+                              onClick={() => handleConfigUpdate('frameType', item.id)}
+                              className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
+                          >
+                              <FrameStyleThumbnail styleId={item.id} active={config.frameType === item.id} />
+                              <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.frameType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
+                          </button>
+                      ))}
+                    </div>
+                    {/* Frame Text Input - only show when frame is selected */}
+                    {config.frameType && config.frameType !== 'none' && (
+                      <div className="w-full max-w-[200px]">
+                        <label className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 block text-center">Frame Text (max 10)</label>
+                        <input
+                          type="text"
+                          value={config.frameText || 'SCAN ME'}
+                          onChange={(e) => handleConfigUpdate('frameText', e.target.value.substring(0, 10))}
+                          maxLength={10}
+                          placeholder="SCAN ME"
+                          className="w-full px-3 py-2 text-sm text-center border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                        />
+                      </div>
+                    )}
+                  </div>
               )}
             </div>
           </div>
