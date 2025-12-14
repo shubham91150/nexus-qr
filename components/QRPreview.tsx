@@ -408,75 +408,77 @@ export const QRPreview: React.FC<Props> = ({
     // SVG paths for different corner styles
     const renderCornerSvg = () => {
       const size = 50;
-      const outerSize = 42;
-      const innerSize = 14;
+      const outerSize = 38;
+      const innerSize = 12;
       const outerOffset = (size - outerSize) / 2;
       const innerOffset = (size - innerSize) / 2;
-      const strokeWidth = 6;
       const fgColor = config.fgColor || '#000000';
+      const radius = 8; // corner radius for rounded styles
+
+      // Helper to create rounded rect path with individual corner radii
+      const roundedRectPath = (x: number, y: number, w: number, h: number, radii: number[]) => {
+        const [tl, tr, br, bl] = radii;
+        return `M ${x + tl} ${y}
+                L ${x + w - tr} ${y}
+                Q ${x + w} ${y} ${x + w} ${y + tr}
+                L ${x + w} ${y + h - br}
+                Q ${x + w} ${y + h} ${x + w - br} ${y + h}
+                L ${x + bl} ${y + h}
+                Q ${x} ${y + h} ${x} ${y + h - bl}
+                L ${x} ${y + tl}
+                Q ${x} ${y} ${x + tl} ${y}
+                Z`;
+      };
 
       switch (styleId) {
         case 'square':
           return (
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill="none" stroke={fgColor} strokeWidth={strokeWidth} rx={0} />
-              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill={fgColor} />
+              <rect x={outerOffset + 5} y={outerOffset + 5} width={outerSize - 10} height={outerSize - 10} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
             </svg>
           );
         case 'circle':
           return (
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <circle cx={size/2} cy={size/2} r={outerSize/2 - strokeWidth/2} fill="none" stroke={fgColor} strokeWidth={strokeWidth} />
+              <circle cx={size/2} cy={size/2} r={outerSize/2} fill={fgColor} />
+              <circle cx={size/2} cy={size/2} r={outerSize/2 - 5} fill="white" />
               <circle cx={size/2} cy={size/2} r={innerSize/2} fill={fgColor} />
             </svg>
           );
         case 'rounded':
           return (
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill="none" stroke={fgColor} strokeWidth={strokeWidth} rx={10} />
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill={fgColor} rx={radius} />
+              <rect x={outerOffset + 5} y={outerOffset + 5} width={outerSize - 10} height={outerSize - 10} fill="white" rx={radius * 0.6} />
               <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={2} />
             </svg>
           );
         case 'three-sided':
-          // Three-sided corner (open on one side)
+          // 3 rounded corners, 1 sharp corner (top-left is sharp)
           return (
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <path
-                d={`M ${outerOffset + outerSize} ${outerOffset}
-                    L ${outerOffset} ${outerOffset}
-                    L ${outerOffset} ${outerOffset + outerSize}
-                    L ${outerOffset + outerSize} ${outerOffset + outerSize}`}
-                fill="none"
-                stroke={fgColor}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+              <path d={roundedRectPath(outerOffset, outerOffset, outerSize, outerSize, [0, radius, radius, radius])} fill={fgColor} />
+              <path d={roundedRectPath(outerOffset + 5, outerOffset + 5, outerSize - 10, outerSize - 10, [0, radius * 0.6, radius * 0.6, radius * 0.6])} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
             </svg>
           );
         case 'two-sided':
-          // Two-sided (leaf shape)
+          // 2 diagonal rounded corners (top-right, bottom-left), 2 sharp (top-left, bottom-right) - leaf shape
           return (
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <path
-                d={`M ${outerOffset + outerSize} ${outerOffset + strokeWidth/2}
-                    Q ${outerOffset + strokeWidth/2} ${outerOffset + strokeWidth/2} ${outerOffset + strokeWidth/2} ${outerOffset + outerSize}
-                    M ${outerOffset + outerSize - strokeWidth/2} ${outerOffset}
-                    Q ${outerOffset + outerSize - strokeWidth/2} ${outerOffset + outerSize - strokeWidth/2} ${outerOffset} ${outerOffset + outerSize - strokeWidth/2}`}
-                fill="none"
-                stroke={fgColor}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-              />
-              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+              <path d={roundedRectPath(outerOffset, outerOffset, outerSize, outerSize, [0, radius, 0, radius])} fill={fgColor} />
+              <path d={roundedRectPath(outerOffset + 5, outerOffset + 5, outerSize - 10, outerSize - 10, [0, radius * 0.6, 0, radius * 0.6])} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
             </svg>
           );
         default:
           return (
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill="none" stroke={fgColor} strokeWidth={strokeWidth} rx={0} />
-              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill={fgColor} />
+              <rect x={outerOffset + 5} y={outerOffset + 5} width={outerSize - 10} height={outerSize - 10} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
             </svg>
           );
       }
