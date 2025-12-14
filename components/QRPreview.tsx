@@ -396,6 +396,201 @@ export const QRPreview: React.FC<Props> = ({
     );
   };
 
+  // Corner eye thumbnail - renders just the corner eye shape
+  const CornerStyleThumbnail: React.FC<{
+    styleId: string;
+    active: boolean;
+  }> = ({ styleId, active }) => {
+    const borderClass = active
+      ? "ring-2 ring-gray-900 ring-offset-2"
+      : "border border-gray-200 hover:border-gray-300";
+
+    // SVG paths for different corner styles
+    const renderCornerSvg = () => {
+      const size = 50;
+      const outerSize = 38;
+      const innerSize = 12;
+      const outerOffset = (size - outerSize) / 2;
+      const innerOffset = (size - innerSize) / 2;
+      const fgColor = config.fgColor || '#000000';
+      const radius = 8; // corner radius for rounded styles
+
+      // Helper to create rounded rect path with individual corner radii
+      const roundedRectPath = (x: number, y: number, w: number, h: number, radii: number[]) => {
+        const [tl, tr, br, bl] = radii;
+        return `M ${x + tl} ${y}
+                L ${x + w - tr} ${y}
+                Q ${x + w} ${y} ${x + w} ${y + tr}
+                L ${x + w} ${y + h - br}
+                Q ${x + w} ${y + h} ${x + w - br} ${y + h}
+                L ${x + bl} ${y + h}
+                Q ${x} ${y + h} ${x} ${y + h - bl}
+                L ${x} ${y + tl}
+                Q ${x} ${y} ${x + tl} ${y}
+                Z`;
+      };
+
+      switch (styleId) {
+        case 'square':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill={fgColor} />
+              <rect x={outerOffset + 5} y={outerOffset + 5} width={outerSize - 10} height={outerSize - 10} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
+            </svg>
+          );
+        case 'circle':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <circle cx={size/2} cy={size/2} r={outerSize/2} fill={fgColor} />
+              <circle cx={size/2} cy={size/2} r={outerSize/2 - 5} fill="white" />
+              <circle cx={size/2} cy={size/2} r={innerSize/2} fill={fgColor} />
+            </svg>
+          );
+        case 'rounded':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill={fgColor} rx={radius} />
+              <rect x={outerOffset + 5} y={outerOffset + 5} width={outerSize - 10} height={outerSize - 10} fill="white" rx={radius * 0.6} />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={2} />
+            </svg>
+          );
+        case 'three-sided':
+          // 3 rounded corners, 1 sharp corner (top-left is sharp)
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <path d={roundedRectPath(outerOffset, outerOffset, outerSize, outerSize, [0, radius, radius, radius])} fill={fgColor} />
+              <path d={roundedRectPath(outerOffset + 5, outerOffset + 5, outerSize - 10, outerSize - 10, [0, radius * 0.6, radius * 0.6, radius * 0.6])} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
+            </svg>
+          );
+        case 'two-sided':
+          // 2 diagonal rounded corners (top-right, bottom-left), 2 sharp (top-left, bottom-right) - leaf shape
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <path d={roundedRectPath(outerOffset, outerOffset, outerSize, outerSize, [0, radius, 0, radius])} fill={fgColor} />
+              <path d={roundedRectPath(outerOffset + 5, outerOffset + 5, outerSize - 10, outerSize - 10, [0, radius * 0.6, 0, radius * 0.6])} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
+            </svg>
+          );
+        default:
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill={fgColor} />
+              <rect x={outerOffset + 5} y={outerOffset + 5} width={outerSize - 10} height={outerSize - 10} fill="white" />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} />
+            </svg>
+          );
+      }
+    };
+
+    return (
+      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200 flex items-center justify-center`}>
+        {renderCornerSvg()}
+      </div>
+    );
+  };
+
+  // Frame style thumbnail - renders frame preview with mini QR
+  const FrameStyleThumbnail: React.FC<{
+    styleId: string;
+    active: boolean;
+  }> = ({ styleId, active }) => {
+    const borderClass = active
+      ? "ring-2 ring-gray-900 ring-offset-2"
+      : "border border-gray-200 hover:border-gray-300";
+
+    const fgColor = config.fgColor || '#000000';
+
+    const renderFrameSvg = () => {
+      const size = 60;
+      const qrSize = 32;
+      const qrOffset = (size - qrSize) / 2;
+
+      // Mini QR placeholder (simple grid)
+      const miniQr = `
+        <rect x="${qrOffset}" y="${qrOffset}" width="${qrSize}" height="${qrSize}" fill="#f3f4f6" rx="2" />
+        <rect x="${qrOffset + 2}" y="${qrOffset + 2}" width="8" height="8" fill="${fgColor}" rx="1" />
+        <rect x="${qrOffset + qrSize - 10}" y="${qrOffset + 2}" width="8" height="8" fill="${fgColor}" rx="1" />
+        <rect x="${qrOffset + 2}" y="${qrOffset + qrSize - 10}" width="8" height="8" fill="${fgColor}" rx="1" />
+        <rect x="${qrOffset + 12}" y="${qrOffset + 12}" width="8" height="8" fill="${fgColor}" rx="1" />
+      `;
+
+      switch (styleId) {
+        case 'none':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+            </svg>
+          );
+
+        case 'simple':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+              <rect x={qrOffset - 4} y={qrOffset - 4} width={qrSize + 8} height={qrSize + 8}
+                    fill="none" stroke={fgColor} strokeWidth="2" rx="2" />
+            </svg>
+          );
+
+        case 'rounded':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+              <rect x={qrOffset - 4} y={qrOffset - 4} width={qrSize + 8} height={qrSize + 8}
+                    fill="none" stroke={fgColor} strokeWidth="2" rx="6" />
+            </svg>
+          );
+
+        case 'circle':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+              <circle cx={size / 2} cy={size / 2} r={qrSize / 2 + 6}
+                      fill="none" stroke={fgColor} strokeWidth="2" />
+            </svg>
+          );
+
+        case 'banner':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+              <rect x={qrOffset - 4} y={qrOffset - 4} width={qrSize + 8} height={qrSize + 16}
+                    fill="none" stroke={fgColor} strokeWidth="2" rx="4" />
+              <rect x={qrOffset - 2} y={qrOffset + qrSize + 2} width={qrSize + 4} height="8"
+                    fill={fgColor} rx="2" />
+            </svg>
+          );
+
+        case 'scan-me':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+              <rect x={qrOffset - 4} y={qrOffset - 14} width={qrSize + 8} height={qrSize + 18}
+                    fill="none" stroke={fgColor} strokeWidth="2" rx="4" />
+              <rect x={qrOffset - 2} y={qrOffset - 12} width={qrSize + 4} height="8"
+                    fill={fgColor} rx="2" />
+              <path d={`M${size/2 - 4} ${qrOffset - 4} L${size/2} ${qrOffset} L${size/2 + 4} ${qrOffset - 4}`}
+                    fill={fgColor} />
+            </svg>
+          );
+
+        default:
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+            </svg>
+          );
+      }
+    };
+
+    return (
+      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200 flex items-center justify-center`}>
+        {renderFrameSvg()}
+      </div>
+    );
+  };
+
   return (
     <div className={`bg-white rounded-[24px] shadow-card p-6 md:p-8 flex flex-col items-center ${className}`}>
       <div className="mb-4 flex flex-col items-center w-full">
@@ -475,7 +670,7 @@ export const QRPreview: React.FC<Props> = ({
                             onClick={() => handleConfigUpdate('cornerSquareType', item.id)}
                             className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
                         >
-                            <StyleThumbnail type="corner" styleId={item.id} active={config.cornerSquareType === item.id} />
+                            <CornerStyleThumbnail styleId={item.id} active={config.cornerSquareType === item.id} />
                             <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.cornerSquareType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
                         </button>
                     ))}
@@ -483,21 +678,19 @@ export const QRPreview: React.FC<Props> = ({
               ) : (
                   <>
                     {[
-                        {id: 'none', label: 'None', icon: '○'},
-                        {id: 'simple', label: 'Simple', icon: '□'},
-                        {id: 'rounded', label: 'Rounded', icon: '▢'},
-                        {id: 'circle', label: 'Circle', icon: '◯'},
-                        {id: 'banner', label: 'Banner', icon: '▭'},
-                        {id: 'scan-me', label: 'Scan Me', icon: '⬚'}
+                        {id: 'none', label: 'None'},
+                        {id: 'simple', label: 'Simple'},
+                        {id: 'rounded', label: 'Rounded'},
+                        {id: 'circle', label: 'Circle'},
+                        {id: 'banner', label: 'Banner'},
+                        {id: 'scan-me', label: 'Scan Me'}
                     ].map((item) => (
                         <button
                             key={item.id}
                             onClick={() => handleConfigUpdate('frameType', item.id)}
                             className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
                         >
-                            <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 flex items-center justify-center text-2xl ${config.frameType === item.id ? 'ring-2 ring-gray-900 ring-offset-2' : 'border border-gray-200 hover:border-gray-300'} transition-all duration-200`}>
-                              {item.icon}
-                            </div>
+                            <FrameStyleThumbnail styleId={item.id} active={config.frameType === item.id} />
                             <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.frameType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
                         </button>
                     ))}
