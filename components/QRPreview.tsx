@@ -396,6 +396,99 @@ export const QRPreview: React.FC<Props> = ({
     );
   };
 
+  // Corner eye thumbnail - renders just the corner eye shape
+  const CornerStyleThumbnail: React.FC<{
+    styleId: string;
+    active: boolean;
+  }> = ({ styleId, active }) => {
+    const borderClass = active
+      ? "ring-2 ring-gray-900 ring-offset-2"
+      : "border border-gray-200 hover:border-gray-300";
+
+    // SVG paths for different corner styles
+    const renderCornerSvg = () => {
+      const size = 50;
+      const outerSize = 42;
+      const innerSize = 14;
+      const outerOffset = (size - outerSize) / 2;
+      const innerOffset = (size - innerSize) / 2;
+      const strokeWidth = 6;
+      const fgColor = config.fgColor || '#000000';
+
+      switch (styleId) {
+        case 'square':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill="none" stroke={fgColor} strokeWidth={strokeWidth} rx={0} />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+            </svg>
+          );
+        case 'circle':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <circle cx={size/2} cy={size/2} r={outerSize/2 - strokeWidth/2} fill="none" stroke={fgColor} strokeWidth={strokeWidth} />
+              <circle cx={size/2} cy={size/2} r={innerSize/2} fill={fgColor} />
+            </svg>
+          );
+        case 'rounded':
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill="none" stroke={fgColor} strokeWidth={strokeWidth} rx={10} />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={2} />
+            </svg>
+          );
+        case 'three-sided':
+          // Three-sided corner (open on one side)
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <path
+                d={`M ${outerOffset + outerSize} ${outerOffset}
+                    L ${outerOffset} ${outerOffset}
+                    L ${outerOffset} ${outerOffset + outerSize}
+                    L ${outerOffset + outerSize} ${outerOffset + outerSize}`}
+                fill="none"
+                stroke={fgColor}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+            </svg>
+          );
+        case 'two-sided':
+          // Two-sided (leaf shape)
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <path
+                d={`M ${outerOffset + outerSize} ${outerOffset + strokeWidth/2}
+                    Q ${outerOffset + strokeWidth/2} ${outerOffset + strokeWidth/2} ${outerOffset + strokeWidth/2} ${outerOffset + outerSize}
+                    M ${outerOffset + outerSize - strokeWidth/2} ${outerOffset}
+                    Q ${outerOffset + outerSize - strokeWidth/2} ${outerOffset + outerSize - strokeWidth/2} ${outerOffset} ${outerOffset + outerSize - strokeWidth/2}`}
+                fill="none"
+                stroke={fgColor}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+              />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+            </svg>
+          );
+        default:
+          return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              <rect x={outerOffset} y={outerOffset} width={outerSize} height={outerSize} fill="none" stroke={fgColor} strokeWidth={strokeWidth} rx={0} />
+              <rect x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} fill={fgColor} rx={0} />
+            </svg>
+          );
+      }
+    };
+
+    return (
+      <div className={`w-[70px] h-[70px] rounded-xl overflow-hidden bg-white flex-shrink-0 ${borderClass} transition-all duration-200 flex items-center justify-center`}>
+        {renderCornerSvg()}
+      </div>
+    );
+  };
+
   return (
     <div className={`bg-white rounded-[24px] shadow-card p-6 md:p-8 flex flex-col items-center ${className}`}>
       <div className="mb-4 flex flex-col items-center w-full">
@@ -475,7 +568,7 @@ export const QRPreview: React.FC<Props> = ({
                             onClick={() => handleConfigUpdate('cornerSquareType', item.id)}
                             className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
                         >
-                            <StyleThumbnail type="corner" styleId={item.id} active={config.cornerSquareType === item.id} />
+                            <CornerStyleThumbnail styleId={item.id} active={config.cornerSquareType === item.id} />
                             <span className={`text-[10px] font-medium uppercase tracking-tight transition-colors ${config.cornerSquareType === item.id ? 'text-gray-900 font-bold' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.label}</span>
                         </button>
                     ))}
