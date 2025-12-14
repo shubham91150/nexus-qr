@@ -27,9 +27,8 @@ export interface QRStyleConfig {
   cornerDotType: 'square' | 'dot';
 
   // Frame
-  frameType: 'none' | 'simple' | 'rounded' | 'circle' | 'banner' | 'scan-me';
+  frameType: 'none' | 'circle' | 'rounded-box' | 'square-box';
   frameText?: string;
-  frameColor?: string;
 
   // Logo
   logoImage: string | null;

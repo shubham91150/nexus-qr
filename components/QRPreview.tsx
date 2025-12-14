@@ -503,82 +503,78 @@ export const QRPreview: React.FC<Props> = ({
     const fgColor = config.fgColor || '#000000';
 
     const renderFrameSvg = () => {
-      const size = 60;
-      const qrSize = 32;
-      const qrOffset = (size - qrSize) / 2;
+      const size = 56;
 
-      // Mini QR placeholder (simple grid)
-      const miniQr = `
-        <rect x="${qrOffset}" y="${qrOffset}" width="${qrSize}" height="${qrSize}" fill="#f3f4f6" rx="2" />
-        <rect x="${qrOffset + 2}" y="${qrOffset + 2}" width="8" height="8" fill="${fgColor}" rx="1" />
-        <rect x="${qrOffset + qrSize - 10}" y="${qrOffset + 2}" width="8" height="8" fill="${fgColor}" rx="1" />
-        <rect x="${qrOffset + 2}" y="${qrOffset + qrSize - 10}" width="8" height="8" fill="${fgColor}" rx="1" />
-        <rect x="${qrOffset + 12}" y="${qrOffset + 12}" width="8" height="8" fill="${fgColor}" rx="1" />
+      // Mini QR inside white container
+      const miniQrContent = `
+        <rect x="4" y="4" width="6" height="6" fill="${fgColor}" rx="0.5" />
+        <rect x="18" y="4" width="6" height="6" fill="${fgColor}" rx="0.5" />
+        <rect x="4" y="18" width="6" height="6" fill="${fgColor}" rx="0.5" />
+        <rect x="11" y="11" width="6" height="6" fill="${fgColor}" rx="0.5" />
+        <rect x="12" y="5" width="2" height="2" fill="${fgColor}" />
+        <rect x="5" y="12" width="2" height="2" fill="${fgColor}" />
+        <rect x="19" y="12" width="2" height="2" fill="${fgColor}" />
+        <rect x="12" y="19" width="2" height="2" fill="${fgColor}" />
       `;
 
       switch (styleId) {
         case 'none':
+          // Just QR without frame
           return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
-            </svg>
-          );
-
-        case 'simple':
-          return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
-              <rect x={qrOffset - 4} y={qrOffset - 4} width={qrSize + 8} height={qrSize + 8}
-                    fill="none" stroke={fgColor} strokeWidth="2" rx="2" />
-            </svg>
-          );
-
-        case 'rounded':
-          return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
-              <rect x={qrOffset - 4} y={qrOffset - 4} width={qrSize + 8} height={qrSize + 8}
-                    fill="none" stroke={fgColor} strokeWidth="2" rx="6" />
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              <rect x="14" y="14" width="28" height="28" fill="#f9fafb" rx="2" />
+              <g transform="translate(16, 16)">{/* Mini QR */}
+                <rect x="2" y="2" width="5" height="5" fill={fgColor} rx="0.5" />
+                <rect x="17" y="2" width="5" height="5" fill={fgColor} rx="0.5" />
+                <rect x="2" y="17" width="5" height="5" fill={fgColor} rx="0.5" />
+                <rect x="9" y="9" width="6" height="6" fill={fgColor} rx="0.5" />
+              </g>
             </svg>
           );
 
         case 'circle':
+          // Circle frame with QR inside
           return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
-              <circle cx={size / 2} cy={size / 2} r={qrSize / 2 + 6}
-                      fill="none" stroke={fgColor} strokeWidth="2" />
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="26" fill={fgColor} />
+              <rect x="10" y="8" width="36" height="36" fill="white" rx="3" />
+              <g transform="translate(14, 11)">
+                <g dangerouslySetInnerHTML={{ __html: miniQrContent }} />
+              </g>
+              <text x="28" y="50" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN</text>
             </svg>
           );
 
-        case 'banner':
+        case 'rounded-box':
+          // Rounded rectangle frame
           return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
-              <rect x={qrOffset - 4} y={qrOffset - 4} width={qrSize + 8} height={qrSize + 16}
-                    fill="none" stroke={fgColor} strokeWidth="2" rx="4" />
-              <rect x={qrOffset - 2} y={qrOffset + qrSize + 2} width={qrSize + 4} height="8"
-                    fill={fgColor} rx="2" />
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              <rect x="2" y="2" width="52" height="52" fill={fgColor} rx="6" />
+              <rect x="6" y="5" width="44" height="40" fill="white" rx="3" />
+              <g transform="translate(14, 9)">
+                <g dangerouslySetInnerHTML={{ __html: miniQrContent }} />
+              </g>
+              <text x="28" y="51" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN ME</text>
             </svg>
           );
 
-        case 'scan-me':
+        case 'square-box':
+          // Square frame with slight radius
           return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
-              <rect x={qrOffset - 4} y={qrOffset - 14} width={qrSize + 8} height={qrSize + 18}
-                    fill="none" stroke={fgColor} strokeWidth="2" rx="4" />
-              <rect x={qrOffset - 2} y={qrOffset - 12} width={qrSize + 4} height="8"
-                    fill={fgColor} rx="2" />
-              <path d={`M${size/2 - 4} ${qrOffset - 4} L${size/2} ${qrOffset} L${size/2 + 4} ${qrOffset - 4}`}
-                    fill={fgColor} />
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              <rect x="2" y="2" width="52" height="52" fill={fgColor} rx="3" />
+              <rect x="6" y="5" width="44" height="40" fill="white" rx="2" />
+              <g transform="translate(14, 9)">
+                <g dangerouslySetInnerHTML={{ __html: miniQrContent }} />
+              </g>
+              <text x="28" y="51" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN ME</text>
             </svg>
           );
 
         default:
           return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <g dangerouslySetInnerHTML={{ __html: miniQr }} />
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              <rect x="14" y="14" width="28" height="28" fill="#f9fafb" rx="2" />
             </svg>
           );
       }
@@ -679,11 +675,9 @@ export const QRPreview: React.FC<Props> = ({
                   <>
                     {[
                         {id: 'none', label: 'None'},
-                        {id: 'simple', label: 'Simple'},
-                        {id: 'rounded', label: 'Rounded'},
                         {id: 'circle', label: 'Circle'},
-                        {id: 'banner', label: 'Banner'},
-                        {id: 'scan-me', label: 'Scan Me'}
+                        {id: 'rounded-box', label: 'Rounded'},
+                        {id: 'square-box', label: 'Square'}
                     ].map((item) => (
                         <button
                             key={item.id}

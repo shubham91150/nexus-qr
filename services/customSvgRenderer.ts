@@ -333,84 +333,55 @@ export class CustomSVGRenderer {
     return svg;
   }
 
-  private generateFrameSVG(qrSize: number, qrOffset: number): string {
-    const frameType = this.settings.frameType || 'none';
-    if (frameType === 'none') return '';
+  // Check if frame is enabled
+  private hasFrame(): boolean {
+    return this.settings.frameType && this.settings.frameType !== 'none';
+  }
 
+  // Get frame layout calculations
+  private getFrameLayout() {
     const size = this.settings.size;
-    const frameColor = this.settings.frameColor || this.settings.fgColor || '#000000';
+    const frameType = this.settings.frameType || 'none';
     const frameText = this.settings.frameText || 'SCAN ME';
-    const padding = 12;
-    const borderRadius = 16;
-    const bannerHeight = 40;
 
-    let svg = '';
+    // Frame takes 20% of space, QR gets 65%, text area 15%
+    const framePadding = size * 0.12;
+    const textAreaHeight = size * 0.10;
+    const qrAreaSize = size - (framePadding * 2) - textAreaHeight;
+    const qrWhitePadding = size * 0.03;
 
-    switch (frameType) {
-      case 'simple':
-        // Simple rectangular frame
-        svg += `<rect x="${qrOffset - padding}" y="${qrOffset - padding}"
-                      width="${qrSize + padding * 2}" height="${qrSize + padding * 2}"
-                      fill="none" stroke="${frameColor}" stroke-width="4" rx="4" />`;
-        break;
+    // QR position (centered horizontally, above text area)
+    const qrX = framePadding;
+    const qrY = framePadding;
+    const qrContainerSize = qrAreaSize;
+    const actualQrSize = qrContainerSize - (qrWhitePadding * 2);
 
-      case 'rounded':
-        // Rounded corner frame
-        svg += `<rect x="${qrOffset - padding}" y="${qrOffset - padding}"
-                      width="${qrSize + padding * 2}" height="${qrSize + padding * 2}"
-                      fill="none" stroke="${frameColor}" stroke-width="4" rx="${borderRadius}" />`;
-        break;
+    // Text position
+    const textY = framePadding + qrAreaSize + (textAreaHeight / 2);
+    const textX = size / 2;
 
-      case 'circle':
-        // Circular frame around QR
-        const centerX = qrOffset + qrSize / 2;
-        const centerY = qrOffset + qrSize / 2;
-        const radius = (qrSize / 2) + padding + 4;
-        svg += `<circle cx="${centerX}" cy="${centerY}" r="${radius}"
-                        fill="none" stroke="${frameColor}" stroke-width="4" />`;
-        break;
-
-      case 'banner':
-        // Frame with banner at bottom
-        const bannerY = qrOffset + qrSize + padding;
-        svg += `<rect x="${qrOffset - padding}" y="${qrOffset - padding}"
-                      width="${qrSize + padding * 2}" height="${qrSize + padding * 2 + bannerHeight}"
-                      fill="none" stroke="${frameColor}" stroke-width="3" rx="${borderRadius}" />`;
-        // Banner background
-        svg += `<rect x="${qrOffset - padding + 2}" y="${bannerY - 4}"
-                      width="${qrSize + padding * 2 - 4}" height="${bannerHeight - 4}"
-                      fill="${frameColor}" rx="8" />`;
-        // Banner text
-        const textY = bannerY + (bannerHeight / 2) - 2;
-        svg += `<text x="${qrOffset + qrSize / 2}" y="${textY}"
-                      font-family="Arial, sans-serif" font-size="14" font-weight="bold"
-                      fill="white" text-anchor="middle" dominant-baseline="middle">${frameText}</text>`;
-        break;
-
-      case 'scan-me':
-        // Frame with "SCAN ME" text at top
-        const topBannerHeight = 32;
-        const topBannerY = qrOffset - padding - topBannerHeight;
-        // Outer frame
-        svg += `<rect x="${qrOffset - padding - 4}" y="${topBannerY - 4}"
-                      width="${qrSize + padding * 2 + 8}" height="${qrSize + padding * 2 + topBannerHeight + 12}"
-                      fill="none" stroke="${frameColor}" stroke-width="3" rx="${borderRadius}" />`;
-        // Top banner
-        svg += `<rect x="${qrOffset - padding}" y="${topBannerY}"
-                      width="${qrSize + padding * 2}" height="${topBannerHeight}"
-                      fill="${frameColor}" rx="8" />`;
-        // Arrow pointing down
-        const arrowX = qrOffset + qrSize / 2;
-        const arrowY = topBannerY + topBannerHeight;
-        svg += `<path d="M${arrowX - 8} ${arrowY} L${arrowX} ${arrowY + 10} L${arrowX + 8} ${arrowY} Z" fill="${frameColor}" />`;
-        // Text
-        svg += `<text x="${qrOffset + qrSize / 2}" y="${topBannerY + topBannerHeight / 2 + 1}"
-                      font-family="Arial, sans-serif" font-size="13" font-weight="bold"
-                      fill="white" text-anchor="middle" dominant-baseline="middle">${frameText}</text>`;
-        break;
+    // Frame specific adjustments
+    let frameRadius = 0;
+    if (frameType === 'circle') {
+      frameRadius = size / 2;
+    } else if (frameType === 'rounded-box') {
+      frameRadius = size * 0.06;
     }
 
-    return svg;
+    return {
+      size,
+      framePadding,
+      qrX,
+      qrY,
+      qrContainerSize,
+      qrWhitePadding,
+      actualQrSize,
+      textX,
+      textY,
+      textAreaHeight,
+      frameRadius,
+      frameText
+    };
   }
 
   public render(text: string): string {
@@ -418,58 +389,96 @@ export class CustomSVGRenderer {
     if (!matrix) return '';
 
     const size = this.settings.size;
-    const padding = this.settings.padding || 0;
-    const effectiveSize = size - (padding * 2);
-    const cellSize = effectiveSize / this.moduleCount;
-
-    // Calculate QR code actual size for frame
-    const qrSize = effectiveSize;
-    const qrOffset = padding;
+    const hasFrame = this.hasFrame();
+    const frameType = this.settings.frameType || 'none';
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
 
-    if (!this.settings.bgTransparent) {
-        svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
-    }
-
+    // Add gradient definitions
     svg += this.generateGradientDefs();
 
-    if (this.settings.isGradient) {
+    if (hasFrame) {
+      // === FRAME MODE ===
+      const layout = this.getFrameLayout();
+      const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
+
+      // 1. Draw frame background
+      if (frameType === 'circle') {
+        svg += `<circle cx="${size/2}" cy="${size/2}" r="${size/2}" fill="${frameColor}" />`;
+      } else if (frameType === 'rounded-box') {
+        svg += `<rect x="0" y="0" width="${size}" height="${size}" rx="${layout.frameRadius}" fill="${frameColor}" />`;
+      } else if (frameType === 'square-box') {
+        svg += `<rect x="0" y="0" width="${size}" height="${size}" rx="${size * 0.02}" fill="${frameColor}" />`;
+      }
+
+      // 2. Draw white container for QR code (rounded corners)
+      const qrContainerRadius = layout.qrContainerSize * 0.04;
+      svg += `<rect x="${layout.qrX}" y="${layout.qrY}" width="${layout.qrContainerSize}" height="${layout.qrContainerSize}" rx="${qrContainerRadius}" fill="white" />`;
+
+      // 3. Calculate QR rendering parameters inside white container
+      const qrPadding = layout.qrWhitePadding + layout.qrX;
+      const qrEffectiveSize = layout.actualQrSize;
+      const cellSize = qrEffectiveSize / this.moduleCount;
+
+      // 4. Render QR code patterns inside frame
+      if (this.settings.dotsType === 'uniform-pills') {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, qrPadding, this.settings.fgColor);
+      } else {
+        svg += this.generateStandardPatternSVG(matrix, cellSize, qrPadding, this.settings.dotsType, this.settings.fgColor);
+      }
+      svg += this.generateAdvancedCornerSVG(cellSize, qrPadding);
+
+      // 5. Draw text at bottom
+      const fontSize = size * 0.05;
+      svg += `<text x="${layout.textX}" y="${layout.textY}"
+                    font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="bold"
+                    fill="white" text-anchor="middle" dominant-baseline="middle">${layout.frameText}</text>`;
+
+    } else {
+      // === NORMAL MODE (no frame) ===
+      const padding = this.settings.padding || 0;
+      const effectiveSize = size - (padding * 2);
+      const cellSize = effectiveSize / this.moduleCount;
+
+      if (!this.settings.bgTransparent) {
+        svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
+      }
+
+      if (this.settings.isGradient) {
         const maskId = `qr-mask-${Math.random().toString(36).substr(2,9)}`;
         svg += `<defs><mask id="${maskId}">`;
         svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="black" />`;
 
         const whiteFill = 'white';
         if (this.settings.dotsType === 'uniform-pills') {
-            const pills = this.findPillGroups(matrix);
-            svg += this.generatePillsSVG(pills, cellSize, padding, whiteFill);
+          const pills = this.findPillGroups(matrix);
+          svg += this.generatePillsSVG(pills, cellSize, padding, whiteFill);
         } else {
-            svg += this.generateStandardPatternSVG(matrix, cellSize, padding, this.settings.dotsType, whiteFill);
+          svg += this.generateStandardPatternSVG(matrix, cellSize, padding, this.settings.dotsType, whiteFill);
         }
 
         if (!this.settings.customCornerColor) {
-            svg += this.generateAdvancedCornerSVG(cellSize, padding, 'white');
+          svg += this.generateAdvancedCornerSVG(cellSize, padding, 'white');
         }
         svg += `</mask></defs>`;
         svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="url(#qrMainGradient)" mask="url(#${maskId})" />`;
 
         if (this.settings.customCornerColor) {
-            svg += this.generateAdvancedCornerSVG(cellSize, padding);
+          svg += this.generateAdvancedCornerSVG(cellSize, padding);
         }
-    } else {
+      } else {
         if (this.settings.dotsType === 'uniform-pills') {
-            const pills = this.findPillGroups(matrix);
-            svg += this.generatePillsSVG(pills, cellSize, padding, this.settings.fgColor);
+          const pills = this.findPillGroups(matrix);
+          svg += this.generatePillsSVG(pills, cellSize, padding, this.settings.fgColor);
         } else {
-            svg += this.generateStandardPatternSVG(matrix, cellSize, padding, this.settings.dotsType, this.settings.fgColor);
+          svg += this.generateStandardPatternSVG(matrix, cellSize, padding, this.settings.dotsType, this.settings.fgColor);
         }
         svg += this.generateAdvancedCornerSVG(cellSize, padding);
+      }
+
+      svg += this.generateLogoSVG();
     }
-
-    svg += this.generateLogoSVG();
-
-    // Add frame around QR code
-    svg += this.generateFrameSVG(qrSize, qrOffset);
 
     svg += '</svg>';
     return svg;
