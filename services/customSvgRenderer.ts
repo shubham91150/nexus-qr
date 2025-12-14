@@ -129,16 +129,17 @@ export class CustomSVGRenderer {
     return pills;
   }
 
-  private generatePillsSVG(pills: any[], cellSize: number, padding: number, fillOverride?: string): string {
+  private generatePillsSVG(pills: any[], cellSize: number, offsetX: number, fillOverride?: string, offsetY?: number): string {
     let svg = '';
     const fill = fillOverride || this.settings.fgColor;
     const uniformGap = cellSize * 0.1;
     const pillHeight = cellSize * 0.75;
+    const oY = offsetY !== undefined ? offsetY : offsetX; // Use offsetX if offsetY not provided
 
     pills.forEach(pill => {
       if (pill.type === 'pill') {
-        const x = (pill.startCol * cellSize) + padding + (uniformGap / 2);
-        const y = (pill.row * cellSize) + padding + (cellSize - pillHeight) / 2;
+        const x = (pill.startCol * cellSize) + offsetX + (uniformGap / 2);
+        const y = (pill.row * cellSize) + oY + (cellSize - pillHeight) / 2;
         const totalWidth = (pill.length * cellSize) - uniformGap;
         const rx = pillHeight / 2;
         
@@ -161,8 +162,8 @@ export class CustomSVGRenderer {
             }
         }
       } else {
-        const cx = (pill.startCol * cellSize) + padding + (cellSize / 2);
-        const cy = (pill.row * cellSize) + padding + (cellSize / 2);
+        const cx = (pill.startCol * cellSize) + offsetX + (cellSize / 2);
+        const cy = (pill.row * cellSize) + oY + (cellSize / 2);
         const r = pillHeight / 3;
         svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" />`;
       }
@@ -170,16 +171,17 @@ export class CustomSVGRenderer {
     return svg;
   }
 
-  private generateStandardPatternSVG(matrix: boolean[][], cellSize: number, padding: number, pattern: string, fillOverride?: string): string {
+  private generateStandardPatternSVG(matrix: boolean[][], cellSize: number, offsetX: number, pattern: string, fillOverride?: string, offsetY?: number): string {
     let svg = '';
     const fill = fillOverride || this.settings.fgColor;
     const count = this.moduleCount;
+    const oY = offsetY !== undefined ? offsetY : offsetX; // Use offsetX if offsetY not provided
 
     for (let row = 0; row < count; row++) {
       for (let col = 0; col < count; col++) {
         if (matrix[row][col] && !this.isCornerSquare(row, col)) {
-          const x = (col * cellSize) + padding;
-          const y = (row * cellSize) + padding;
+          const x = (col * cellSize) + offsetX;
+          const y = (row * cellSize) + oY;
 
           if (pattern === 'square') {
             svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${fill}" />`;
@@ -225,11 +227,12 @@ export class CustomSVGRenderer {
       Z" fill="${fill}" />`;
   }
 
-  private generateAdvancedCornerSVG(cellSize: number, padding: number, fillOverride?: string): string {
+  private generateAdvancedCornerSVG(cellSize: number, offsetX: number, fillOverride?: string, offsetY?: number): string {
     let svg = '';
     const cornerSize = cellSize * 7;
     const count = this.moduleCount;
-    
+    const oY = offsetY !== undefined ? offsetY : offsetX; // Use offsetX if offsetY not provided
+
     const corners = [
       { r: 0, c: 0, type: 'top-left' },
       { r: 0, c: count - 7, type: 'top-right' },
@@ -238,13 +241,13 @@ export class CustomSVGRenderer {
 
     const style = this.settings.cornerSquareType;
     let fill = fillOverride;
-    
+
     if (!fill) {
         fill = this.settings.fgColor;
         if (this.settings.customCornerColor) fill = this.settings.cornerSquareColor;
     }
 
-    let dotFill = fillOverride; 
+    let dotFill = fillOverride;
     if (!dotFill) {
         dotFill = this.settings.fgColor;
         if (this.settings.customCornerColor && this.settings.cornerDotColor) {
@@ -253,8 +256,8 @@ export class CustomSVGRenderer {
     }
 
     corners.forEach(corner => {
-      const x = (corner.c * cellSize) + padding;
-      const y = (corner.r * cellSize) + padding;
+      const x = (corner.c * cellSize) + offsetX;
+      const y = (corner.r * cellSize) + oY;
       const radius = cornerSize * 0.15;
       const bg = fillOverride ? 'black' : (this.settings.bgTransparent ? 'none' : this.settings.bgColor);
       const maskId = `mask-${corner.type}-${Math.random().toString(36).substr(2,9)}`;
@@ -343,33 +346,33 @@ export class CustomSVGRenderer {
     const size = this.settings.size;
     const frameText = (this.settings.frameText || 'SCAN ME').substring(0, 10); // 10 char limit
 
-    // Circle fills almost entire area (small 1% gap around edges)
-    const circleGap = size * 0.01;
-    const circleRadius = (size / 2) - circleGap;
+    // Circle fills ENTIRE container (no gap)
+    const circleRadius = size / 2;
 
-    // QR code is 75% of the size
-    const qrSize = size * 0.75;
+    // QR code is 60% of size (smaller to fit inside circle with margins)
+    const qrSize = size * 0.60;
 
-    // QR positioned in center, slightly above to leave room for text
-    const textAreaHeight = size * 0.08;
+    // Text area at bottom
+    const textAreaHeight = size * 0.10;
+
+    // QR positioned centered horizontally, above center vertically to leave room for text
     const qrX = (size - qrSize) / 2;
-    const qrY = (size - qrSize - textAreaHeight) / 2;
+    const qrY = (size - qrSize - textAreaHeight) / 2 + (size * 0.02);
 
-    // White container behind QR (with small padding)
-    const qrPadding = size * 0.02;
+    // White container behind QR (with padding for rounded corners)
+    const qrPadding = size * 0.025;
     const whiteContainerSize = qrSize + (qrPadding * 2);
     const whiteContainerX = qrX - qrPadding;
     const whiteContainerY = qrY - qrPadding;
 
-    // Text position (at bottom of circle, inside the circle)
-    const textY = qrY + qrSize + qrPadding + (textAreaHeight * 0.7);
+    // Text position (at bottom inside the circle)
+    const textY = whiteContainerY + whiteContainerSize + (textAreaHeight * 0.5);
     const textX = size / 2;
-    const fontSize = size * 0.045;
+    const fontSize = size * 0.05;
 
     return {
       size,
       circleRadius,
-      circleGap,
       qrSize,
       qrX,
       qrY,
@@ -411,14 +414,14 @@ export class CustomSVGRenderer {
       // 3. Calculate QR rendering parameters
       const cellSize = layout.qrSize / this.moduleCount;
 
-      // 4. Render QR code patterns inside
+      // 4. Render QR code patterns inside (pass both qrX and qrY for proper positioning)
       if (this.settings.dotsType === 'uniform-pills') {
         const pills = this.findPillGroups(matrix);
-        svg += this.generatePillsSVG(pills, cellSize, layout.qrX, this.settings.fgColor);
+        svg += this.generatePillsSVG(pills, cellSize, layout.qrX, this.settings.fgColor, layout.qrY);
       } else {
-        svg += this.generateStandardPatternSVG(matrix, cellSize, layout.qrX, this.settings.dotsType, this.settings.fgColor);
+        svg += this.generateStandardPatternSVG(matrix, cellSize, layout.qrX, this.settings.dotsType, this.settings.fgColor, layout.qrY);
       }
-      svg += this.generateAdvancedCornerSVG(cellSize, layout.qrX);
+      svg += this.generateAdvancedCornerSVG(cellSize, layout.qrX, undefined, layout.qrY);
 
       // 5. Draw text at bottom
       svg += `<text x="${layout.textX}" y="${layout.textY}"
