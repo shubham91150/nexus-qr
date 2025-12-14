@@ -333,6 +333,86 @@ export class CustomSVGRenderer {
     return svg;
   }
 
+  private generateFrameSVG(qrSize: number, qrOffset: number): string {
+    const frameType = this.settings.frameType || 'none';
+    if (frameType === 'none') return '';
+
+    const size = this.settings.size;
+    const frameColor = this.settings.frameColor || this.settings.fgColor || '#000000';
+    const frameText = this.settings.frameText || 'SCAN ME';
+    const padding = 12;
+    const borderRadius = 16;
+    const bannerHeight = 40;
+
+    let svg = '';
+
+    switch (frameType) {
+      case 'simple':
+        // Simple rectangular frame
+        svg += `<rect x="${qrOffset - padding}" y="${qrOffset - padding}"
+                      width="${qrSize + padding * 2}" height="${qrSize + padding * 2}"
+                      fill="none" stroke="${frameColor}" stroke-width="4" rx="4" />`;
+        break;
+
+      case 'rounded':
+        // Rounded corner frame
+        svg += `<rect x="${qrOffset - padding}" y="${qrOffset - padding}"
+                      width="${qrSize + padding * 2}" height="${qrSize + padding * 2}"
+                      fill="none" stroke="${frameColor}" stroke-width="4" rx="${borderRadius}" />`;
+        break;
+
+      case 'circle':
+        // Circular frame around QR
+        const centerX = qrOffset + qrSize / 2;
+        const centerY = qrOffset + qrSize / 2;
+        const radius = (qrSize / 2) + padding + 4;
+        svg += `<circle cx="${centerX}" cy="${centerY}" r="${radius}"
+                        fill="none" stroke="${frameColor}" stroke-width="4" />`;
+        break;
+
+      case 'banner':
+        // Frame with banner at bottom
+        const bannerY = qrOffset + qrSize + padding;
+        svg += `<rect x="${qrOffset - padding}" y="${qrOffset - padding}"
+                      width="${qrSize + padding * 2}" height="${qrSize + padding * 2 + bannerHeight}"
+                      fill="none" stroke="${frameColor}" stroke-width="3" rx="${borderRadius}" />`;
+        // Banner background
+        svg += `<rect x="${qrOffset - padding + 2}" y="${bannerY - 4}"
+                      width="${qrSize + padding * 2 - 4}" height="${bannerHeight - 4}"
+                      fill="${frameColor}" rx="8" />`;
+        // Banner text
+        const textY = bannerY + (bannerHeight / 2) - 2;
+        svg += `<text x="${qrOffset + qrSize / 2}" y="${textY}"
+                      font-family="Arial, sans-serif" font-size="14" font-weight="bold"
+                      fill="white" text-anchor="middle" dominant-baseline="middle">${frameText}</text>`;
+        break;
+
+      case 'scan-me':
+        // Frame with "SCAN ME" text at top
+        const topBannerHeight = 32;
+        const topBannerY = qrOffset - padding - topBannerHeight;
+        // Outer frame
+        svg += `<rect x="${qrOffset - padding - 4}" y="${topBannerY - 4}"
+                      width="${qrSize + padding * 2 + 8}" height="${qrSize + padding * 2 + topBannerHeight + 12}"
+                      fill="none" stroke="${frameColor}" stroke-width="3" rx="${borderRadius}" />`;
+        // Top banner
+        svg += `<rect x="${qrOffset - padding}" y="${topBannerY}"
+                      width="${qrSize + padding * 2}" height="${topBannerHeight}"
+                      fill="${frameColor}" rx="8" />`;
+        // Arrow pointing down
+        const arrowX = qrOffset + qrSize / 2;
+        const arrowY = topBannerY + topBannerHeight;
+        svg += `<path d="M${arrowX - 8} ${arrowY} L${arrowX} ${arrowY + 10} L${arrowX + 8} ${arrowY} Z" fill="${frameColor}" />`;
+        // Text
+        svg += `<text x="${qrOffset + qrSize / 2}" y="${topBannerY + topBannerHeight / 2 + 1}"
+                      font-family="Arial, sans-serif" font-size="13" font-weight="bold"
+                      fill="white" text-anchor="middle" dominant-baseline="middle">${frameText}</text>`;
+        break;
+    }
+
+    return svg;
+  }
+
   public render(text: string): string {
     const matrix = this.generateMatrix(text);
     if (!matrix) return '';
@@ -341,6 +421,10 @@ export class CustomSVGRenderer {
     const padding = this.settings.padding || 0;
     const effectiveSize = size - (padding * 2);
     const cellSize = effectiveSize / this.moduleCount;
+
+    // Calculate QR code actual size for frame
+    const qrSize = effectiveSize;
+    const qrOffset = padding;
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
 
@@ -354,7 +438,7 @@ export class CustomSVGRenderer {
         const maskId = `qr-mask-${Math.random().toString(36).substr(2,9)}`;
         svg += `<defs><mask id="${maskId}">`;
         svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="black" />`;
-        
+
         const whiteFill = 'white';
         if (this.settings.dotsType === 'uniform-pills') {
             const pills = this.findPillGroups(matrix);
@@ -383,6 +467,10 @@ export class CustomSVGRenderer {
     }
 
     svg += this.generateLogoSVG();
+
+    // Add frame around QR code
+    svg += this.generateFrameSVG(qrSize, qrOffset);
+
     svg += '</svg>';
     return svg;
   }
