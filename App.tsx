@@ -6,7 +6,7 @@ import { QRInputs } from './components/QRInputs';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { AuthLoadingScreen, DashboardSkeleton } from './components/auth/AuthLoadingScreen';
@@ -22,6 +22,32 @@ import {
   completeOnboarding,
 } from './components/onboarding/OnboardingTour';
 import { BusinessCardLanding } from './components/BusinessCardLanding';
+
+// QR Type Categories for Dynamic/Static handling
+// Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
+const ONLY_DYNAMIC_TYPES: QRType[] = [
+  'pdf', 'menu', 'audio', 'video', 'images', 'document', 'coupon', 'ai', 'bulk'
+];
+
+// Category 2: BOTH - Can work as static (direct encoding) or dynamic (trackable)
+const BOTH_DYNAMIC_STATIC_TYPES: QRType[] = [
+  'url', 'text', 'youtube', 'instagram', 'twitter', 'linkedin', 'facebook',
+  'tiktok', 'pinterest', 'snapchat', 'discord', 'telegram', 'spotify',
+  'whatsapp', 'zoom', 'googlemeet', 'googlereview', 'paypal', 'skype',
+  'appstore', 'social'
+];
+
+// Category 3: ONLY STATIC - Native phone protocols (tel:, mailto:, WIFI:, vCard, etc.)
+const ONLY_STATIC_TYPES: QRType[] = [
+  'wifi', 'contact', 'phone', 'sms', 'email', 'geo', 'event', 'bitcoin', 'upi', 'facetime'
+];
+
+// Helper function to get QR type category
+const getQRTypeCategory = (type: QRType): 'only-dynamic' | 'both' | 'only-static' => {
+  if (ONLY_DYNAMIC_TYPES.includes(type)) return 'only-dynamic';
+  if (ONLY_STATIC_TYPES.includes(type)) return 'only-static';
+  return 'both';
+};
 
 // Analytics tracking options type
 export interface AnalyticsOptions {
@@ -120,6 +146,22 @@ const QRGenerator: React.FC<{
   const handleTabChange = (type: QRType) => {
     setActiveTab(type);
     setContentData({ ...contentData, type });
+
+    // Auto-manage isDynamic based on QR type category
+    const category = getQRTypeCategory(type);
+    if (category === 'only-dynamic') {
+      // Auto-enable dynamic for file-based content types
+      if (user) {
+        setIsDynamic(true);
+      } else {
+        // If not logged in, prompt login when switching to dynamic-only types
+        onAuthRequired();
+      }
+    } else if (category === 'only-static') {
+      // Force disable dynamic for native protocol types
+      setIsDynamic(false);
+    }
+    // For 'both' category, keep the current state - user decides
   };
 
   const getPayload = () => {
@@ -211,88 +253,147 @@ const QRGenerator: React.FC<{
                )}
             </div>
 
-            {/* Dynamic QR Toggle */}
-            <div className="mt-6 pt-6 border-t border-gray-100" data-tour="dynamic-qr">
-               <div className="flex items-center justify-between mb-3">
+            {/* Dynamic QR Toggle - Hidden for ONLY_STATIC types */}
+            {getQRTypeCategory(activeTab) !== 'only-static' && (
+              <div className="mt-6 pt-6 border-t border-gray-100" data-tour="dynamic-qr">
+                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                     <Zap size={14} className={isDynamic ? "text-indigo-600" : "text-gray-400"} />
-                     Dynamic QR
-                     <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-medium">
-                       Trackable
-                     </span>
+                    <Zap size={14} className={isDynamic ? "text-indigo-600" : "text-gray-400"} />
+                    Dynamic QR
+                    {getQRTypeCategory(activeTab) === 'only-dynamic' ? (
+                      <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
+                        Required
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-medium">
+                        Trackable
+                      </span>
+                    )}
                   </h3>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={isDynamic}
-                      onChange={e => handleDynamicToggle(e.target.checked)}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                  </label>
-               </div>
 
-               {isDynamic && (
-                  <div className="space-y-4">
-                     <p className="text-xs text-gray-500">
-                       Create a trackable QR with analytics. You can edit the destination anytime.
-                     </p>
-                     <input
-                        type="text"
-                        placeholder="QR Code Title (e.g., My Business Card)"
-                        value={dynamicTitle}
-                        onChange={e => setDynamicTitle(e.target.value)}
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors"
-                        maxLength={255}
-                     />
+                  {/* Show different UI based on category */}
+                  {getQRTypeCategory(activeTab) === 'only-dynamic' ? (
+                    // ONLY_DYNAMIC: Always enabled, no toggle
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-amber-600 font-medium">Always On</span>
+                      <div className="w-11 h-6 bg-indigo-600 rounded-full relative">
+                        <div className="absolute top-[2px] right-[2px] bg-white border-gray-300 border rounded-full h-5 w-5"></div>
+                      </div>
+                    </div>
+                  ) : (
+                    // BOTH: Normal toggle
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={isDynamic}
+                        onChange={e => handleDynamicToggle(e.target.checked)}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                  )}
+                </div>
 
-                     {/* Analytics Options */}
-                     <div className="bg-indigo-50/50 rounded-xl p-4">
-                        <p className="text-xs font-semibold text-indigo-900 mb-3">
-                          Track Analytics For:
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                           {[
-                             { key: 'trackLocation', label: 'Location', icon: '📍' },
-                             { key: 'trackDevice', label: 'Device', icon: '📱' },
-                             { key: 'trackBrowser', label: 'Browser', icon: '🌐' },
-                             { key: 'trackTime', label: 'Scan Time', icon: '🕐' },
-                             { key: 'trackReferrer', label: 'Referrer', icon: '🔗' },
-                           ].map((option) => (
-                             <label
-                               key={option.key}
-                               className={`flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-all ${
-                                 analyticsOptions[option.key as keyof AnalyticsOptions]
-                                   ? 'bg-white border-2 border-indigo-500 shadow-sm'
-                                   : 'bg-white/50 border-2 border-transparent hover:bg-white'
-                               }`}
-                             >
-                               <input
-                                 type="checkbox"
-                                 checked={analyticsOptions[option.key as keyof AnalyticsOptions]}
-                                 onChange={(e) =>
-                                   setAnalyticsOptions({
-                                     ...analyticsOptions,
-                                     [option.key]: e.target.checked,
-                                   })
-                                 }
-                                 className="sr-only"
-                               />
-                               <span className="text-sm">{option.icon}</span>
-                               <span className={`text-xs font-medium ${
-                                 analyticsOptions[option.key as keyof AnalyticsOptions]
-                                   ? 'text-indigo-700'
-                                   : 'text-gray-500'
-                               }`}>
-                                 {option.label}
-                               </span>
-                             </label>
-                           ))}
-                        </div>
-                     </div>
+                {/* Info message for ONLY_DYNAMIC types */}
+                {getQRTypeCategory(activeTab) === 'only-dynamic' && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl mb-4">
+                    <Info size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-amber-700">
+                      This content type requires Dynamic QR for file hosting and tracking.
+                      Your files will be stored securely and you can update them anytime.
+                    </p>
                   </div>
-               )}
-            </div>
+                )}
+
+                {isDynamic && (
+                  <div className="space-y-4">
+                    {getQRTypeCategory(activeTab) !== 'only-dynamic' && (
+                      <p className="text-xs text-gray-500">
+                        Create a trackable QR with analytics. You can edit the destination anytime.
+                      </p>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="QR Code Title (e.g., My Business Card)"
+                      value={dynamicTitle}
+                      onChange={e => setDynamicTitle(e.target.value)}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors"
+                      maxLength={255}
+                    />
+
+                    {/* Analytics Options */}
+                    <div className="bg-indigo-50/50 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-indigo-900 mb-3">
+                        Track Analytics For:
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { key: 'trackLocation', label: 'Location', icon: '📍' },
+                          { key: 'trackDevice', label: 'Device', icon: '📱' },
+                          { key: 'trackBrowser', label: 'Browser', icon: '🌐' },
+                          { key: 'trackTime', label: 'Scan Time', icon: '🕐' },
+                          { key: 'trackReferrer', label: 'Referrer', icon: '🔗' },
+                        ].map((option) => (
+                          <label
+                            key={option.key}
+                            className={`flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-all ${
+                              analyticsOptions[option.key as keyof AnalyticsOptions]
+                                ? 'bg-white border-2 border-indigo-500 shadow-sm'
+                                : 'bg-white/50 border-2 border-transparent hover:bg-white'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={analyticsOptions[option.key as keyof AnalyticsOptions]}
+                              onChange={(e) =>
+                                setAnalyticsOptions({
+                                  ...analyticsOptions,
+                                  [option.key]: e.target.checked,
+                                })
+                              }
+                              className="sr-only"
+                            />
+                            <span className="text-sm">{option.icon}</span>
+                            <span className={`text-xs font-medium ${
+                              analyticsOptions[option.key as keyof AnalyticsOptions]
+                                ? 'text-indigo-700'
+                                : 'text-gray-500'
+                            }`}>
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Info message for ONLY_STATIC types */}
+            {getQRTypeCategory(activeTab) === 'only-static' && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="flex items-start gap-2 p-3 bg-green-50 rounded-xl">
+                  <Info size={14} className="text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-green-800 mb-1">Static QR Only</p>
+                    <p className="text-xs text-green-700">
+                      This content type uses native phone protocols ({activeTab === 'wifi' ? 'WiFi auto-connect' :
+                        activeTab === 'contact' ? 'vCard contact save' :
+                        activeTab === 'phone' ? 'direct dial' :
+                        activeTab === 'sms' ? 'SMS compose' :
+                        activeTab === 'email' ? 'email compose' :
+                        activeTab === 'geo' ? 'maps location' :
+                        activeTab === 'event' ? 'calendar event' :
+                        activeTab === 'bitcoin' ? 'crypto wallet' :
+                        activeTab === 'upi' ? 'UPI payment' :
+                        'native protocol'}).
+                      Works offline directly on any phone scanner.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Replaced QRStyling with QRStylePanel which contains the new features */}
             <div data-tour="style-panel">
