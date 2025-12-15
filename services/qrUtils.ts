@@ -23,8 +23,67 @@ export const generatePayload = (data: QRContentData): string => {
 
     case 'contact':
       if (!data.contact) return '';
-      const { fn, phone, email, org } = data.contact;
-      return `BEGIN:VCARD\nVERSION:3.0\nFN:${fn}\nTEL:${phone}\nEMAIL:${email}\nORG:${org}\nEND:VCARD`;
+      const contact = data.contact;
+
+      // Build full name (support both new and legacy format)
+      const fullName = contact.firstName && contact.lastName
+        ? `${contact.firstName} ${contact.lastName}`.trim()
+        : contact.fn || '';
+
+      // Start VCard 3.0
+      let vcard = 'BEGIN:VCARD\nVERSION:3.0\n';
+
+      // Name (N: last;first;middle;prefix;suffix)
+      if (contact.firstName || contact.lastName) {
+        vcard += `N:${contact.lastName || ''};${contact.firstName || ''};;;\n`;
+      }
+
+      // Full Name (required)
+      vcard += `FN:${fullName}\n`;
+
+      // Organization & Title
+      if (contact.company || contact.org) {
+        vcard += `ORG:${contact.company || contact.org}\n`;
+      }
+      if (contact.title) {
+        vcard += `TITLE:${contact.title}\n`;
+      }
+
+      // Phone Numbers
+      if (contact.mobile) {
+        vcard += `TEL;TYPE=CELL:${contact.mobile}\n`;
+      }
+      if (contact.phone) {
+        vcard += `TEL;TYPE=WORK:${contact.phone}\n`;
+      }
+      if (contact.fax) {
+        vcard += `TEL;TYPE=FAX:${contact.fax}\n`;
+      }
+
+      // Emails
+      if (contact.email) {
+        vcard += `EMAIL;TYPE=HOME:${contact.email}\n`;
+      }
+      if (contact.workEmail) {
+        vcard += `EMAIL;TYPE=WORK:${contact.workEmail}\n`;
+      }
+
+      // Address (ADR: PO;extended;street;city;region;postal;country)
+      if (contact.street || contact.city || contact.state || contact.zip || contact.country) {
+        vcard += `ADR;TYPE=WORK:;;${contact.street || ''};${contact.city || ''};${contact.state || ''};${contact.zip || ''};${contact.country || ''}\n`;
+      }
+
+      // Website
+      if (contact.website) {
+        vcard += `URL:${contact.website}\n`;
+      }
+
+      // Profile Photo (Base64) - only include if not too large for QR
+      // Note: Photos significantly increase QR code density, may not scan well
+      // For production, consider hosting photo and using URL instead
+
+      vcard += 'END:VCARD';
+      return vcard;
 
     case 'email':
       if (!data.email) return '';

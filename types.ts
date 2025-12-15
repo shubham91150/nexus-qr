@@ -41,7 +41,33 @@ export interface QRContentData {
   type: QRType;
   value: string;
   wifi?: { ssid: string; pass: string; type: string; hidden: boolean };
-  contact?: { fn: string; phone: string; email: string; org: string };
+  contact?: {
+    // Basic Info
+    firstName: string;
+    lastName: string;
+    title: string;      // Job Title
+    company: string;
+    // Phone Numbers
+    mobile: string;
+    phone: string;      // Work phone
+    fax: string;
+    // Emails
+    email: string;      // Personal
+    workEmail: string;
+    // Address
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+    // Web & Social
+    website: string;
+    // Profile Photo
+    photo: string;
+    // Legacy support
+    fn?: string;
+    org?: string;
+  };
   email?: { to: string; subject: string; body: string };
   geo?: { lat: string; lng: string };
   event?: { title: string; location: string; start: string; end: string };
