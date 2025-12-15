@@ -306,7 +306,13 @@ async function sendScanNotification(
     return;
   }
 
-  console.log(`[EMAIL] Sending notification to ${config.email} for QR: ${scanData.qrTitle}`);
+  // Get custom from domain or use Resend's default
+  // IMPORTANT: onboarding@resend.dev only works for sending to the Resend account owner's email
+  // For production, set RESEND_FROM_EMAIL env variable with your verified domain
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Nexus QR <onboarding@resend.dev>';
+
+  console.log(`[EMAIL] Attempting to send notification to ${config.email} for QR: ${scanData.qrTitle}`);
+  console.log(`[EMAIL] Using from address: ${fromEmail}`);
 
   try {
     const locationText = scanData.city && scanData.country
@@ -320,7 +326,7 @@ async function sendScanNotification(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'QR Scan Alert <onboarding@resend.dev>',
+        from: fromEmail,
         to: config.email,
         subject: `🔔 New QR Scan: ${scanData.qrTitle}`,
         html: `
@@ -365,10 +371,15 @@ async function sendScanNotification(
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('[EMAIL] Failed to send:', response.status, error);
+      const errorText = await response.text();
+      console.error('[EMAIL] Failed to send:', response.status, errorText);
+      console.error('[EMAIL] This usually happens when:');
+      console.error('[EMAIL] 1. Using onboarding@resend.dev to send to non-account email');
+      console.error('[EMAIL] 2. API key is invalid');
+      console.error('[EMAIL] 3. Email address is invalid');
     } else {
-      console.log('[EMAIL] Successfully sent to', config.email);
+      const result = await response.json();
+      console.log('[EMAIL] Successfully sent to', config.email, 'ID:', result.id);
     }
   } catch (error) {
     console.error('[EMAIL] Error sending notification:', error);
@@ -1081,7 +1092,99 @@ export default async function handler(
     // Get the final redirect URL based on all conditions
     let { url: redirectUrl, abVariantId } = getRedirectUrl(qrCode as DynamicQRCode, context);
 
-    // 4. Append UTM Parameters
+    // Check if destination is a valid URL or non-URL content (vCard, WiFi, etc.)
+    const isValidUrl = isValidRedirectUrl(redirectUrl);
+    console.log('[DEBUG] Destination URL:', redirectUrl.substring(0, 100), '... isValidUrl:', isValidUrl);
+
+    // Handle non-URL content types (vCard, WiFi, text, etc.)
+    if (!isValidUrl) {
+      // Check content type from qr_style
+      const qrStyle = qrCode.qr_style as { contentData?: { type?: string } } | null;
+      const contentType = qrStyle?.contentData?.type || 'unknown';
+      console.log('[DEBUG] Non-URL content detected. Type:', contentType);
+
+      // For vCard - serve as downloadable contact file
+      if (redirectUrl.startsWith('BEGIN:VCARD')) {
+        res.setHeader('Content-Type', 'text/vcard');
+        res.setHeader('Content-Disposition', `attachment; filename="${qrCode.title || 'contact'}.vcf"`);
+        res.status(200).send(redirectUrl);
+        return;
+      }
+
+      // For WiFi - show a nice page with WiFi details
+      if (redirectUrl.startsWith('WIFI:')) {
+        const wifiMatch = redirectUrl.match(/WIFI:T:([^;]*);S:([^;]*);P:([^;]*);/);
+        const wifiType = wifiMatch?.[1] || 'WPA';
+        const ssid = wifiMatch?.[2] || '';
+        const password = wifiMatch?.[3] || '';
+
+        res.status(200).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>WiFi: ${escapeHtml(ssid)}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+              .card { background: white; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; margin: 20px; }
+              .icon { font-size: 48px; margin-bottom: 16px; }
+              h1 { color: #333; margin: 0 0 8px 0; font-size: 24px; }
+              .info { background: #f5f5f5; padding: 15px; border-radius: 12px; margin: 15px 0; text-align: left; }
+              .label { color: #666; font-size: 12px; margin-bottom: 4px; }
+              .value { color: #333; font-size: 16px; font-weight: 600; word-break: break-all; }
+              .copy-btn { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="icon">📶</div>
+              <h1>WiFi Network</h1>
+              <div class="info">
+                <div class="label">Network Name (SSID)</div>
+                <div class="value">${escapeHtml(ssid)}</div>
+              </div>
+              <div class="info">
+                <div class="label">Password</div>
+                <div class="value">${escapeHtml(password)}</div>
+              </div>
+              <div class="info">
+                <div class="label">Security</div>
+                <div class="value">${escapeHtml(wifiType)}</div>
+              </div>
+              <button class="copy-btn" onclick="navigator.clipboard.writeText('${escapeHtml(password)}').then(() => this.textContent = 'Copied!')">Copy Password</button>
+            </div>
+          </body>
+          </html>
+        `);
+        return;
+      }
+
+      // For other non-URL content - show as text
+      res.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${escapeHtml(qrCode.title || 'QR Content')}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; padding: 20px; }
+            .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
+            h1 { color: #333; margin: 0 0 20px 0; font-size: 20px; }
+            pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>${escapeHtml(qrCode.title || 'QR Content')}</h1>
+            <pre>${escapeHtml(redirectUrl)}</pre>
+          </div>
+        </body>
+        </html>
+      `);
+      return;
+    }
+
+    // 4. Append UTM Parameters (only for valid URLs)
     const utmParameters = qrCode.utm_parameters as UTMParameters | null;
     if (utmParameters?.enabled) {
       redirectUrl = appendUTMParameters(redirectUrl, utmParameters);
@@ -1132,6 +1235,9 @@ export default async function handler(
 
       // Send email notification if enabled
       const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
+      console.log('[DEBUG] Email config from DB:', JSON.stringify(emailConfig));
+      console.log('[DEBUG] Location tracking config:', JSON.stringify(qrCode.location_tracking_config));
+
       if (emailConfig?.enabled && emailConfig.email) {
         const currentScanCount = qrCode.scan_count || 0;
         let shouldSendEmail = false;
@@ -1152,6 +1258,8 @@ export default async function handler(
           default:
             shouldSendEmail = true;
         }
+
+        console.log('[DEBUG] Should send email:', shouldSendEmail, 'Frequency:', emailConfig.frequency);
 
         if (shouldSendEmail) {
           sendScanNotification(emailConfig, {
@@ -1205,6 +1313,9 @@ export default async function handler(
       res.status(200).send(retargetingPage);
       return;
     }
+
+    // Log final redirect
+    console.log('[REDIRECT] Final URL:', safeRedirectUrl);
 
     // Redirect to final destination (validated)
     res.redirect(302, safeRedirectUrl);
