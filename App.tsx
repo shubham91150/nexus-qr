@@ -21,6 +21,7 @@ import {
   markWelcomeShown,
   completeOnboarding,
 } from './components/onboarding/OnboardingTour';
+import { BusinessCardLanding } from './components/BusinessCardLanding';
 
 // Analytics tracking options type
 export interface AnalyticsOptions {
@@ -371,13 +372,26 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [cardSlug, setCardSlug] = useState<string | null>(null);
 
   // Handle URL-based routing for redirect
   useEffect(() => {
     const path = window.location.pathname;
+
+    // Check for business card landing page route
+    if (path.startsWith('/card/')) {
+      const slug = path.replace('/card/', '');
+      if (slug) {
+        setCardSlug(slug);
+        setView('business-card');
+        return;
+      }
+    }
+
+    // Check for dashboard route
     if (path.startsWith('/dashboard')) {
       if (user) {
         setView('dynamic');
@@ -427,6 +441,11 @@ const AppContent: React.FC = () => {
   // Show dashboard skeleton while loading
   if (dashboardLoading) {
     return <DashboardSkeleton />;
+  }
+
+  // Business Card Landing Page (public - no auth required)
+  if (view === 'business-card' && cardSlug) {
+    return <BusinessCardLanding slug={cardSlug} />;
   }
 
   if (view === 'dynamic' && user) {
