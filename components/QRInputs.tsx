@@ -368,10 +368,119 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
     case 'contact':
       return (
         <InputWrapper>
-          <DebouncedInput placeholder="Full Name" value={data.contact?.fn || ''} onChange={(v) => updateNested('contact', 'fn', v)} />
-          <DebouncedInput placeholder="Phone Number" value={data.contact?.phone || ''} onChange={(v) => updateNested('contact', 'phone', v)} />
-          <DebouncedInput placeholder="Email" value={data.contact?.email || ''} onChange={(v) => updateNested('contact', 'email', v)} />
-          <DebouncedInput placeholder="Organization" value={data.contact?.org || ''} onChange={(v) => updateNested('contact', 'org', v)} />
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-xl border border-indigo-100 mb-1">
+            <h4 className="text-indigo-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              Digital Business Card (vCard)
+            </h4>
+            <p className="text-xs text-indigo-700">Create a professional contact card that saves directly to phone.</p>
+          </div>
+
+          {/* Profile Photo Upload */}
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+            <div
+              className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-gray-300 transition-colors"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      updateNested('contact', 'photo', e.target?.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                };
+                input.click();
+              }}
+            >
+              {data.contact?.photo ? (
+                <img src={data.contact.photo} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <svg className="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-700">Profile Photo</p>
+              <p className="text-xs text-gray-500">Click to upload (optional)</p>
+            </div>
+            {data.contact?.photo && (
+              <button
+                onClick={() => updateNested('contact', 'photo', '')}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Basic Info Section */}
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium px-1">Basic Info</label>
+            <div className="grid grid-cols-2 gap-2">
+              <DebouncedInput placeholder="First Name *" value={data.contact?.firstName || ''} onChange={(v) => updateNested('contact', 'firstName', v)} />
+              <DebouncedInput placeholder="Last Name *" value={data.contact?.lastName || ''} onChange={(v) => updateNested('contact', 'lastName', v)} />
+            </div>
+            <DebouncedInput placeholder="Job Title (e.g., Software Engineer)" value={data.contact?.title || ''} onChange={(v) => updateNested('contact', 'title', v)} />
+            <DebouncedInput placeholder="Company / Organization" value={data.contact?.company || ''} onChange={(v) => updateNested('contact', 'company', v)} />
+          </div>
+
+          {/* Contact Section */}
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium px-1">Contact</label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-400 ml-1">Mobile</label>
+                <DebouncedInput placeholder="+91 98765 43210" value={data.contact?.mobile || ''} onChange={(v) => updateNested('contact', 'mobile', v)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-400 ml-1">Work Phone</label>
+                <DebouncedInput placeholder="+91 11 2345 6789" value={data.contact?.phone || ''} onChange={(v) => updateNested('contact', 'phone', v)} />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-gray-400 ml-1">Fax (optional)</label>
+              <DebouncedInput placeholder="+91 11 2345 6780" value={data.contact?.fax || ''} onChange={(v) => updateNested('contact', 'fax', v)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-400 ml-1">Email</label>
+                <DebouncedInput placeholder="personal@email.com" value={data.contact?.email || ''} onChange={(v) => updateNested('contact', 'email', v)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-400 ml-1">Work Email</label>
+                <DebouncedInput placeholder="work@company.com" value={data.contact?.workEmail || ''} onChange={(v) => updateNested('contact', 'workEmail', v)} />
+              </div>
+            </div>
+          </div>
+
+          {/* Address Section */}
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium px-1">Address</label>
+            <DebouncedInput placeholder="Street Address" value={data.contact?.street || ''} onChange={(v) => updateNested('contact', 'street', v)} />
+            <div className="grid grid-cols-2 gap-2">
+              <DebouncedInput placeholder="City" value={data.contact?.city || ''} onChange={(v) => updateNested('contact', 'city', v)} />
+              <DebouncedInput placeholder="State / Province" value={data.contact?.state || ''} onChange={(v) => updateNested('contact', 'state', v)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <DebouncedInput placeholder="ZIP / Postal Code" value={data.contact?.zip || ''} onChange={(v) => updateNested('contact', 'zip', v)} />
+              <DebouncedInput placeholder="Country" value={data.contact?.country || ''} onChange={(v) => updateNested('contact', 'country', v)} />
+            </div>
+          </div>
+
+          {/* Website Section */}
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium px-1">Website</label>
+            <DebouncedInput placeholder="https://www.yourwebsite.com" value={data.contact?.website || ''} onChange={(v) => updateNested('contact', 'website', v)} />
+          </div>
         </InputWrapper>
       );
 
