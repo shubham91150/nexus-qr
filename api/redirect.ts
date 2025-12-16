@@ -77,6 +77,19 @@ function sanitizeRedirectUrl(url: string, fallback: string = '/'): string {
 
 // ==================== Types ====================
 
+// QR Content Types that need custom landing pages
+const LANDING_PAGE_TYPES = ['pdf', 'menu', 'audio', 'video', 'images', 'document', 'coupon', 'text'];
+
+// QR Content Types that need smart redirect (device detection)
+const SMART_REDIRECT_TYPES = ['appstore'];
+
+// QR Content Types that get direct redirect
+const DIRECT_REDIRECT_TYPES = [
+  'url', 'youtube', 'instagram', 'twitter', 'linkedin', 'facebook',
+  'tiktok', 'pinterest', 'snapchat', 'discord', 'telegram', 'spotify',
+  'whatsapp', 'zoom', 'googlemeet', 'googlereview', 'paypal', 'skype', 'social'
+];
+
 interface ConditionalRule {
   id: string;
   type: 'time' | 'location' | 'device' | 'language';
@@ -597,6 +610,552 @@ function isQRExpired(qr: DynamicQRCode): boolean {
   return new Date(qr.expires_at) < new Date();
 }
 
+// ==================== Landing Page Generators ====================
+
+// Common styles for all landing pages
+const commonStyles = `
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+  .container { max-width: 500px; margin: 0 auto; }
+  .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .header { padding: 24px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+  .header h1 { font-size: 20px; color: #333; font-weight: 600; }
+  .header p { font-size: 13px; color: #888; margin-top: 4px; }
+  .content { padding: 24px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 28px; border-radius: 12px; font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; width: 100%; }
+  .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+  .btn-secondary { background: #f5f5f5; color: #333; }
+  .btn-secondary:hover { background: #eee; }
+  .footer { padding: 16px 24px; background: #f9f9f9; text-align: center; font-size: 12px; color: #888; }
+  .preview { background: #f5f5f5; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .file-info { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .file-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .file-details h3 { font-size: 16px; color: #333; margin-bottom: 4px; word-break: break-word; }
+  .file-details p { font-size: 13px; color: #888; }
+  .share-btns { display: flex; gap: 10px; margin-top: 16px; }
+  .share-btns .btn { flex: 1; padding: 12px; }
+`;
+
+// PDF Landing Page
+function getPDFLandingPage(title: string, pdfUrl: string): string {
+  const safeTitle = escapeHtml(title || 'PDF Document');
+  const safePdfUrl = escapeHtml(pdfUrl);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .pdf-preview { width: 100%; height: 400px; border: none; border-radius: 12px; background: #f0f0f0; }
+        @media (max-width: 500px) { .pdf-preview { height: 300px; } }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>${safeTitle}</h1>
+            <p>PDF Document</p>
+          </div>
+          <div class="content">
+            <iframe src="${safePdfUrl}#toolbar=0" class="pdf-preview" title="PDF Preview"></iframe>
+            <div style="margin-top: 20px;">
+              <a href="${safePdfUrl}" download class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+              </a>
+            </div>
+            <div class="share-btns">
+              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => this.textContent = 'Link Copied!')">Share</button>
+            </div>
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Video Landing Page
+function getVideoLandingPage(title: string, videoUrl: string): string {
+  const safeTitle = escapeHtml(title || 'Video');
+  const safeVideoUrl = escapeHtml(videoUrl);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .video-player { width: 100%; border-radius: 12px; background: #000; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>${safeTitle}</h1>
+            <p>Video</p>
+          </div>
+          <div class="content">
+            <video controls class="video-player" playsinline>
+              <source src="${safeVideoUrl}" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <div style="margin-top: 20px;">
+              <a href="${safeVideoUrl}" download class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Video
+              </a>
+            </div>
+            <div class="share-btns">
+              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => this.textContent = 'Link Copied!')">Share</button>
+            </div>
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Audio Landing Page
+function getAudioLandingPage(title: string, audioUrl: string, artist?: string): string {
+  const safeTitle = escapeHtml(title || 'Audio');
+  const safeAudioUrl = escapeHtml(audioUrl);
+  const safeArtist = artist ? escapeHtml(artist) : '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .audio-card { text-align: center; padding: 30px 20px; }
+        .audio-icon { width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 48px; }
+        .audio-title { font-size: 22px; font-weight: 600; color: #333; margin-bottom: 4px; }
+        .audio-artist { font-size: 15px; color: #888; margin-bottom: 24px; }
+        audio { width: 100%; margin-bottom: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="content audio-card">
+            <div class="audio-icon">🎵</div>
+            <h1 class="audio-title">${safeTitle}</h1>
+            ${safeArtist ? `<p class="audio-artist">${safeArtist}</p>` : ''}
+            <audio controls style="width: 100%;">
+              <source src="${safeAudioUrl}" type="audio/mpeg">
+              Your browser does not support the audio element.
+            </audio>
+            <a href="${safeAudioUrl}" download class="btn btn-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Audio
+            </a>
+            <div class="share-btns">
+              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => this.textContent = 'Link Copied!')">Share</button>
+            </div>
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Images Gallery Landing Page
+function getImagesLandingPage(title: string, imageUrls: string[]): string {
+  const safeTitle = escapeHtml(title || 'Image Gallery');
+  const safeUrls = imageUrls.map(url => escapeHtml(url));
+
+  const imagesHtml = safeUrls.map((url, i) => `
+    <div class="gallery-item" onclick="openLightbox(${i})">
+      <img src="${url}" alt="Image ${i + 1}" loading="lazy">
+    </div>
+  `).join('');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .gallery-item { aspect-ratio: 1; border-radius: 12px; overflow: hidden; cursor: pointer; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .gallery-item:hover img { transform: scale(1.05); }
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; }
+        .lightbox.active { display: flex; }
+        .lightbox img { max-width: 90%; max-height: 90%; border-radius: 8px; }
+        .lightbox-close { position: absolute; top: 20px; right: 20px; background: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: white; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+        .lightbox-prev { left: 20px; }
+        .lightbox-next { right: 20px; }
+        .image-count { background: rgba(0,0,0,0.5); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; text-align: center; margin-bottom: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>${safeTitle}</h1>
+            <p>${safeUrls.length} images</p>
+          </div>
+          <div class="content">
+            <div class="gallery">${imagesHtml}</div>
+            <div class="share-btns" style="margin-top: 20px;">
+              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => this.textContent = 'Link Copied!')">Share Gallery</button>
+            </div>
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+
+      <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" onclick="closeLightbox()">×</button>
+        <button class="lightbox-nav lightbox-prev" onclick="prevImage()">‹</button>
+        <img id="lightbox-img" src="" alt="Full size">
+        <button class="lightbox-nav lightbox-next" onclick="nextImage()">›</button>
+      </div>
+
+      <script>
+        const images = ${JSON.stringify(safeUrls)};
+        let currentIndex = 0;
+
+        function openLightbox(i) {
+          currentIndex = i;
+          document.getElementById('lightbox-img').src = images[i];
+          document.getElementById('lightbox').classList.add('active');
+        }
+
+        function closeLightbox() {
+          document.getElementById('lightbox').classList.remove('active');
+        }
+
+        function prevImage() {
+          currentIndex = (currentIndex - 1 + images.length) % images.length;
+          document.getElementById('lightbox-img').src = images[currentIndex];
+        }
+
+        function nextImage() {
+          currentIndex = (currentIndex + 1) % images.length;
+          document.getElementById('lightbox-img').src = images[currentIndex];
+        }
+
+        document.getElementById('lightbox').onclick = function(e) {
+          if (e.target === this) closeLightbox();
+        };
+      </script>
+    </body>
+    </html>
+  `;
+}
+
+// Document Landing Page
+function getDocumentLandingPage(title: string, docUrl: string, fileType?: string): string {
+  const safeTitle = escapeHtml(title || 'Document');
+  const safeDocUrl = escapeHtml(docUrl);
+  const safeFileType = fileType ? escapeHtml(fileType.toUpperCase()) : 'DOC';
+
+  const iconColors: Record<string, string> = {
+    'PDF': '#E53E3E',
+    'DOC': '#3182CE',
+    'DOCX': '#3182CE',
+    'XLS': '#38A169',
+    'XLSX': '#38A169',
+    'PPT': '#DD6B20',
+    'PPTX': '#DD6B20',
+    'TXT': '#718096',
+  };
+
+  const bgColor = iconColors[safeFileType] || '#667eea';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .doc-icon { background: ${bgColor}; color: white; font-weight: 700; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>${safeTitle}</h1>
+            <p>Document</p>
+          </div>
+          <div class="content">
+            <div class="preview">
+              <div class="file-info">
+                <div class="file-icon doc-icon">${safeFileType}</div>
+                <div class="file-details">
+                  <h3>${safeTitle}</h3>
+                  <p>${safeFileType} Document</p>
+                </div>
+              </div>
+            </div>
+            <a href="${safeDocUrl}" download class="btn btn-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Document
+            </a>
+            <div class="share-btns">
+              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => this.textContent = 'Link Copied!')">Share</button>
+            </div>
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Coupon Landing Page
+function getCouponLandingPage(couponData: { code: string; discount: string; expiry?: string; terms?: string }, title?: string): string {
+  const safeCode = escapeHtml(couponData.code || 'COUPON');
+  const safeDiscount = escapeHtml(couponData.discount || '');
+  const safeExpiry = couponData.expiry ? escapeHtml(couponData.expiry) : '';
+  const safeTerms = couponData.terms ? escapeHtml(couponData.terms) : '';
+  const safeTitle = escapeHtml(title || 'Special Offer');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .coupon-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 24px; text-align: center; }
+        .coupon-header h1 { font-size: 28px; margin-bottom: 8px; }
+        .coupon-discount { font-size: 48px; font-weight: 800; margin: 16px 0; }
+        .coupon-code-box { background: white; border: 3px dashed #667eea; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; }
+        .coupon-code { font-size: 28px; font-weight: 700; color: #333; letter-spacing: 3px; font-family: monospace; }
+        .coupon-expiry { background: #FFF5F5; color: #E53E3E; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+        .coupon-terms { font-size: 12px; color: #888; margin-top: 16px; line-height: 1.6; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="coupon-header">
+            <h1>${safeTitle}</h1>
+            <div class="coupon-discount">${safeDiscount}</div>
+          </div>
+          <div class="content">
+            ${safeExpiry ? `<div class="coupon-expiry">⏰ Expires: ${safeExpiry}</div>` : ''}
+            <div class="coupon-code-box">
+              <p style="font-size: 12px; color: #888; margin-bottom: 8px;">YOUR CODE</p>
+              <div class="coupon-code">${safeCode}</div>
+            </div>
+            <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${safeCode}').then(() => { this.innerHTML = '✓ Code Copied!'; setTimeout(() => this.innerHTML = 'Copy Code', 2000); })">
+              Copy Code
+            </button>
+            ${safeTerms ? `<p class="coupon-terms">* ${safeTerms}</p>` : ''}
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Menu Landing Page
+function getMenuLandingPage(title: string, menuUrl: string): string {
+  const safeTitle = escapeHtml(title || 'Menu');
+  const safeMenuUrl = escapeHtml(menuUrl);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .menu-header { background: linear-gradient(135deg, #F6AD55 0%, #ED8936 100%); color: white; padding: 32px 24px; text-align: center; }
+        .menu-header .icon { font-size: 48px; margin-bottom: 12px; }
+        .menu-frame { width: 100%; height: 500px; border: none; border-radius: 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="menu-header">
+            <div class="icon">🍽️</div>
+            <h1>${safeTitle}</h1>
+          </div>
+          <iframe src="${safeMenuUrl}" class="menu-frame" title="Menu"></iframe>
+          <div class="content">
+            <a href="${safeMenuUrl}" target="_blank" class="btn btn-primary">
+              Open Full Menu
+            </a>
+            <div class="share-btns">
+              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => this.textContent = 'Link Copied!')">Share Menu</button>
+            </div>
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Text Landing Page
+function getTextLandingPage(title: string, text: string): string {
+  const safeTitle = escapeHtml(title || 'Message');
+  const safeText = escapeHtml(text || '');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .text-content { background: #f5f5f5; border-radius: 12px; padding: 20px; white-space: pre-wrap; word-break: break-word; line-height: 1.6; font-size: 15px; color: #333; max-height: 400px; overflow-y: auto; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>${safeTitle}</h1>
+            <p>Text Message</p>
+          </div>
+          <div class="content">
+            <div class="text-content">${safeText}</div>
+            <div style="margin-top: 20px;">
+              <button class="btn btn-primary" onclick="navigator.clipboard.writeText(\`${safeText.replace(/`/g, '\\`')}\`).then(() => { this.innerHTML = '✓ Copied!'; setTimeout(() => this.innerHTML = 'Copy Text', 2000); })">
+                Copy Text
+              </button>
+            </div>
+            <div class="share-btns">
+              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', text: \`${safeText.replace(/`/g, '\\`')}\`}) : null">Share</button>
+            </div>
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// App Store Smart Redirect Page
+function getAppStoreRedirectPage(appData: { iosUrl?: string; androidUrl?: string; huaweiUrl?: string; appName?: string }, device: string, os: string): string {
+  const safeAppName = escapeHtml(appData.appName || 'App');
+  const safeIosUrl = appData.iosUrl ? escapeHtml(appData.iosUrl) : '';
+  const safeAndroidUrl = appData.androidUrl ? escapeHtml(appData.androidUrl) : '';
+  const safeHuaweiUrl = appData.huaweiUrl ? escapeHtml(appData.huaweiUrl) : '';
+
+  // Auto-redirect based on device
+  let autoRedirectUrl = '';
+  if (os === 'iOS' && safeIosUrl) {
+    autoRedirectUrl = safeIosUrl;
+  } else if ((os === 'Android' || device === 'mobile') && safeAndroidUrl) {
+    autoRedirectUrl = safeAndroidUrl;
+  }
+
+  // If we can auto-redirect, do it
+  if (autoRedirectUrl) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Redirecting to ${safeAppName}</title>
+        <meta http-equiv="refresh" content="0;url=${autoRedirectUrl}">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>${commonStyles}</style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="card">
+            <div class="content" style="text-align: center; padding: 40px;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+              <h1 style="font-size: 20px; margin-bottom: 8px;">Redirecting to App Store...</h1>
+              <p style="color: #888;">If not redirected, <a href="${autoRedirectUrl}">click here</a></p>
+            </div>
+          </div>
+        </div>
+        <script>window.location.href = '${autoRedirectUrl}';</script>
+      </body>
+      </html>
+    `;
+  }
+
+  // Show all store options if we can't auto-detect
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Download ${safeAppName}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>${commonStyles}
+        .store-btn { display: flex; align-items: center; gap: 12px; padding: 16px 20px; margin-bottom: 12px; text-align: left; }
+        .store-icon { font-size: 32px; }
+        .store-info h3 { font-size: 14px; color: #888; margin-bottom: 2px; }
+        .store-info p { font-size: 16px; color: #333; font-weight: 600; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header" style="padding: 32px;">
+            <div style="font-size: 64px; margin-bottom: 16px;">📱</div>
+            <h1>Download ${safeAppName}</h1>
+            <p>Choose your app store</p>
+          </div>
+          <div class="content">
+            ${safeIosUrl ? `
+              <a href="${safeIosUrl}" class="btn btn-secondary store-btn">
+                <span class="store-icon">🍎</span>
+                <div class="store-info">
+                  <h3>Download on the</h3>
+                  <p>App Store</p>
+                </div>
+              </a>
+            ` : ''}
+            ${safeAndroidUrl ? `
+              <a href="${safeAndroidUrl}" class="btn btn-secondary store-btn">
+                <span class="store-icon">🤖</span>
+                <div class="store-info">
+                  <h3>Get it on</h3>
+                  <p>Google Play</p>
+                </div>
+              </a>
+            ` : ''}
+            ${safeHuaweiUrl ? `
+              <a href="${safeHuaweiUrl}" class="btn btn-secondary store-btn">
+                <span class="store-icon">📲</span>
+                <div class="store-info">
+                  <h3>Explore it on</h3>
+                  <p>AppGallery</p>
+                </div>
+              </a>
+            ` : ''}
+          </div>
+          <div class="footer">Powered by Nexus QR</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 // Generate retargeting scripts
 function generateRetargetingScripts(config: RetargetingConfig, eventName: string = 'qr_scan'): string {
   if (!config.enabled) return '';
@@ -1092,16 +1651,136 @@ export default async function handler(
     // Get the final redirect URL based on all conditions
     let { url: redirectUrl, abVariantId } = getRedirectUrl(qrCode as DynamicQRCode, context);
 
-    // Check if destination is a valid URL or non-URL content (vCard, WiFi, etc.)
-    const isValidUrl = isValidRedirectUrl(redirectUrl);
-    console.log('[DEBUG] Destination URL:', redirectUrl.substring(0, 100), '... isValidUrl:', isValidUrl);
+    // Get content type from qr_style
+    const qrStyle = qrCode.qr_style as { contentData?: { type?: string; pdf?: any; video?: any; audio?: any; images?: any; document?: any; coupon?: any; menu?: any; appstore?: any } } | null;
+    const contentType = qrStyle?.contentData?.type || 'unknown';
+    const contentData = qrStyle?.contentData || {};
+    console.log('[DEBUG] Content Type:', contentType, 'Destination:', redirectUrl.substring(0, 100));
 
-    // Handle non-URL content types (vCard, WiFi, text, etc.)
+    // ==================== Content Type Based Routing ====================
+
+    // 1. Handle Landing Page Content Types (files, media, coupon, text)
+    if (LANDING_PAGE_TYPES.includes(contentType)) {
+      console.log('[LANDING] Serving landing page for content type:', contentType);
+
+      // Record scan before serving landing page
+      if (!isInternalRequest) {
+        const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
+        const locationData = locationTrackingConfig?.enabled
+          ? { country: geo?.country || null, city: geo?.city || null }
+          : { country: null, city: null };
+
+        db.from('qr_scans').insert({
+          qr_id: qrCode.id,
+          ip_address: clientIP || null,
+          ...locationData,
+          device_type: device,
+          browser: browser,
+          os: os,
+          referrer: referer,
+          language: language,
+          user_agent: userAgent,
+          ab_variant_id: abVariantId || null,
+        }).then(({ error }) => {
+          if (error) console.error('Error recording scan:', error);
+        });
+      }
+
+      // Serve appropriate landing page based on content type
+      switch (contentType) {
+        case 'pdf': {
+          const pdfData = contentData.pdf || {};
+          res.status(200).send(getPDFLandingPage(pdfData.title || qrCode.title, pdfData.url || redirectUrl));
+          return;
+        }
+
+        case 'video': {
+          const videoData = contentData.video || {};
+          res.status(200).send(getVideoLandingPage(videoData.title || qrCode.title, videoData.url || redirectUrl));
+          return;
+        }
+
+        case 'audio': {
+          const audioData = contentData.audio || {};
+          res.status(200).send(getAudioLandingPage(audioData.title || qrCode.title, audioData.url || redirectUrl, audioData.artist));
+          return;
+        }
+
+        case 'images': {
+          const imagesData = contentData.images || {};
+          const imageUrls = imagesData.urls || [redirectUrl];
+          res.status(200).send(getImagesLandingPage(imagesData.title || qrCode.title, imageUrls));
+          return;
+        }
+
+        case 'document': {
+          const docData = contentData.document || {};
+          res.status(200).send(getDocumentLandingPage(docData.title || qrCode.title, docData.url || redirectUrl, docData.fileType));
+          return;
+        }
+
+        case 'coupon': {
+          const couponData = contentData.coupon || {};
+          res.status(200).send(getCouponLandingPage(couponData, qrCode.title));
+          return;
+        }
+
+        case 'menu': {
+          const menuData = contentData.menu || {};
+          res.status(200).send(getMenuLandingPage(menuData.restaurantName || qrCode.title, menuData.url || redirectUrl));
+          return;
+        }
+
+        case 'text': {
+          res.status(200).send(getTextLandingPage(qrCode.title, redirectUrl));
+          return;
+        }
+
+        default:
+          // Fallback to text landing page
+          res.status(200).send(getTextLandingPage(qrCode.title, redirectUrl));
+          return;
+      }
+    }
+
+    // 2. Handle Smart Redirect Content Types (appstore)
+    if (SMART_REDIRECT_TYPES.includes(contentType)) {
+      console.log('[SMART] Serving smart redirect for content type:', contentType);
+
+      // Record scan before redirect
+      if (!isInternalRequest) {
+        const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
+        const locationData = locationTrackingConfig?.enabled
+          ? { country: geo?.country || null, city: geo?.city || null }
+          : { country: null, city: null };
+
+        db.from('qr_scans').insert({
+          qr_id: qrCode.id,
+          ip_address: clientIP || null,
+          ...locationData,
+          device_type: device,
+          browser: browser,
+          os: os,
+          referrer: referer,
+          language: language,
+          user_agent: userAgent,
+          ab_variant_id: abVariantId || null,
+        }).then(({ error }) => {
+          if (error) console.error('Error recording scan:', error);
+        });
+      }
+
+      if (contentType === 'appstore') {
+        const appData = contentData.appstore || {};
+        res.status(200).send(getAppStoreRedirectPage(appData, device, os));
+        return;
+      }
+    }
+
+    // 3. Handle non-URL content (vCard, WiFi - legacy static types that shouldn't be dynamic)
+    const isValidUrl = isValidRedirectUrl(redirectUrl);
     if (!isValidUrl) {
-      // Check content type from qr_style
-      const qrStyle = qrCode.qr_style as { contentData?: { type?: string } } | null;
-      const contentType = qrStyle?.contentData?.type || 'unknown';
-      console.log('[DEBUG] Non-URL content detected. Type:', contentType);
+      console.log('[DEBUG] Non-URL content detected, serving as-is');
 
       // For vCard - serve as downloadable contact file
       if (redirectUrl.startsWith('BEGIN:VCARD')) {
@@ -1159,32 +1838,13 @@ export default async function handler(
         return;
       }
 
-      // For other non-URL content - show as text
-      res.status(200).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${escapeHtml(qrCode.title || 'QR Content')}</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; padding: 20px; }
-            .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
-            h1 { color: #333; margin: 0 0 20px 0; font-size: 20px; }
-            pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <h1>${escapeHtml(qrCode.title || 'QR Content')}</h1>
-            <pre>${escapeHtml(redirectUrl)}</pre>
-          </div>
-        </body>
-        </html>
-      `);
+      // For other non-URL content - show text landing page
+      res.status(200).send(getTextLandingPage(qrCode.title, redirectUrl));
       return;
     }
 
-    // 4. Append UTM Parameters (only for valid URLs)
+    // 4. Direct Redirect for URL-based content types (url, social media, etc.)
+    // Append UTM Parameters (only for valid URLs)
     const utmParameters = qrCode.utm_parameters as UTMParameters | null;
     if (utmParameters?.enabled) {
       redirectUrl = appendUTMParameters(redirectUrl, utmParameters);
