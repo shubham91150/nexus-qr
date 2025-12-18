@@ -1,27 +1,24 @@
 import { supabase } from '../lib/supabase';
 
-// File type configurations
+// File type configurations with secure bucket assignment
 export const FILE_CONFIG = {
   audio: {
     accept: 'audio/*',
     maxSize: 10 * 1024 * 1024, // 10MB
     allowedTypes: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/m4a'],
-    bucket: 'media-files',
-    folder: 'audio',
+    bucket: 'qr-media', // Private bucket
   },
   video: {
     accept: 'video/*',
     maxSize: 50 * 1024 * 1024, // 50MB
     allowedTypes: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
-    bucket: 'media-files',
-    folder: 'video',
+    bucket: 'qr-media', // Private bucket
   },
   images: {
     accept: 'image/*',
     maxSize: 5 * 1024 * 1024, // 5MB per image
     allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-    bucket: 'media-files',
-    folder: 'images',
+    bucket: 'qr-media', // Private bucket
   },
   document: {
     accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt',
@@ -36,8 +33,13 @@ export const FILE_CONFIG = {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'text/plain',
     ],
-    bucket: 'media-files',
-    folder: 'documents',
+    bucket: 'qr-docs', // Private bucket for documents
+  },
+  pdf: {
+    accept: '.pdf',
+    maxSize: 20 * 1024 * 1024, // 20MB
+    allowedTypes: ['application/pdf'],
+    bucket: 'qr-docs', // Private bucket
   },
 };
 
@@ -45,7 +47,9 @@ export type MediaType = keyof typeof FILE_CONFIG;
 
 export interface UploadResult {
   success: boolean;
-  url?: string;
+  url?: string;        // Will store path for signed URL generation
+  filePath?: string;   // Full path: user_id/qr_id/filename
+  bucket?: string;     // Bucket name for signed URL
   error?: string;
   fileName?: string;
 }
@@ -84,9 +88,22 @@ export function validateFile(file: File, mediaType: MediaType): { valid: boolean
 }
 
 /**
- * Upload a single file to Supabase Storage
+ * Get current user ID from Supabase auth
  */
-export async function uploadFile(file: File, mediaType: MediaType): Promise<UploadResult> {
+async function getCurrentUserId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+}
+
+/**
+ * Upload a single file to Supabase Storage
+ * Path format: <user_id>/<qr_id>/<filename>
+ */
+export async function uploadFile(
+  file: File,
+  mediaType: MediaType,
+  qrId?: string
+): Promise<UploadResult> {
   const config = FILE_CONFIG[mediaType];
 
   // Validate file
@@ -96,10 +113,19 @@ export async function uploadFile(file: File, mediaType: MediaType): Promise<Uplo
   }
 
   try {
-    const fileName = generateFileName(file.name);
-    const filePath = `${config.folder}/${fileName}`;
+    // Get current user ID
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' };
+    }
 
-    // Upload to Supabase Storage
+    const fileName = generateFileName(file.name);
+
+    // Path format: user_id/qr_id/filename OR user_id/temp/filename
+    const folderPath = qrId ? `${userId}/${qrId}` : `${userId}/temp`;
+    const filePath = `${folderPath}/${fileName}`;
+
+    // Upload to Supabase Storage (private bucket)
     const { data, error } = await supabase.storage
       .from(config.bucket)
       .upload(filePath, file, {
@@ -112,14 +138,12 @@ export async function uploadFile(file: File, mediaType: MediaType): Promise<Uplo
       return { success: false, error: error.message };
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(config.bucket)
-      .getPublicUrl(filePath);
-
+    // Return file path (NOT public URL - we'll use signed URLs)
     return {
       success: true,
-      url: urlData.publicUrl,
+      url: filePath,           // Store path for signed URL generation
+      filePath: filePath,
+      bucket: config.bucket,
       fileName: fileName,
     };
   } catch (err) {
@@ -131,11 +155,15 @@ export async function uploadFile(file: File, mediaType: MediaType): Promise<Uplo
 /**
  * Upload multiple files (for image gallery)
  */
-export async function uploadMultipleFiles(files: File[], mediaType: MediaType): Promise<UploadResult[]> {
+export async function uploadMultipleFiles(
+  files: File[],
+  mediaType: MediaType,
+  qrId?: string
+): Promise<UploadResult[]> {
   const results: UploadResult[] = [];
 
   for (const file of files) {
-    const result = await uploadFile(file, mediaType);
+    const result = await uploadFile(file, mediaType, qrId);
     results.push(result);
   }
 
@@ -143,20 +171,104 @@ export async function uploadMultipleFiles(files: File[], mediaType: MediaType): 
 }
 
 /**
+ * Generate a signed URL for temporary file access
+ * @param filePath - The file path in storage
+ * @param bucket - The bucket name
+ * @param expiresIn - Expiry time in seconds (default 60)
+ */
+export async function getSignedUrl(
+  filePath: string,
+  bucket: string,
+  expiresIn: number = 60
+): Promise<{ url: string | null; error?: string }> {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, expiresIn);
+
+    if (error) {
+      console.error('Signed URL error:', error);
+      return { url: null, error: error.message };
+    }
+
+    return { url: data.signedUrl };
+  } catch (err) {
+    console.error('Signed URL exception:', err);
+    return { url: null, error: 'Failed to generate access URL' };
+  }
+}
+
+/**
+ * Generate signed URLs for multiple files
+ */
+export async function getSignedUrls(
+  filePaths: string[],
+  bucket: string,
+  expiresIn: number = 60
+): Promise<{ urls: string[]; errors: string[] }> {
+  const urls: string[] = [];
+  const errors: string[] = [];
+
+  for (const filePath of filePaths) {
+    const result = await getSignedUrl(filePath, bucket, expiresIn);
+    if (result.url) {
+      urls.push(result.url);
+    } else {
+      errors.push(result.error || 'Unknown error');
+    }
+  }
+
+  return { urls, errors };
+}
+
+/**
+ * Move file from temp folder to QR folder when QR is created
+ */
+export async function moveFileToQR(
+  tempFilePath: string,
+  bucket: string,
+  qrId: string
+): Promise<{ success: boolean; newPath?: string; error?: string }> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    // Extract filename from temp path
+    const fileName = tempFilePath.split('/').pop();
+    if (!fileName) {
+      return { success: false, error: 'Invalid file path' };
+    }
+
+    const newPath = `${userId}/${qrId}/${fileName}`;
+
+    // Copy to new location
+    const { error: copyError } = await supabase.storage
+      .from(bucket)
+      .copy(tempFilePath, newPath);
+
+    if (copyError) {
+      return { success: false, error: copyError.message };
+    }
+
+    // Delete from temp location
+    await supabase.storage.from(bucket).remove([tempFilePath]);
+
+    return { success: true, newPath };
+  } catch (err) {
+    console.error('Move file exception:', err);
+    return { success: false, error: 'Failed to move file' };
+  }
+}
+
+/**
  * Delete a file from Supabase Storage
  */
-export async function deleteFile(url: string, mediaType: MediaType): Promise<boolean> {
-  const config = FILE_CONFIG[mediaType];
-
+export async function deleteFile(filePath: string, bucket: string): Promise<boolean> {
   try {
-    // Extract file path from URL
-    const urlParts = url.split(`${config.bucket}/`);
-    if (urlParts.length < 2) return false;
-
-    const filePath = urlParts[1];
-
     const { error } = await supabase.storage
-      .from(config.bucket)
+      .from(bucket)
       .remove([filePath]);
 
     if (error) {
@@ -172,6 +284,35 @@ export async function deleteFile(url: string, mediaType: MediaType): Promise<boo
 }
 
 /**
+ * Delete all files for a QR code
+ */
+export async function deleteQRFiles(qrId: string): Promise<boolean> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return false;
+
+    const folderPath = `${userId}/${qrId}`;
+
+    // Delete from both buckets
+    for (const bucket of ['qr-media', 'qr-docs']) {
+      const { data: files } = await supabase.storage
+        .from(bucket)
+        .list(folderPath);
+
+      if (files && files.length > 0) {
+        const filePaths = files.map(f => `${folderPath}/${f.name}`);
+        await supabase.storage.from(bucket).remove(filePaths);
+      }
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Delete QR files exception:', err);
+    return false;
+  }
+}
+
+/**
  * Format file size for display
  */
 export function formatFileSize(bytes: number): string {
@@ -180,4 +321,11 @@ export function formatFileSize(bytes: number): string {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Get bucket name for a media type
+ */
+export function getBucketForType(mediaType: MediaType): string {
+  return FILE_CONFIG[mediaType].bucket;
 }
