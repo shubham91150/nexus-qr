@@ -20,6 +20,71 @@ function getSupabaseClient(): SupabaseClient | null {
   return supabase;
 }
 
+// ==================== Signed URL Helper Functions ====================
+
+/**
+ * Generate a signed URL for secure file access
+ * @param filePath - The file path in storage (e.g., user_id/qr_id/filename)
+ * @param bucket - The bucket name (qr-media or qr-docs)
+ * @param expiresIn - Expiry time in seconds (default 300 = 5 minutes)
+ */
+async function generateSignedUrl(
+  db: SupabaseClient,
+  filePath: string,
+  bucket: string,
+  expiresIn: number = 300
+): Promise<string | null> {
+  try {
+    // Skip if it's already a full URL (external link)
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+      return filePath;
+    }
+
+    const { data, error } = await db.storage
+      .from(bucket)
+      .createSignedUrl(filePath, expiresIn);
+
+    if (error) {
+      console.error('[SIGNED_URL] Error generating signed URL:', error);
+      return null;
+    }
+
+    return data.signedUrl;
+  } catch (err) {
+    console.error('[SIGNED_URL] Exception:', err);
+    return null;
+  }
+}
+
+/**
+ * Generate signed URLs for multiple files
+ */
+async function generateSignedUrls(
+  db: SupabaseClient,
+  filePaths: string[],
+  bucket: string,
+  expiresIn: number = 300
+): Promise<string[]> {
+  const urls: string[] = [];
+  for (const path of filePaths) {
+    const url = await generateSignedUrl(db, path, bucket, expiresIn);
+    if (url) urls.push(url);
+  }
+  return urls;
+}
+
+/**
+ * Determine bucket from content type
+ */
+function getBucketForContentType(contentType: string): string {
+  const mediaBucketTypes = ['audio', 'video', 'images'];
+  const docsBucketTypes = ['pdf', 'document'];
+
+  if (mediaBucketTypes.includes(contentType)) return 'qr-media';
+  if (docsBucketTypes.includes(contentType)) return 'qr-docs';
+  return 'qr-media'; // default
+}
+
 // ==================== Security Helper Functions ====================
 
 /**
@@ -1687,35 +1752,49 @@ export default async function handler(
       }
 
       // Serve appropriate landing page based on content type
+      // Generate signed URLs for file-based content types
+      const bucket = getBucketForContentType(contentType);
+
       switch (contentType) {
         case 'pdf': {
           const pdfData = contentData.pdf || {};
-          res.status(200).send(getPDFLandingPage(pdfData.title || qrCode.title, pdfData.url || redirectUrl));
+          const filePath = pdfData.filePath || pdfData.url || redirectUrl;
+          const signedUrl = await generateSignedUrl(db, filePath, 'qr-docs', 300) || filePath;
+          res.status(200).send(getPDFLandingPage(pdfData.title || qrCode.title, signedUrl));
           return;
         }
 
         case 'video': {
           const videoData = contentData.video || {};
-          res.status(200).send(getVideoLandingPage(videoData.title || qrCode.title, videoData.url || redirectUrl));
+          const filePath = videoData.filePath || videoData.url || redirectUrl;
+          const signedUrl = await generateSignedUrl(db, filePath, 'qr-media', 300) || filePath;
+          res.status(200).send(getVideoLandingPage(videoData.title || qrCode.title, signedUrl));
           return;
         }
 
         case 'audio': {
           const audioData = contentData.audio || {};
-          res.status(200).send(getAudioLandingPage(audioData.title || qrCode.title, audioData.url || redirectUrl, audioData.artist));
+          const filePath = audioData.filePath || audioData.url || redirectUrl;
+          const signedUrl = await generateSignedUrl(db, filePath, 'qr-media', 300) || filePath;
+          res.status(200).send(getAudioLandingPage(audioData.title || qrCode.title, signedUrl, audioData.artist));
           return;
         }
 
         case 'images': {
           const imagesData = contentData.images || {};
-          const imageUrls = imagesData.urls || [redirectUrl];
+          // Handle both filePaths (array of paths) and urls (legacy)
+          const filePaths = imagesData.filePaths || imagesData.urls || [redirectUrl];
+          const signedUrls = await generateSignedUrls(db, filePaths, 'qr-media', 300);
+          const imageUrls = signedUrls.length > 0 ? signedUrls : filePaths;
           res.status(200).send(getImagesLandingPage(imagesData.title || qrCode.title, imageUrls));
           return;
         }
 
         case 'document': {
           const docData = contentData.document || {};
-          res.status(200).send(getDocumentLandingPage(docData.title || qrCode.title, docData.url || redirectUrl, docData.fileType));
+          const filePath = docData.filePath || docData.url || redirectUrl;
+          const signedUrl = await generateSignedUrl(db, filePath, 'qr-docs', 300) || filePath;
+          res.status(200).send(getDocumentLandingPage(docData.title || qrCode.title, signedUrl, docData.fileType));
           return;
         }
 
@@ -1727,6 +1806,7 @@ export default async function handler(
 
         case 'menu': {
           const menuData = contentData.menu || {};
+          // Menu URLs are external, no signed URL needed
           res.status(200).send(getMenuLandingPage(menuData.restaurantName || qrCode.title, menuData.url || redirectUrl));
           return;
         }
