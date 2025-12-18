@@ -272,7 +272,7 @@ FOR EACH ROW
 EXECUTE FUNCTION update_business_card_timestamp();
 
 -- =====================================================
--- 8. ROW LEVEL SECURITY (RLS)
+-- 8. ROW LEVEL SECURITY (RLS) - Idempotent (Safe to re-run)
 -- =====================================================
 
 -- Enable RLS on all tables
@@ -281,29 +281,35 @@ ALTER TABLE qr_scans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ip_scan_tracking ENABLE ROW LEVEL SECURITY;
 ALTER TABLE business_cards ENABLE ROW LEVEL SECURITY;
 
--- Dynamic QR Codes Policies
+-- Dynamic QR Codes Policies (Drop first to make idempotent)
+DROP POLICY IF EXISTS "Users can view their own QR codes" ON dynamic_qr_codes;
 CREATE POLICY "Users can view their own QR codes"
 ON dynamic_qr_codes FOR SELECT
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can create their own QR codes" ON dynamic_qr_codes;
 CREATE POLICY "Users can create their own QR codes"
 ON dynamic_qr_codes FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own QR codes" ON dynamic_qr_codes;
 CREATE POLICY "Users can update their own QR codes"
 ON dynamic_qr_codes FOR UPDATE
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own QR codes" ON dynamic_qr_codes;
 CREATE POLICY "Users can delete their own QR codes"
 ON dynamic_qr_codes FOR DELETE
 USING (auth.uid() = user_id);
 
 -- Allow public read for redirect API (by short_code lookup)
+DROP POLICY IF EXISTS "Anyone can view active QR codes by short_code" ON dynamic_qr_codes;
 CREATE POLICY "Anyone can view active QR codes by short_code"
 ON dynamic_qr_codes FOR SELECT
 USING (is_active = TRUE);
 
 -- QR Scans Policies
+DROP POLICY IF EXISTS "Users can view scans for their QR codes" ON qr_scans;
 CREATE POLICY "Users can view scans for their QR codes"
 ON qr_scans FOR SELECT
 USING (
@@ -314,38 +320,51 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Anyone can insert scans" ON qr_scans;
 CREATE POLICY "Anyone can insert scans"
 ON qr_scans FOR INSERT
 WITH CHECK (true);
 
 -- IP Scan Tracking Policies
+DROP POLICY IF EXISTS "Service role can manage ip_scan_tracking" ON ip_scan_tracking;
 CREATE POLICY "Service role can manage ip_scan_tracking"
 ON ip_scan_tracking FOR ALL
 USING (true)
 WITH CHECK (true);
 
 -- Business Cards Policies
+DROP POLICY IF EXISTS "Anyone can view active business cards" ON business_cards;
 CREATE POLICY "Anyone can view active business cards"
 ON business_cards FOR SELECT
 USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS "Users can create their own business cards" ON business_cards;
 CREATE POLICY "Users can create their own business cards"
 ON business_cards FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own business cards" ON business_cards;
 CREATE POLICY "Users can update their own business cards"
 ON business_cards FOR UPDATE
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own business cards" ON business_cards;
 CREATE POLICY "Users can delete their own business cards"
 ON business_cards FOR DELETE
 USING (auth.uid() = user_id);
 
 -- =====================================================
--- 9. ENABLE REALTIME
+-- 9. ENABLE REALTIME (Safe - won't fail if already added)
 -- =====================================================
 -- Enable realtime for qr_scans (for live analytics)
-ALTER PUBLICATION supabase_realtime ADD TABLE qr_scans;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE qr_scans;
+EXCEPTION
+  WHEN duplicate_object THEN
+    -- Table already in publication, ignore error
+    NULL;
+END $$;
 
 -- =====================================================
 -- 10. STORAGE BUCKETS (Run separately in SQL or UI)
