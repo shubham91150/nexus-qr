@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS api_keys (
   -- Rate limits (requests per month)
   rate_limit INTEGER NOT NULL DEFAULT 100,
 
+  -- IP Whitelisting (null means all IPs allowed)
+  ip_whitelist TEXT[] DEFAULT NULL,
+
   -- Permissions
   permissions JSONB DEFAULT '{"create": true, "read": true, "update": true, "delete": true, "analytics": true, "bulk": false, "webhooks": false}'::jsonb
 );
@@ -28,6 +31,7 @@ CREATE TABLE IF NOT EXISTS api_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   api_key_id UUID NOT NULL REFERENCES api_keys(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  request_id VARCHAR(36) NOT NULL, -- UUID for request tracking
   endpoint VARCHAR(100) NOT NULL,
   method VARCHAR(10) NOT NULL,
   status_code INTEGER NOT NULL,
@@ -35,6 +39,7 @@ CREATE TABLE IF NOT EXISTS api_usage (
   ip_address INET,
   user_agent TEXT,
   request_body JSONB,
+  error_code INTEGER, -- Structured error code if failed
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -78,8 +83,23 @@ CREATE TABLE IF NOT EXISTS webhook_deliveries (
   payload JSONB NOT NULL,
   response_status INTEGER,
   response_body TEXT,
+  retry_count INTEGER DEFAULT 0, -- Number of retry attempts
   delivered_at TIMESTAMPTZ DEFAULT NOW(),
   success BOOLEAN DEFAULT false
+);
+
+-- Idempotency keys for POST requests
+CREATE TABLE IF NOT EXISTS api_idempotency (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  idempotency_key VARCHAR(64) NOT NULL,
+  api_key_id UUID NOT NULL REFERENCES api_keys(id) ON DELETE CASCADE,
+  endpoint VARCHAR(100) NOT NULL,
+  response_status INTEGER NOT NULL,
+  response_body JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '24 hours',
+
+  UNIQUE(idempotency_key, api_key_id)
 );
 
 -- =====================================================
@@ -90,10 +110,13 @@ CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_api_keys_key_prefix ON api_keys(key_prefix);
 CREATE INDEX IF NOT EXISTS idx_api_usage_api_key_id ON api_usage(api_key_id);
+CREATE INDEX IF NOT EXISTS idx_api_usage_request_id ON api_usage(request_id);
 CREATE INDEX IF NOT EXISTS idx_api_usage_created_at ON api_usage(created_at);
 CREATE INDEX IF NOT EXISTS idx_api_usage_monthly_key_month ON api_usage_monthly(api_key_id, year_month);
 CREATE INDEX IF NOT EXISTS idx_api_webhooks_user_id ON api_webhooks(user_id);
 CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id);
+CREATE INDEX IF NOT EXISTS idx_api_idempotency_key ON api_idempotency(idempotency_key, api_key_id);
+CREATE INDEX IF NOT EXISTS idx_api_idempotency_expires ON api_idempotency(expires_at);
 
 -- =====================================================
 -- Row Level Security (RLS)
@@ -104,6 +127,7 @@ ALTER TABLE api_usage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_usage_monthly ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_webhooks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE api_idempotency ENABLE ROW LEVEL SECURITY;
 
 -- API Keys policies
 DROP POLICY IF EXISTS "Users can view own API keys" ON api_keys;
@@ -142,6 +166,13 @@ DROP POLICY IF EXISTS "Users can view own webhook deliveries" ON webhook_deliver
 CREATE POLICY "Users can view own webhook deliveries" ON webhook_deliveries
   FOR SELECT USING (
     webhook_id IN (SELECT id FROM api_webhooks WHERE user_id = auth.uid())
+  );
+
+-- Idempotency policies (service role only for insert/select)
+DROP POLICY IF EXISTS "Service can manage idempotency" ON api_idempotency;
+CREATE POLICY "Service can manage idempotency" ON api_idempotency
+  FOR ALL USING (
+    api_key_id IN (SELECT id FROM api_keys WHERE user_id = auth.uid())
   );
 
 -- =====================================================
@@ -231,7 +262,7 @@ AS $$
 DECLARE
   v_key_record RECORD;
 BEGIN
-  SELECT id, user_id, tier, is_active, permissions, rate_limit, expires_at
+  SELECT id, user_id, tier, is_active, permissions, rate_limit, expires_at, ip_whitelist
   INTO v_key_record
   FROM api_keys
   WHERE key_hash = p_key_hash;
@@ -257,7 +288,8 @@ BEGIN
     'user_id', v_key_record.user_id,
     'tier', v_key_record.tier,
     'permissions', v_key_record.permissions,
-    'rate_limit', v_key_record.rate_limit
+    'rate_limit', v_key_record.rate_limit,
+    'ip_whitelist', v_key_record.ip_whitelist
   );
 END;
 $$;
@@ -284,6 +316,45 @@ DROP TRIGGER IF EXISTS update_api_webhooks_updated_at ON api_webhooks;
 CREATE TRIGGER update_api_webhooks_updated_at
   BEFORE UPDATE ON api_webhooks
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================
+-- Cleanup Functions
+-- =====================================================
+
+-- Function to clean up expired idempotency keys
+CREATE OR REPLACE FUNCTION cleanup_expired_idempotency()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  deleted_count INTEGER;
+BEGIN
+  DELETE FROM api_idempotency
+  WHERE expires_at < NOW();
+
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  RETURN deleted_count;
+END;
+$$;
+
+-- Function to update IP whitelist for an API key
+CREATE OR REPLACE FUNCTION update_api_key_ip_whitelist(
+  p_key_id UUID,
+  p_ip_list TEXT[]
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE api_keys
+  SET ip_whitelist = p_ip_list, updated_at = NOW()
+  WHERE id = p_key_id AND user_id = auth.uid();
+
+  RETURN FOUND;
+END;
+$$;
 
 -- =====================================================
 -- Tier rate limits reference
