@@ -22,6 +22,8 @@ import {
   completeOnboarding,
 } from './components/onboarding/OnboardingTour';
 import { BusinessCardLanding } from './components/BusinessCardLanding';
+import ApiDashboard from './components/ApiDashboard';
+import ApiDocs from './components/ApiDocs';
 
 // QR Type Categories for Dynamic/Static handling
 // Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
@@ -473,7 +475,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -490,6 +492,22 @@ const AppContent: React.FC = () => {
         setView('business-card');
         return;
       }
+    }
+
+    // Check for API docs route
+    if (path === '/api/docs' || path === '/api-docs') {
+      setView('api-docs');
+      return;
+    }
+
+    // Check for API dashboard route
+    if (path === '/api' || path === '/api-dashboard') {
+      if (user) {
+        setView('api');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
     }
 
     // Check for dashboard route
@@ -547,6 +565,16 @@ const AppContent: React.FC = () => {
   // Business Card Landing Page (public - no auth required)
   if (view === 'business-card' && cardSlug) {
     return <BusinessCardLanding slug={cardSlug} />;
+  }
+
+  // API Documentation (public - no auth required)
+  if (view === 'api-docs') {
+    return <ApiDocs />;
+  }
+
+  // API Dashboard (auth required)
+  if (view === 'api' && user) {
+    return <ApiDashboard />;
   }
 
   if (view === 'dynamic' && user) {
