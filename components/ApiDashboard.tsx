@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, Code, ChevronRight, Check,
-  AlertCircle, Clock, TrendingUp, Globe
+  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -126,7 +126,13 @@ const NewKeyModal: React.FC<NewKeyModalProps> = ({ isOpen, onClose, onCreateKey,
   );
 };
 
-const ApiDashboard: React.FC = () => {
+interface ApiDashboardProps {
+  onBack: () => void;
+  onWebhooksClick: () => void;
+  onDocsClick: () => void;
+}
+
+const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick }) => {
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -194,9 +200,17 @@ const ApiDashboard: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">API Dashboard</h1>
-        <p className="text-gray-600">Manage your API keys and monitor usage</p>
+      <div className="flex items-center gap-4 mb-8">
+        <button
+          onClick={onBack}
+          className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
+        </button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">API Dashboard</h1>
+          <p className="text-gray-600">Manage your API keys and monitor usage</p>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -428,9 +442,9 @@ const ApiDashboard: React.FC = () => {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <a
-          href="/api/docs"
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group"
+        <button
+          onClick={onDocsClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
@@ -444,11 +458,11 @@ const ApiDashboard: React.FC = () => {
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
           </div>
-        </a>
+        </button>
 
-        <a
-          href="/api/webhooks"
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group"
+        <button
+          onClick={onWebhooksClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -462,7 +476,7 @@ const ApiDashboard: React.FC = () => {
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
           </div>
-        </a>
+        </button>
       </div>
 
       {/* New Key Modal */}
