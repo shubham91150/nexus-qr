@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Code, Copy, Check, ChevronRight, ChevronDown,
   Terminal, Zap, Key, Globe, FileJson, Shield,
-  Play, Book, ExternalLink
+  Play, Book, ExternalLink, ArrowLeft, AlertTriangle
 } from 'lucide-react';
 
 interface CodeBlockProps {
@@ -91,14 +91,32 @@ const Endpoint: React.FC<EndpointProps> = ({ method, path, description, children
   );
 };
 
-const ApiDocs: React.FC = () => {
+interface ApiDocsProps {
+  onBack?: () => void;
+}
+
+const ApiDocs: React.FC<ApiDocsProps> = ({ onBack }) => {
   const baseUrl = window.location.origin;
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      window.history.back();
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8">
       {/* Header */}
       <div className="mb-12">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-4 mb-4">
+          <button
+            onClick={handleBack}
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
           <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
             <Code className="w-6 h-6 text-white" />
           </div>
@@ -455,50 +473,255 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
 
       {/* Error Codes */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Error Codes</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <AlertTriangle className="w-6 h-6 text-red-500" />
+          Error Codes
+        </h2>
 
+        <p className="text-gray-600 mb-6">
+          All API errors include a structured response with an error code, message, and details to help you debug issues.
+        </p>
+
+        <CodeBlock
+          title="Error Response Format"
+          language="json"
+          code={`{
+  "success": false,
+  "error": {
+    "code": 1001,
+    "message": "Invalid API key",
+    "details": "The provided API key does not exist or has been revoked"
+  },
+  "request_id": "req_abc123xyz"
+}`}
+        />
+
+        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Authentication Errors (1xxx)</h3>
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-sm">
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1001</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
+                <td className="px-4 py-3 text-gray-900">Invalid API Key</td>
+                <td className="px-4 py-3 text-gray-600">API key doesn't exist. Check for typos or generate a new key.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1002</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
+                <td className="px-4 py-3 text-gray-900">Expired API Key</td>
+                <td className="px-4 py-3 text-gray-600">Key has expired. Generate a new API key from dashboard.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1003</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
+                <td className="px-4 py-3 text-gray-900">Inactive API Key</td>
+                <td className="px-4 py-3 text-gray-600">Key is disabled. Re-activate from API Dashboard.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1004</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
+                <td className="px-4 py-3 text-gray-900">Missing API Key</td>
+                <td className="px-4 py-3 text-gray-600">No API key provided. Add X-API-Key header to request.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Authorization Errors (2xxx)</h3>
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-sm">
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">2001</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">403</code></td>
+                <td className="px-4 py-3 text-gray-900">Permission Denied</td>
+                <td className="px-4 py-3 text-gray-600">Your tier doesn't allow this operation. Upgrade your plan.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">2002</code></td>
+                <td className="px-4 py-3"><code className="bg-orange-100 text-orange-700 px-2 py-1 rounded">429</code></td>
+                <td className="px-4 py-3 text-gray-900">Rate Limit Exceeded</td>
+                <td className="px-4 py-3 text-gray-600">Monthly quota exhausted. Wait for reset or upgrade plan.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">2003</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">403</code></td>
+                <td className="px-4 py-3 text-gray-900">IP Not Whitelisted</td>
+                <td className="px-4 py-3 text-gray-600">Request IP not in allowed list. Add IP in API settings.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Validation Errors (3xxx)</h3>
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-sm">
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3001</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
+                <td className="px-4 py-3 text-gray-900">Invalid Request Body</td>
+                <td className="px-4 py-3 text-gray-600">JSON is malformed. Validate JSON syntax.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3002</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
+                <td className="px-4 py-3 text-gray-900">Missing Required Field</td>
+                <td className="px-4 py-3 text-gray-600">Required field missing. Check 'type' and 'content' are present.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3003</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
+                <td className="px-4 py-3 text-gray-900">Invalid QR Type</td>
+                <td className="px-4 py-3 text-gray-600">Unknown type. Use: url, text, vcard, wifi, email, sms, phone.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3004</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
+                <td className="px-4 py-3 text-gray-900">Invalid URL Format</td>
+                <td className="px-4 py-3 text-gray-600">URL is malformed. Include protocol (https://).</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3005</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
+                <td className="px-4 py-3 text-gray-900">Invalid Email Format</td>
+                <td className="px-4 py-3 text-gray-600">Email format invalid. Use valid email address.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3006</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
+                <td className="px-4 py-3 text-gray-900">Invalid Phone Format</td>
+                <td className="px-4 py-3 text-gray-600">Phone format invalid. Use international format (+1...).</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3007</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
+                <td className="px-4 py-3 text-gray-900">Content Too Long</td>
+                <td className="px-4 py-3 text-gray-600">Content exceeds max length. Reduce content size.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Resource Errors (4xxx)</h3>
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-sm">
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">4001</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">404</code></td>
+                <td className="px-4 py-3 text-gray-900">QR Code Not Found</td>
+                <td className="px-4 py-3 text-gray-600">QR code doesn't exist. Verify the ID is correct.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">4002</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">404</code></td>
+                <td className="px-4 py-3 text-gray-900">Resource Not Found</td>
+                <td className="px-4 py-3 text-gray-600">Requested resource doesn't exist.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Server Errors (5xxx)</h3>
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-sm">
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">5001</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">500</code></td>
+                <td className="px-4 py-3 text-gray-900">Internal Server Error</td>
+                <td className="px-4 py-3 text-gray-600">Server error. Retry later or contact support with request_id.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">5002</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">500</code></td>
+                <td className="px-4 py-3 text-gray-900">Database Error</td>
+                <td className="px-4 py-3 text-gray-600">Database unavailable. Retry after a few seconds.</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">5003</code></td>
+                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">500</code></td>
+                <td className="px-4 py-3 text-gray-900">QR Generation Failed</td>
+                <td className="px-4 py-3 text-gray-600">Failed to generate QR. Check content and retry.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Idempotency Errors (6xxx)</h3>
         <div className="overflow-x-auto">
           <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">Status</th>
-                <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">Error</th>
-                <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">Description</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 text-sm">
               <tr>
-                <td className="px-6 py-4"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-6 py-4 text-sm text-gray-900">Bad Request</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Invalid request body or parameters</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
-                <td className="px-6 py-4 text-sm text-gray-900">Unauthorized</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Missing or invalid API key</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">403</code></td>
-                <td className="px-6 py-4 text-sm text-gray-900">Forbidden</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Permission denied for this operation</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">404</code></td>
-                <td className="px-6 py-4 text-sm text-gray-900">Not Found</td>
-                <td className="px-6 py-4 text-sm text-gray-600">QR code not found</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4"><code className="bg-orange-100 text-orange-700 px-2 py-1 rounded">429</code></td>
-                <td className="px-6 py-4 text-sm text-gray-900">Rate Limited</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Monthly request limit exceeded</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">500</code></td>
-                <td className="px-6 py-4 text-sm text-gray-900">Server Error</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Internal server error</td>
+                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">6001</code></td>
+                <td className="px-4 py-3"><code className="bg-orange-100 text-orange-700 px-2 py-1 rounded">409</code></td>
+                <td className="px-4 py-3 text-gray-900">Idempotency Key Reused</td>
+                <td className="px-4 py-3 text-gray-600">Same key used for different request. Use unique idempotency key.</td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
+          <Code className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h4 className="font-semibold text-blue-800 mb-1">Handling Errors</h4>
+            <p className="text-sm text-blue-700">
+              Always check the <code className="bg-blue-100 px-1 rounded">success</code> field in response.
+              Use <code className="bg-blue-100 px-1 rounded">request_id</code> when contacting support.
+              Implement exponential backoff for 5xx errors.
+            </p>
+          </div>
         </div>
       </section>
 

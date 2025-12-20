@@ -24,6 +24,7 @@ import {
 import { BusinessCardLanding } from './components/BusinessCardLanding';
 import ApiDashboard from './components/ApiDashboard';
 import ApiDocs from './components/ApiDocs';
+import ApiWebhooks from './components/ApiWebhooks';
 
 // QR Type Categories for Dynamic/Static handling
 // Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
@@ -485,7 +486,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-webhooks'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -507,6 +508,16 @@ const AppContent: React.FC = () => {
     // Check for API docs route
     if (path === '/api/docs' || path === '/api-docs') {
       setView('api-docs');
+      return;
+    }
+
+    // Check for API webhooks route
+    if (path === '/api/webhooks') {
+      if (user) {
+        setView('api-webhooks');
+      } else {
+        setShowAuthModal(true);
+      }
       return;
     }
 
@@ -593,7 +604,21 @@ const AppContent: React.FC = () => {
 
   // API Dashboard (auth required)
   if (view === 'api' && user) {
-    return <ApiDashboard />;
+    return <ApiDashboard onBack={handleBackToGenerator} onWebhooksClick={() => {
+      setView('api-webhooks');
+      window.history.pushState({}, '', '/api/webhooks');
+    }} onDocsClick={() => {
+      setView('api-docs');
+      window.history.pushState({}, '', '/api/docs');
+    }} />;
+  }
+
+  // API Webhooks (auth required)
+  if (view === 'api-webhooks' && user) {
+    return <ApiWebhooks onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
   }
 
   if (view === 'dynamic' && user) {
