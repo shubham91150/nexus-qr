@@ -6,7 +6,7 @@ import { QRInputs } from './components/QRInputs';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { AuthLoadingScreen, DashboardSkeleton } from './components/auth/AuthLoadingScreen';
@@ -93,7 +93,8 @@ const INITIAL_CONTENT: QRContentData = {
 const QRGenerator: React.FC<{
   onDashboardClick: () => void;
   onAuthRequired: () => void;
-}> = ({ onDashboardClick, onAuthRequired }) => {
+  onApiClick: () => void;
+}> = ({ onDashboardClick, onAuthRequired, onApiClick }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<QRType>('text');
   const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
@@ -193,13 +194,22 @@ const QRGenerator: React.FC<{
          {/* Right side: Dashboard button + Profile */}
          <div className="flex items-center gap-3">
            {user && (
-             <button
-               onClick={onDashboardClick}
-               className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
-             >
-               <BarChart3 size={16} />
-               <span className="hidden sm:inline">Dashboard</span>
-             </button>
+             <>
+               <button
+                 onClick={onApiClick}
+                 className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-indigo-200 transition-all"
+               >
+                 <Code size={16} />
+                 <span className="hidden sm:inline">API</span>
+               </button>
+               <button
+                 onClick={onDashboardClick}
+                 className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
+               >
+                 <BarChart3 size={16} />
+                 <span className="hidden sm:inline">Dashboard</span>
+               </button>
+             </>
            )}
            {/* Help button to restart tour */}
            <button
@@ -537,6 +547,15 @@ const AppContent: React.FC = () => {
     setShowAuthModal(true);
   };
 
+  const handleApiClick = () => {
+    if (user) {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
   const handleBackToGenerator = () => {
     setView('generator');
     window.history.pushState({}, '', '/');
@@ -585,7 +604,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <QRGenerator onDashboardClick={handleDashboardClick} onAuthRequired={handleAuthRequired} />
+      <QRGenerator onDashboardClick={handleDashboardClick} onAuthRequired={handleAuthRequired} onApiClick={handleApiClick} />
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
