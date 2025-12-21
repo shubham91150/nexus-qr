@@ -1,0 +1,1614 @@
+openapi: 3.1.0
+info:
+  title: Nexus QR API
+  description: |
+    # Introduction
+
+    The Nexus QR API provides a powerful and flexible way to create, manage, and track QR codes programmatically.
+    Built with developers in mind, our RESTful API enables seamless integration with your applications.
+
+    ## Base URL
+
+    All API requests should be made to:
+    - **Production**: `https://api.nexusqr.com`
+    - **Sandbox**: `https://sandbox.api.nexusqr.com`
+
+    ## Authentication
+
+    The Nexus QR API uses API keys to authenticate requests. You can view and manage your API keys in the
+    [API Dashboard](/api). Include your API key in the `Authorization` header:
+
+    ```
+    Authorization: Bearer nxqr_live_xxxxxxxxxxxx
+    ```
+
+    **Important**: Keep your API keys secure! Do not share them in publicly accessible areas such as GitHub,
+    client-side code, or browser requests.
+
+    ## Rate Limiting
+
+    API requests are rate limited based on your subscription tier:
+
+    | Tier | Requests/Month | Requests/Minute |
+    |------|----------------|-----------------|
+    | Free | 100 | 10 |
+    | Starter | 5,000 | 60 |
+    | Pro | 50,000 | 300 |
+    | Enterprise | Unlimited | Custom |
+
+    Rate limit headers are included in every response:
+    - `X-RateLimit-Limit`: Maximum requests allowed
+    - `X-RateLimit-Remaining`: Requests remaining in current window
+    - `X-RateLimit-Reset`: Unix timestamp when the limit resets
+
+    ## Errors
+
+    Nexus QR uses conventional HTTP response codes to indicate success or failure. Codes in the `2xx` range
+    indicate success, codes in the `4xx` range indicate an error from the provided information, and codes
+    in the `5xx` range indicate a server error.
+
+    ## Webhooks
+
+    Webhooks allow you to receive real-time notifications when events occur. Configure webhooks in your
+    dashboard to receive POST requests to your specified URL.
+
+    ## SDKs
+
+    Official SDKs are available for:
+    - Node.js
+    - Python
+    - PHP
+    - Go
+
+  version: 1.0.0
+  termsOfService: https://nexusqr.com/terms
+  contact:
+    name: Nexus QR API Support
+    url: https://nexusqr.com/support
+    email: api@nexusqr.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  x-logo:
+    url: https://nexusqr.com/logo.png
+    altText: Nexus QR Logo
+
+servers:
+  - url: https://api.nexusqr.com
+    description: Production server
+  - url: https://sandbox.api.nexusqr.com
+    description: Sandbox server (test environment)
+
+tags:
+  - name: QR Codes
+    description: |
+      Create, retrieve, update, and delete QR codes. QR codes can be static (data encoded directly)
+      or dynamic (redirectable with tracking).
+  - name: Analytics
+    description: |
+      Access detailed scan analytics for your QR codes including geographic data, device information,
+      and temporal patterns.
+  - name: Webhooks
+    description: |
+      Configure webhooks to receive real-time notifications when events occur, such as QR code scans,
+      creations, or updates.
+  - name: Account
+    description: |
+      Manage your account settings, API keys, and subscription.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/qr:
+    post:
+      operationId: createQRCode
+      tags:
+        - QR Codes
+      summary: Create a QR code
+      description: |
+        Creates a new QR code with the specified configuration. You can create both static and dynamic QR codes.
+
+        **Static QR Codes** encode the data directly and cannot be changed after creation.
+
+        **Dynamic QR Codes** use a short URL that redirects to your target URL, allowing you to:
+        - Change the destination URL anytime
+        - Track scans with detailed analytics
+        - Set expiration dates
+        - Password protect access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQRCodeRequest'
+            examples:
+              simple:
+                summary: Simple URL QR Code
+                value:
+                  url: "https://example.com"
+                  type: "dynamic"
+              styled:
+                summary: Styled QR Code with Logo
+                value:
+                  url: "https://mywebsite.com"
+                  type: "dynamic"
+                  title: "My Website QR"
+                  style:
+                    size: 500
+                    color: "#1a1a2e"
+                    background: "#ffffff"
+                    pattern: "rounded"
+                    cornerStyle: "rounded"
+                  logo:
+                    url: "https://example.com/logo.png"
+                    size: 0.25
+              wifi:
+                summary: WiFi QR Code
+                value:
+                  type: "static"
+                  content_type: "wifi"
+                  wifi:
+                    ssid: "MyNetwork"
+                    password: "secret123"
+                    encryption: "WPA"
+                    hidden: false
+      responses:
+        '201':
+          description: QR code created successfully
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QRCodeResponse'
+              example:
+                success: true
+                data:
+                  id: "qr_abc123xyz789"
+                  short_code: "Xk9mP2"
+                  short_url: "https://nxqr.io/Xk9mP2"
+                  target_url: "https://example.com"
+                  qr_image_url: "https://cdn.nexusqr.com/qr/abc123xyz789.png"
+                  type: "dynamic"
+                  title: "My QR Code"
+                  is_active: true
+                  scans: 0
+                  created_at: "2024-01-15T10:30:00Z"
+                  updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      operationId: listQRCodes
+      tags:
+        - QR Codes
+      summary: List all QR codes
+      description: |
+        Returns a paginated list of all QR codes associated with your account.
+        Results are sorted by creation date, with the most recent QR codes first.
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          description: Number of items per page (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - name: type
+          in: query
+          description: Filter by QR code type
+          schema:
+            type: string
+            enum: [static, dynamic]
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          description: Search by title or URL
+          schema:
+            type: string
+            maxLength: 255
+        - name: sort
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, scans, title]
+            default: created_at
+        - name: order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of QR codes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QRCodeListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/v1/qr/{id}:
+    get:
+      operationId: getQRCode
+      tags:
+        - QR Codes
+      summary: Retrieve a QR code
+      description: |
+        Retrieves the details of an existing QR code. Supply the unique QR code ID
+        that was returned from your previous request.
+      parameters:
+        - $ref: '#/components/parameters/QRCodeId'
+        - name: expand
+          in: query
+          description: |
+            Expand related resources. Available expansions: `analytics`, `style`, `scans`
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [analytics, style, scans]
+      responses:
+        '200':
+          description: QR code details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QRCodeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      operationId: updateQRCode
+      tags:
+        - QR Codes
+      summary: Update a QR code
+      description: |
+        Updates the specified QR code by setting the values of the parameters passed.
+        Any parameters not provided will be left unchanged.
+
+        **Note**: Only dynamic QR codes can have their target URL updated.
+      parameters:
+        - $ref: '#/components/parameters/QRCodeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQRCodeRequest'
+            example:
+              url: "https://new-destination.com"
+              title: "Updated Title"
+              is_active: true
+      responses:
+        '200':
+          description: QR code updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QRCodeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteQRCode
+      tags:
+        - QR Codes
+      summary: Delete a QR code
+      description: |
+        Permanently deletes a QR code. This action cannot be undone.
+        The short URL will stop working immediately after deletion.
+      parameters:
+        - $ref: '#/components/parameters/QRCodeId'
+      responses:
+        '200':
+          description: QR code deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "QR code deleted successfully"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/qr/{id}/analytics:
+    get:
+      operationId: getQRCodeAnalytics
+      tags:
+        - Analytics
+      summary: Get QR code analytics
+      description: |
+        Retrieves detailed scan analytics for a specific QR code. Includes geographic data,
+        device information, browser statistics, and temporal patterns.
+
+        **Note**: Analytics are only available for dynamic QR codes.
+      parameters:
+        - $ref: '#/components/parameters/QRCodeId'
+        - name: period
+          in: query
+          description: Time period for analytics
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, 90d, 1y, all]
+            default: 30d
+        - name: timezone
+          in: query
+          description: Timezone for date grouping (IANA timezone)
+          schema:
+            type: string
+            default: "UTC"
+          example: "America/New_York"
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+              example:
+                success: true
+                data:
+                  qr_id: "qr_abc123xyz789"
+                  period: "30d"
+                  summary:
+                    total_scans: 1250
+                    unique_scans: 980
+                    avg_daily_scans: 41.7
+                    peak_hour: 14
+                    peak_day: "Wednesday"
+                  scans_by_date:
+                    - date: "2024-01-14"
+                      scans: 45
+                      unique: 38
+                    - date: "2024-01-15"
+                      scans: 62
+                      unique: 51
+                  scans_by_country:
+                    - country: "United States"
+                      country_code: "US"
+                      scans: 520
+                      percentage: 41.6
+                    - country: "United Kingdom"
+                      country_code: "GB"
+                      scans: 180
+                      percentage: 14.4
+                  scans_by_device:
+                    - device: "iPhone"
+                      scans: 540
+                      percentage: 43.2
+                    - device: "Android"
+                      scans: 420
+                      percentage: 33.6
+                    - device: "Desktop"
+                      scans: 290
+                      percentage: 23.2
+                  scans_by_browser:
+                    - browser: "Safari"
+                      scans: 480
+                      percentage: 38.4
+                    - browser: "Chrome"
+                      scans: 520
+                      percentage: 41.6
+                  scans_by_hour:
+                    - hour: 0
+                      scans: 12
+                    - hour: 1
+                      scans: 8
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/qr/{id}/scans:
+    get:
+      operationId: getQRCodeScans
+      tags:
+        - Analytics
+      summary: List individual scans
+      description: |
+        Returns a paginated list of individual scan events for a QR code.
+        Each scan includes timestamp, location, device, and referrer information.
+      parameters:
+        - $ref: '#/components/parameters/QRCodeId'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: start_date
+          in: query
+          description: Filter scans from this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: Filter scans until this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of scan events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScansListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/qr/bulk:
+    post:
+      operationId: bulkCreateQRCodes
+      tags:
+        - QR Codes
+      summary: Bulk create QR codes
+      description: |
+        Creates multiple QR codes in a single request. Maximum 100 QR codes per request.
+
+        This endpoint uses asynchronous processing for large batches. If the request
+        contains more than 10 QR codes, a `batch_id` will be returned for tracking progress.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkCreateRequest'
+            example:
+              qr_codes:
+                - url: "https://example.com/page1"
+                  title: "Page 1"
+                - url: "https://example.com/page2"
+                  title: "Page 2"
+                - url: "https://example.com/page3"
+                  title: "Page 3"
+              default_style:
+                size: 300
+                color: "#000000"
+      responses:
+        '201':
+          description: Bulk creation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkCreateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/v1/qr/{id}/download:
+    get:
+      operationId: downloadQRCode
+      tags:
+        - QR Codes
+      summary: Download QR code image
+      description: |
+        Downloads the QR code image in the specified format and size.
+        Available formats: PNG, SVG, PDF, EPS.
+      parameters:
+        - $ref: '#/components/parameters/QRCodeId'
+        - name: format
+          in: query
+          description: Image format
+          required: true
+          schema:
+            type: string
+            enum: [png, svg, pdf, eps]
+            default: png
+        - name: size
+          in: query
+          description: Image size in pixels (for PNG)
+          schema:
+            type: integer
+            minimum: 100
+            maximum: 4000
+            default: 1000
+        - name: margin
+          in: query
+          description: Margin around QR code (in modules)
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10
+            default: 4
+      responses:
+        '200':
+          description: QR code image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/webhooks:
+    get:
+      operationId: listWebhooks
+      tags:
+        - Webhooks
+      summary: List all webhooks
+      description: Returns a list of all configured webhooks for your account.
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createWebhook
+      tags:
+        - Webhooks
+      summary: Create a webhook
+      description: |
+        Creates a new webhook endpoint. The webhook will receive POST requests
+        when the specified events occur.
+
+        ## Event Types
+
+        | Event | Description |
+        |-------|-------------|
+        | `qr.created` | A new QR code was created |
+        | `qr.scanned` | A QR code was scanned |
+        | `qr.updated` | A QR code was updated |
+        | `qr.deleted` | A QR code was deleted |
+        | `scan.milestone` | A scan milestone was reached (100, 500, 1000, etc.) |
+
+        ## Webhook Payload
+
+        All webhooks receive a JSON payload with the following structure:
+
+        ```json
+        {
+          "event": "qr.scanned",
+          "timestamp": "2024-01-15T10:30:00Z",
+          "data": { ... }
+        }
+        ```
+
+        ## Signature Verification
+
+        All webhook requests include an `X-Webhook-Signature` header containing
+        an HMAC-SHA256 signature. Verify this signature using your webhook secret
+        to ensure the request is authentic.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+            example:
+              name: "Production Webhook"
+              url: "https://api.yoursite.com/webhooks/nexusqr"
+              events:
+                - "qr.created"
+                - "qr.scanned"
+              secret: "your-webhook-secret"
+      responses:
+        '201':
+          description: Webhook created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/webhooks/{id}:
+    get:
+      operationId: getWebhook
+      tags:
+        - Webhooks
+      summary: Retrieve a webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: Webhook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      operationId: updateWebhook
+      tags:
+        - Webhooks
+      summary: Update a webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWebhookRequest'
+      responses:
+        '200':
+          description: Webhook updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteWebhook
+      tags:
+        - Webhooks
+      summary: Delete a webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: Webhook deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/webhooks/{id}/test:
+    post:
+      operationId: testWebhook
+      tags:
+        - Webhooks
+      summary: Send a test webhook
+      description: |
+        Sends a test webhook event to verify your endpoint is configured correctly.
+        The test event will have `test: true` in the payload.
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  enum: [qr.created, qr.scanned, qr.updated, qr.deleted]
+                  default: qr.scanned
+      responses:
+        '200':
+          description: Test webhook sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  delivery:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum: [delivered, failed]
+                      response_code:
+                        type: integer
+                      duration_ms:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/account:
+    get:
+      operationId: getAccount
+      tags:
+        - Account
+      summary: Get account details
+      description: Retrieves information about your account including subscription tier and usage.
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/account/usage:
+    get:
+      operationId: getAccountUsage
+      tags:
+        - Account
+      summary: Get API usage
+      description: Returns your current API usage for the billing period.
+      parameters:
+        - name: period
+          in: query
+          description: Usage period
+          schema:
+            type: string
+            enum: [current, last_month, last_3_months]
+            default: current
+      responses:
+        '200':
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: |
+        Use your API key as the bearer token. API keys start with `nxqr_live_` for production
+        or `nxqr_test_` for sandbox environment.
+
+        Example: `Authorization: Bearer nxqr_live_xxxxxxxxxxxx`
+
+  parameters:
+    QRCodeId:
+      name: id
+      in: path
+      required: true
+      description: The unique identifier of the QR code
+      schema:
+        type: string
+        pattern: '^qr_[a-zA-Z0-9]{12,}$'
+      example: "qr_abc123xyz789"
+
+    WebhookId:
+      name: id
+      in: path
+      required: true
+      description: The unique identifier of the webhook
+      schema:
+        type: string
+        pattern: '^wh_[a-zA-Z0-9]{12,}$'
+      example: "wh_def456uvw012"
+
+  headers:
+    X-Request-Id:
+      description: Unique identifier for this request (useful for debugging)
+      schema:
+        type: string
+        format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    X-RateLimit-Limit:
+      description: The maximum number of requests allowed in the current period
+      schema:
+        type: integer
+      example: 1000
+
+    X-RateLimit-Remaining:
+      description: The number of requests remaining in the current period
+      schema:
+        type: integer
+      example: 999
+
+  schemas:
+    CreateQRCodeRequest:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: The target URL for the QR code
+          example: "https://example.com"
+        type:
+          type: string
+          enum: [static, dynamic]
+          default: dynamic
+          description: |
+            - `static`: Data encoded directly, cannot be changed
+            - `dynamic`: Uses short URL, can be updated and tracked
+        content_type:
+          type: string
+          enum: [url, text, wifi, vcard, email, phone, sms, geo]
+          default: url
+          description: The type of content to encode
+        title:
+          type: string
+          maxLength: 255
+          description: A friendly name for the QR code
+          example: "My Website QR"
+        style:
+          $ref: '#/components/schemas/QRCodeStyle'
+        logo:
+          $ref: '#/components/schemas/QRCodeLogo'
+        wifi:
+          $ref: '#/components/schemas/WiFiConfig'
+        vcard:
+          $ref: '#/components/schemas/VCardConfig'
+        settings:
+          type: object
+          properties:
+            password:
+              type: string
+              description: Password to protect the QR code
+            expires_at:
+              type: string
+              format: date-time
+              description: Expiration date for the QR code
+            max_scans:
+              type: integer
+              minimum: 1
+              description: Maximum number of scans allowed
+
+    UpdateQRCodeRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+        title:
+          type: string
+          maxLength: 255
+        is_active:
+          type: boolean
+          description: Enable or disable the QR code
+        settings:
+          type: object
+          properties:
+            password:
+              type: string
+            expires_at:
+              type: string
+              format: date-time
+            max_scans:
+              type: integer
+
+    QRCodeStyle:
+      type: object
+      properties:
+        size:
+          type: integer
+          minimum: 100
+          maximum: 4000
+          default: 300
+          description: Size in pixels
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          default: "#000000"
+          description: Foreground color (hex)
+        background:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          default: "#ffffff"
+          description: Background color (hex)
+        pattern:
+          type: string
+          enum: [square, rounded, dots, classy, elegant]
+          default: square
+          description: Pattern style for the QR modules
+        cornerStyle:
+          type: string
+          enum: [square, rounded, dots]
+          default: square
+          description: Style for corner squares
+        errorCorrection:
+          type: string
+          enum: [L, M, Q, H]
+          default: M
+          description: |
+            Error correction level:
+            - L: ~7% recovery
+            - M: ~15% recovery
+            - Q: ~25% recovery
+            - H: ~30% recovery (best for logos)
+
+    QRCodeLogo:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL of the logo image
+        size:
+          type: number
+          minimum: 0.1
+          maximum: 0.4
+          default: 0.25
+          description: Logo size as a ratio of QR code size
+        padding:
+          type: integer
+          minimum: 0
+          maximum: 20
+          default: 5
+          description: Padding around the logo in pixels
+
+    WiFiConfig:
+      type: object
+      required:
+        - ssid
+      properties:
+        ssid:
+          type: string
+          maxLength: 32
+          description: Network name
+        password:
+          type: string
+          maxLength: 64
+          description: Network password
+        encryption:
+          type: string
+          enum: [WPA, WEP, nopass]
+          default: WPA
+        hidden:
+          type: boolean
+          default: false
+          description: Whether the network is hidden
+
+    VCardConfig:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          maxLength: 100
+        lastName:
+          type: string
+          maxLength: 100
+        organization:
+          type: string
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        website:
+          type: string
+          format: uri
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            zip:
+              type: string
+            country:
+              type: string
+
+    QRCode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier
+          example: "qr_abc123xyz789"
+        short_code:
+          type: string
+          description: Short code for the URL
+          example: "Xk9mP2"
+        short_url:
+          type: string
+          format: uri
+          description: Short URL for dynamic QR codes
+          example: "https://nxqr.io/Xk9mP2"
+        target_url:
+          type: string
+          format: uri
+          description: The destination URL
+        qr_image_url:
+          type: string
+          format: uri
+          description: URL to the QR code image
+        type:
+          type: string
+          enum: [static, dynamic]
+        content_type:
+          type: string
+        title:
+          type: string
+        is_active:
+          type: boolean
+        scans:
+          type: integer
+          description: Total number of scans
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    QRCodeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/QRCode'
+
+    QRCodeListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/QRCode'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 150
+        pages:
+          type: integer
+          example: 8
+        has_more:
+          type: boolean
+          example: true
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            qr_id:
+              type: string
+            period:
+              type: string
+            summary:
+              type: object
+              properties:
+                total_scans:
+                  type: integer
+                unique_scans:
+                  type: integer
+                avg_daily_scans:
+                  type: number
+                peak_hour:
+                  type: integer
+                peak_day:
+                  type: string
+            scans_by_date:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  scans:
+                    type: integer
+                  unique:
+                    type: integer
+            scans_by_country:
+              type: array
+              items:
+                type: object
+                properties:
+                  country:
+                    type: string
+                  country_code:
+                    type: string
+                  scans:
+                    type: integer
+                  percentage:
+                    type: number
+            scans_by_device:
+              type: array
+              items:
+                type: object
+                properties:
+                  device:
+                    type: string
+                  scans:
+                    type: integer
+                  percentage:
+                    type: number
+            scans_by_browser:
+              type: array
+              items:
+                type: object
+                properties:
+                  browser:
+                    type: string
+                  scans:
+                    type: integer
+                  percentage:
+                    type: number
+            scans_by_hour:
+              type: array
+              items:
+                type: object
+                properties:
+                  hour:
+                    type: integer
+                  scans:
+                    type: integer
+
+    ScansListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  ip:
+                    type: string
+                  country:
+                    type: string
+                  city:
+                    type: string
+                  device:
+                    type: string
+                  browser:
+                    type: string
+                  os:
+                    type: string
+                  referrer:
+                    type: string
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    BulkCreateRequest:
+      type: object
+      required:
+        - qr_codes
+      properties:
+        qr_codes:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            required:
+              - url
+            properties:
+              url:
+                type: string
+                format: uri
+              title:
+                type: string
+        default_style:
+          $ref: '#/components/schemas/QRCodeStyle'
+        default_type:
+          type: string
+          enum: [static, dynamic]
+          default: dynamic
+
+    BulkCreateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            batch_id:
+              type: string
+              description: ID for tracking async batch operations
+            created:
+              type: integer
+              description: Number of QR codes created
+            failed:
+              type: integer
+              description: Number of failed creations
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  index:
+                    type: integer
+                  qr_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [created, failed]
+                  error:
+                    type: string
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "wh_def456uvw012"
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        last_triggered_at:
+          type: string
+          format: date-time
+        success_rate:
+          type: number
+          description: Delivery success rate (percentage)
+
+    WebhookResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Webhook'
+
+    WebhookListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Webhook'
+
+    CreateWebhookRequest:
+      type: object
+      required:
+        - name
+        - url
+        - events
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [qr.created, qr.scanned, qr.updated, qr.deleted, scan.milestone]
+        secret:
+          type: string
+          description: Secret for webhook signature verification
+
+    UpdateWebhookRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+
+    AccountResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            name:
+              type: string
+            tier:
+              type: string
+              enum: [free, starter, pro, enterprise]
+            created_at:
+              type: string
+              format: date-time
+            api_keys_count:
+              type: integer
+            qr_codes_count:
+              type: integer
+
+    UsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            period:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+            requests:
+              type: object
+              properties:
+                used:
+                  type: integer
+                limit:
+                  type: integer
+                percentage:
+                  type: number
+            qr_codes:
+              type: object
+              properties:
+                created:
+                  type: integer
+                active:
+                  type: integer
+            scans:
+              type: object
+              properties:
+                total:
+                  type: integer
+
+    Error:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "The 'url' field is required"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+            request_id:
+              type: string
+              format: uuid
+
+  responses:
+    BadRequest:
+      description: Bad Request - The request was malformed or contained invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            validation_error:
+              summary: Validation Error
+              value:
+                success: false
+                error:
+                  code: "VALIDATION_ERROR"
+                  message: "Request validation failed"
+                  details:
+                    - field: "url"
+                      message: "URL is required and must be a valid URL"
+            invalid_json:
+              summary: Invalid JSON
+              value:
+                success: false
+                error:
+                  code: "INVALID_JSON"
+                  message: "The request body is not valid JSON"
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "UNAUTHORIZED"
+              message: "Invalid API key provided"
+
+    NotFound:
+      description: Not Found - The requested resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "NOT_FOUND"
+              message: "QR code not found"
+
+    RateLimited:
+      description: Too Many Requests - Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/X-RateLimit-Limit'
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            example: 0
+        Retry-After:
+          description: Seconds until rate limit resets
+          schema:
+            type: integer
+          example: 60
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "RATE_LIMITED"
+              message: "Rate limit exceeded. Please retry after 60 seconds"
+
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "INTERNAL_ERROR"
+              message: "An unexpected error occurred. Please try again later"
+              request_id: "550e8400-e29b-41d4-a716-446655440000"
