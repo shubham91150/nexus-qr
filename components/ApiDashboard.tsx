@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, Code, ChevronRight, Check,
-  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft
+  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft, Play, FileText
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -130,9 +130,12 @@ interface ApiDashboardProps {
   onBack: () => void;
   onWebhooksClick: () => void;
   onDocsClick: () => void;
+  onPlaygroundClick: () => void;
+  onAnalyticsClick: () => void;
+  onLogsClick: () => void;
 }
 
-const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick }) => {
+const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick, onLogsClick }) => {
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -441,7 +444,63 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, on
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <button
+          onClick={onPlaygroundClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <Play className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                API Playground
+              </h3>
+              <p className="text-sm text-gray-500">Test endpoints live</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+          </div>
+        </button>
+
+        <button
+          onClick={onAnalyticsClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
+                Analytics
+              </h3>
+              <p className="text-sm text-gray-500">View usage insights</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-amber-600 transition-colors" />
+          </div>
+        </button>
+
+        <button
+          onClick={onLogsClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-cyan-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
+                Request Logs
+              </h3>
+              <p className="text-sm text-gray-500">Debug API calls</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-cyan-600 transition-colors" />
+          </div>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
           onClick={onDocsClick}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
@@ -452,9 +511,9 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, on
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                API Documentation
+                Documentation
               </h3>
-              <p className="text-sm text-gray-500">Learn how to integrate with our API</p>
+              <p className="text-sm text-gray-500">Integration guide</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
           </div>
@@ -472,11 +531,19 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, on
               <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                 Webhooks
               </h3>
-              <p className="text-sm text-gray-500">Set up real-time notifications</p>
+              <p className="text-sm text-gray-500">Real-time notifications</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
           </div>
         </button>
+
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+          <h3 className="font-semibold mb-2">Need Help?</h3>
+          <p className="text-white/80 text-sm mb-4">Contact our developer support team</p>
+          <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+            Get Support
+          </button>
+        </div>
       </div>
 
       {/* New Key Modal */}

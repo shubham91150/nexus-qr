@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Plus, Trash2, Edit2, RefreshCw, Check, X,
   Globe, Zap, Clock, AlertCircle, CheckCircle, Link2,
-  Bell, Code, Copy, Eye, EyeOff
+  Bell, Code, Copy, Eye, EyeOff, FileText
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -167,9 +167,10 @@ const WebhookModal: React.FC<WebhookModalProps> = ({ isOpen, onClose, onSave, ed
 
 interface ApiWebhooksProps {
   onBack: () => void;
+  onDeliveryLogsClick: () => void;
 }
 
-const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack }) => {
+const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack, onDeliveryLogsClick }) => {
   const { user } = useAuth();
   const [webhooks, setWebhooks] = useState<ApiWebhook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,6 +238,13 @@ const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack }) => {
           <h1 className="text-3xl font-bold text-gray-900">Webhooks</h1>
           <p className="text-gray-600">Receive real-time notifications when events happen</p>
         </div>
+        <button
+          onClick={onDeliveryLogsClick}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
+          Delivery Logs
+        </button>
         <button
           onClick={() => {
             setEditingWebhook(null);

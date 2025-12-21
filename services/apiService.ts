@@ -128,7 +128,7 @@ export async function generateApiKey(
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const fullKey = `nxqr_live_${keyString}`;
-    const keyPrefix = fullKey.substring(0, 12) + '...';
+    const keyPrefix = fullKey.substring(0, 12); // nxqr_live_xx (exactly 12 chars)
 
     // Hash the key for storage (we never store the actual key)
     const encoder = new TextEncoder();

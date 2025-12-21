@@ -25,6 +25,10 @@ import { BusinessCardLanding } from './components/BusinessCardLanding';
 import ApiDashboard from './components/ApiDashboard';
 import ApiDocs from './components/ApiDocs';
 import ApiWebhooks from './components/ApiWebhooks';
+import ApiPlayground from './components/ApiPlayground';
+import ApiAnalytics from './components/ApiAnalytics';
+import ApiLogs from './components/ApiLogs';
+import WebhookDeliveryLogs from './components/WebhookDeliveryLogs';
 
 // QR Type Categories for Dynamic/Static handling
 // Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
@@ -486,7 +490,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-webhooks'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -511,10 +515,50 @@ const AppContent: React.FC = () => {
       return;
     }
 
+    // Check for webhook delivery logs route
+    if (path === '/api/webhooks/logs') {
+      if (user) {
+        setView('webhook-delivery-logs');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
     // Check for API webhooks route
     if (path === '/api/webhooks') {
       if (user) {
         setView('api-webhooks');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API playground route
+    if (path === '/api/playground') {
+      if (user) {
+        setView('api-playground');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API analytics route
+    if (path === '/api/analytics') {
+      if (user) {
+        setView('api-analytics');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API logs route
+    if (path === '/api/logs') {
+      if (user) {
+        setView('api-logs');
       } else {
         setShowAuthModal(true);
       }
@@ -610,6 +654,15 @@ const AppContent: React.FC = () => {
     }} onDocsClick={() => {
       setView('api-docs');
       window.history.pushState({}, '', '/api/docs');
+    }} onPlaygroundClick={() => {
+      setView('api-playground');
+      window.history.pushState({}, '', '/api/playground');
+    }} onAnalyticsClick={() => {
+      setView('api-analytics');
+      window.history.pushState({}, '', '/api/analytics');
+    }} onLogsClick={() => {
+      setView('api-logs');
+      window.history.pushState({}, '', '/api/logs');
     }} />;
   }
 
@@ -618,6 +671,41 @@ const AppContent: React.FC = () => {
     return <ApiWebhooks onBack={() => {
       setView('api');
       window.history.pushState({}, '', '/api');
+    }} onDeliveryLogsClick={() => {
+      setView('webhook-delivery-logs');
+      window.history.pushState({}, '', '/api/webhooks/logs');
+    }} />;
+  }
+
+  // API Playground (auth required)
+  if (view === 'api-playground' && user) {
+    return <ApiPlayground onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
+  }
+
+  // API Analytics (auth required)
+  if (view === 'api-analytics' && user) {
+    return <ApiAnalytics onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
+  }
+
+  // API Logs (auth required)
+  if (view === 'api-logs' && user) {
+    return <ApiLogs onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
+  }
+
+  // Webhook Delivery Logs (auth required)
+  if (view === 'webhook-delivery-logs' && user) {
+    return <WebhookDeliveryLogs onBack={() => {
+      setView('api-webhooks');
+      window.history.pushState({}, '', '/api/webhooks');
     }} />;
   }
 
