@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, Code, ChevronRight, Check,
-  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft, Play, FileText
+  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -133,9 +133,10 @@ interface ApiDashboardProps {
   onPlaygroundClick: () => void;
   onAnalyticsClick: () => void;
   onLogsClick: () => void;
+  onApiReferenceClick: () => void;
 }
 
-const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick, onLogsClick }) => {
+const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick, onLogsClick, onApiReferenceClick }) => {
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -500,7 +501,25 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, on
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button
+          onClick={onApiReferenceClick}
+          className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <Book className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-white">
+                API Reference
+              </h3>
+              <p className="text-sm text-white/80">OpenAPI Docs</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+        </button>
+
         <button
           onClick={onDocsClick}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
@@ -511,7 +530,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, on
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                Documentation
+                Quick Start
               </h3>
               <p className="text-sm text-gray-500">Integration guide</p>
             </div>
