@@ -3,7 +3,7 @@ import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, Code, ChevronRight, Check,
   AlertCircle, Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book,
-  Users, Gauge, Link2, ClipboardList, PieChart
+  Users, Gauge, Link2, ClipboardList, PieChart, Rocket
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -140,9 +140,10 @@ interface ApiDashboardProps {
   onDomainsClick: () => void;
   onAuditClick: () => void;
   onUsageQuotaClick: () => void;
+  onOnboardingClick: () => void;
 }
 
-const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick, onLogsClick, onApiReferenceClick, onTeamAccessClick, onPerformanceClick, onDomainsClick, onAuditClick, onUsageQuotaClick }) => {
+const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick, onLogsClick, onApiReferenceClick, onTeamAccessClick, onPerformanceClick, onDomainsClick, onAuditClick, onUsageQuotaClick, onOnboardingClick }) => {
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -210,17 +211,26 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, on
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">API Dashboard</h1>
-          <p className="text-gray-600">Manage your API keys and monitor usage</p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onBack}
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">API Dashboard</h1>
+            <p className="text-gray-600">Manage your API keys and monitor usage</p>
+          </div>
         </div>
+        <button
+          onClick={onOnboardingClick}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-lg shadow-emerald-200"
+        >
+          <Rocket className="w-4 h-4" />
+          Getting Started
+        </button>
       </div>
 
       {/* Stats Cards */}

@@ -41,8 +41,16 @@ import {
   FileCode,
   Cpu,
   Database,
-  Link
+  Link,
+  ArrowLeft
 } from 'lucide-react';
+import { useAuth } from '../lib/AuthContext';
+import { generateApiKey as generateApiKeyService } from '../services/apiService';
+
+interface ApiOnboardingWizardProps {
+  onBack: () => void;
+  onComplete?: () => void;
+}
 
 interface Step {
   id: number;
@@ -61,7 +69,8 @@ interface SDKOption {
   importCode: string;
 }
 
-export default function ApiOnboardingWizard() {
+export default function ApiOnboardingWizard({ onBack, onComplete }: ApiOnboardingWizardProps) {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -151,21 +160,29 @@ export default function ApiOnboardingWizard() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  // Generate API key (simulated)
-  const generateApiKey = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const key = `nxqr_${selectedEnvironment === 'sandbox' ? 'test' : 'live'}_${generateRandomString(32)}`;
-      setGeneratedApiKey(key);
-      setIsLoading(false);
-      markStepCompleted(2);
-    }, 1500);
-  };
+  // Generate API key using real service
+  const generateApiKey = async () => {
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
 
-  // Generate random string
-  const generateRandomString = (length: number) => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    setIsLoading(true);
+    try {
+      const tier = selectedEnvironment === 'sandbox' ? 'free' : 'starter';
+      const result = await generateApiKeyService(user.id, apiKeyName, tier);
+
+      if (result) {
+        setGeneratedApiKey(result.key);
+        markStepCompleted(2);
+      } else {
+        console.error('Failed to generate API key');
+      }
+    } catch (error) {
+      console.error('Error generating API key:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Mark step as completed
@@ -947,7 +964,14 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
             </div>
 
             <button
-              onClick={() => markStepCompleted(5)}
+              onClick={() => {
+                markStepCompleted(5);
+                if (onComplete) {
+                  onComplete();
+                } else {
+                  onBack();
+                }
+              }}
               className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
             >
               <Rocket className="w-5 h-5" />
@@ -964,6 +988,15 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-4xl mx-auto p-6">
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to API Dashboard
+        </button>
+
         {/* Progress Header */}
         <div className="mb-8">
           {/* Progress Bar */}
