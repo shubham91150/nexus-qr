@@ -195,8 +195,14 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
   const [userApiKey, setUserApiKey] = useState(apiKey || '');
 
   const baseUrl = environment === 'sandbox'
-    ? 'https://sandbox.api.nexusqr.com'
-    : 'https://api.nexusqr.com';
+    ? '' // Use same origin for sandbox (local API)
+    : ''; // Use same origin for production too
+
+  // Get the actual API base URL
+  const getApiBaseUrl = () => {
+    // Use the current origin for API calls
+    return window.location.origin;
+  };
 
   const handleEndpointSelect = (endpoint: ApiEndpoint) => {
     setSelectedEndpoint(endpoint);
@@ -204,18 +210,40 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
     setParams({});
     setResponse(null);
 
-    // Set default body for POST/PUT/PATCH
-    if (endpoint.body && endpoint.body.length > 0) {
-      const defaultBody: Record<string, unknown> = {};
-      endpoint.body.forEach(field => {
-        if (field.name === 'url') defaultBody[field.name] = 'https://example.com';
-        else if (field.name === 'size') defaultBody[field.name] = 300;
-        else if (field.name === 'style') defaultBody[field.name] = 'modern';
-        else if (field.name === 'color') defaultBody[field.name] = '#000000';
-        else if (field.name === 'background') defaultBody[field.name] = '#FFFFFF';
-        else if (field.name === 'qr_codes') defaultBody[field.name] = [{ url: 'https://example.com' }];
-      });
-      setBody(JSON.stringify(defaultBody, null, 2));
+    // Set default body for POST/PUT/PATCH based on endpoint
+    if (endpoint.method === 'POST' || endpoint.method === 'PUT' || endpoint.method === 'PATCH') {
+      if (endpoint.id === 'create-qr') {
+        // Default body for creating QR code - matches API spec
+        setBody(JSON.stringify({
+          type: 'url',
+          content: 'https://example.com',
+          title: 'My QR Code',
+          is_dynamic: true,
+          options: {
+            width: 400,
+            margin: 2,
+            color: '#000000',
+            background: '#ffffff',
+            format: 'png',
+            error_correction: 'M'
+          }
+        }, null, 2));
+      } else if (endpoint.id === 'bulk-create') {
+        setBody(JSON.stringify({
+          items: [
+            { type: 'url', content: 'https://example1.com', title: 'QR 1' },
+            { type: 'url', content: 'https://example2.com', title: 'QR 2' }
+          ]
+        }, null, 2));
+      } else if (endpoint.id === 'update-qr') {
+        setBody(JSON.stringify({
+          content: 'https://updated-url.com',
+          title: 'Updated QR Code',
+          is_active: true
+        }, null, 2));
+      } else {
+        setBody('{}');
+      }
     } else {
       setBody('');
     }
@@ -241,16 +269,27 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
       }
     }
 
-    return `${baseUrl}${path}`;
+    // Use actual API URL for display
+    const displayUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}${path}`
+      : `https://your-domain.com${path}`;
+
+    return displayUrl;
   };
 
   const generateCurl = (): string => {
     let curl = `curl -X ${selectedEndpoint.method} "${buildUrl()}"`;
-    curl += ` \\\n  -H "Authorization: Bearer ${userApiKey || 'YOUR_API_KEY'}"`;
+    curl += ` \\\n  -H "X-API-Key: ${userApiKey || 'YOUR_API_KEY'}"`;
     curl += ` \\\n  -H "Content-Type: application/json"`;
 
     if (body && ['POST', 'PUT', 'PATCH'].includes(selectedEndpoint.method)) {
-      curl += ` \\\n  -d '${body.replace(/\n/g, '')}'`;
+      // Format body for curl
+      try {
+        const parsedBody = JSON.parse(body);
+        curl += ` \\\n  -d '${JSON.stringify(parsedBody)}'`;
+      } catch {
+        curl += ` \\\n  -d '${body.replace(/\n/g, '').replace(/'/g, "\\'")}'`;
+      }
     }
 
     return curl;
@@ -269,23 +308,91 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
     setIsLoading(true);
     const startTime = performance.now();
 
-    // Simulate API response (in production, this would be a real fetch)
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    try {
+      // Build the actual request URL
+      let requestPath = selectedEndpoint.path;
 
-    const endTime = performance.now();
+      // Replace path parameters
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) {
+          requestPath = requestPath.replace(`{${key}}`, value);
+        }
+      });
 
-    // Simulate different responses based on environment
-    if (environment === 'sandbox') {
+      // Add query params for GET requests
+      if (selectedEndpoint.method === 'GET' && selectedEndpoint.params) {
+        const queryParams = selectedEndpoint.params
+          .filter(p => !selectedEndpoint.path.includes(`{${p.name}}`))
+          .map(p => params[p.name] ? `${p.name}=${encodeURIComponent(params[p.name])}` : null)
+          .filter(Boolean);
+
+        if (queryParams.length > 0) {
+          requestPath += `?${queryParams.join('&')}`;
+        }
+      }
+
+      const apiUrl = `${getApiBaseUrl()}${requestPath}`;
+
+      // Prepare request options
+      const requestOptions: RequestInit = {
+        method: selectedEndpoint.method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': userApiKey,
+          'Authorization': `Bearer ${userApiKey}`
+        }
+      };
+
+      // Add body for POST/PUT/PATCH requests
+      if (body && ['POST', 'PUT', 'PATCH'].includes(selectedEndpoint.method)) {
+        try {
+          requestOptions.body = body;
+          // Validate JSON
+          JSON.parse(body);
+        } catch (e) {
+          setResponse({
+            status: 400,
+            data: { error: { code: 'INVALID_JSON', message: 'Request body is not valid JSON' } },
+            time: 0
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Make the actual API call
+      const res = await fetch(apiUrl, requestOptions);
+      const endTime = performance.now();
+
+      let responseData;
+      const contentType = res.headers.get('content-type');
+
+      if (contentType?.includes('application/json')) {
+        responseData = await res.json();
+      } else {
+        const text = await res.text();
+        responseData = { raw: text };
+      }
+
       setResponse({
-        status: 200,
-        data: selectedEndpoint.exampleResponse,
+        status: res.status,
+        data: responseData,
         time: Math.round(endTime - startTime)
       });
-    } else {
-      // In production, would make actual API call
+
+    } catch (error: any) {
+      const endTime = performance.now();
+
+      // Handle network errors or other exceptions
       setResponse({
-        status: 200,
-        data: selectedEndpoint.exampleResponse,
+        status: 0,
+        data: {
+          error: {
+            code: 'NETWORK_ERROR',
+            message: error.message || 'Failed to connect to API. Check if the server is running.',
+            hint: 'This might be a CORS issue or the API server is not available.'
+          }
+        },
         time: Math.round(endTime - startTime)
       });
     }
