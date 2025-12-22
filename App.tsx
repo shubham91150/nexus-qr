@@ -36,6 +36,7 @@ import CustomDomainConfig from './components/CustomDomainConfig';
 import WebhookSignatureVerification from './components/WebhookSignatureVerification';
 import ApiAuditTrail from './components/ApiAuditTrail';
 import ApiUsageQuota from './components/ApiUsageQuota';
+import ApiOnboardingWizard from './components/ApiOnboardingWizard';
 
 // QR Type Categories for Dynamic/Static handling
 // Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
@@ -497,7 +498,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota' | 'api-onboarding'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -638,6 +639,16 @@ const AppContent: React.FC = () => {
       return;
     }
 
+    // Check for API onboarding wizard route
+    if (path === '/api/onboarding' || path === '/api/getting-started') {
+      if (user) {
+        setView('api-onboarding');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
     // Check for API dashboard route
     if (path === '/api' || path === '/api-dashboard') {
       if (user) {
@@ -762,6 +773,9 @@ const AppContent: React.FC = () => {
     }} onUsageQuotaClick={() => {
       setView('api-usage-quota');
       window.history.pushState({}, '', '/api/usage');
+    }} onOnboardingClick={() => {
+      setView('api-onboarding');
+      window.history.pushState({}, '', '/api/onboarding');
     }} />;
   }
 
@@ -854,6 +868,20 @@ const AppContent: React.FC = () => {
       setView('api');
       window.history.pushState({}, '', '/api');
     }} />;
+  }
+
+  // API Onboarding Wizard (auth required)
+  if (view === 'api-onboarding' && user) {
+    return <ApiOnboardingWizard
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+      onComplete={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
   }
 
   if (view === 'dynamic' && user) {
