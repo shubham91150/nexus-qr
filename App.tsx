@@ -30,6 +30,12 @@ import ApiPlayground from './components/ApiPlayground';
 import ApiAnalytics from './components/ApiAnalytics';
 import ApiLogs from './components/ApiLogs';
 import WebhookDeliveryLogs from './components/WebhookDeliveryLogs';
+import TeamAccessControl from './components/TeamAccessControl';
+import ApiPerformanceMonitor from './components/ApiPerformanceMonitor';
+import CustomDomainConfig from './components/CustomDomainConfig';
+import WebhookSignatureVerification from './components/WebhookSignatureVerification';
+import ApiAuditTrail from './components/ApiAuditTrail';
+import ApiUsageQuota from './components/ApiUsageQuota';
 
 // QR Type Categories for Dynamic/Static handling
 // Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
@@ -491,7 +497,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -566,6 +572,66 @@ const AppContent: React.FC = () => {
     if (path === '/api/logs') {
       if (user) {
         setView('api-logs');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for team access route
+    if (path === '/api/team') {
+      if (user) {
+        setView('team-access');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API performance monitor route
+    if (path === '/api/performance') {
+      if (user) {
+        setView('api-performance');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for custom domain route
+    if (path === '/api/domains') {
+      if (user) {
+        setView('custom-domain');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for webhook signature verification route
+    if (path === '/api/webhooks/security') {
+      if (user) {
+        setView('webhook-signature');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API audit trail route
+    if (path === '/api/audit') {
+      if (user) {
+        setView('api-audit');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API usage quota route
+    if (path === '/api/usage') {
+      if (user) {
+        setView('api-usage-quota');
       } else {
         setShowAuthModal(true);
       }
@@ -681,6 +747,21 @@ const AppContent: React.FC = () => {
     }} onApiReferenceClick={() => {
       setView('api-docs-interactive');
       window.history.pushState({}, '', '/api/reference');
+    }} onTeamAccessClick={() => {
+      setView('team-access');
+      window.history.pushState({}, '', '/api/team');
+    }} onPerformanceClick={() => {
+      setView('api-performance');
+      window.history.pushState({}, '', '/api/performance');
+    }} onDomainsClick={() => {
+      setView('custom-domain');
+      window.history.pushState({}, '', '/api/domains');
+    }} onAuditClick={() => {
+      setView('api-audit');
+      window.history.pushState({}, '', '/api/audit');
+    }} onUsageQuotaClick={() => {
+      setView('api-usage-quota');
+      window.history.pushState({}, '', '/api/usage');
     }} />;
   }
 
@@ -724,6 +805,54 @@ const AppContent: React.FC = () => {
     return <WebhookDeliveryLogs onBack={() => {
       setView('api-webhooks');
       window.history.pushState({}, '', '/api/webhooks');
+    }} />;
+  }
+
+  // Team Access Control (auth required)
+  if (view === 'team-access' && user) {
+    return <TeamAccessControl onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
+  }
+
+  // API Performance Monitor (auth required)
+  if (view === 'api-performance' && user) {
+    return <ApiPerformanceMonitor onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
+  }
+
+  // Custom Domain Config (auth required)
+  if (view === 'custom-domain' && user) {
+    return <CustomDomainConfig onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
+  }
+
+  // Webhook Signature Verification (auth required)
+  if (view === 'webhook-signature' && user) {
+    return <WebhookSignatureVerification onBack={() => {
+      setView('api-webhooks');
+      window.history.pushState({}, '', '/api/webhooks');
+    }} />;
+  }
+
+  // API Audit Trail (auth required)
+  if (view === 'api-audit' && user) {
+    return <ApiAuditTrail onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
+    }} />;
+  }
+
+  // API Usage Quota (auth required)
+  if (view === 'api-usage-quota' && user) {
+    return <ApiUsageQuota onBack={() => {
+      setView('api');
+      window.history.pushState({}, '', '/api');
     }} />;
   }
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, Code, ChevronRight, Check,
-  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book
+  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book,
+  Users, Gauge, Link2, ClipboardList, PieChart
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -134,9 +135,14 @@ interface ApiDashboardProps {
   onAnalyticsClick: () => void;
   onLogsClick: () => void;
   onApiReferenceClick: () => void;
+  onTeamAccessClick: () => void;
+  onPerformanceClick: () => void;
+  onDomainsClick: () => void;
+  onAuditClick: () => void;
+  onUsageQuotaClick: () => void;
 }
 
-const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick, onLogsClick, onApiReferenceClick }) => {
+const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick, onLogsClick, onApiReferenceClick, onTeamAccessClick, onPerformanceClick, onDomainsClick, onAuditClick, onUsageQuotaClick }) => {
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -497,6 +503,99 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({ onBack, onWebhooksClick, on
               <p className="text-sm text-gray-500">Debug API calls</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-cyan-600 transition-colors" />
+          </div>
+        </button>
+
+        <button
+          onClick={onUsageQuotaClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center">
+              <PieChart className="w-6 h-6 text-rose-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-rose-600 transition-colors">
+                Usage & Quota
+              </h3>
+              <p className="text-sm text-gray-500">Monitor API limits</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-rose-600 transition-colors" />
+          </div>
+        </button>
+
+        <button
+          onClick={onPerformanceClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+              <Gauge className="w-6 h-6 text-violet-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">
+                Performance
+              </h3>
+              <p className="text-sm text-gray-500">API health metrics</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-violet-600 transition-colors" />
+          </div>
+        </button>
+
+        <button
+          onClick={onAuditClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+              <ClipboardList className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
+                Audit Trail
+              </h3>
+              <p className="text-sm text-gray-500">Activity history</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" />
+          </div>
+        </button>
+      </div>
+
+      {/* Team & Settings */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <button
+          onClick={onTeamAccessClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                Team Access
+              </h3>
+              <p className="text-sm text-gray-500">Manage members & roles</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+          </div>
+        </button>
+
+        <button
+          onClick={onDomainsClick}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+              <Link2 className="w-6 h-6 text-teal-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
+                Custom Domains
+              </h3>
+              <p className="text-sm text-gray-500">Branded API URLs</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" />
           </div>
         </button>
       </div>
