@@ -28,8 +28,13 @@ import {
   AlertCircle,
   Info,
   Server,
-  Database
+  Database,
+  ArrowLeft
 } from 'lucide-react';
+
+interface PostmanCollectionExportProps {
+  onBack?: () => void;
+}
 
 // Collection structure matching Postman v2.1 schema
 interface CollectionEndpoint {
@@ -514,7 +519,7 @@ const methodColors: Record<string, string> = {
   DELETE: 'bg-red-500'
 };
 
-export default function PostmanCollectionExport() {
+export default function PostmanCollectionExport({ onBack }: PostmanCollectionExportProps) {
   const [selectedFormat, setSelectedFormat] = useState<'postman' | 'openapi' | 'insomnia'>('postman');
   const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>(['dev', 'staging', 'prod']);
   const [expandedFolders, setExpandedFolders] = useState<string[]>(['qr-codes']);
@@ -949,6 +954,17 @@ export default function PostmanCollectionExport() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to API Dashboard
+          </button>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
