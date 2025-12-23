@@ -1073,6 +1073,7 @@ const AppContent: React.FC = () => {
   // Rate Limiting Panel (auth required)
   if (view === 'rate-limiting' && user) {
     return <RateLimitingPanel
+      userId={user.id}
       onBack={() => {
         setView('api');
         window.history.pushState({}, '', '/api');

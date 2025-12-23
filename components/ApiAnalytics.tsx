@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart3, TrendingUp, TrendingDown, Clock, Globe,
   Smartphone, Monitor, CheckCircle, XCircle, ArrowLeft,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { getUserApiKeys, getApiKeyUsage, formatNumber } from '../services/apiService';
+import { getDailyUsage } from '../services/apiExtendedService';
 
 interface AnalyticsData {
   totalRequests: number;
@@ -100,24 +101,63 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
   const [selectedApiKey, setSelectedApiKey] = useState<string>('all');
   const [apiKeys, setApiKeys] = useState<{ id: string; name: string }[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, [user, dateRange]);
-
-  const loadData = async () => {
+  // Load real data from database
+  const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
-    // Load API keys
-    const keys = await getUserApiKeys(user.id);
-    setApiKeys(keys.map(k => ({ id: k.id, name: k.name })));
+    try {
+      // Load API keys
+      const keys = await getUserApiKeys(user.id);
+      setApiKeys(keys.map(k => ({ id: k.id, name: k.name })));
 
-    // In production, this would fetch real analytics
-    // For demo, using mock data
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setAnalytics(generateMockAnalytics());
-    setLoading(false);
-  };
+      // Load real daily usage data from database
+      const dailyUsage = await getDailyUsage(user.id);
+
+      // If we have real data, use it; otherwise generate mock
+      if (dailyUsage && dailyUsage.length > 0) {
+        // Convert real data to analytics format
+        const requestsByDay = dailyUsage.map(d => ({
+          date: new Date(d.date).toISOString().split('T')[0],
+          count: d.requests,
+          success: d.requests - (d.errors || 0),
+          failed: d.errors || 0
+        }));
+
+        const totalRequests = requestsByDay.reduce((sum, d) => sum + d.count, 0);
+        const successfulRequests = requestsByDay.reduce((sum, d) => sum + d.success, 0);
+        const failedRequests = requestsByDay.reduce((sum, d) => sum + d.failed, 0);
+
+        // Generate supplementary mock data for features not in DB
+        const mockData = generateMockAnalytics();
+
+        setAnalytics({
+          totalRequests,
+          successfulRequests,
+          failedRequests,
+          avgResponseTime: mockData.avgResponseTime, // Would need logs table
+          requestsByDay: requestsByDay.length >= 7 ? requestsByDay : mockData.requestsByDay,
+          topEndpoints: mockData.topEndpoints, // Would need endpoint logs
+          requestsByCountry: mockData.requestsByCountry, // Would need geo data
+          requestsByDevice: mockData.requestsByDevice, // Would need user-agent parsing
+          requestsByStatus: mockData.requestsByStatus, // Would need status logging
+          peakHours: mockData.peakHours // Would need hourly aggregation
+        });
+      } else {
+        // No real data, use mock for demo
+        setAnalytics(generateMockAnalytics());
+      }
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+      setAnalytics(generateMockAnalytics());
+    } finally {
+      setLoading(false);
+    }
+  }, [user, dateRange]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const getSuccessRate = () => {
     if (!analytics) return 0;
