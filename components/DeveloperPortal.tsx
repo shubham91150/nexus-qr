@@ -4,7 +4,8 @@ import {
   ArrowRight, ExternalLink, Play, Copy, Check, Search,
   FileText, MessageSquare, Github, Slack, ChevronRight,
   Sparkles, Shield, Clock, Users, Star, TrendingUp,
-  Package, Cpu, Database, Lock, RefreshCw, Activity
+  Package, Cpu, Database, Lock, RefreshCw, Activity,
+  ArrowLeft
 } from 'lucide-react';
 
 interface QuickLink {
@@ -153,9 +154,10 @@ const SDK_LIBRARIES = [
 
 interface DeveloperPortalProps {
   onNavigate?: (section: string) => void;
+  onBack?: () => void;
 }
 
-const DeveloperPortal: React.FC<DeveloperPortalProps> = ({ onNavigate }) => {
+const DeveloperPortal: React.FC<DeveloperPortalProps> = ({ onNavigate, onBack }) => {
   const [selectedLanguage, setSelectedLanguage] = useState('curl');
   const [copiedCode, setCopiedCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,6 +172,19 @@ const DeveloperPortal: React.FC<DeveloperPortalProps> = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-indigo-950">
+      {/* Back Button */}
+      {onBack && (
+        <div className="max-w-7xl mx-auto px-6 pt-6">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to API Dashboard
+          </button>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background Pattern */}

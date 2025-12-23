@@ -37,6 +37,17 @@ import WebhookSignatureVerification from './components/WebhookSignatureVerificat
 import ApiAuditTrail from './components/ApiAuditTrail';
 import ApiUsageQuota from './components/ApiUsageQuota';
 import ApiOnboardingWizard from './components/ApiOnboardingWizard';
+import RateLimitingPanel from './components/RateLimitingPanel';
+import IpWhitelisting from './components/IpWhitelisting';
+import CorsConfiguration from './components/CorsConfiguration';
+import ApiKeyRotation from './components/ApiKeyRotation';
+import ApiKeyScopes from './components/ApiKeyScopes';
+import ApiChangelog from './components/ApiChangelog';
+import ApiStatusPage from './components/ApiStatusPage';
+import ApiSDKExamples from './components/ApiSDKExamples';
+import PostmanCollectionExport from './components/PostmanCollectionExport';
+import ErrorCodesReference from './components/ErrorCodesReference';
+import DeveloperPortal from './components/DeveloperPortal';
 
 // QR Type Categories for Dynamic/Static handling
 // Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
@@ -498,7 +509,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota' | 'api-onboarding'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota' | 'api-onboarding' | 'rate-limiting' | 'ip-whitelisting' | 'cors-config' | 'api-key-rotation' | 'api-key-scopes' | 'api-changelog' | 'api-status' | 'api-sdk-examples' | 'postman-export' | 'error-codes' | 'developer-portal'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -645,6 +656,96 @@ const AppContent: React.FC = () => {
       } else {
         setShowAuthModal(true);
       }
+      return;
+    }
+
+    // Check for rate limiting route
+    if (path === '/api/rate-limiting') {
+      if (user) {
+        setView('rate-limiting');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for IP whitelisting route
+    if (path === '/api/ip-whitelist') {
+      if (user) {
+        setView('ip-whitelisting');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for CORS configuration route
+    if (path === '/api/cors') {
+      if (user) {
+        setView('cors-config');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API key rotation route
+    if (path === '/api/keys/rotation') {
+      if (user) {
+        setView('api-key-rotation');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API key scopes route
+    if (path === '/api/keys/scopes') {
+      if (user) {
+        setView('api-key-scopes');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for API changelog route
+    if (path === '/api/changelog') {
+      setView('api-changelog');
+      return;
+    }
+
+    // Check for API status page route
+    if (path === '/api/status') {
+      setView('api-status');
+      return;
+    }
+
+    // Check for SDK examples route
+    if (path === '/api/sdk' || path === '/api/examples') {
+      setView('api-sdk-examples');
+      return;
+    }
+
+    // Check for Postman export route
+    if (path === '/api/postman') {
+      if (user) {
+        setView('postman-export');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check for error codes reference route
+    if (path === '/api/errors') {
+      setView('error-codes');
+      return;
+    }
+
+    // Check for developer portal route
+    if (path === '/developers' || path === '/api/developers') {
+      setView('developer-portal');
       return;
     }
 
@@ -796,6 +897,39 @@ const AppContent: React.FC = () => {
     }} onOnboardingClick={() => {
       setView('api-onboarding');
       window.history.pushState({}, '', '/api/onboarding');
+    }} onRateLimitingClick={() => {
+      setView('rate-limiting');
+      window.history.pushState({}, '', '/api/rate-limiting');
+    }} onIpWhitelistClick={() => {
+      setView('ip-whitelisting');
+      window.history.pushState({}, '', '/api/ip-whitelist');
+    }} onCorsConfigClick={() => {
+      setView('cors-config');
+      window.history.pushState({}, '', '/api/cors');
+    }} onKeyRotationClick={() => {
+      setView('api-key-rotation');
+      window.history.pushState({}, '', '/api/keys/rotation');
+    }} onKeyScopesClick={() => {
+      setView('api-key-scopes');
+      window.history.pushState({}, '', '/api/keys/scopes');
+    }} onChangelogClick={() => {
+      setView('api-changelog');
+      window.history.pushState({}, '', '/api/changelog');
+    }} onStatusPageClick={() => {
+      setView('api-status');
+      window.history.pushState({}, '', '/api/status');
+    }} onSdkExamplesClick={() => {
+      setView('api-sdk-examples');
+      window.history.pushState({}, '', '/api/sdk');
+    }} onPostmanExportClick={() => {
+      setView('postman-export');
+      window.history.pushState({}, '', '/api/postman');
+    }} onErrorCodesClick={() => {
+      setView('error-codes');
+      window.history.pushState({}, '', '/api/errors');
+    }} onDeveloperPortalClick={() => {
+      setView('developer-portal');
+      window.history.pushState({}, '', '/developers');
     }} />;
   }
 
@@ -916,6 +1050,116 @@ const AppContent: React.FC = () => {
         window.history.pushState({}, '', '/api');
       }}
       onComplete={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // Rate Limiting Panel (auth required)
+  if (view === 'rate-limiting' && user) {
+    return <RateLimitingPanel
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // IP Whitelisting (auth required)
+  if (view === 'ip-whitelisting' && user) {
+    return <IpWhitelisting
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // CORS Configuration (auth required)
+  if (view === 'cors-config' && user) {
+    return <CorsConfiguration
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // API Key Rotation (auth required)
+  if (view === 'api-key-rotation' && user) {
+    return <ApiKeyRotation
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // API Key Scopes (auth required)
+  if (view === 'api-key-scopes' && user) {
+    return <ApiKeyScopes
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // API Changelog
+  if (view === 'api-changelog') {
+    return <ApiChangelog
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // API Status Page
+  if (view === 'api-status') {
+    return <ApiStatusPage
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // API SDK Examples
+  if (view === 'api-sdk-examples') {
+    return <ApiSDKExamples
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // Postman Collection Export (auth required)
+  if (view === 'postman-export' && user) {
+    return <PostmanCollectionExport
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // Error Codes Reference
+  if (view === 'error-codes') {
+    return <ErrorCodesReference
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // Developer Portal
+  if (view === 'developer-portal') {
+    return <DeveloperPortal
+      onBack={() => {
         setView('api');
         window.history.pushState({}, '', '/api');
       }}
