@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -14,32 +14,33 @@ import {
   Zap,
   Database,
   Globe,
-  ArrowUpRight,
-  ArrowDownRight,
   ChevronRight,
   Check,
-  X,
-  Info,
   RefreshCw,
   Download,
-  Filter,
-  MoreVertical,
-  Shield,
   Activity,
-  PieChart,
-  Target,
   Gauge,
   Package,
-  Users,
-  FileText,
   Mail,
   Smartphone,
-  ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
+import {
+  getUsageMetrics,
+  getUsageAlerts,
+  getDailyUsage,
+  getAlertSettings,
+  updateAlertSettings,
+  acknowledgeAlert as acknowledgeAlertApi,
+  UsageAlert as ApiUsageAlert,
+  AlertSettings,
+  DailyUsage as ApiDailyUsage
+} from '../services/apiExtendedService';
 
 interface ApiUsageQuotaProps {
   onBack: () => void;
+  userId?: string;
 }
 
 // Types
@@ -212,9 +213,13 @@ const overageRates: BillingOverage[] = [
   { metric: 'Bandwidth', overage: 0, rate: 0.10, cost: 0 }
 ];
 
-export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
+export default function ApiUsageQuota({ onBack, userId }: ApiUsageQuotaProps) {
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('month');
-  const [alerts, setAlerts] = useState(usageAlerts);
+  const [alerts, setAlerts] = useState<UsageAlert[]>([]);
+  const [metrics, setMetrics] = useState<UsageMetric[]>(usageMetrics);
+  const [dailyData, setDailyData] = useState<DailyUsage[]>(dailyUsage);
   const [showAlertSettings, setShowAlertSettings] = useState(false);
   const [alertThresholds, setAlertThresholds] = useState({
     warning: 75,
@@ -223,6 +228,136 @@ export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
     slackNotify: false,
     webhookNotify: true
   });
+
+  // Fetch data from API
+  const fetchData = useCallback(async (showRefresh = false) => {
+    if (!userId) return;
+
+    if (showRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const [alertsData, metricsData, dailyData, settingsData] = await Promise.all([
+        getUsageAlerts(userId),
+        getUsageMetrics(userId),
+        getDailyUsage(userId, 7),
+        getAlertSettings(userId),
+      ]);
+
+      // Transform alerts
+      setAlerts(alertsData.map(a => ({
+        id: a.id,
+        type: a.alert_type,
+        message: a.message,
+        metric: a.metric,
+        threshold: a.threshold || 0,
+        timestamp: a.created_at,
+        acknowledged: a.acknowledged,
+      })));
+
+      // Transform metrics
+      const transformedMetrics: UsageMetric[] = [
+        {
+          id: 'api-calls',
+          name: 'API Calls',
+          current: metricsData.apiCalls.current,
+          limit: metricsData.apiCalls.limit,
+          unit: 'calls',
+          icon: Zap,
+          color: 'from-blue-500 to-indigo-600',
+          trend: metricsData.apiCalls.trend,
+          resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
+        },
+        {
+          id: 'qr-codes',
+          name: 'QR Codes Created',
+          current: metricsData.qrCodes.current,
+          limit: metricsData.qrCodes.limit,
+          unit: 'codes',
+          icon: Package,
+          color: 'from-emerald-500 to-teal-600',
+          trend: metricsData.qrCodes.trend,
+          resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
+        },
+        {
+          id: 'bandwidth',
+          name: 'Bandwidth',
+          current: metricsData.bandwidth.current,
+          limit: metricsData.bandwidth.limit,
+          unit: 'GB',
+          icon: Globe,
+          color: 'from-purple-500 to-violet-600',
+          trend: metricsData.bandwidth.trend,
+          resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
+        },
+        {
+          id: 'storage',
+          name: 'Storage Used',
+          current: metricsData.storage.current,
+          limit: metricsData.storage.limit,
+          unit: 'GB',
+          icon: Database,
+          color: 'from-amber-500 to-orange-600',
+          trend: metricsData.storage.trend,
+          resetDate: 'N/A'
+        },
+        {
+          id: 'webhooks',
+          name: 'Webhook Calls',
+          current: metricsData.webhooks.current,
+          limit: metricsData.webhooks.limit,
+          unit: 'calls',
+          icon: Bell,
+          color: 'from-pink-500 to-rose-600',
+          trend: metricsData.webhooks.trend,
+          resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
+        },
+        {
+          id: 'analytics',
+          name: 'Analytics Queries',
+          current: metricsData.analytics.current,
+          limit: metricsData.analytics.limit,
+          unit: 'queries',
+          icon: BarChart3,
+          color: 'from-cyan-500 to-blue-600',
+          trend: metricsData.analytics.trend,
+          resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
+        }
+      ];
+      setMetrics(transformedMetrics);
+
+      // Transform daily usage
+      if (dailyData.length > 0) {
+        setDailyData(dailyData.map(d => ({
+          date: d.date,
+          apiCalls: d.api_calls,
+          qrCodes: d.qr_codes_created,
+          bandwidth: d.bandwidth_bytes / (1024 * 1024 * 1024) // Convert to GB
+        })));
+      }
+
+      // Update alert settings
+      if (settingsData) {
+        setAlertThresholds({
+          warning: settingsData.warning_threshold,
+          critical: settingsData.critical_threshold,
+          emailNotify: settingsData.email_notify,
+          slackNotify: settingsData.slack_notify,
+          webhookNotify: settingsData.webhook_notify,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching usage data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [userId]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Calculate usage percentage
   const getUsagePercentage = (current: number, limit: number) => {
@@ -244,10 +379,27 @@ export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
   };
 
   // Acknowledge alert
-  const acknowledgeAlert = (alertId: string) => {
+  const acknowledgeAlert = async (alertId: string) => {
+    if (userId) {
+      await acknowledgeAlertApi(alertId);
+    }
     setAlerts(alerts.map(a =>
       a.id === alertId ? { ...a, acknowledged: true } : a
     ));
+  };
+
+  // Save alert settings
+  const saveAlertSettings = async () => {
+    if (userId) {
+      await updateAlertSettings(userId, {
+        warning_threshold: alertThresholds.warning,
+        critical_threshold: alertThresholds.critical,
+        email_notify: alertThresholds.emailNotify,
+        slack_notify: alertThresholds.slackNotify,
+        webhook_notify: alertThresholds.webhookNotify,
+      });
+    }
+    setShowAlertSettings(false);
   };
 
   // Format number with commas
@@ -256,13 +408,14 @@ export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
   };
 
   // Days remaining in billing period
-  const daysRemaining = 4;
+  const daysRemaining = Math.max(0, new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate());
 
   // Calculate projected usage
   const getProjectedUsage = (current: number, limit: number) => {
-    const daysPassed = 28;
+    const daysPassed = new Date().getDate();
     const dailyAvg = current / daysPassed;
-    const projected = dailyAvg * 31;
+    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const projected = dailyAvg * daysInMonth;
     return Math.min(projected, limit * 1.5);
   };
 
@@ -370,7 +523,7 @@ export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
 
         {/* Usage Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {usageMetrics.map(metric => {
+          {metrics.map(metric => {
             const percentage = getUsagePercentage(metric.current, metric.limit);
             const projected = getProjectedUsage(metric.current, metric.limit);
             const projectedPercentage = (projected / metric.limit) * 100;
@@ -472,8 +625,8 @@ export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
 
             {/* Simple bar chart representation */}
             <div className="flex items-end justify-between h-48 gap-2">
-              {dailyUsage.map((day, i) => {
-                const maxCalls = Math.max(...dailyUsage.map(d => d.apiCalls));
+              {dailyData.map((day, i) => {
+                const maxCalls = Math.max(...dailyData.map(d => d.apiCalls));
                 const callsHeight = (day.apiCalls / maxCalls) * 100;
                 const qrHeight = (day.qrCodes / 50) * 100;
 
@@ -503,13 +656,13 @@ export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
               <div>
                 <div className="text-sm text-slate-400">Avg. Daily API Calls</div>
                 <div className="text-xl font-bold">
-                  {formatNumber(Math.round(dailyUsage.reduce((a, b) => a + b.apiCalls, 0) / dailyUsage.length))}
+                  {formatNumber(Math.round(dailyData.reduce((a, b) => a + b.apiCalls, 0) / dailyData.length))}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-slate-400">Avg. Daily QR Codes</div>
                 <div className="text-xl font-bold">
-                  {Math.round(dailyUsage.reduce((a, b) => a + b.qrCodes, 0) / dailyUsage.length)}
+                  {Math.round(dailyData.reduce((a, b) => a + b.qrCodes, 0) / dailyData.length)}
                 </div>
               </div>
               <div>
