@@ -37,8 +37,13 @@ import {
   XCircle,
   Info,
   Star,
-  ExternalLink
+  ExternalLink,
+  ArrowLeft
 } from 'lucide-react';
+
+interface TeamAccessControlProps {
+  onBack: () => void;
+}
 
 // Types
 interface TeamMember {
@@ -272,7 +277,7 @@ const permissionCategories = [
   }
 ];
 
-export default function TeamAccessControl() {
+export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
   const [activeTab, setActiveTab] = useState<'members' | 'roles' | 'invitations' | 'activity'>('members');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -366,6 +371,15 @@ export default function TeamAccessControl() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to API Dashboard
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
