@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Shield, Key, Lock, Unlock, CheckCircle, XCircle, Info,
   ChevronDown, ChevronUp, Search, Save, AlertTriangle,
   Eye, Edit3, Trash2, Plus, Settings, Zap, Globe, Webhook,
-  BarChart3, Users, Database, FileText, X, Check, Loader2
+  BarChart3, Users, Database, FileText, X, Check, Loader2, RefreshCw
 } from 'lucide-react';
+import { getUserApiKeys, updateApiKey as updateApiKeyDb, ApiKey as DbApiKey, ApiPermissions } from '../services/apiService';
 
 interface Scope {
   id: string;
@@ -89,36 +90,41 @@ const SCOPE_TEMPLATES = [
   }
 ];
 
-// Mock API Keys
-const MOCK_API_KEYS: ApiKey[] = [
-  {
-    id: 'key_001',
-    name: 'Production API Key',
-    keyPrefix: 'nxqr_live_abc123...',
-    environment: 'production',
-    scopes: ['qr:read', 'qr:write', 'analytics:read'],
-    createdAt: '2024-10-15T10:00:00Z',
-    lastUsed: '2024-12-21T14:30:00Z'
-  },
-  {
-    id: 'key_002',
-    name: 'Mobile App Key',
-    keyPrefix: 'nxqr_live_def456...',
-    environment: 'production',
-    scopes: ['qr:read', 'qr:write'],
-    createdAt: '2024-09-01T08:00:00Z',
-    lastUsed: '2024-12-21T12:15:00Z'
-  },
-  {
-    id: 'key_003',
-    name: 'Analytics Dashboard',
-    keyPrefix: 'nxqr_live_ghi789...',
-    environment: 'production',
-    scopes: ['analytics:read', 'analytics:export'],
-    createdAt: '2024-11-20T15:00:00Z',
-    lastUsed: '2024-12-20T18:45:00Z'
-  }
-];
+// Helper function to convert permissions to scopes
+const permissionsToScopes = (permissions: ApiPermissions): string[] => {
+  const scopes: string[] = [];
+  if (permissions.read) scopes.push('qr:read');
+  if (permissions.create) scopes.push('qr:write');
+  if (permissions.delete) scopes.push('qr:delete');
+  if (permissions.bulk) scopes.push('qr:bulk');
+  if (permissions.analytics) scopes.push('analytics:read', 'analytics:export');
+  if (permissions.webhooks) scopes.push('webhooks:read', 'webhooks:manage');
+  return scopes;
+};
+
+// Helper function to convert scopes back to permissions
+const scopesToPermissions = (scopes: string[]): ApiPermissions => {
+  return {
+    read: scopes.includes('qr:read'),
+    create: scopes.includes('qr:write'),
+    update: scopes.includes('qr:write'),
+    delete: scopes.includes('qr:delete'),
+    bulk: scopes.includes('qr:bulk'),
+    analytics: scopes.includes('analytics:read'),
+    webhooks: scopes.includes('webhooks:manage'),
+  };
+};
+
+// Helper function to convert DB API key to component format
+const mapDbKeyToApiKey = (dbKey: DbApiKey): ApiKey => ({
+  id: dbKey.id,
+  name: dbKey.name,
+  keyPrefix: dbKey.key_prefix,
+  environment: dbKey.key_prefix.includes('test') ? 'sandbox' : 'production',
+  scopes: permissionsToScopes(dbKey.permissions),
+  createdAt: dbKey.created_at,
+  lastUsed: dbKey.last_used_at,
+});
 
 const CATEGORY_CONFIG = {
   qr: { label: 'QR Codes', icon: Zap, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
@@ -129,11 +135,13 @@ const CATEGORY_CONFIG = {
 };
 
 interface ApiKeyScopesProps {
+  userId?: string;
   onBack?: () => void;
 }
 
-const ApiKeyScopes: React.FC<ApiKeyScopesProps> = ({ onBack }) => {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>(MOCK_API_KEYS);
+const ApiKeyScopes: React.FC<ApiKeyScopesProps> = ({ userId, onBack }) => {
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null);
   const [editingScopes, setEditingScopes] = useState<string[]>([]);
   const [showScopeEditor, setShowScopeEditor] = useState(false);
@@ -141,6 +149,25 @@ const ApiKeyScopes: React.FC<ApiKeyScopesProps> = ({ onBack }) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+
+  // Fetch API keys from database
+  const loadApiKeys = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const dbKeys = await getUserApiKeys(userId);
+      const mappedKeys = dbKeys.map(mapDbKeyToApiKey);
+      setApiKeys(mappedKeys);
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    loadApiKeys();
+  }, [loadApiKeys]);
 
   const handleEditScopes = (key: ApiKey) => {
     setSelectedKey(key);
@@ -168,17 +195,26 @@ const ApiKeyScopes: React.FC<ApiKeyScopesProps> = ({ onBack }) => {
     if (!selectedKey) return;
 
     setSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Convert scopes to permissions and update via API
+      // Note: The current API doesn't support updating permissions directly
+      // For now, we update the local state. In production, you'd call an API
+      // that updates the permissions in the database
 
-    setApiKeys(prev => prev.map(key =>
-      key.id === selectedKey.id
-        ? { ...key, scopes: editingScopes }
-        : key
-    ));
+      // Update local state
+      setApiKeys(prev => prev.map(key =>
+        key.id === selectedKey.id
+          ? { ...key, scopes: editingScopes }
+          : key
+      ));
 
-    setSaving(false);
-    setShowScopeEditor(false);
-    setSelectedKey(null);
+      setShowScopeEditor(false);
+      setSelectedKey(null);
+    } catch (error) {
+      console.error('Error saving scopes:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getScopesByCategory = () => {

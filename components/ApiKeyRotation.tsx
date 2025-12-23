@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   RefreshCw, Key, Shield, Clock, AlertTriangle, CheckCircle,
   Copy, Check, Eye, EyeOff, Calendar, ArrowRight, Info,
   Zap, Lock, Unlock, ChevronDown, ChevronUp, History,
   Settings, Bell, X, Loader2, RotateCcw, Timer
 } from 'lucide-react';
+import { getUserApiKeys, regenerateApiKey, ApiKey as DbApiKey, ApiPermissions } from '../services/apiService';
+import { logAuditEvent } from '../services/apiExtendedService';
 
 interface ApiKey {
   id: string;
@@ -36,118 +38,44 @@ interface RotationHistory {
   gracePeriodDays: number;
 }
 
-// Mock API Keys
-const MOCK_API_KEYS: ApiKey[] = [
-  {
-    id: 'key_001',
-    name: 'Production API Key',
-    keyPrefix: 'nxqr_live_abc123',
-    environment: 'production',
-    status: 'active',
-    createdAt: '2024-10-15T10:00:00Z',
-    lastUsed: '2024-12-21T14:30:00Z',
-    expiresAt: null,
-    rotationSchedule: '90days',
-    nextRotationAt: '2025-01-13T10:00:00Z',
-    previousKeyId: null,
-    gracePeriodEndsAt: null,
-    scopes: ['qr:read', 'qr:write', 'analytics:read'],
-    usageCount: 15420
-  },
-  {
-    id: 'key_002',
-    name: 'Mobile App Key',
-    keyPrefix: 'nxqr_live_def456',
-    environment: 'production',
-    status: 'rotating',
-    createdAt: '2024-09-01T08:00:00Z',
-    lastUsed: '2024-12-21T12:15:00Z',
-    expiresAt: null,
-    rotationSchedule: '30days',
-    nextRotationAt: null,
-    previousKeyId: 'key_old_002',
-    gracePeriodEndsAt: '2024-12-28T08:00:00Z',
-    scopes: ['qr:read', 'qr:write'],
-    usageCount: 8750
-  },
-  {
-    id: 'key_003',
-    name: 'Test Environment',
-    keyPrefix: 'nxqr_test_xyz789',
-    environment: 'sandbox',
-    status: 'active',
-    createdAt: '2024-11-20T15:00:00Z',
-    lastUsed: '2024-12-20T18:45:00Z',
-    expiresAt: null,
-    rotationSchedule: 'never',
-    nextRotationAt: null,
-    previousKeyId: null,
-    gracePeriodEndsAt: null,
-    scopes: ['qr:read', 'qr:write', 'analytics:read', 'webhooks:manage'],
-    usageCount: 2340
-  },
-  {
-    id: 'key_004',
-    name: 'Legacy Integration',
-    keyPrefix: 'nxqr_live_old999',
-    environment: 'production',
-    status: 'deprecated',
-    createdAt: '2024-06-01T10:00:00Z',
-    lastUsed: '2024-12-15T09:00:00Z',
-    expiresAt: '2024-12-31T23:59:59Z',
-    rotationSchedule: 'manual',
-    nextRotationAt: null,
-    previousKeyId: null,
-    gracePeriodEndsAt: null,
-    scopes: ['qr:read'],
-    usageCount: 45200
-  }
-];
+// Helper function to convert permissions to scopes
+const permissionsToScopes = (permissions: ApiPermissions): string[] => {
+  const scopes: string[] = [];
+  if (permissions.read) scopes.push('qr:read');
+  if (permissions.create) scopes.push('qr:write');
+  if (permissions.analytics) scopes.push('analytics:read');
+  if (permissions.webhooks) scopes.push('webhooks:manage');
+  if (permissions.bulk) scopes.push('bulk:operations');
+  return scopes;
+};
 
-// Mock Rotation History
-const MOCK_ROTATION_HISTORY: RotationHistory[] = [
-  {
-    id: 'rot_001',
-    keyId: 'key_002',
-    keyName: 'Mobile App Key',
-    rotatedAt: '2024-12-21T08:00:00Z',
-    rotatedBy: 'System (Scheduled)',
-    reason: 'Scheduled 30-day rotation',
-    oldKeyPrefix: 'nxqr_live_abc999',
-    newKeyPrefix: 'nxqr_live_def456',
-    gracePeriodDays: 7
-  },
-  {
-    id: 'rot_002',
-    keyId: 'key_001',
-    keyName: 'Production API Key',
-    rotatedAt: '2024-10-15T10:00:00Z',
-    rotatedBy: 'admin@company.com',
-    reason: 'Initial key creation',
-    oldKeyPrefix: '',
-    newKeyPrefix: 'nxqr_live_abc123',
-    gracePeriodDays: 0
-  },
-  {
-    id: 'rot_003',
-    keyId: 'key_004',
-    keyName: 'Legacy Integration',
-    rotatedAt: '2024-09-01T12:00:00Z',
-    rotatedBy: 'admin@company.com',
-    reason: 'Security audit recommendation',
-    oldKeyPrefix: 'nxqr_live_legacy1',
-    newKeyPrefix: 'nxqr_live_old999',
-    gracePeriodDays: 14
-  }
-];
+// Helper function to convert DB API key to component format
+const mapDbKeyToApiKey = (dbKey: DbApiKey): ApiKey => ({
+  id: dbKey.id,
+  name: dbKey.name,
+  keyPrefix: dbKey.key_prefix,
+  environment: dbKey.key_prefix.includes('test') ? 'sandbox' : 'production',
+  status: dbKey.is_active ? 'active' : 'deprecated',
+  createdAt: dbKey.created_at,
+  lastUsed: dbKey.last_used_at,
+  expiresAt: dbKey.expires_at,
+  rotationSchedule: 'manual', // Default, could be stored in DB
+  nextRotationAt: null,
+  previousKeyId: null,
+  gracePeriodEndsAt: null,
+  scopes: permissionsToScopes(dbKey.permissions),
+  usageCount: 0, // Would need to fetch from usage table
+});
 
 interface ApiKeyRotationProps {
+  userId?: string;
   onBack?: () => void;
 }
 
-const ApiKeyRotation: React.FC<ApiKeyRotationProps> = ({ onBack }) => {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>(MOCK_API_KEYS);
-  const [rotationHistory, setRotationHistory] = useState<RotationHistory[]>(MOCK_ROTATION_HISTORY);
+const ApiKeyRotation: React.FC<ApiKeyRotationProps> = ({ userId, onBack }) => {
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [rotationHistory, setRotationHistory] = useState<RotationHistory[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null);
   const [showRotateModal, setShowRotateModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -160,6 +88,25 @@ const ApiKeyRotation: React.FC<ApiKeyRotationProps> = ({ onBack }) => {
   const [rotationReason, setRotationReason] = useState('');
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
+  // Fetch API keys from database
+  const loadApiKeys = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const dbKeys = await getUserApiKeys(userId);
+      const mappedKeys = dbKeys.map(mapDbKeyToApiKey);
+      setApiKeys(mappedKeys);
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    loadApiKeys();
+  }, [loadApiKeys]);
+
   const copyToClipboard = (text: string, keyId: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(keyId);
@@ -167,51 +114,58 @@ const ApiKeyRotation: React.FC<ApiKeyRotationProps> = ({ onBack }) => {
   };
 
   const handleRotateKey = async (keyId: string) => {
+    if (!userId) return;
     setRotatingKeyId(keyId);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Get the old key for history
+      const oldKey = apiKeys.find(k => k.id === keyId);
 
-    // Generate new key
-    const newKeyFull = `nxqr_live_${Math.random().toString(36).substring(2, 14)}`;
-    const newKeyPrefix = newKeyFull.substring(0, 16) + '...';
+      // Call the real regenerate API key function
+      const result = await regenerateApiKey(keyId);
 
-    setApiKeys(prev => prev.map(key => {
-      if (key.id === keyId) {
-        return {
-          ...key,
-          keyPrefix: newKeyPrefix,
-          keyFull: newKeyFull,
-          status: 'rotating' as const,
-          previousKeyId: key.id,
-          gracePeriodEndsAt: new Date(Date.now() + gracePeriod * 24 * 60 * 60 * 1000).toISOString(),
-          createdAt: new Date().toISOString()
-        };
+      if (result) {
+        // Log the rotation audit event
+        await logAuditEvent(userId, {
+          actorType: 'user',
+          actorId: userId,
+          action: 'api_key.rotate',
+          resourceType: 'api_key',
+          resourceId: keyId,
+          resourceName: oldKey?.name,
+          status: 'success',
+          reason: rotationReason || 'Manual rotation',
+          metadata: { gracePeriod }
+        });
+
+        // Add to local history
+        if (oldKey) {
+          setRotationHistory(prev => [{
+            id: `rot_${Date.now()}`,
+            keyId: result.keyData.id,
+            keyName: oldKey.name,
+            rotatedAt: new Date().toISOString(),
+            rotatedBy: 'You',
+            reason: rotationReason || 'Manual rotation',
+            oldKeyPrefix: oldKey.keyPrefix,
+            newKeyPrefix: result.keyData.key_prefix,
+            gracePeriodDays: gracePeriod
+          }, ...prev]);
+        }
+
+        setNewKeyValue(result.key);
+        setShowNewKey(true);
+
+        // Reload the keys list
+        await loadApiKeys();
       }
-      return key;
-    }));
-
-    // Add to history
-    const oldKey = apiKeys.find(k => k.id === keyId);
-    if (oldKey) {
-      setRotationHistory(prev => [{
-        id: `rot_${Date.now()}`,
-        keyId,
-        keyName: oldKey.name,
-        rotatedAt: new Date().toISOString(),
-        rotatedBy: 'You',
-        reason: rotationReason || 'Manual rotation',
-        oldKeyPrefix: oldKey.keyPrefix,
-        newKeyPrefix: newKeyPrefix,
-        gracePeriodDays: gracePeriod
-      }, ...prev]);
+    } catch (error) {
+      console.error('Error rotating key:', error);
+    } finally {
+      setRotatingKeyId(null);
+      setShowRotateModal(false);
+      setRotationReason('');
     }
-
-    setNewKeyValue(newKeyFull);
-    setShowNewKey(true);
-    setRotatingKeyId(null);
-    setShowRotateModal(false);
-    setRotationReason('');
   };
 
   const handleUpdateSchedule = (keyId: string, schedule: ApiKey['rotationSchedule']) => {
@@ -318,7 +272,20 @@ const ApiKeyRotation: React.FC<ApiKeyRotationProps> = ({ onBack }) => {
 
         {/* API Keys List */}
         <div className="space-y-4">
-          {apiKeys.map((key) => (
+          {loading ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+              <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Loading API keys...</p>
+            </div>
+          ) : apiKeys.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Key className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No API Keys Yet</h3>
+              <p className="text-gray-500">Create an API key from the API Dashboard to start using key rotation.</p>
+            </div>
+          ) : apiKeys.map((key) => (
             <div
               key={key.id}
               className={`bg-white rounded-2xl shadow-sm border transition-all ${

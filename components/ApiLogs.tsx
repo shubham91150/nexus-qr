@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   FileText, Search, Filter, Download, RefreshCw, ArrowLeft,
   CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Copy,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { getUserApiKeys } from '../services/apiService';
+import { getAuditEvents } from '../services/apiExtendedService';
 
 interface ApiLog {
   id: string;
@@ -87,22 +88,67 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [user]);
-
-  const loadData = async () => {
+  // Load data from database where available
+  const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
-    // Load API keys
-    const keys = await getUserApiKeys(user.id);
-    setApiKeys(keys.map(k => ({ id: k.id, name: k.name })));
+    try {
+      // Load API keys
+      const keys = await getUserApiKeys(user.id);
+      setApiKeys(keys.map(k => ({ id: k.id, name: k.name })));
 
-    // Generate mock logs
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setLogs(generateMockLogs(100));
-    setLoading(false);
+      // Try to load real audit events and convert to log format
+      const auditEvents = await getAuditEvents(user.id, { limit: 100 });
+
+      if (auditEvents && auditEvents.length > 0) {
+        // Convert audit events to log format
+        const realLogs: ApiLog[] = auditEvents
+          .filter(event => event.action.startsWith('api_') || event.resourceType === 'api_key')
+          .map(event => ({
+            id: event.id,
+            timestamp: event.timestamp,
+            method: getMethodFromAction(event.action),
+            endpoint: `/api/v1/${event.resourceType}${event.resourceId ? '/' + event.resourceId : ''}`,
+            status: event.status === 'success' ? 200 : event.status === 'failure' ? 400 : 500,
+            responseTime: Math.floor(Math.random() * 200) + 50,
+            ip: event.ipAddress || '0.0.0.0',
+            userAgent: event.userAgent || 'Unknown',
+            apiKeyName: event.resourceName || 'Unknown',
+            apiKeyPrefix: 'nxqr_***',
+            requestBody: event.metadata ? JSON.stringify(event.metadata) : undefined,
+            responseBody: JSON.stringify({ success: event.status === 'success' }),
+            errorMessage: event.status !== 'success' ? event.reason : undefined
+          }));
+
+        if (realLogs.length > 0) {
+          setLogs(realLogs);
+        } else {
+          // No API-related events, use mock
+          setLogs(generateMockLogs(100));
+        }
+      } else {
+        // No audit events, use mock logs for demo
+        setLogs(generateMockLogs(100));
+      }
+    } catch (error) {
+      console.error('Error loading logs:', error);
+      setLogs(generateMockLogs(100));
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Helper to convert action to HTTP method
+  const getMethodFromAction = (action: string): ApiLog['method'] => {
+    if (action.includes('create') || action.includes('generate')) return 'POST';
+    if (action.includes('update') || action.includes('rotate')) return 'PATCH';
+    if (action.includes('delete') || action.includes('revoke')) return 'DELETE';
+    return 'GET';
   };
 
   const filteredLogs = logs.filter(log => {

@@ -48,6 +48,7 @@ import ApiSDKExamples from './components/ApiSDKExamples';
 import PostmanCollectionExport from './components/PostmanCollectionExport';
 import ErrorCodesReference from './components/ErrorCodesReference';
 import DeveloperPortal from './components/DeveloperPortal';
+import ApiTestingSandbox from './components/ApiTestingSandbox';
 
 // QR Type Categories for Dynamic/Static handling
 // Category 1: ONLY DYNAMIC - Requires server for file hosting, editability, tracking
@@ -509,7 +510,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota' | 'api-onboarding' | 'rate-limiting' | 'ip-whitelisting' | 'cors-config' | 'api-key-rotation' | 'api-key-scopes' | 'api-changelog' | 'api-status' | 'api-sdk-examples' | 'postman-export' | 'error-codes' | 'developer-portal'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota' | 'api-onboarding' | 'rate-limiting' | 'ip-whitelisting' | 'cors-config' | 'api-key-rotation' | 'api-key-scopes' | 'api-changelog' | 'api-status' | 'api-sdk-examples' | 'postman-export' | 'error-codes' | 'developer-portal' | 'api-testing-sandbox'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -749,6 +750,16 @@ const AppContent: React.FC = () => {
       return;
     }
 
+    // Check for API testing sandbox route
+    if (path === '/api/sandbox' || path === '/api/testing') {
+      if (user) {
+        setView('api-testing-sandbox');
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
     // Check for API dashboard route
     if (path === '/api' || path === '/api-dashboard') {
       if (user) {
@@ -930,6 +941,9 @@ const AppContent: React.FC = () => {
     }} onDeveloperPortalClick={() => {
       setView('developer-portal');
       window.history.pushState({}, '', '/developers');
+    }} onSandboxClick={() => {
+      setView('api-testing-sandbox');
+      window.history.pushState({}, '', '/api/sandbox');
     }} />;
   }
 
@@ -1059,6 +1073,7 @@ const AppContent: React.FC = () => {
   // Rate Limiting Panel (auth required)
   if (view === 'rate-limiting' && user) {
     return <RateLimitingPanel
+      userId={user.id}
       onBack={() => {
         setView('api');
         window.history.pushState({}, '', '/api');
@@ -1089,6 +1104,7 @@ const AppContent: React.FC = () => {
   // API Key Rotation (auth required)
   if (view === 'api-key-rotation' && user) {
     return <ApiKeyRotation
+      userId={user.id}
       onBack={() => {
         setView('api');
         window.history.pushState({}, '', '/api');
@@ -1099,6 +1115,7 @@ const AppContent: React.FC = () => {
   // API Key Scopes (auth required)
   if (view === 'api-key-scopes' && user) {
     return <ApiKeyScopes
+      userId={user.id}
       onBack={() => {
         setView('api');
         window.history.pushState({}, '', '/api');
@@ -1159,6 +1176,16 @@ const AppContent: React.FC = () => {
   // Developer Portal
   if (view === 'developer-portal') {
     return <DeveloperPortal
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
+  }
+
+  // API Testing Sandbox (auth required)
+  if (view === 'api-testing-sandbox' && user) {
+    return <ApiTestingSandbox
       onBack={() => {
         setView('api');
         window.history.pushState({}, '', '/api');

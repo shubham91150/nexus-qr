@@ -43,8 +43,13 @@ import {
   Hash,
   Type,
   ToggleLeft,
-  List
+  List,
+  ArrowLeft
 } from 'lucide-react';
+
+interface ApiTestingSandboxProps {
+  onBack?: () => void;
+}
 
 // Types
 interface Header {
@@ -222,7 +227,7 @@ const generateMockResponse = (method: string, endpoint: string): { status: numbe
   };
 };
 
-export default function ApiTestingSandbox() {
+export default function ApiTestingSandbox({ onBack }: ApiTestingSandboxProps) {
   // Request state
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [endpoint, setEndpoint] = useState('/qr-codes');
@@ -442,8 +447,17 @@ echo $response;`;
       <div className="flex h-screen">
         {/* Sidebar */}
         <div className="w-72 bg-slate-800/50 border-r border-slate-700 flex flex-col">
-          {/* Logo & Title */}
+          {/* Back Button & Logo */}
           <div className="p-4 border-b border-slate-700">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm">Back to Dashboard</span>
+              </button>
+            )}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <Terminal className="w-5 h-5 text-white" />
