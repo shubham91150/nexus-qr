@@ -153,6 +153,7 @@ interface ApiDashboardProps {
   onPostmanExportClick?: () => void;
   onErrorCodesClick?: () => void;
   onDeveloperPortalClick?: () => void;
+  onSandboxClick?: () => void;
 }
 
 const ApiDashboard: React.FC<ApiDashboardProps> = ({
@@ -161,7 +162,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
   onDomainsClick, onAuditClick, onUsageQuotaClick, onOnboardingClick,
   onRateLimitingClick, onIpWhitelistClick, onCorsConfigClick, onKeyRotationClick,
   onKeyScopesClick, onChangelogClick, onStatusPageClick, onSdkExamplesClick,
-  onPostmanExportClick, onErrorCodesClick, onDeveloperPortalClick
+  onPostmanExportClick, onErrorCodesClick, onDeveloperPortalClick, onSandboxClick
 }) => {
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -498,6 +499,26 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors" />
           </div>
         </button>
+
+        {onSandboxClick && (
+          <button
+            onClick={onSandboxClick}
+            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
+                <Terminal className="w-6 h-6 text-cyan-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
+                  API Sandbox
+                </h3>
+                <p className="text-sm text-gray-500">Interactive testing</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-cyan-600 transition-colors" />
+            </div>
+          </button>
+        )}
 
         <button
           onClick={onAnalyticsClick}
