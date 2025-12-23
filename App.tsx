@@ -876,18 +876,24 @@ const AppContent: React.FC = () => {
 
   // API Audit Trail (auth required)
   if (view === 'api-audit' && user) {
-    return <ApiAuditTrail onBack={() => {
-      setView('api');
-      window.history.pushState({}, '', '/api');
-    }} />;
+    return <ApiAuditTrail
+      userId={user.id}
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
   }
 
   // API Usage Quota (auth required)
   if (view === 'api-usage-quota' && user) {
-    return <ApiUsageQuota onBack={() => {
-      setView('api');
-      window.history.pushState({}, '', '/api');
-    }} />;
+    return <ApiUsageQuota
+      userId={user.id}
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
   }
 
   // API Onboarding Wizard (auth required)
