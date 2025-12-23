@@ -33,8 +33,13 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Circle,
-  MoreVertical
+  MoreVertical,
+  ArrowLeft
 } from 'lucide-react';
+
+interface ApiPerformanceMonitorProps {
+  onBack: () => void;
+}
 
 // Types
 interface PerformanceMetric {
@@ -173,7 +178,7 @@ const methodColors: Record<string, string> = {
   DELETE: 'bg-red-500'
 };
 
-export default function ApiPerformanceMonitor() {
+export default function ApiPerformanceMonitor({ onBack }: ApiPerformanceMonitorProps) {
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h' | '7d'>('24h');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -279,6 +284,15 @@ export default function ApiPerformanceMonitor() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to API Dashboard
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

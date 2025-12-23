@@ -26,8 +26,13 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  ArrowLeft
 } from 'lucide-react';
+
+interface WebhookSignatureVerificationProps {
+  onBack: () => void;
+}
 
 // Types
 interface WebhookSecret {
@@ -76,7 +81,7 @@ const verificationLogs: VerificationLog[] = [
   { id: 'log-4', webhookId: 'whsec_2', timestamp: '2024-01-28T15:30:00Z', status: 'expired', signatureReceived: 'sha256=ghi...', signatureExpected: 'sha256=ghi...', payload: '{"event":"webhook.test"}' }
 ];
 
-export default function WebhookSignatureVerification() {
+export default function WebhookSignatureVerification({ onBack }: WebhookSignatureVerificationProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'secrets' | 'logs' | 'test'>('overview');
   const [selectedLanguage, setSelectedLanguage] = useState<'nodejs' | 'python' | 'php' | 'go' | 'ruby'>('nodejs');
   const [showSecret, setShowSecret] = useState<string | null>(null);
@@ -410,6 +415,15 @@ end`;
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
       <div className="max-w-6xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Webhooks
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

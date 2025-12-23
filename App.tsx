@@ -503,9 +503,8 @@ const AppContent: React.FC = () => {
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
 
-  // Handle URL-based routing for redirect
-  useEffect(() => {
-    const path = window.location.pathname;
+  // Route handler function - reusable for both initial load and popstate
+  const handleRouteChange = (path: string) => {
 
     // Check for business card landing page route
     if (path.startsWith('/card/')) {
@@ -666,7 +665,28 @@ const AppContent: React.FC = () => {
       } else {
         setShowAuthModal(true);
       }
+      return;
     }
+
+    // Default to generator for root or unknown paths
+    if (path === '/' || path === '') {
+      setView('generator');
+    }
+  };
+
+  // Handle URL-based routing on initial load and user change
+  useEffect(() => {
+    handleRouteChange(window.location.pathname);
+  }, [user]);
+
+  // Handle browser back/forward button
+  useEffect(() => {
+    const handlePopState = () => {
+      handleRouteChange(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [user]);
 
   const handleDashboardClick = () => {

@@ -34,8 +34,13 @@ import {
   FileText,
   Mail,
   Smartphone,
-  ExternalLink
+  ExternalLink,
+  ArrowLeft
 } from 'lucide-react';
+
+interface ApiUsageQuotaProps {
+  onBack: () => void;
+}
 
 // Types
 interface UsageMetric {
@@ -207,7 +212,7 @@ const overageRates: BillingOverage[] = [
   { metric: 'Bandwidth', overage: 0, rate: 0.10, cost: 0 }
 ];
 
-export default function ApiUsageQuota() {
+export default function ApiUsageQuota({ onBack }: ApiUsageQuotaProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('month');
   const [alerts, setAlerts] = useState(usageAlerts);
   const [showAlertSettings, setShowAlertSettings] = useState(false);
@@ -264,6 +269,15 @@ export default function ApiUsageQuota() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to API Dashboard
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

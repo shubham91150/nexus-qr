@@ -39,8 +39,13 @@ import {
   Copy,
   Check,
   ArrowUpRight,
-  ExternalLink
+  ExternalLink,
+  ArrowLeft
 } from 'lucide-react';
+
+interface ApiAuditTrailProps {
+  onBack: () => void;
+}
 
 // Types
 interface AuditEvent {
@@ -219,7 +224,7 @@ const getActionColor = (action: string, status: string): string => {
   return 'bg-slate-500/20 text-slate-400';
 };
 
-export default function ApiAuditTrail() {
+export default function ApiAuditTrail({ onBack }: ApiAuditTrailProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -285,6 +290,15 @@ export default function ApiAuditTrail() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to API Dashboard
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
