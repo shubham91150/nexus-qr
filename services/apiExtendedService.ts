@@ -828,3 +828,122 @@ export async function setPrimaryDomain(userId: string, domainId: string): Promis
     return false;
   }
 }
+
+// =====================================================
+// Webhook Functions
+// =====================================================
+
+export interface WebhookSecret {
+  id: string;
+  name: string;
+  prefix: string;
+  created_at: string;
+  last_used: string | null;
+  status: 'active' | 'rotated';
+}
+
+export interface WebhookVerificationLog {
+  id: string;
+  webhook_id: string;
+  timestamp: string;
+  status: 'valid' | 'invalid' | 'expired' | 'missing';
+  signature_received: string;
+  signature_expected: string;
+  payload: string;
+}
+
+/**
+ * Get webhook secrets for a user
+ */
+export async function getWebhookSecrets(userId: string): Promise<WebhookSecret[]> {
+  try {
+    const { data, error } = await supabase
+      .from('api_webhooks')
+      .select('id, name, secret, created_at, last_triggered_at, is_active')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Transform data to match WebhookSecret interface
+    return (data || []).map(webhook => ({
+      id: webhook.id,
+      name: webhook.name,
+      prefix: webhook.secret ? `whsec_${webhook.secret.substring(0, 8)}...` : 'whsec_...',
+      created_at: webhook.created_at,
+      last_used: webhook.last_triggered_at,
+      status: webhook.is_active ? 'active' as const : 'rotated' as const,
+    }));
+  } catch (error) {
+    console.error('Error fetching webhook secrets:', error);
+    return [];
+  }
+}
+
+/**
+ * Get webhook verification logs
+ */
+export async function getWebhookVerificationLogs(userId: string, limit: number = 20): Promise<WebhookVerificationLog[]> {
+  try {
+    // Get webhook IDs for this user
+    const { data: webhooks, error: webhookError } = await supabase
+      .from('api_webhooks')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (webhookError) throw webhookError;
+    if (!webhooks || webhooks.length === 0) return [];
+
+    const webhookIds = webhooks.map(w => w.id);
+
+    // Get delivery logs for these webhooks
+    const { data, error } = await supabase
+      .from('webhook_deliveries')
+      .select('*')
+      .in('webhook_id', webhookIds)
+      .order('delivered_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    // Transform data to match WebhookVerificationLog interface
+    return (data || []).map(log => ({
+      id: log.id,
+      webhook_id: log.webhook_id,
+      timestamp: log.delivered_at,
+      status: log.success ? 'valid' as const :
+              log.response_status === 401 ? 'invalid' as const :
+              log.response_status === 408 ? 'expired' as const : 'missing' as const,
+      signature_received: 'sha256=...',
+      signature_expected: 'sha256=...',
+      payload: typeof log.payload === 'string' ? log.payload : JSON.stringify(log.payload),
+    }));
+  } catch (error) {
+    console.error('Error fetching webhook verification logs:', error);
+    return [];
+  }
+}
+
+/**
+ * Rotate webhook secret
+ */
+export async function rotateWebhookSecret(webhookId: string): Promise<string | null> {
+  try {
+    // Generate a new secret
+    const randomBytes = crypto.getRandomValues(new Uint8Array(32));
+    const newSecret = Array.from(randomBytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    const { error } = await supabase
+      .from('api_webhooks')
+      .update({ secret: newSecret })
+      .eq('id', webhookId);
+
+    if (error) throw error;
+    return newSecret;
+  } catch (error) {
+    console.error('Error rotating webhook secret:', error);
+    return null;
+  }
+}

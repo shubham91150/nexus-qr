@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Globe,
   Plus,
   Check,
   X,
-  ChevronDown,
   ChevronRight,
+  ChevronDown,
   Copy,
   ExternalLink,
   Shield,
@@ -18,22 +18,26 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Settings,
   Trash2,
-  Edit2,
-  Eye,
   Server,
   Link,
-  Zap,
-  FileText,
+  ArrowLeft,
   Info,
   HelpCircle,
-  ArrowRight,
-  ArrowLeft
+  Zap
 } from 'lucide-react';
+import {
+  getCustomDomains,
+  addCustomDomain,
+  deleteCustomDomain,
+  verifyDomainDns,
+  setPrimaryDomain,
+  CustomDomain as ApiCustomDomain
+} from '../services/apiExtendedService';
 
 interface CustomDomainConfigProps {
   onBack: () => void;
+  userId?: string;
 }
 
 // Types
@@ -57,47 +61,46 @@ interface DNSRecord {
   ttl?: string;
 }
 
-// Mock data
-const customDomains: CustomDomain[] = [
-  {
-    id: 'domain-1',
-    domain: 'qr.mycompany.com',
-    status: 'active',
-    sslStatus: 'active',
-    sslExpiry: '2025-06-15',
-    isPrimary: true,
-    dnsVerified: true,
-    createdAt: '2023-08-15T10:00:00Z',
-    totalRedirects: 45892
-  },
-  {
-    id: 'domain-2',
-    domain: 'links.mycompany.com',
-    status: 'active',
-    sslStatus: 'active',
-    sslExpiry: '2025-04-20',
-    isPrimary: false,
-    dnsVerified: true,
-    createdAt: '2023-10-20T14:30:00Z',
-    totalRedirects: 12456
-  },
-  {
-    id: 'domain-3',
-    domain: 'scan.newbrand.io',
-    status: 'pending',
-    sslStatus: 'pending',
-    isPrimary: false,
-    dnsVerified: false,
-    createdAt: '2024-01-25T09:00:00Z',
-    totalRedirects: 0
-  }
-];
+// Note: Mock data removed - component now fetches real data from Supabase
 
-export default function CustomDomainConfig({ onBack }: CustomDomainConfigProps) {
-  const [domains, setDomains] = useState(customDomains);
+export default function CustomDomainConfig({ onBack, userId }: CustomDomainConfigProps) {
+  const [loading, setLoading] = useState(true);
+  const [domains, setDomains] = useState<CustomDomain[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<CustomDomain | null>(null);
   const [newDomain, setNewDomain] = useState('');
+
+  // Fetch domains
+  const fetchData = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await getCustomDomains(userId);
+      const transformedDomains: CustomDomain[] = data.map(d => ({
+        id: d.id,
+        domain: d.domain,
+        status: d.status,
+        sslStatus: d.ssl_status,
+        sslExpiry: d.ssl_expiry || undefined,
+        isPrimary: d.is_primary,
+        dnsVerified: d.dns_verified,
+        createdAt: d.created_at,
+        totalRedirects: d.total_redirects
+      }));
+      setDomains(transformedDomains);
+    } catch (error) {
+      console.error('Error fetching domains:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
   const [isAdding, setIsAdding] = useState(false);
   const [isVerifying, setIsVerifying] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -146,62 +149,88 @@ export default function CustomDomainConfig({ onBack }: CustomDomainConfigProps) 
 
   // Add domain
   const handleAddDomain = async () => {
-    if (!newDomain) return;
+    if (!newDomain || !userId) return;
 
     setIsAdding(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const newDomainObj: CustomDomain = {
-      id: `domain-${Date.now()}`,
-      domain: newDomain,
-      status: 'pending',
-      sslStatus: 'none',
-      isPrimary: false,
-      dnsVerified: false,
-      createdAt: new Date().toISOString(),
-      totalRedirects: 0
-    };
-
-    setDomains([...domains, newDomainObj]);
-    setNewDomain('');
-    setShowAddModal(false);
-    setIsAdding(false);
-    setExpandedDomain(newDomainObj.id);
+    try {
+      const result = await addCustomDomain(userId, newDomain);
+      if (result) {
+        const newDomainObj: CustomDomain = {
+          id: result.id,
+          domain: result.domain,
+          status: result.status,
+          sslStatus: result.ssl_status,
+          sslExpiry: result.ssl_expiry || undefined,
+          isPrimary: result.is_primary,
+          dnsVerified: result.dns_verified,
+          createdAt: result.created_at,
+          totalRedirects: result.total_redirects
+        };
+        setDomains([...domains, newDomainObj]);
+        setExpandedDomain(newDomainObj.id);
+      }
+      setNewDomain('');
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Error adding domain:', error);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   // Verify DNS
   const verifyDNS = async (domainId: string) => {
     setIsVerifying(domainId);
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    setDomains(domains.map(d => {
-      if (d.id === domainId) {
-        return {
-          ...d,
-          dnsVerified: true,
-          status: 'active',
-          sslStatus: 'active',
-          sslExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        };
+    try {
+      const result = await verifyDomainDns(domainId);
+      if (result.verified) {
+        setDomains(domains.map(d => {
+          if (d.id === domainId) {
+            return {
+              ...d,
+              dnsVerified: true,
+              status: 'active' as const,
+              sslStatus: 'active' as const,
+              sslExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            };
+          }
+          return d;
+        }));
       }
-      return d;
-    }));
-
-    setIsVerifying(null);
+    } catch (error) {
+      console.error('Error verifying DNS:', error);
+    } finally {
+      setIsVerifying(null);
+    }
   };
 
   // Set as primary
-  const setPrimary = (domainId: string) => {
-    setDomains(domains.map(d => ({
-      ...d,
-      isPrimary: d.id === domainId
-    })));
+  const handleSetPrimary = async (domainId: string) => {
+    if (!userId) return;
+    try {
+      const success = await setPrimaryDomain(userId, domainId);
+      if (success) {
+        setDomains(domains.map(d => ({
+          ...d,
+          isPrimary: d.id === domainId
+        })));
+      }
+    } catch (error) {
+      console.error('Error setting primary domain:', error);
+    }
   };
 
   // Delete domain
-  const deleteDomain = (domainId: string) => {
-    setDomains(domains.filter(d => d.id !== domainId));
-    setSelectedDomain(null);
+  const handleDeleteDomain = async (domainId: string) => {
+    try {
+      const success = await deleteCustomDomain(domainId);
+      if (success) {
+        setDomains(domains.filter(d => d.id !== domainId));
+        setSelectedDomain(null);
+      }
+    } catch (error) {
+      console.error('Error deleting domain:', error);
+    }
   };
 
   return (
@@ -476,7 +505,7 @@ export default function CustomDomainConfig({ onBack }: CustomDomainConfigProps) 
                       <div className="flex items-center gap-2">
                         {!domain.isPrimary && domain.status === 'active' && (
                           <button
-                            onClick={() => setPrimary(domain.id)}
+                            onClick={() => handleSetPrimary(domain.id)}
                             className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm flex items-center gap-2 transition-colors"
                           >
                             <Zap className="w-4 h-4" />
@@ -496,7 +525,7 @@ export default function CustomDomainConfig({ onBack }: CustomDomainConfigProps) 
 
                       {!domain.isPrimary && (
                         <button
-                          onClick={() => deleteDomain(domain.id)}
+                          onClick={() => handleDeleteDomain(domain.id)}
                           className="px-3 py-1.5 text-red-400 hover:bg-red-500/20 rounded-lg text-sm flex items-center gap-2 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />

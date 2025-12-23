@@ -1,48 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   UserPlus,
   Shield,
   Key,
   Mail,
-  MoreVertical,
   Check,
   X,
   Search,
-  Filter,
-  ChevronDown,
   Edit2,
   Trash2,
   Copy,
   Eye,
-  EyeOff,
   Clock,
   Activity,
-  AlertCircle,
-  Lock,
-  Unlock,
-  Settings,
   UserCheck,
   UserX,
   Crown,
-  Building,
   Globe,
   Zap,
   RefreshCw,
-  Download,
   Send,
-  CheckCircle2,
-  XCircle,
-  Info,
-  Star,
-  ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
+import {
+  getTeamMembers,
+  inviteTeamMember,
+  updateTeamMember,
+  removeTeamMember,
+  TeamMember as ApiTeamMember
+} from '../services/apiExtendedService';
 
 interface TeamAccessControlProps {
   onBack: () => void;
+  userId?: string;
 }
 
 // Types
@@ -90,82 +84,9 @@ interface ActivityLog {
   ipAddress: string;
 }
 
-// Mock data
-const teamMembers: TeamMember[] = [
-  {
-    id: 'user-1',
-    name: 'John Smith',
-    email: 'john@company.com',
-    role: 'owner',
-    status: 'active',
-    apiKeys: 3,
-    lastActive: '2024-01-28T15:30:00Z',
-    joinedAt: '2023-01-15T10:00:00Z',
-    mfaEnabled: true,
-    permissions: ['*']
-  },
-  {
-    id: 'user-2',
-    name: 'Sarah Johnson',
-    email: 'sarah@company.com',
-    role: 'admin',
-    status: 'active',
-    apiKeys: 2,
-    lastActive: '2024-01-28T14:45:00Z',
-    joinedAt: '2023-03-20T09:00:00Z',
-    mfaEnabled: true,
-    permissions: ['qr:*', 'analytics:*', 'webhooks:*', 'team:read']
-  },
-  {
-    id: 'user-3',
-    name: 'Mike Chen',
-    email: 'mike@company.com',
-    role: 'developer',
-    status: 'active',
-    apiKeys: 1,
-    lastActive: '2024-01-28T12:00:00Z',
-    joinedAt: '2023-06-10T11:30:00Z',
-    mfaEnabled: false,
-    permissions: ['qr:create', 'qr:read', 'analytics:read']
-  },
-  {
-    id: 'user-4',
-    name: 'Emily Davis',
-    email: 'emily@company.com',
-    role: 'viewer',
-    status: 'active',
-    apiKeys: 0,
-    lastActive: '2024-01-27T16:20:00Z',
-    joinedAt: '2023-09-05T14:00:00Z',
-    mfaEnabled: false,
-    permissions: ['qr:read', 'analytics:read']
-  },
-  {
-    id: 'user-5',
-    name: 'Alex Turner',
-    email: 'alex@company.com',
-    role: 'developer',
-    status: 'pending',
-    apiKeys: 0,
-    lastActive: '',
-    joinedAt: '2024-01-25T10:00:00Z',
-    mfaEnabled: false,
-    permissions: ['qr:create', 'qr:read']
-  },
-  {
-    id: 'user-6',
-    name: 'Lisa Wong',
-    email: 'lisa@company.com',
-    role: 'developer',
-    status: 'suspended',
-    apiKeys: 1,
-    lastActive: '2024-01-15T09:00:00Z',
-    joinedAt: '2023-08-12T08:30:00Z',
-    mfaEnabled: true,
-    permissions: ['qr:*', 'analytics:read']
-  }
-];
+// Note: Mock teamMembers data removed - component now fetches real data from Supabase
 
+// Role definitions (static constants for UI display)
 const roles: Role[] = [
   {
     id: 'owner',
@@ -277,7 +198,9 @@ const permissionCategories = [
   }
 ];
 
-export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
+export default function TeamAccessControl({ onBack, userId }: TeamAccessControlProps) {
+  const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [activeTab, setActiveTab] = useState<'members' | 'roles' | 'invitations' | 'activity'>('members');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -294,6 +217,40 @@ export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
     message: ''
   });
 
+  // Fetch team members
+  const fetchData = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await getTeamMembers(userId);
+      const transformedMembers: TeamMember[] = data.map(m => ({
+        id: m.id,
+        name: m.name || 'Unknown',
+        email: m.email,
+        role: m.role,
+        status: m.status,
+        apiKeys: m.api_keys_count,
+        lastActive: m.last_active_at || '',
+        joinedAt: m.joined_at,
+        mfaEnabled: m.mfa_enabled,
+        permissions: Array.isArray(m.permissions) ? m.permissions : []
+      }));
+      setMembers(transformedMembers);
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   // Copy to clipboard
   const copyToClipboard = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
@@ -302,7 +259,7 @@ export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
   };
 
   // Filter members
-  const filteredMembers = teamMembers.filter(member => {
+  const filteredMembers = members.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || member.role === roleFilter;
@@ -362,10 +319,22 @@ export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
   };
 
   // Send invite
-  const handleSendInvite = () => {
-    console.log('Sending invite:', inviteForm);
-    setShowInviteModal(false);
-    setInviteForm({ email: '', role: 'developer', message: '' });
+  const handleSendInvite = async () => {
+    if (!userId || !inviteForm.email) return;
+
+    try {
+      await inviteTeamMember(
+        userId,
+        inviteForm.email,
+        inviteForm.role as 'admin' | 'developer' | 'viewer',
+        userId
+      );
+      setShowInviteModal(false);
+      setInviteForm({ email: '', role: 'developer', message: '' });
+      fetchData(); // Refresh the list
+    } catch (error) {
+      console.error('Error sending invite:', error);
+    }
   };
 
   return (
@@ -409,7 +378,7 @@ export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
                 <Users className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{teamMembers.length}</div>
+                <div className="text-2xl font-bold">{members.length}</div>
                 <div className="text-sm text-slate-400">Team Members</div>
               </div>
             </div>
@@ -420,7 +389,7 @@ export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
                 <UserCheck className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{teamMembers.filter(m => m.status === 'active').length}</div>
+                <div className="text-2xl font-bold">{members.filter(m => m.status === 'active').length}</div>
                 <div className="text-sm text-slate-400">Active</div>
               </div>
             </div>
@@ -442,7 +411,7 @@ export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
                 <Key className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{teamMembers.reduce((a, b) => a + b.apiKeys, 0)}</div>
+                <div className="text-2xl font-bold">{members.reduce((a, b) => a + b.apiKeys, 0)}</div>
                 <div className="text-sm text-slate-400">API Keys</div>
               </div>
             </div>
@@ -452,7 +421,7 @@ export default function TeamAccessControl({ onBack }: TeamAccessControlProps) {
         {/* Tabs */}
         <div className="flex gap-1 border-b border-slate-700 mb-6">
           {[
-            { id: 'members', label: 'Members', icon: Users, count: teamMembers.length },
+            { id: 'members', label: 'Members', icon: Users, count: members.length },
             { id: 'roles', label: 'Roles', icon: Shield, count: roles.length },
             { id: 'invitations', label: 'Invitations', icon: Mail, count: invitations.filter(i => i.status === 'pending').length },
             { id: 'activity', label: 'Activity', icon: Activity }
