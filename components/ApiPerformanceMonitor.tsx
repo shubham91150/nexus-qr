@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity,
   Zap,
@@ -15,30 +15,28 @@ import {
   Database,
   RefreshCw,
   BarChart3,
-  LineChart,
-  PieChart,
-  Filter,
   Download,
-  Settings,
-  Bell,
-  ChevronDown,
-  ChevronRight,
-  Info,
-  Cpu,
-  HardDrive,
-  Wifi,
   Timer,
   Target,
   Gauge,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowLeft,
+  Loader2,
   Circle,
-  MoreVertical,
-  ArrowLeft
+  Cpu,
+  HardDrive,
+  Wifi
 } from 'lucide-react';
+import {
+  getPerformanceMetrics,
+  getEndpointPerformance,
+  getApiErrors
+} from '../services/apiExtendedService';
 
 interface ApiPerformanceMonitorProps {
   onBack: () => void;
+  userId?: string;
 }
 
 // Types
@@ -178,7 +176,8 @@ const methodColors: Record<string, string> = {
   DELETE: 'bg-red-500'
 };
 
-export default function ApiPerformanceMonitor({ onBack }: ApiPerformanceMonitorProps) {
+export default function ApiPerformanceMonitor({ onBack, userId }: ApiPerformanceMonitorProps) {
+  const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h' | '7d'>('24h');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -186,8 +185,50 @@ export default function ApiPerformanceMonitor({ onBack }: ApiPerformanceMonitorP
   const [latencyData, setLatencyData] = useState<TimeSeriesPoint[]>([]);
   const [throughputData, setThroughputData] = useState<TimeSeriesPoint[]>([]);
   const [errorData, setErrorData] = useState<TimeSeriesPoint[]>([]);
+  const [endpoints, setEndpoints] = useState<EndpointMetric[]>(endpointMetrics);
+  const [errors, setErrors] = useState<ErrorEntry[]>(recentErrors);
 
-  // Generate initial data
+  // Fetch real data
+  const fetchData = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [endpointData, errorData] = await Promise.all([
+        getEndpointPerformance(userId),
+        getApiErrors(userId, 10)
+      ]);
+
+      if (endpointData.length > 0) {
+        setEndpoints(endpointData);
+      }
+
+      if (errorData.length > 0) {
+        setErrors(errorData.map(e => ({
+          id: e.id,
+          endpoint: e.endpoint,
+          statusCode: e.status_code,
+          message: e.error_message || 'Unknown error',
+          count: e.error_count,
+          lastOccurred: e.last_occurred,
+          trend: e.trend
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching performance data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Generate chart data based on time range
   useEffect(() => {
     const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : timeRange === '24h' ? 24 : 168;
     setLatencyData(generateTimeSeriesData(hours, 145, 60));
@@ -200,10 +241,10 @@ export default function ApiPerformanceMonitor({ onBack }: ApiPerformanceMonitorP
     if (!autoRefresh) return;
     const interval = setInterval(() => {
       setLastUpdated(new Date());
-      // In real app, would fetch fresh data here
+      fetchData();
     }, 30000);
     return () => clearInterval(interval);
-  }, [autoRefresh]);
+  }, [autoRefresh, fetchData]);
 
   // Get status color
   const getStatusColor = (status: string) => {
@@ -487,7 +528,7 @@ export default function ApiPerformanceMonitor({ onBack }: ApiPerformanceMonitorP
                 </tr>
               </thead>
               <tbody>
-                {endpointMetrics.map((ep, i) => (
+                {endpoints.map((ep, i) => (
                   <tr
                     key={i}
                     className="border-b border-slate-700/50 hover:bg-slate-700/30 cursor-pointer"
@@ -540,7 +581,7 @@ export default function ApiPerformanceMonitor({ onBack }: ApiPerformanceMonitorP
             </h2>
 
             <div className="space-y-3">
-              {recentErrors.map(error => (
+              {errors.map(error => (
                 <div key={error.id} className="flex items-center gap-4 p-3 bg-slate-700/30 rounded-lg">
                   <div className={`px-2 py-1 text-xs font-bold rounded ${
                     error.statusCode >= 500 ? 'bg-red-500/20 text-red-400' :

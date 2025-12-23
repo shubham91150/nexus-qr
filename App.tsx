@@ -844,34 +844,46 @@ const AppContent: React.FC = () => {
 
   // Team Access Control (auth required)
   if (view === 'team-access' && user) {
-    return <TeamAccessControl onBack={() => {
-      setView('api');
-      window.history.pushState({}, '', '/api');
-    }} />;
+    return <TeamAccessControl
+      userId={user.id}
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
   }
 
   // API Performance Monitor (auth required)
   if (view === 'api-performance' && user) {
-    return <ApiPerformanceMonitor onBack={() => {
-      setView('api');
-      window.history.pushState({}, '', '/api');
-    }} />;
+    return <ApiPerformanceMonitor
+      userId={user.id}
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
   }
 
   // Custom Domain Config (auth required)
   if (view === 'custom-domain' && user) {
-    return <CustomDomainConfig onBack={() => {
-      setView('api');
-      window.history.pushState({}, '', '/api');
-    }} />;
+    return <CustomDomainConfig
+      userId={user.id}
+      onBack={() => {
+        setView('api');
+        window.history.pushState({}, '', '/api');
+      }}
+    />;
   }
 
   // Webhook Signature Verification (auth required)
   if (view === 'webhook-signature' && user) {
-    return <WebhookSignatureVerification onBack={() => {
-      setView('api-webhooks');
-      window.history.pushState({}, '', '/api/webhooks');
-    }} />;
+    return <WebhookSignatureVerification
+      userId={user.id}
+      onBack={() => {
+        setView('api-webhooks');
+        window.history.pushState({}, '', '/api/webhooks');
+      }}
+    />;
   }
 
   // API Audit Trail (auth required)

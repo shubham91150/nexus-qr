@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Shield,
   Lock,
@@ -27,11 +27,20 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
+import {
+  getWebhookSecrets,
+  getWebhookVerificationLogs,
+  rotateWebhookSecret,
+  WebhookSecret as ApiWebhookSecret,
+  WebhookVerificationLog as ApiVerificationLog
+} from '../services/apiExtendedService';
 
 interface WebhookSignatureVerificationProps {
   onBack: () => void;
+  userId?: string;
 }
 
 // Types
@@ -54,34 +63,70 @@ interface VerificationLog {
   payload: string;
 }
 
-// Mock data
-const webhookSecrets: WebhookSecret[] = [
-  {
-    id: 'whsec_1',
-    name: 'Production Webhook',
-    prefix: 'whsec_abc...xyz',
-    createdAt: '2023-10-15T10:00:00Z',
-    lastUsed: '2024-01-28T15:30:00Z',
-    status: 'active'
-  },
-  {
-    id: 'whsec_2',
-    name: 'Staging Webhook',
-    prefix: 'whsec_def...uvw',
-    createdAt: '2023-08-20T14:00:00Z',
-    lastUsed: '2024-01-25T09:15:00Z',
-    status: 'active'
-  }
-];
+// Note: Mock data removed - component now fetches real data from Supabase
 
-const verificationLogs: VerificationLog[] = [
-  { id: 'log-1', webhookId: 'whsec_1', timestamp: '2024-01-28T15:42:00Z', status: 'valid', signatureReceived: 'sha256=abc...', signatureExpected: 'sha256=abc...', payload: '{"event":"qr.scanned"}' },
-  { id: 'log-2', webhookId: 'whsec_1', timestamp: '2024-01-28T15:38:00Z', status: 'valid', signatureReceived: 'sha256=def...', signatureExpected: 'sha256=def...', payload: '{"event":"qr.created"}' },
-  { id: 'log-3', webhookId: 'whsec_1', timestamp: '2024-01-28T15:35:00Z', status: 'invalid', signatureReceived: 'sha256=xyz...', signatureExpected: 'sha256=abc...', payload: '{"event":"qr.updated"}' },
-  { id: 'log-4', webhookId: 'whsec_2', timestamp: '2024-01-28T15:30:00Z', status: 'expired', signatureReceived: 'sha256=ghi...', signatureExpected: 'sha256=ghi...', payload: '{"event":"webhook.test"}' }
-];
+export default function WebhookSignatureVerification({ onBack, userId }: WebhookSignatureVerificationProps) {
+  const [loading, setLoading] = useState(true);
+  const [secrets, setSecrets] = useState<WebhookSecret[]>([]);
+  const [logs, setLogs] = useState<VerificationLog[]>([]);
 
-export default function WebhookSignatureVerification({ onBack }: WebhookSignatureVerificationProps) {
+  // Fetch real data
+  const fetchData = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [secretsData, logsData] = await Promise.all([
+        getWebhookSecrets(userId),
+        getWebhookVerificationLogs(userId, 20)
+      ]);
+
+      // Transform secrets
+      const transformedSecrets: WebhookSecret[] = secretsData.map(s => ({
+        id: s.id,
+        name: s.name,
+        prefix: s.prefix,
+        createdAt: s.created_at,
+        lastUsed: s.last_used || '',
+        status: s.status
+      }));
+      setSecrets(transformedSecrets);
+
+      // Transform logs
+      const transformedLogs: VerificationLog[] = logsData.map(l => ({
+        id: l.id,
+        webhookId: l.webhook_id,
+        timestamp: l.timestamp,
+        status: l.status,
+        signatureReceived: l.signature_received,
+        signatureExpected: l.signature_expected,
+        payload: l.payload
+      }));
+      setLogs(transformedLogs);
+    } catch (error) {
+      console.error('Error fetching webhook data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Handle secret rotation
+  const handleRotateSecret = async (secretId: string) => {
+    try {
+      const newSecret = await rotateWebhookSecret(secretId);
+      if (newSecret) {
+        await fetchData(); // Refresh data
+      }
+    } catch (error) {
+      console.error('Error rotating secret:', error);
+    }
+  };
   const [activeTab, setActiveTab] = useState<'overview' | 'secrets' | 'logs' | 'test'>('overview');
   const [selectedLanguage, setSelectedLanguage] = useState<'nodejs' | 'python' | 'php' | 'go' | 'ruby'>('nodejs');
   const [showSecret, setShowSecret] = useState<string | null>(null);
@@ -643,7 +688,7 @@ end`;
               </div>
 
               <div className="p-6 space-y-4">
-                {webhookSecrets.map(secret => (
+                {secrets.map(secret => (
                   <div key={secret.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -705,7 +750,7 @@ end`;
             </div>
 
             <div className="divide-y divide-slate-700">
-              {verificationLogs.map(log => (
+              {logs.map(log => (
                 <div key={log.id} className="p-4 hover:bg-slate-700/30">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
