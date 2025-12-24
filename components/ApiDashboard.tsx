@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
-  Activity, Zap, Shield, Code, ChevronRight, Check,
-  AlertCircle, Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book,
-  Users, Gauge, Link2, ClipboardList, PieChart, Rocket, Lock,
-  Server, Wifi, Settings, RotateCcw, History, Package, AlertOctagon, Terminal
+  Activity, Zap, Shield, ChevronRight, Check,
+  Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book,
+  Users, Rocket
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -135,34 +134,14 @@ interface ApiDashboardProps {
   onPlaygroundClick: () => void;
   onAnalyticsClick: () => void;
   onLogsClick: () => void;
-  onApiReferenceClick: () => void;
   onTeamAccessClick: () => void;
-  onPerformanceClick: () => void;
-  onDomainsClick: () => void;
-  onAuditClick: () => void;
-  onUsageQuotaClick: () => void;
   onOnboardingClick: () => void;
-  onRateLimitingClick?: () => void;
-  onIpWhitelistClick?: () => void;
-  onCorsConfigClick?: () => void;
-  onKeyRotationClick?: () => void;
-  onKeyScopesClick?: () => void;
-  onChangelogClick?: () => void;
-  onStatusPageClick?: () => void;
-  onSdkExamplesClick?: () => void;
-  onPostmanExportClick?: () => void;
-  onErrorCodesClick?: () => void;
-  onDeveloperPortalClick?: () => void;
-  onSandboxClick?: () => void;
+  onSecurityClick?: () => void;
 }
 
 const ApiDashboard: React.FC<ApiDashboardProps> = ({
   onBack, onWebhooksClick, onDocsClick, onPlaygroundClick, onAnalyticsClick,
-  onLogsClick, onApiReferenceClick, onTeamAccessClick, onPerformanceClick,
-  onDomainsClick, onAuditClick, onUsageQuotaClick, onOnboardingClick,
-  onRateLimitingClick, onIpWhitelistClick, onCorsConfigClick, onKeyRotationClick,
-  onKeyScopesClick, onChangelogClick, onStatusPageClick, onSdkExamplesClick,
-  onPostmanExportClick, onErrorCodesClick, onDeveloperPortalClick, onSandboxClick
+  onLogsClick, onTeamAccessClick, onOnboardingClick, onSecurityClick
 }) => {
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -495,7 +474,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
         </div>
       </div>
 
-      {/* Quick Links - Section Header */}
+      {/* Quick Actions - Simplified */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
           <Zap className="w-4 h-4" />
@@ -503,7 +482,8 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
         <h2 className="text-sm font-semibold text-gray-800">Quick Actions</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        {/* API Playground - Test endpoints */}
         <button
           onClick={onPlaygroundClick}
           className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
@@ -516,32 +496,13 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
               <h3 className="font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
                 API Playground
               </h3>
-              <p className="text-sm text-gray-500">Test endpoints live</p>
+              <p className="text-sm text-gray-500">Test & debug endpoints</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors" />
           </div>
         </button>
 
-        {onSandboxClick && (
-          <button
-            onClick={onSandboxClick}
-            className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
-                <Terminal className="w-6 h-6 text-cyan-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
-                  API Sandbox
-                </h3>
-                <p className="text-sm text-gray-500">Interactive testing</p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-cyan-600 transition-colors" />
-            </div>
-          </button>
-        )}
-
+        {/* Analytics - Usage, performance, quota all in one */}
         <button
           onClick={onAnalyticsClick}
           className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
@@ -552,14 +513,15 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
-                Analytics
+                Analytics & Usage
               </h3>
-              <p className="text-sm text-gray-500">View usage insights</p>
+              <p className="text-sm text-gray-500">Stats, quota & performance</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-amber-600 transition-colors" />
           </div>
         </button>
 
+        {/* Request Logs - Includes audit trail */}
         <button
           onClick={onLogsClick}
           className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
@@ -570,145 +532,34 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
-                Request Logs
+                Logs & Activity
               </h3>
-              <p className="text-sm text-gray-500">Debug API calls</p>
+              <p className="text-sm text-gray-500">Requests & audit trail</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-cyan-600 transition-colors" />
           </div>
         </button>
 
-        <button
-          onClick={onUsageQuotaClick}
-          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center">
-              <PieChart className="w-6 h-6 text-rose-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 group-hover:text-rose-600 transition-colors">
-                Usage & Quota
-              </h3>
-              <p className="text-sm text-gray-500">Monitor API limits</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-rose-600 transition-colors" />
-          </div>
-        </button>
-
-        <button
-          onClick={onPerformanceClick}
-          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
-              <Gauge className="w-6 h-6 text-violet-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">
-                Performance
-              </h3>
-              <p className="text-sm text-gray-500">API health metrics</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-violet-600 transition-colors" />
-          </div>
-        </button>
-
-        <button
-          onClick={onAuditClick}
-          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-              <ClipboardList className="w-6 h-6 text-orange-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                Audit Trail
-              </h3>
-              <p className="text-sm text-gray-500">Activity history</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" />
-          </div>
-        </button>
-      </div>
-
-      {/* Team & Settings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        <button
-          onClick={onTeamAccessClick}
-          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                Team Access
-              </h3>
-              <p className="text-sm text-gray-500">Manage members & roles</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-          </div>
-        </button>
-
-        <button
-          onClick={onDomainsClick}
-          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
-              <Link2 className="w-6 h-6 text-teal-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
-                Custom Domains
-              </h3>
-              <p className="text-sm text-gray-500">Branded API URLs</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" />
-          </div>
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button
-          onClick={onApiReferenceClick}
-          className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group text-left"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Book className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-white">
-                API Reference
-              </h3>
-              <p className="text-sm text-white/80">OpenAPI Docs</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
-          </div>
-        </button>
-
+        {/* Documentation */}
         <button
           onClick={onDocsClick}
           className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <Code className="w-6 h-6 text-indigo-600" />
+              <Book className="w-6 h-6 text-indigo-600" />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                Quick Start
+                Documentation
               </h3>
-              <p className="text-sm text-gray-500">Integration guide</p>
+              <p className="text-sm text-gray-500">API reference & guides</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
           </div>
         </button>
 
+        {/* Webhooks */}
         <button
           onClick={onWebhooksClick}
           className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
@@ -727,252 +578,57 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           </div>
         </button>
 
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
-          <h3 className="font-semibold mb-2">Need Help?</h3>
-          <p className="text-white/80 text-sm mb-4">Contact our developer support team</p>
+        {/* Team Access */}
+        <button
+          onClick={onTeamAccessClick}
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                Team Access
+              </h3>
+              <p className="text-sm text-gray-500">Manage members & roles</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+          </div>
+        </button>
+      </div>
+
+      {/* Security Settings - Consolidated */}
+      {onSecurityClick && (
+        <button
+          onClick={onSecurityClick}
+          className="w-full bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left mb-6"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+              <Shield className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
+                Security Settings
+              </h3>
+              <p className="text-sm text-gray-500">Rate limits, IP whitelist, CORS & key management</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" />
+          </div>
+        </button>
+      )}
+
+      {/* Help Card */}
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold mb-1">Need Help?</h3>
+            <p className="text-white/80 text-sm">Contact our developer support team for assistance</p>
+          </div>
           <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
             Get Support
           </button>
-        </div>
-      </div>
-
-      {/* Security Settings */}
-      <div className="mt-8">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Security Settings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {onRateLimitingClick && (
-            <button
-              onClick={onRateLimitingClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                  <Gauge className="w-6 h-6 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
-                    Rate Limiting
-                  </h3>
-                  <p className="text-sm text-gray-500">Configure API limits</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" />
-              </div>
-            </button>
-          )}
-
-          {onIpWhitelistClick && (
-            <button
-              onClick={onIpWhitelistClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <Server className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
-                    IP Whitelist
-                  </h3>
-                  <p className="text-sm text-gray-500">Manage allowed IPs</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" />
-              </div>
-            </button>
-          )}
-
-          {onCorsConfigClick && (
-            <button
-              onClick={onCorsConfigClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                  <Wifi className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-yellow-600 transition-colors">
-                    CORS Config
-                  </h3>
-                  <p className="text-sm text-gray-500">Cross-origin settings</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-yellow-600 transition-colors" />
-              </div>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* API Key Management */}
-      <div className="mt-8">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">API Key Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {onKeyRotationClick && (
-            <button
-              onClick={onKeyRotationClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <RotateCcw className="w-6 h-6 text-indigo-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                    Key Rotation
-                  </h3>
-                  <p className="text-sm text-gray-500">Rotate API keys securely</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
-              </div>
-            </button>
-          )}
-
-          {onKeyScopesClick && (
-            <button
-              onClick={onKeyScopesClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                    Key Scopes
-                  </h3>
-                  <p className="text-sm text-gray-500">Manage permissions</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
-              </div>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Resources & Documentation */}
-      <div className="mt-8">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Resources & Documentation</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {onSdkExamplesClick && (
-            <button
-              onClick={onSdkExamplesClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
-                  <Terminal className="w-6 h-6 text-cyan-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
-                    SDK Examples
-                  </h3>
-                  <p className="text-sm text-gray-500">Code snippets</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-cyan-600 transition-colors" />
-              </div>
-            </button>
-          )}
-
-          {onPostmanExportClick && (
-            <button
-              onClick={onPostmanExportClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <Package className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                    Postman Export
-                  </h3>
-                  <p className="text-sm text-gray-500">Download collection</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" />
-              </div>
-            </button>
-          )}
-
-          {onErrorCodesClick && (
-            <button
-              onClick={onErrorCodesClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                  <AlertOctagon className="w-6 h-6 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
-                    Error Codes
-                  </h3>
-                  <p className="text-sm text-gray-500">Reference guide</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" />
-              </div>
-            </button>
-          )}
-
-          {onChangelogClick && (
-            <button
-              onClick={onChangelogClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
-                  <History className="w-6 h-6 text-slate-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-slate-600 transition-colors">
-                    Changelog
-                  </h3>
-                  <p className="text-sm text-gray-500">Version history</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-slate-600 transition-colors" />
-              </div>
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          {onStatusPageClick && (
-            <button
-              onClick={onStatusPageClick}
-              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
-                    Status Page
-                  </h3>
-                  <p className="text-sm text-gray-500">System health & uptime</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors" />
-              </div>
-            </button>
-          )}
-
-          {onDeveloperPortalClick && (
-            <button
-              onClick={onDeveloperPortalClick}
-              className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Code className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white">
-                    Developer Portal
-                  </h3>
-                  <p className="text-sm text-white/80">Full documentation</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
-              </div>
-            </button>
-          )}
         </div>
       </div>
 
