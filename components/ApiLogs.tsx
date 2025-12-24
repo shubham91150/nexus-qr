@@ -219,26 +219,26 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+      <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
+        {/* Header - Matching Home Page Style */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
+            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
+              <FileText className="w-5 h-5" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="w-6 h-6 text-indigo-600" />
-                API Request Logs
-              </h1>
-              <p className="text-gray-500 text-sm">View and debug your API requests</p>
+              <h1 className="text-xl font-bold text-gray-800">API Request Logs</h1>
+              <p className="text-xs text-gray-500 font-medium">View and debug your API requests</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={loadData}
               className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
@@ -254,7 +254,7 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
         </div>
 
         {/* Search & Filters */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="bg-white rounded-[24px] shadow-card p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
@@ -342,23 +342,23 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] shadow-card p-4">
             <div className="text-2xl font-bold text-gray-900">{filteredLogs.length}</div>
             <div className="text-sm text-gray-500">Total Requests</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] shadow-card p-4">
             <div className="text-2xl font-bold text-emerald-600">
               {filteredLogs.filter(l => l.status >= 200 && l.status < 300).length}
             </div>
             <div className="text-sm text-gray-500">Successful</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] shadow-card p-4">
             <div className="text-2xl font-bold text-red-600">
               {filteredLogs.filter(l => l.status >= 400).length}
             </div>
             <div className="text-sm text-gray-500">Errors</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] shadow-card p-4">
             <div className="text-2xl font-bold text-purple-600">
               {Math.round(filteredLogs.reduce((sum, l) => sum + l.responseTime, 0) / filteredLogs.length || 0)}ms
             </div>
@@ -367,7 +367,7 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
         </div>
 
         {/* Logs List */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-[24px] shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
