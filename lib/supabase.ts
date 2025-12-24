@@ -132,6 +132,22 @@ export interface EmailNotificationConfig {
   frequency: 'every_scan' | 'first_daily' | 'every_10_scans';
 }
 
+// URL History Entry
+export interface URLHistoryEntry {
+  url: string;
+  changed_at: string;
+  changed_to: string;
+}
+
+// Webhook Configuration
+export interface WebhookConfig {
+  enabled: boolean;
+  url: string;
+  secret?: string; // Optional HMAC secret for signature verification
+  events: ('scan' | 'url_changed' | 'expired')[];
+  headers?: Record<string, string>; // Custom headers
+}
+
 // Extended Dynamic QR Code with all features
 export interface DynamicQRCode {
   id: string;
@@ -186,6 +202,12 @@ export interface DynamicQRCode {
 
   // NEW: Email Notifications
   email_notification_config?: EmailNotificationConfig;
+
+  // NEW: URL History (track all URL changes)
+  url_history?: URLHistoryEntry[];
+
+  // NEW: Webhook Configuration (for scan notifications)
+  webhook_config?: WebhookConfig;
 }
 
 // QR Scan Record

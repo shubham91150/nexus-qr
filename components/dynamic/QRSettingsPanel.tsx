@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
   Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
-  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Bell, CheckCircle
+  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Bell, CheckCircle, Info, History, Webhook
 } from 'lucide-react';
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
   PasswordProtection, GeofenceSettings, GeofenceLocation, IPRestriction, UTMParameters,
   RetargetingConfig, LocationTrackingConfig, EmailNotificationConfig,
+  URLHistoryEntry, WebhookConfig,
   supabase
 } from '../../lib/supabase';
 
@@ -16,7 +17,7 @@ interface QRSettingsPanelProps {
   onUpdate: () => void;
 }
 
-type SettingsTab = 'url' | 'expiry' | 'conditions' | 'language' | 'ab-testing' | 'security' | 'utm' | 'tracking';
+type SettingsTab = 'url' | 'expiry' | 'conditions' | 'language' | 'ab-testing' | 'security' | 'utm' | 'tracking' | 'history' | 'webhook';
 
 // Generate unique ID
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -88,6 +89,16 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     qrCode.email_notification_config || { enabled: false, email: '', frequency: 'every_scan' }
   );
 
+  // URL History (read-only, populated from database)
+  const [urlHistory, setUrlHistory] = useState<URLHistoryEntry[]>(
+    qrCode.url_history || []
+  );
+
+  // Webhook Configuration
+  const [webhookConfig, setWebhookConfig] = useState<WebhookConfig>(
+    qrCode.webhook_config || { enabled: false, url: '', events: ['scan'] }
+  );
+
   // Reset on QR change
   useEffect(() => {
     setDestinationUrl(qrCode.destination_url);
@@ -106,6 +117,8 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     setRetargetingConfig(qrCode.retargeting_config || { enabled: false, gtm_id: '', facebook_pixel_id: '', google_ads_id: '', tiktok_pixel_id: '' });
     setLocationTrackingConfig(qrCode.location_tracking_config || { enabled: false });
     setEmailNotificationConfig(qrCode.email_notification_config || { enabled: false, email: '', frequency: 'every_scan' });
+    setUrlHistory(qrCode.url_history || []);
+    setWebhookConfig(qrCode.webhook_config || { enabled: false, url: '', events: ['scan'] });
   }, [qrCode.id]);
 
   // Save settings
@@ -132,6 +145,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         retargeting_config: retargetingConfig,
         location_tracking_config: locationTrackingConfig,
         email_notification_config: emailNotificationConfig,
+        webhook_config: webhookConfig,
         updated_at: new Date().toISOString(),
       };
 
@@ -225,9 +239,11 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
 
   const tabs = [
     { id: 'url' as SettingsTab, label: 'URL', icon: Link },
+    { id: 'history' as SettingsTab, label: 'History', icon: History },
     { id: 'expiry' as SettingsTab, label: 'Expiry', icon: Timer },
     { id: 'conditions' as SettingsTab, label: 'Conditions', icon: MapPin },
     { id: 'security' as SettingsTab, label: 'Security', icon: Shield },
+    { id: 'webhook' as SettingsTab, label: 'Webhook', icon: Webhook },
     { id: 'utm' as SettingsTab, label: 'UTM', icon: Tag },
     { id: 'tracking' as SettingsTab, label: 'Tracking', icon: Target },
     { id: 'language' as SettingsTab, label: 'Language', icon: Languages },
@@ -1358,6 +1374,209 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                   <Plus size={14} /> Add Variant
                 </button>
               </>
+            )}
+          </div>
+        )}
+
+        {/* URL History Tab */}
+        {activeTab === 'history' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <History size={18} className="text-indigo-600" />
+                URL Change History
+              </h3>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Track all destination URL changes for this QR code. History is automatically recorded when you update the URL.
+            </p>
+
+            {urlHistory && urlHistory.length > 0 ? (
+              <div className="space-y-3">
+                {/* Current URL */}
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle size={14} className="text-green-600" />
+                    <span className="text-xs font-medium text-green-700">Current URL</span>
+                  </div>
+                  <p className="text-sm text-gray-900 break-all">{qrCode.destination_url}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Last updated: {new Date(qrCode.updated_at).toLocaleString()}
+                  </p>
+                </div>
+
+                {/* History entries */}
+                <div className="border border-gray-200 rounded-xl divide-y divide-gray-100">
+                  {urlHistory.slice().reverse().map((entry, index) => (
+                    <div key={index} className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-500">
+                          {new Date(entry.changed_at).toLocaleString()}
+                        </span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                          Change #{urlHistory.length - index}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs text-red-500 flex-shrink-0 mt-0.5">From:</span>
+                          <p className="text-xs text-gray-600 break-all">{entry.url}</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs text-green-600 flex-shrink-0 mt-0.5">To:</span>
+                          <p className="text-xs text-gray-800 break-all">{entry.changed_to}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 rounded-xl p-8 text-center">
+                <History size={32} className="mx-auto text-gray-300 mb-3" />
+                <p className="text-gray-500 font-medium">No URL changes yet</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  URL history will appear here when you change the destination URL
+                </p>
+              </div>
+            )}
+
+            {/* Info Box */}
+            <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
+              <Info size={14} className="text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">
+                URL history is automatically tracked. Every time you change the destination URL, a record is saved with timestamp. This helps you audit changes and revert if needed.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Webhook Tab */}
+        {activeTab === 'webhook' && (
+          <div className="space-y-4">
+            {/* Enable Webhook */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Webhook size={18} className="text-gray-600" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Webhook Notifications</h4>
+                  <p className="text-xs text-gray-500">Get notified via HTTP POST on events</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setWebhookConfig(c => ({ ...c, enabled: !c.enabled }))}
+                className={`w-12 h-6 rounded-full transition-colors ${webhookConfig.enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${webhookConfig.enabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
+
+            {webhookConfig.enabled && (
+              <div className="space-y-4 mt-4 pl-2 border-l-2 border-indigo-100">
+                {/* Webhook URL */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Webhook URL <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={webhookConfig.url}
+                    onChange={(e) => setWebhookConfig(c => ({ ...c, url: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 outline-none text-sm"
+                    placeholder="https://your-server.com/webhook"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    We'll send a POST request to this URL when events occur
+                  </p>
+                </div>
+
+                {/* Webhook Secret */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Webhook Secret (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={webhookConfig.secret || ''}
+                    onChange={(e) => setWebhookConfig(c => ({ ...c, secret: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 outline-none text-sm font-mono"
+                    placeholder="your-webhook-secret"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Used to generate HMAC-SHA256 signature for verification (x-signature header)
+                  </p>
+                </div>
+
+                {/* Events Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Events to Trigger
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { id: 'scan', label: 'QR Code Scanned', desc: 'When someone scans this QR code' },
+                      { id: 'url_changed', label: 'URL Changed', desc: 'When destination URL is updated' },
+                      { id: 'expired', label: 'QR Code Expired', desc: 'When the QR code expires' },
+                    ].map((event) => (
+                      <label key={event.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={webhookConfig.events?.includes(event.id as 'scan' | 'url_changed' | 'expired') || false}
+                          onChange={(e) => {
+                            const eventType = event.id as 'scan' | 'url_changed' | 'expired';
+                            if (e.target.checked) {
+                              setWebhookConfig(c => ({ ...c, events: [...(c.events || []), eventType] }));
+                            } else {
+                              setWebhookConfig(c => ({ ...c, events: (c.events || []).filter(ev => ev !== eventType) }));
+                            }
+                          }}
+                          className="mt-0.5 w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">{event.label}</span>
+                          <p className="text-xs text-gray-500">{event.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payload Preview */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Example Payload
+                  </label>
+                  <pre className="bg-gray-900 text-green-400 p-4 rounded-xl text-xs overflow-x-auto">
+{`{
+  "event": "scan",
+  "qr_id": "${qrCode.id.substring(0, 8)}...",
+  "short_code": "${qrCode.short_code}",
+  "timestamp": "${new Date().toISOString()}",
+  "data": {
+    "country": "India",
+    "city": "Mumbai",
+    "device": "Mobile",
+    "browser": "Chrome",
+    "os": "Android"
+  }
+}`}
+                  </pre>
+                </div>
+
+                {/* Info */}
+                <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
+                  <Info size={14} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs text-blue-700">
+                    <p className="font-medium mb-1">Webhook Headers:</p>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      <li>Content-Type: application/json</li>
+                      <li>X-Signature: HMAC-SHA256 of payload (if secret is set)</li>
+                      <li>X-Event-Type: Event name (scan/url_changed/expired)</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
