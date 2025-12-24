@@ -229,72 +229,80 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6">
-      {/* Header */}
+    <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
+      {/* Header - Matching Home Page Style */}
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
+          <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
+            <Code className="w-5 h-5" />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">API Dashboard</h1>
-            <p className="text-gray-600">Manage your API keys and monitor usage</p>
+            <h1 className="text-xl font-bold text-gray-800">API Dashboard</h1>
+            <p className="text-xs text-gray-500 font-medium">Manage keys & monitor usage</p>
           </div>
         </div>
         <button
           onClick={onOnboardingClick}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-lg shadow-emerald-200"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl font-medium text-sm hover:bg-gray-800 transition-all"
         >
           <Rocket className="w-4 h-4" />
           Getting Started
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Activity className="w-6 h-6" />
+      {/* Stats Cards - Matching Home Page Style */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-[24px] shadow-card p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <Activity className="w-5 h-5 text-indigo-600" />
             </div>
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">This Month</span>
+            <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full font-medium">This Month</span>
           </div>
-          <div className="text-3xl font-bold mb-1">{formatNumber(totalUsage.totalRequests)}</div>
-          <div className="text-white/80 text-sm">API Requests</div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{formatNumber(totalUsage.totalRequests)}</div>
+          <div className="text-sm text-gray-500">API Requests</div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Key className="w-6 h-6" />
+        <div className="bg-white rounded-[24px] shadow-card p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <Key className="w-5 h-5 text-emerald-600" />
             </div>
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Active</span>
+            <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full font-medium">Active</span>
           </div>
-          <div className="text-3xl font-bold mb-1">{totalUsage.activeKeys}</div>
-          <div className="text-white/80 text-sm">of {totalUsage.totalKeys} API Keys</div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{totalUsage.activeKeys}</div>
+          <div className="text-sm text-gray-500">of {totalUsage.totalKeys} API Keys</div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6" />
+        <div className="bg-white rounded-[24px] shadow-card p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+              <Zap className="w-5 h-5 text-amber-600" />
             </div>
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Plan</span>
+            <span className="text-xs bg-amber-50 text-amber-600 px-2 py-1 rounded-full font-medium">Plan</span>
           </div>
-          <div className="text-3xl font-bold mb-1">Free</div>
-          <div className="text-white/80 text-sm">100 requests/month</div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">Free</div>
+          <div className="text-sm text-gray-500">100 requests/month</div>
         </div>
       </div>
 
       {/* API Keys Section */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+      <div className="bg-white rounded-[24px] shadow-card overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">API Keys</h2>
-            <p className="text-gray-500 text-sm mt-1">Manage your API keys for programmatic access</p>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
+              <Key className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">API Keys</h2>
+              <p className="text-xs text-gray-500">Manage your API keys for programmatic access</p>
+            </div>
           </div>
           <button
             onClick={() => {
@@ -430,10 +438,17 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
       </div>
 
       {/* Pricing Tiers */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+      <div className="bg-white rounded-[24px] shadow-card overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">API Plans</h2>
-          <p className="text-gray-500 text-sm mt-1">Choose the plan that fits your needs</p>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">API Plans</h2>
+              <p className="text-xs text-gray-500">Choose the plan that fits your needs</p>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6">
@@ -480,11 +495,18 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
         </div>
       </div>
 
-      {/* Quick Links */}
+      {/* Quick Links - Section Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
+          <Zap className="w-4 h-4" />
+        </div>
+        <h2 className="text-sm font-semibold text-gray-800">Quick Actions</h2>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         <button
           onClick={onPlaygroundClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -503,7 +525,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
         {onSandboxClick && (
           <button
             onClick={onSandboxClick}
-            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+            className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
@@ -522,7 +544,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onAnalyticsClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -540,7 +562,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onLogsClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
@@ -558,7 +580,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onUsageQuotaClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center">
@@ -576,7 +598,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onPerformanceClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
@@ -594,7 +616,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onAuditClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -615,7 +637,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         <button
           onClick={onTeamAccessClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -633,7 +655,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onDomainsClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
@@ -671,7 +693,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onDocsClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
@@ -689,7 +711,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
 
         <button
           onClick={onWebhooksClick}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+          className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -721,7 +743,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onRateLimitingClick && (
             <button
               onClick={onRateLimitingClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
@@ -741,7 +763,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onIpWhitelistClick && (
             <button
               onClick={onIpWhitelistClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -761,7 +783,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onCorsConfigClick && (
             <button
               onClick={onCorsConfigClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
@@ -787,7 +809,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onKeyRotationClick && (
             <button
               onClick={onKeyRotationClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
@@ -807,7 +829,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onKeyScopesClick && (
             <button
               onClick={onKeyScopesClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -833,7 +855,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onSdkExamplesClick && (
             <button
               onClick={onSdkExamplesClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
@@ -853,7 +875,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onPostmanExportClick && (
             <button
               onClick={onPostmanExportClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -873,7 +895,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onErrorCodesClick && (
             <button
               onClick={onErrorCodesClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
@@ -893,7 +915,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onChangelogClick && (
             <button
               onClick={onChangelogClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
@@ -915,7 +937,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           {onStatusPageClick && (
             <button
               onClick={onStatusPageClick}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all group text-left"
+              className="bg-white rounded-[20px] shadow-card p-5 hover:shadow-lg transition-all group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
