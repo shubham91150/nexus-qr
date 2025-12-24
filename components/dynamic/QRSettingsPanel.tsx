@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Link, Clock, MapPin, Smartphone, Globe, FlaskConical, Languages,
   Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, AlertCircle,
-  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Bell, CheckCircle, Info, History, Webhook
+  Calendar, Timer, X, Lock, Navigation, Shield, Tag, Target, Bell, CheckCircle, Info, History, Webhook, CalendarClock, Play, Pause, Repeat
 } from 'lucide-react';
 import {
   DynamicQRCode, ConditionalRule, ABTestVariant, LanguageContent,
   PasswordProtection, GeofenceSettings, GeofenceLocation, IPRestriction, UTMParameters,
   RetargetingConfig, LocationTrackingConfig, EmailNotificationConfig,
-  URLHistoryEntry, WebhookConfig,
+  URLHistoryEntry, WebhookConfig, CampaignConfig,
   supabase
 } from '../../lib/supabase';
 
@@ -17,7 +17,7 @@ interface QRSettingsPanelProps {
   onUpdate: () => void;
 }
 
-type SettingsTab = 'url' | 'expiry' | 'conditions' | 'language' | 'ab-testing' | 'security' | 'utm' | 'tracking' | 'history' | 'webhook';
+type SettingsTab = 'url' | 'expiry' | 'conditions' | 'language' | 'ab-testing' | 'security' | 'utm' | 'tracking' | 'history' | 'webhook' | 'schedule';
 
 // Generate unique ID
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -99,6 +99,11 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     qrCode.webhook_config || { enabled: false, url: '', events: ['scan'] }
   );
 
+  // Campaign Configuration
+  const [campaignConfig, setCampaignConfig] = useState<CampaignConfig>(
+    qrCode.campaign_config || { enabled: false }
+  );
+
   // Reset on QR change
   useEffect(() => {
     setDestinationUrl(qrCode.destination_url);
@@ -119,6 +124,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
     setEmailNotificationConfig(qrCode.email_notification_config || { enabled: false, email: '', frequency: 'every_scan' });
     setUrlHistory(qrCode.url_history || []);
     setWebhookConfig(qrCode.webhook_config || { enabled: false, url: '', events: ['scan'] });
+    setCampaignConfig(qrCode.campaign_config || { enabled: false });
   }, [qrCode.id]);
 
   // Save settings
@@ -146,6 +152,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         location_tracking_config: locationTrackingConfig,
         email_notification_config: emailNotificationConfig,
         webhook_config: webhookConfig,
+        campaign_config: campaignConfig,
         updated_at: new Date().toISOString(),
       };
 
@@ -239,6 +246,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
 
   const tabs = [
     { id: 'url' as SettingsTab, label: 'URL', icon: Link },
+    { id: 'schedule' as SettingsTab, label: 'Schedule', icon: CalendarClock },
     { id: 'history' as SettingsTab, label: 'History', icon: History },
     { id: 'expiry' as SettingsTab, label: 'Expiry', icon: Timer },
     { id: 'conditions' as SettingsTab, label: 'Conditions', icon: MapPin },
@@ -326,6 +334,250 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                 You can change this URL anytime. All printed QR codes will redirect to the new URL.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Schedule Tab - Campaign Scheduling */}
+        {activeTab === 'schedule' && (
+          <div className="space-y-4">
+            {/* Enable Campaign */}
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                  <CalendarClock size={20} className="text-white" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Scheduled Campaign</h4>
+                  <p className="text-xs text-gray-500">Auto-activate/deactivate QR at specific times</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCampaignConfig(c => ({ ...c, enabled: !c.enabled }))}
+                className={`w-12 h-6 rounded-full transition-colors ${campaignConfig.enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${campaignConfig.enabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
+
+            {campaignConfig.enabled && (
+              <div className="space-y-4 mt-4">
+                {/* Campaign Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Campaign Name
+                  </label>
+                  <input
+                    type="text"
+                    value={campaignConfig.name || ''}
+                    onChange={(e) => setCampaignConfig(c => ({ ...c, name: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 outline-none text-sm"
+                    placeholder="e.g., Black Friday Sale, New Year Promo"
+                  />
+                </div>
+
+                {/* Campaign Status Indicator */}
+                {(() => {
+                  const now = new Date();
+                  const start = campaignConfig.scheduled_start ? new Date(campaignConfig.scheduled_start) : null;
+                  const end = campaignConfig.scheduled_end ? new Date(campaignConfig.scheduled_end) : null;
+
+                  let status = 'none';
+                  let statusColor = 'gray';
+                  let statusText = 'Not Scheduled';
+                  let statusIcon = <Clock size={14} />;
+
+                  if (start && end) {
+                    if (now < start) {
+                      status = 'scheduled';
+                      statusColor = 'yellow';
+                      statusText = `Starts in ${Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))} days`;
+                      statusIcon = <Clock size={14} />;
+                    } else if (now >= start && now <= end) {
+                      status = 'active';
+                      statusColor = 'green';
+                      statusText = 'Campaign Active';
+                      statusIcon = <Play size={14} />;
+                    } else {
+                      status = 'ended';
+                      statusColor = 'red';
+                      statusText = 'Campaign Ended';
+                      statusIcon = <Pause size={14} />;
+                    }
+                  } else if (start && !end) {
+                    if (now < start) {
+                      status = 'scheduled';
+                      statusColor = 'yellow';
+                      statusText = `Starts ${start.toLocaleDateString()}`;
+                      statusIcon = <Clock size={14} />;
+                    } else {
+                      status = 'active';
+                      statusColor = 'green';
+                      statusText = 'Campaign Active (No End)';
+                      statusIcon = <Play size={14} />;
+                    }
+                  }
+
+                  return (
+                    <div className={`flex items-center gap-2 p-3 rounded-lg bg-${statusColor}-50 border border-${statusColor}-200`}>
+                      <span className={`text-${statusColor}-600`}>{statusIcon}</span>
+                      <span className={`text-sm font-medium text-${statusColor}-700`}>{statusText}</span>
+                    </div>
+                  );
+                })()}
+
+                {/* Schedule Times */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <Play size={14} className="inline mr-1 text-green-600" />
+                      Start Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={campaignConfig.scheduled_start ? campaignConfig.scheduled_start.slice(0, 16) : ''}
+                      onChange={(e) => setCampaignConfig(c => ({
+                        ...c,
+                        scheduled_start: e.target.value ? new Date(e.target.value).toISOString() : undefined
+                      }))}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 outline-none text-sm"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">QR will auto-activate at this time</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <Pause size={14} className="inline mr-1 text-red-600" />
+                      End Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={campaignConfig.scheduled_end ? campaignConfig.scheduled_end.slice(0, 16) : ''}
+                      onChange={(e) => setCampaignConfig(c => ({
+                        ...c,
+                        scheduled_end: e.target.value ? new Date(e.target.value).toISOString() : undefined
+                      }))}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 outline-none text-sm"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">QR will auto-deactivate at this time</p>
+                  </div>
+                </div>
+
+                {/* Auto Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                    <input
+                      type="checkbox"
+                      checked={campaignConfig.auto_activate ?? true}
+                      onChange={(e) => setCampaignConfig(c => ({ ...c, auto_activate: e.target.checked }))}
+                      className="w-4 h-4 text-indigo-600 rounded border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700">Auto-activate at start</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                    <input
+                      type="checkbox"
+                      checked={campaignConfig.auto_deactivate ?? true}
+                      onChange={(e) => setCampaignConfig(c => ({ ...c, auto_deactivate: e.target.checked }))}
+                      className="w-4 h-4 text-indigo-600 rounded border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700">Auto-deactivate at end</span>
+                  </label>
+                </div>
+
+                {/* Repeat Schedule */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Repeat size={14} className="inline mr-1" />
+                    Repeat Schedule
+                  </label>
+                  <div className="flex gap-2">
+                    {[
+                      { value: null, label: 'No Repeat' },
+                      { value: 'daily', label: 'Daily' },
+                      { value: 'weekly', label: 'Weekly' },
+                      { value: 'monthly', label: 'Monthly' },
+                    ].map((option) => (
+                      <button
+                        key={option.value || 'none'}
+                        onClick={() => setCampaignConfig(c => ({ ...c, repeat: option.value as CampaignConfig['repeat'] }))}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          campaignConfig.repeat === option.value
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pre/Post Campaign URLs */}
+                <div className="border-t border-gray-100 pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Redirect URLs (Optional)</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Before Campaign Starts</label>
+                      <input
+                        type="url"
+                        value={campaignConfig.pre_campaign_url || ''}
+                        onChange={(e) => setCampaignConfig(c => ({ ...c, pre_campaign_url: e.target.value }))}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 outline-none text-sm"
+                        placeholder="https://coming-soon.example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">After Campaign Ends</label>
+                      <input
+                        type="url"
+                        value={campaignConfig.post_campaign_url || ''}
+                        onChange={(e) => setCampaignConfig(c => ({ ...c, post_campaign_url: e.target.value }))}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 outline-none text-sm"
+                        placeholder="https://sale-ended.example.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notifications */}
+                <div className="border-t border-gray-100 pt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Email Notifications</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                      <input
+                        type="checkbox"
+                        checked={campaignConfig.notify_on_start ?? false}
+                        onChange={(e) => setCampaignConfig(c => ({ ...c, notify_on_start: e.target.checked }))}
+                        className="w-4 h-4 text-indigo-600 rounded border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700">Notify when starts</span>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                      <input
+                        type="checkbox"
+                        checked={campaignConfig.notify_on_end ?? false}
+                        onChange={(e) => setCampaignConfig(c => ({ ...c, notify_on_end: e.target.checked }))}
+                        className="w-4 h-4 text-indigo-600 rounded border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700">Notify when ends</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
+                  <Info size={14} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs text-blue-700">
+                    <p className="font-medium mb-1">How Scheduled Campaigns Work:</p>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      <li>QR code will auto-activate at the scheduled start time</li>
+                      <li>QR code will auto-deactivate at the scheduled end time</li>
+                      <li>Pre/Post campaign URLs redirect users when campaign isn't active</li>
+                      <li>Perfect for flash sales, limited-time offers, event promotions</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

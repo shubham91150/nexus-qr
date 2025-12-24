@@ -148,6 +148,26 @@ export interface WebhookConfig {
   headers?: Record<string, string>; // Custom headers
 }
 
+// Scheduled Campaign Configuration
+export interface CampaignConfig {
+  enabled: boolean;
+  name?: string; // Campaign name (e.g., "Black Friday Sale")
+  scheduled_start?: string; // ISO timestamp for activation
+  scheduled_end?: string; // ISO timestamp for deactivation
+  timezone?: string; // User's timezone (e.g., "Asia/Kolkata")
+  auto_activate?: boolean; // Automatically activate at scheduled_start
+  auto_deactivate?: boolean; // Automatically deactivate at scheduled_end
+  repeat?: 'daily' | 'weekly' | 'monthly' | null; // Repeat schedule
+  repeat_end_date?: string | null; // When to stop repeating
+  pre_campaign_url?: string; // Redirect URL before campaign starts
+  post_campaign_url?: string; // Redirect URL after campaign ends
+  notify_on_start?: boolean; // Send email when campaign starts
+  notify_on_end?: boolean; // Send email when campaign ends
+}
+
+// Campaign Status (computed)
+export type CampaignStatus = 'scheduled' | 'active' | 'ended' | 'paused' | 'none';
+
 // Extended Dynamic QR Code with all features
 export interface DynamicQRCode {
   id: string;
@@ -208,6 +228,9 @@ export interface DynamicQRCode {
 
   // NEW: Webhook Configuration (for scan notifications)
   webhook_config?: WebhookConfig;
+
+  // NEW: Scheduled Campaign Configuration
+  campaign_config?: CampaignConfig;
 }
 
 // QR Scan Record
