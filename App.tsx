@@ -870,81 +870,43 @@ const AppContent: React.FC = () => {
     }} />;
   }
 
-  // API Dashboard (auth required)
+  // API Dashboard (auth required) - Simplified with consolidated features
   if (view === 'api' && user) {
-    return <ApiDashboard onBack={handleBackToGenerator} onWebhooksClick={() => {
-      setView('api-webhooks');
-      window.history.pushState({}, '', '/api/webhooks');
-    }} onDocsClick={() => {
-      setView('api-docs');
-      window.history.pushState({}, '', '/api/docs');
-    }} onPlaygroundClick={() => {
-      setView('api-playground');
-      window.history.pushState({}, '', '/api/playground');
-    }} onAnalyticsClick={() => {
-      setView('api-analytics');
-      window.history.pushState({}, '', '/api/analytics');
-    }} onLogsClick={() => {
-      setView('api-logs');
-      window.history.pushState({}, '', '/api/logs');
-    }} onApiReferenceClick={() => {
-      setView('api-docs-interactive');
-      window.history.pushState({}, '', '/api/reference');
-    }} onTeamAccessClick={() => {
-      setView('team-access');
-      window.history.pushState({}, '', '/api/team');
-    }} onPerformanceClick={() => {
-      setView('api-performance');
-      window.history.pushState({}, '', '/api/performance');
-    }} onDomainsClick={() => {
-      setView('custom-domain');
-      window.history.pushState({}, '', '/api/domains');
-    }} onAuditClick={() => {
-      setView('api-audit');
-      window.history.pushState({}, '', '/api/audit');
-    }} onUsageQuotaClick={() => {
-      setView('api-usage-quota');
-      window.history.pushState({}, '', '/api/usage');
-    }} onOnboardingClick={() => {
-      setView('api-onboarding');
-      window.history.pushState({}, '', '/api/onboarding');
-    }} onRateLimitingClick={() => {
-      setView('rate-limiting');
-      window.history.pushState({}, '', '/api/rate-limiting');
-    }} onIpWhitelistClick={() => {
-      setView('ip-whitelisting');
-      window.history.pushState({}, '', '/api/ip-whitelist');
-    }} onCorsConfigClick={() => {
-      setView('cors-config');
-      window.history.pushState({}, '', '/api/cors');
-    }} onKeyRotationClick={() => {
-      setView('api-key-rotation');
-      window.history.pushState({}, '', '/api/keys/rotation');
-    }} onKeyScopesClick={() => {
-      setView('api-key-scopes');
-      window.history.pushState({}, '', '/api/keys/scopes');
-    }} onChangelogClick={() => {
-      setView('api-changelog');
-      window.history.pushState({}, '', '/api/changelog');
-    }} onStatusPageClick={() => {
-      setView('api-status');
-      window.history.pushState({}, '', '/api/status');
-    }} onSdkExamplesClick={() => {
-      setView('api-sdk-examples');
-      window.history.pushState({}, '', '/api/sdk');
-    }} onPostmanExportClick={() => {
-      setView('postman-export');
-      window.history.pushState({}, '', '/api/postman');
-    }} onErrorCodesClick={() => {
-      setView('error-codes');
-      window.history.pushState({}, '', '/api/errors');
-    }} onDeveloperPortalClick={() => {
-      setView('developer-portal');
-      window.history.pushState({}, '', '/developers');
-    }} onSandboxClick={() => {
-      setView('api-testing-sandbox');
-      window.history.pushState({}, '', '/api/sandbox');
-    }} />;
+    return <ApiDashboard
+      onBack={handleBackToGenerator}
+      onWebhooksClick={() => {
+        setView('api-webhooks');
+        window.history.pushState({}, '', '/api/webhooks');
+      }}
+      onDocsClick={() => {
+        setView('api-docs-interactive');
+        window.history.pushState({}, '', '/api/docs');
+      }}
+      onPlaygroundClick={() => {
+        setView('api-playground');
+        window.history.pushState({}, '', '/api/playground');
+      }}
+      onAnalyticsClick={() => {
+        setView('api-analytics');
+        window.history.pushState({}, '', '/api/analytics');
+      }}
+      onLogsClick={() => {
+        setView('api-logs');
+        window.history.pushState({}, '', '/api/logs');
+      }}
+      onTeamAccessClick={() => {
+        setView('team-access');
+        window.history.pushState({}, '', '/api/team');
+      }}
+      onOnboardingClick={() => {
+        setView('api-onboarding');
+        window.history.pushState({}, '', '/api/onboarding');
+      }}
+      onSecurityClick={() => {
+        setView('api-key-scopes');
+        window.history.pushState({}, '', '/api/security');
+      }}
+    />;
   }
 
   // API Webhooks (auth required)
