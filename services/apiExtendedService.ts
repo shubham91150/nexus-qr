@@ -947,3 +947,151 @@ export async function rotateWebhookSecret(webhookId: string): Promise<string | n
     return null;
   }
 }
+
+// =====================================================
+// Daily Usage Tracking Functions
+// =====================================================
+
+/**
+ * Track API usage for a user (increments daily usage counters)
+ */
+export async function trackDailyUsage(
+  userId: string,
+  options: {
+    apiKeyId?: string;
+    apiCalls?: number;
+    qrCodes?: number;
+    bandwidth?: number;
+    success?: boolean;
+    responseTime?: number;
+  } = {}
+): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('increment_daily_usage', {
+      p_user_id: userId,
+      p_api_key_id: options.apiKeyId || null,
+      p_api_calls: options.apiCalls ?? 1,
+      p_qr_codes: options.qrCodes ?? 0,
+      p_bandwidth: options.bandwidth ?? 0,
+      p_success: options.success ?? true,
+      p_response_time: options.responseTime ?? 0,
+    });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error tracking daily usage:', error);
+    return false;
+  }
+}
+
+/**
+ * Seed demo daily usage data for testing
+ * This should be called once for new users who want to see demo data
+ */
+export async function seedDemoUsageData(userId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('seed_demo_daily_usage', {
+      p_user_id: userId,
+    });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error seeding demo usage data:', error);
+    return false;
+  }
+}
+
+/**
+ * Direct insert/upsert for daily usage (fallback if RPC not available)
+ */
+export async function upsertDailyUsage(
+  userId: string,
+  date: string,
+  data: {
+    apiKeyId?: string;
+    apiCalls?: number;
+    qrCodesCreated?: number;
+    bandwidthBytes?: number;
+    successfulRequests?: number;
+    failedRequests?: number;
+    avgResponseTimeMs?: number;
+  }
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('api_usage_daily')
+      .upsert(
+        {
+          user_id: userId,
+          api_key_id: data.apiKeyId || null,
+          date,
+          api_calls: data.apiCalls ?? 0,
+          qr_codes_created: data.qrCodesCreated ?? 0,
+          bandwidth_bytes: data.bandwidthBytes ?? 0,
+          successful_requests: data.successfulRequests ?? 0,
+          failed_requests: data.failedRequests ?? 0,
+          avg_response_time_ms: data.avgResponseTimeMs ?? 0,
+        },
+        { onConflict: 'user_id,api_key_id,date' }
+      );
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error upserting daily usage:', error);
+    return false;
+  }
+}
+
+/**
+ * Generate and insert demo data directly (no RPC needed)
+ * Call this if the database migration hasn't been run yet
+ */
+export async function generateDemoUsageData(userId: string): Promise<boolean> {
+  try {
+    const today = new Date();
+    const demoData: {
+      user_id: string;
+      date: string;
+      api_calls: number;
+      qr_codes_created: number;
+      bandwidth_bytes: number;
+      successful_requests: number;
+      failed_requests: number;
+      avg_response_time_ms: number;
+    }[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+
+      const apiCalls = Math.floor(Math.random() * 500) + 100;
+      const successfulRequests = Math.floor(apiCalls * 0.9);
+      const failedRequests = apiCalls - successfulRequests;
+
+      demoData.push({
+        user_id: userId,
+        date: dateStr,
+        api_calls: apiCalls,
+        qr_codes_created: Math.floor(Math.random() * 50) + 10,
+        bandwidth_bytes: Math.floor(Math.random() * 50000000) + 10000000,
+        successful_requests: successfulRequests,
+        failed_requests: failedRequests,
+        avg_response_time_ms: Math.floor(Math.random() * 150) + 50,
+      });
+    }
+
+    const { error } = await supabase
+      .from('api_usage_daily')
+      .upsert(demoData, { onConflict: 'user_id,api_key_id,date' });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error generating demo usage data:', error);
+    return false;
+  }
+}

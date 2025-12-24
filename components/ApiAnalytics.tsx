@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { getUserApiKeys, getApiKeyUsage, formatNumber } from '../services/apiService';
-import { getDailyUsage } from '../services/apiExtendedService';
+import { getDailyUsage, generateDemoUsageData } from '../services/apiExtendedService';
 
 interface AnalyticsData {
   totalRequests: number;
@@ -112,21 +112,30 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
       setApiKeys(keys.map(k => ({ id: k.id, name: k.name })));
 
       // Load real daily usage data from database
-      const dailyUsage = await getDailyUsage(user.id);
+      let dailyUsage = await getDailyUsage(user.id);
+
+      // If no data exists, try to generate demo data first
+      if (!dailyUsage || dailyUsage.length === 0) {
+        console.log('No daily usage data found, generating demo data...');
+        await generateDemoUsageData(user.id);
+        // Reload after generating
+        dailyUsage = await getDailyUsage(user.id);
+      }
 
       // If we have real data, use it; otherwise generate mock
       if (dailyUsage && dailyUsage.length > 0) {
-        // Convert real data to analytics format
+        // Convert real data to analytics format using correct field names
         const requestsByDay = dailyUsage.map(d => ({
           date: new Date(d.date).toISOString().split('T')[0],
-          count: d.requests,
-          success: d.requests - (d.errors || 0),
-          failed: d.errors || 0
+          count: d.api_calls || 0,
+          success: d.successful_requests || 0,
+          failed: d.failed_requests || 0
         }));
 
         const totalRequests = requestsByDay.reduce((sum, d) => sum + d.count, 0);
         const successfulRequests = requestsByDay.reduce((sum, d) => sum + d.success, 0);
         const failedRequests = requestsByDay.reduce((sum, d) => sum + d.failed, 0);
+        const avgResponseTime = dailyUsage.reduce((sum, d) => sum + (d.avg_response_time_ms || 0), 0) / dailyUsage.length;
 
         // Generate supplementary mock data for features not in DB
         const mockData = generateMockAnalytics();
@@ -135,7 +144,7 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
           totalRequests,
           successfulRequests,
           failedRequests,
-          avgResponseTime: mockData.avgResponseTime, // Would need logs table
+          avgResponseTime: Math.round(avgResponseTime) || mockData.avgResponseTime,
           requestsByDay: requestsByDay.length >= 7 ? requestsByDay : mockData.requestsByDay,
           topEndpoints: mockData.topEndpoints, // Would need endpoint logs
           requestsByCountry: mockData.requestsByCountry, // Would need geo data
@@ -145,6 +154,7 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         });
       } else {
         // No real data, use mock for demo
+        console.log('Using mock analytics data as fallback');
         setAnalytics(generateMockAnalytics());
       }
     } catch (error) {

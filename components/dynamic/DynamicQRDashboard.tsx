@@ -3,7 +3,8 @@ import {
   QrCode, BarChart3, Edit2, Trash2, ExternalLink,
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
   Smartphone, Globe, Calendar, Users, Eye, MapPin,
-  Download, Settings, Timer, AlertTriangle, Files, Plus, HelpCircle
+  Download, Settings, Timer, AlertTriangle, Files, Plus, HelpCircle,
+  FileSpreadsheet, FileDown
 } from 'lucide-react';
 import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired, generateShortCode } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
@@ -195,6 +196,14 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkPrefix, setBulkPrefix] = useState('QR');
+
+  // Export Modal states
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState<'all' | '7d' | '30d' | '90d' | 'custom'>('all');
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
 
   // Real-time scan count
   const [liveScansToday, setLiveScansToday] = useState(0);
@@ -393,6 +402,146 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+    }
+  };
+
+  // Export Analytics Data
+  const handleExportAnalytics = async () => {
+    if (!selectedQR) return;
+    setExportLoading(true);
+
+    try {
+      // Calculate date range
+      let startDate: Date | null = null;
+      const endDate = new Date();
+
+      switch (exportDateRange) {
+        case '7d':
+          startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '90d':
+          startDate = new Date(endDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        case 'custom':
+          if (exportStartDate) startDate = new Date(exportStartDate);
+          break;
+        default:
+          startDate = null; // All time
+      }
+
+      // Build query
+      let query = supabase
+        .from('qr_scans')
+        .select('*')
+        .eq('qr_id', selectedQR.id)
+        .order('scanned_at', { ascending: false });
+
+      if (startDate) {
+        query = query.gte('scanned_at', startDate.toISOString());
+      }
+      if (exportDateRange === 'custom' && exportEndDate) {
+        query = query.lte('scanned_at', new Date(exportEndDate).toISOString());
+      }
+
+      const { data: scans, error } = await query;
+
+      if (error) throw error;
+      if (!scans || scans.length === 0) {
+        alert('No scan data found for the selected date range.');
+        setExportLoading(false);
+        return;
+      }
+
+      // Prepare data for export
+      const exportData = scans.map((scan, index) => ({
+        '#': index + 1,
+        'Date': new Date(scan.scanned_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        'Time': new Date(scan.scanned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        'Country': scan.country || 'Unknown',
+        'City': scan.city || 'Unknown',
+        'Region': scan.region || 'Unknown',
+        'Device': scan.device_type || 'Unknown',
+        'Browser': scan.browser || 'Unknown',
+        'OS': scan.os || 'Unknown',
+        'Language': scan.language || 'Unknown',
+        'Referrer': scan.referrer || 'Direct',
+        'A/B Variant': scan.ab_variant_id || 'N/A',
+        'Converted': scan.converted ? 'Yes' : 'No',
+        'IP Address': scan.ip_address || 'N/A',
+      }));
+
+      if (exportFormat === 'csv') {
+        // Generate CSV
+        const headers = Object.keys(exportData[0]);
+        const csvRows = [
+          headers.join(','),
+          ...exportData.map(row =>
+            headers.map(header => {
+              const value = String(row[header as keyof typeof row] || '');
+              // Escape quotes and wrap in quotes if contains comma
+              if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                return `"${value.replace(/"/g, '""')}"`;
+              }
+              return value;
+            }).join(',')
+          )
+        ];
+        const csvContent = csvRows.join('\n');
+
+        // Add BOM for Excel UTF-8 compatibility
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${selectedQR.title.replace(/\s+/g, '_')}_scans_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // Generate Excel-compatible XML (SpreadsheetML)
+        const headers = Object.keys(exportData[0]);
+        const xmlRows = exportData.map(row =>
+          `<Row>${headers.map(h => `<Cell><Data ss:Type="String">${String(row[h as keyof typeof row] || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Data></Cell>`).join('')}</Row>`
+        ).join('\n');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Header">
+      <Font ss:Bold="1"/>
+      <Interior ss:Color="#4F46E5" ss:Pattern="Solid"/>
+      <Font ss:Color="#FFFFFF"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Scan Data">
+    <Table>
+      <Row ss:StyleID="Header">${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>
+      ${xmlRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+        const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${selectedQR.title.replace(/\s+/g, '_')}_scans_${new Date().toISOString().split('T')[0]}.xls`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      setShowExportModal(false);
+      alert(`Successfully exported ${scans.length} scan records!`);
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Failed to export data. Please try again.');
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -664,6 +813,13 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                           {cloning ? <Loader2 size={16} className="text-gray-400 animate-spin" /> : <Files size={16} className="text-gray-400" />}
                         </button>
                         <button
+                          onClick={() => setShowExportModal(true)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Export Analytics"
+                        >
+                          <FileSpreadsheet size={16} className="text-gray-400" />
+                        </button>
+                        <button
                           onClick={() => setActiveView(activeView === 'settings' ? 'analytics' : 'settings')}
                           className={`p-2 rounded-lg transition-colors ${activeView === 'settings' ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 text-gray-400'}`}
                           title="Settings"
@@ -905,6 +1061,139 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                 >
                   {bulkGenerating && <Loader2 size={16} className="animate-spin" />}
                   {bulkGenerating ? 'Generating...' : 'Generate All'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Analytics Modal */}
+      {showExportModal && selectedQR && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <FileDown size={20} className="text-indigo-600" />
+                Export Scan Data
+              </h2>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Export scan analytics for <strong>{selectedQR.title}</strong> as CSV or Excel file.
+            </p>
+
+            <div className="space-y-4">
+              {/* Date Range Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date Range
+                </label>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {[
+                    { value: 'all', label: 'All Time' },
+                    { value: '7d', label: '7 Days' },
+                    { value: '30d', label: '30 Days' },
+                    { value: '90d', label: '90 Days' },
+                    { value: 'custom', label: 'Custom' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setExportDateRange(option.value as typeof exportDateRange)}
+                      className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                        exportDateRange === option.value
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Date Range Inputs */}
+                {exportDateRange === 'custom' && (
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                      <input
+                        type="date"
+                        value={exportStartDate}
+                        onChange={(e) => setExportStartDate(e.target.value)}
+                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                      <input
+                        type="date"
+                        value={exportEndDate}
+                        onChange={(e) => setExportEndDate(e.target.value)}
+                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Format Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Export Format
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setExportFormat('csv')}
+                    className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                      exportFormat === 'csv'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <FileSpreadsheet size={16} />
+                    CSV
+                  </button>
+                  <button
+                    onClick={() => setExportFormat('excel')}
+                    className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                      exportFormat === 'excel'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <FileSpreadsheet size={16} />
+                    Excel (.xls)
+                  </button>
+                </div>
+              </div>
+
+              {/* Export Info */}
+              <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-500">
+                <p className="font-medium text-gray-700 mb-1">Included Data:</p>
+                <p>Date, Time, Country, City, Device, Browser, OS, Language, Referrer, A/B Variant, Conversion Status</p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowExportModal(false)}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExportAnalytics}
+                  disabled={exportLoading}
+                  className="flex-1 py-3 px-4 bg-indigo-600 text-white rounded-xl font-medium text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {exportLoading && <Loader2 size={16} className="animate-spin" />}
+                  {exportLoading ? 'Exporting...' : 'Export Data'}
                 </button>
               </div>
             </div>
