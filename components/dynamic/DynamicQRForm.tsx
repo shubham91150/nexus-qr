@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Copy, Check, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Loader2, Copy, Check, ExternalLink, ChevronDown, ChevronUp, Link2, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase, generateShortCode, DynamicQRCode } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
 import { QRContentData, QRStyleConfig } from '../../types';
@@ -55,8 +55,74 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
   const [copied, setCopied] = useState(false);
   const [showStyling, setShowStyling] = useState(false);
 
+  // Custom Short URL state
+  const [customAlias, setCustomAlias] = useState('');
+  const [aliasStatus, setAliasStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  const aliasCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+
   const previewRef = useRef<HTMLDivElement>(null);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+  // Validate alias format
+  const isValidAlias = (alias: string): boolean => {
+    // Allow only letters, numbers, hyphens, underscores. 3-30 chars
+    return /^[a-zA-Z0-9_-]{3,30}$/.test(alias);
+  };
+
+  // Check if alias is available
+  const checkAliasAvailability = async (alias: string) => {
+    if (!alias) {
+      setAliasStatus('idle');
+      return;
+    }
+
+    if (!isValidAlias(alias)) {
+      setAliasStatus('invalid');
+      return;
+    }
+
+    setAliasStatus('checking');
+
+    try {
+      const { data, error } = await supabase
+        .from('dynamic_qr_codes')
+        .select('id')
+        .eq('short_code', alias)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking alias:', error);
+        setAliasStatus('idle');
+        return;
+      }
+
+      setAliasStatus(data ? 'taken' : 'available');
+    } catch (err) {
+      console.error('Error checking alias:', err);
+      setAliasStatus('idle');
+    }
+  };
+
+  // Debounced alias check
+  useEffect(() => {
+    if (aliasCheckTimeout.current) {
+      clearTimeout(aliasCheckTimeout.current);
+    }
+
+    if (customAlias) {
+      aliasCheckTimeout.current = setTimeout(() => {
+        checkAliasAvailability(customAlias);
+      }, 500);
+    } else {
+      setAliasStatus('idle');
+    }
+
+    return () => {
+      if (aliasCheckTimeout.current) {
+        clearTimeout(aliasCheckTimeout.current);
+      }
+    };
+  }, [customAlias]);
 
   // Reset form when opening/closing
   useEffect(() => {
@@ -74,13 +140,17 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
         if (savedStyle?.styleConfig) {
           setStyleConfig(savedStyle.styleConfig as QRStyleConfig);
         }
+        // Don't allow changing alias when editing
+        setCustomAlias('');
       } else {
         setTitle('');
         setContentData(INITIAL_CONTENT);
         setStyleConfig(INITIAL_STYLE);
+        setCustomAlias('');
       }
       setError(null);
       setCreatedQR(null);
+      setAliasStatus('idle');
     }
   }, [editingQR, isOpen]);
 
@@ -165,10 +235,13 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
         onSuccess();
         onClose();
       } else {
-        // Create new QR with unique short code
-        let shortCode = generateShortCode();
+        // Use custom alias if provided and valid, otherwise generate
+        let shortCode = customAlias && aliasStatus === 'available'
+          ? customAlias
+          : generateShortCode();
+
         let attempts = 0;
-        const maxAttempts = 5;
+        const maxAttempts = customAlias ? 1 : 5; // Only 1 attempt if using custom alias
 
         while (attempts < maxAttempts) {
           const { data, error: insertError } = await supabase
@@ -185,6 +258,10 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
 
           if (insertError) {
             if (insertError.code === '23505') {
+              if (customAlias) {
+                // Custom alias was taken (race condition)
+                throw new Error('This custom URL is no longer available. Please choose another.');
+              }
               shortCode = generateShortCode();
               attempts++;
               continue;
@@ -197,7 +274,7 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
           break;
         }
 
-        if (attempts >= maxAttempts) {
+        if (attempts >= maxAttempts && !customAlias) {
           throw new Error('Failed to generate unique short code. Please try again.');
         }
       }
@@ -323,6 +400,71 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
                     maxLength={255}
                   />
                 </div>
+
+                {/* Custom Short URL (only for new QR) */}
+                {!editingQR && (
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Link2 className="w-4 h-4 text-indigo-600" />
+                      <label className="text-sm font-medium text-gray-700">
+                        Custom Short URL <span className="text-gray-400 font-normal">(Optional)</span>
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-sm whitespace-nowrap">{baseUrl}/r/</span>
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          value={customAlias}
+                          onChange={(e) => setCustomAlias(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                          className={`w-full px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-sm ${
+                            aliasStatus === 'available' ? 'border-green-500' :
+                            aliasStatus === 'taken' || aliasStatus === 'invalid' ? 'border-red-500' :
+                            'border-gray-200 focus:border-indigo-500'
+                          }`}
+                          placeholder="my-brand"
+                          maxLength={30}
+                        />
+                        {/* Status indicator */}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                          {aliasStatus === 'checking' && (
+                            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                          )}
+                          {aliasStatus === 'available' && (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          )}
+                          {(aliasStatus === 'taken' || aliasStatus === 'invalid') && (
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Status message */}
+                    <div className="mt-2 text-xs">
+                      {aliasStatus === 'idle' && !customAlias && (
+                        <span className="text-gray-500">Leave empty for auto-generated code, or create your branded URL</span>
+                      )}
+                      {aliasStatus === 'checking' && (
+                        <span className="text-gray-500">Checking availability...</span>
+                      )}
+                      {aliasStatus === 'available' && (
+                        <span className="text-green-600 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" /> This URL is available!
+                        </span>
+                      )}
+                      {aliasStatus === 'taken' && (
+                        <span className="text-red-600 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> This URL is already taken
+                        </span>
+                      )}
+                      {aliasStatus === 'invalid' && (
+                        <span className="text-red-600 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> Use 3-30 characters: letters, numbers, hyphens, underscores
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* Left: URL Input */}

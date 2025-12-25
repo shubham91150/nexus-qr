@@ -168,6 +168,20 @@ export interface CampaignConfig {
 // Campaign Status (computed)
 export type CampaignStatus = 'scheduled' | 'active' | 'ended' | 'paused' | 'none';
 
+// QR Code Folder for organization
+export interface QRFolder {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon: string;
+  parent_id?: string | null; // For nested folders
+  created_at: string;
+  updated_at: string;
+  qr_count?: number; // Computed field
+}
+
 // Extended Dynamic QR Code with all features
 export interface DynamicQRCode {
   id: string;
@@ -179,6 +193,9 @@ export interface DynamicQRCode {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+
+  // Folder Organization
+  folder_id?: string | null;
 
   // Expiry Control
   expires_at?: string | null;
