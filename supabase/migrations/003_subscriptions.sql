@@ -181,15 +181,16 @@ CREATE POLICY "Users can view own payment history"
     USING (auth.uid() = user_id);
 
 -- Create view for easy subscription checking (SECURITY INVOKER - runs as querying user)
--- Only returns the current user's subscription status
+-- Only returns the current user's subscription status from user_subscriptions table
+-- Does NOT join with auth.users to avoid exposing sensitive data
 CREATE OR REPLACE VIEW user_subscription_status
 WITH (security_barrier = true, security_invoker = true) AS
 SELECT
-    u.id as user_id,
-    u.email,
+    s.user_id,
     COALESCE(s.plan_tier, 'free') as plan_tier,
     COALESCE(s.status, 'active') as status,
     COALESCE(s.billing_cycle, 'monthly') as billing_cycle,
+    s.current_period_start,
     s.current_period_end,
     s.trial_end,
     s.cancel_at_period_end,
@@ -198,14 +199,16 @@ SELECT
         ELSE FALSE
     END as is_trialing,
     CASE
-        WHEN s.current_period_end < NOW() AND s.status = 'active' THEN TRUE
+        WHEN s.current_period_end IS NOT NULL AND s.current_period_end < NOW() AND s.status = 'active' THEN TRUE
         ELSE FALSE
     END as is_expired
-FROM auth.users u
-LEFT JOIN user_subscriptions s ON u.id = s.user_id
-WHERE u.id = auth.uid(); -- Only return current user's data
+FROM user_subscriptions s
+WHERE s.user_id = auth.uid(); -- Only return current user's data
 
--- Grant access to the view
-GRANT SELECT ON user_subscription_status TO authenticated;
--- Revoke from anon to ensure only authenticated users can access
+-- Revoke all access first
+REVOKE ALL ON user_subscription_status FROM PUBLIC;
 REVOKE ALL ON user_subscription_status FROM anon;
+REVOKE ALL ON user_subscription_status FROM authenticated;
+
+-- Grant only to authenticated users
+GRANT SELECT ON user_subscription_status TO authenticated;
