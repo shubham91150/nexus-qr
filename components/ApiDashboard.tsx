@@ -3,7 +3,7 @@ import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, ChevronRight, Check,
   Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book,
-  Users, Rocket
+  Users, Rocket, Code
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
