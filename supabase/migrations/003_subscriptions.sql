@@ -180,8 +180,10 @@ CREATE POLICY "Users can view own payment history"
     ON payment_history FOR SELECT
     USING (auth.uid() = user_id);
 
--- Create view for easy subscription checking
-CREATE OR REPLACE VIEW user_subscription_status AS
+-- Create view for easy subscription checking (SECURITY INVOKER - runs as querying user)
+-- Only returns the current user's subscription status
+CREATE OR REPLACE VIEW user_subscription_status
+WITH (security_barrier = true, security_invoker = true) AS
 SELECT
     u.id as user_id,
     u.email,
@@ -200,7 +202,10 @@ SELECT
         ELSE FALSE
     END as is_expired
 FROM auth.users u
-LEFT JOIN user_subscriptions s ON u.id = s.user_id;
+LEFT JOIN user_subscriptions s ON u.id = s.user_id
+WHERE u.id = auth.uid(); -- Only return current user's data
 
 -- Grant access to the view
 GRANT SELECT ON user_subscription_status TO authenticated;
+-- Revoke from anon to ensure only authenticated users can access
+REVOKE ALL ON user_subscription_status FROM anon;
