@@ -4,9 +4,9 @@ import {
   Copy, Check, Power, PowerOff, Loader2, TrendingUp,
   Smartphone, Globe, Calendar, Users, Eye, MapPin,
   Download, Settings, Timer, AlertTriangle, Files, Plus, HelpCircle,
-  FileSpreadsheet, FileDown
+  FileSpreadsheet, FileDown, Folder, FolderPlus, X, ChevronRight
 } from 'lucide-react';
-import { supabase, DynamicQRCode, QRScan, subscribeToScans, isQRExpired, generateShortCode } from '../../lib/supabase';
+import { supabase, DynamicQRCode, QRScan, QRFolder, subscribeToScans, isQRExpired, generateShortCode } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
 import { DynamicQRForm } from './DynamicQRForm';
 import { QRSettingsPanel } from './QRSettingsPanel';
@@ -211,6 +211,15 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
   // Dashboard Tour state - only show when user clicks help button
   const [showDashboardTour, setShowDashboardTour] = useState(false);
 
+  // Folder Management states
+  const [folders, setFolders] = useState<QRFolder[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null); // null = All QR Codes
+  const [showFolderModal, setShowFolderModal] = useState(false);
+  const [editingFolder, setEditingFolder] = useState<QRFolder | null>(null);
+  const [folderName, setFolderName] = useState('');
+  const [folderColor, setFolderColor] = useState('#6366f1');
+  const [folderSaving, setFolderSaving] = useState(false);
+
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   // Subscribe to real-time scan updates
@@ -262,6 +271,107 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
       setLoading(false);
     }
   };
+
+  // Fetch folders
+  const fetchFolders = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('qr_folders')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setFolders(data || []);
+    } catch (err) {
+      console.error('Error fetching folders:', err);
+    }
+  };
+
+  // Save folder (create or update)
+  const handleSaveFolder = async () => {
+    if (!user || !folderName.trim()) return;
+    setFolderSaving(true);
+
+    try {
+      if (editingFolder) {
+        // Update existing folder
+        const { error } = await supabase
+          .from('qr_folders')
+          .update({ name: folderName.trim(), color: folderColor })
+          .eq('id', editingFolder.id);
+
+        if (error) throw error;
+      } else {
+        // Create new folder
+        const { error } = await supabase
+          .from('qr_folders')
+          .insert({
+            user_id: user.id,
+            name: folderName.trim(),
+            color: folderColor,
+            icon: 'folder',
+          });
+
+        if (error) throw error;
+      }
+
+      await fetchFolders();
+      setShowFolderModal(false);
+      setFolderName('');
+      setFolderColor('#6366f1');
+      setEditingFolder(null);
+    } catch (err) {
+      console.error('Error saving folder:', err);
+      alert('Failed to save folder');
+    } finally {
+      setFolderSaving(false);
+    }
+  };
+
+  // Delete folder
+  const handleDeleteFolder = async (folderId: string) => {
+    if (!confirm('Delete this folder? QR codes inside will be moved to "All QR Codes".')) return;
+
+    try {
+      const { error } = await supabase
+        .from('qr_folders')
+        .delete()
+        .eq('id', folderId);
+
+      if (error) throw error;
+
+      await fetchFolders();
+      if (selectedFolder === folderId) {
+        setSelectedFolder(null);
+      }
+    } catch (err) {
+      console.error('Error deleting folder:', err);
+      alert('Failed to delete folder');
+    }
+  };
+
+  // Move QR to folder
+  const handleMoveToFolder = async (qrId: string, folderId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('dynamic_qr_codes')
+        .update({ folder_id: folderId })
+        .eq('id', qrId);
+
+      if (error) throw error;
+      await fetchQRCodes();
+    } catch (err) {
+      console.error('Error moving QR to folder:', err);
+    }
+  };
+
+  // Get filtered QR codes based on selected folder
+  const filteredQRCodes = selectedFolder
+    ? qrCodes.filter(qr => qr.folder_id === selectedFolder)
+    : qrCodes;
 
   // Fetch analytics for selected QR
   const fetchAnalytics = async (qrId: string) => {
@@ -351,6 +461,7 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
 
   useEffect(() => {
     fetchQRCodes();
+    fetchFolders();
   }, [user]);
 
   useEffect(() => {
@@ -708,9 +819,98 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* QR List - Left Column */}
           <div className="lg:col-span-3" data-tour="qr-list">
+            {/* Folders Section */}
+            <div className="bg-white rounded-2xl shadow-sm p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Folder size={16} className="text-indigo-600" />
+                  Folders
+                </h2>
+                <button
+                  onClick={() => {
+                    setEditingFolder(null);
+                    setFolderName('');
+                    setFolderColor('#6366f1');
+                    setShowFolderModal(true);
+                  }}
+                  className="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg hover:bg-indigo-200 transition-colors flex items-center gap-1"
+                  title="New Folder"
+                >
+                  <FolderPlus size={12} />
+                  New
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                {/* All QR Codes */}
+                <button
+                  onClick={() => setSelectedFolder(null)}
+                  className={`w-full text-left p-2 rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                    selectedFolder === null
+                      ? 'bg-indigo-50 text-indigo-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <QrCode size={14} />
+                  All QR Codes
+                  <span className="ml-auto text-xs text-gray-400">{qrCodes.length}</span>
+                </button>
+
+                {/* User Folders */}
+                {folders.map((folder) => {
+                  const folderQRCount = qrCodes.filter(qr => qr.folder_id === folder.id).length;
+                  return (
+                    <div
+                      key={folder.id}
+                      className={`group flex items-center gap-2 p-2 rounded-lg text-sm transition-colors ${
+                        selectedFolder === folder.id
+                          ? 'bg-indigo-50 text-indigo-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <button
+                        onClick={() => setSelectedFolder(folder.id)}
+                        className="flex-1 flex items-center gap-2 text-left"
+                      >
+                        <Folder size={14} style={{ color: folder.color }} />
+                        <span className="truncate">{folder.name}</span>
+                        <span className="ml-auto text-xs text-gray-400">{folderQRCount}</span>
+                      </button>
+                      <div className="hidden group-hover:flex items-center gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingFolder(folder);
+                            setFolderName(folder.name);
+                            setFolderColor(folder.color);
+                            setShowFolderModal(true);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                        >
+                          <Edit2 size={12} className="text-gray-400" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteFolder(folder.id);
+                          }}
+                          className="p-1 hover:bg-red-100 rounded transition-colors"
+                        >
+                          <Trash2 size={12} className="text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* QR Codes List */}
             <div className="bg-white rounded-2xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-gray-900">Your QR Codes</h2>
+                <h2 className="font-semibold text-gray-900">
+                  {selectedFolder ? folders.find(f => f.id === selectedFolder)?.name || 'QR Codes' : 'All QR Codes'}
+                </h2>
                 <button
                   onClick={() => setShowBulkModal(true)}
                   className="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg hover:bg-indigo-200 transition-colors flex items-center gap-1"
@@ -725,21 +925,25 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="animate-spin text-indigo-600" size={32} />
                 </div>
-              ) : qrCodes.length === 0 ? (
+              ) : filteredQRCodes.length === 0 ? (
                 <div className="text-center py-12">
                   <QrCode className="mx-auto text-gray-300 mb-3" size={48} />
-                  <p className="text-gray-500 mb-2">No Dynamic QR codes yet</p>
+                  <p className="text-gray-500 mb-2">
+                    {selectedFolder ? 'No QR codes in this folder' : 'No Dynamic QR codes yet'}
+                  </p>
                   <p className="text-xs text-gray-400">
-                    Use the main generator with "Dynamic QR" enabled to create trackable QR codes
+                    {selectedFolder
+                      ? 'Move QR codes here by clicking the folder icon on a QR card'
+                      : 'Use the main generator with "Dynamic QR" enabled to create trackable QR codes'}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                  {qrCodes.map((qr) => (
+                <div className="space-y-2 max-h-[45vh] overflow-y-auto">
+                  {filteredQRCodes.map((qr) => (
                     <div
                       key={qr.id}
                       onClick={() => setSelectedQR(qr)}
-                      className={`p-3 rounded-xl cursor-pointer transition-all ${
+                      className={`group p-3 rounded-xl cursor-pointer transition-all ${
                         selectedQR?.id === qr.id
                           ? 'bg-indigo-50 border-2 border-indigo-500'
                           : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
@@ -747,15 +951,35 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                     >
                       <div className="flex items-start justify-between mb-1">
                         <h3 className="font-medium text-gray-900 truncate text-sm">{qr.title}</h3>
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
-                            qr.is_active
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-200 text-gray-600'
-                          }`}
-                        >
-                          {qr.is_active ? 'Active' : 'Paused'}
-                        </span>
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                          {/* Folder dropdown */}
+                          {folders.length > 0 && (
+                            <select
+                              value={qr.folder_id || ''}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleMoveToFolder(qr.id, e.target.value || null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="hidden group-hover:block text-xs bg-transparent border-none outline-none cursor-pointer text-gray-400 hover:text-gray-600"
+                              title="Move to folder"
+                            >
+                              <option value="">No Folder</option>
+                              {folders.map((f) => (
+                                <option key={f.id} value={f.id}>{f.name}</option>
+                              ))}
+                            </select>
+                          )}
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full ${
+                              qr.is_active
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-200 text-gray-600'
+                            }`}
+                          >
+                            {qr.is_active ? 'Active' : 'Paused'}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-xs text-gray-500 truncate">/r/{qr.short_code}</p>
                     </div>
@@ -1194,6 +1418,98 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                 >
                   {exportLoading && <Loader2 size={16} className="animate-spin" />}
                   {exportLoading ? 'Exporting...' : 'Export Data'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Folder Create/Edit Modal */}
+      {showFolderModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <FolderPlus size={20} className="text-indigo-600" />
+                {editingFolder ? 'Edit Folder' : 'New Folder'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowFolderModal(false);
+                  setEditingFolder(null);
+                  setFolderName('');
+                  setFolderColor('#6366f1');
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Folder Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Folder Name
+                </label>
+                <input
+                  type="text"
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                  placeholder="e.g., Marketing Campaign"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors"
+                  autoFocus
+                />
+              </div>
+
+              {/* Folder Color */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Folder Color
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#3b82f6', '#64748b'].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setFolderColor(color)}
+                      className={`w-8 h-8 rounded-lg transition-all ${
+                        folderColor === color ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110' : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-2">
+                <Folder size={18} style={{ color: folderColor }} />
+                <span className="text-sm font-medium text-gray-700">
+                  {folderName || 'Folder Preview'}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowFolderModal(false);
+                    setEditingFolder(null);
+                    setFolderName('');
+                    setFolderColor('#6366f1');
+                  }}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveFolder}
+                  disabled={folderSaving || !folderName.trim()}
+                  className="flex-1 py-3 px-4 bg-indigo-600 text-white rounded-xl font-medium text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {folderSaving && <Loader2 size={16} className="animate-spin" />}
+                  {folderSaving ? 'Saving...' : editingFolder ? 'Update' : 'Create'}
                 </button>
               </div>
             </div>
