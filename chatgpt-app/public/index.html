@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus QR - ChatGPT App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+
+    .logo-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .logo-text p {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .description {
+      color: #4b5563;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .features {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 12px;
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-icon.purple { background: #ede9fe; color: #7c3aed; }
+    .feature-icon.blue { background: #dbeafe; color: #2563eb; }
+    .feature-icon.green { background: #dcfce7; color: #16a34a; }
+    .feature-icon.orange { background: #ffedd5; color: #ea580c; }
+
+    .feature-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .feature-content p {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .examples {
+      background: #f0f9ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .examples h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0369a1;
+      margin-bottom: 12px;
+    }
+
+    .examples ul {
+      list-style: none;
+    }
+
+    .examples li {
+      font-size: 13px;
+      color: #0c4a6e;
+      padding: 8px 0;
+      border-bottom: 1px dashed #bae6fd;
+    }
+
+    .examples li:last-child {
+      border-bottom: none;
+    }
+
+    .examples li::before {
+      content: '"';
+      color: #0ea5e9;
+      font-weight: bold;
+    }
+
+    .examples li::after {
+      content: '"';
+      color: #0ea5e9;
+      font-weight: bold;
+    }
+
+    .cta {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      color: white;
+    }
+
+    .cta p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .cta strong {
+      display: block;
+      font-size: 16px;
+      margin-top: 8px;
+    }
+
+    /* QR Preview Section */
+    .qr-preview {
+      display: none;
+      text-align: center;
+      padding: 24px;
+      background: #f9fafb;
+      border-radius: 16px;
+      margin-top: 24px;
+    }
+
+    .qr-preview.visible {
+      display: block;
+    }
+
+    .qr-preview img {
+      max-width: 200px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-preview p {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #4b5563;
+    }
+
+    .download-btn {
+      margin-top: 16px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h1>Nexus QR</h1>
+        <p>Professional QR Generator</p>
+      </div>
+    </div>
+
+    <p class="description">
+      Generate professional QR codes directly in ChatGPT! Just describe what you need,
+      and I'll create the perfect QR code for you.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3>URLs & Links</h3>
+          <p>Any website, landing page, or link</p>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3>WiFi Networks</h3>
+          <p>Auto-connect QR codes for your guests</p>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3>Contact Cards</h3>
+          <p>vCard QR codes for business cards</p>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon orange">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3>Payments</h3>
+          <p>UPI, Bitcoin, and PayPal QR codes</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="examples">
+      <h3>Try saying:</h3>
+      <ul>
+        <li>Create a QR code for my website https://example.com</li>
+        <li>Generate a WiFi QR code for network MyWiFi with password secret123</li>
+        <li>Make a contact QR for John Doe, phone +1234567890</li>
+        <li>Create an Instagram QR for @myprofile</li>
+        <li>Generate a UPI payment QR for merchant@upi</li>
+      </ul>
+    </div>
+
+    <div class="cta">
+      <p>Just chat with me to create QR codes!</p>
+      <strong>No signup required</strong>
+    </div>
+
+    <div class="qr-preview" id="qrPreview">
+      <img id="qrImage" src="" alt="Generated QR Code">
+      <p id="qrMessage"></p>
+      <button class="download-btn" onclick="downloadQR()">Download QR Code</button>
+    </div>
+  </div>
+
+  <script>
+    // Listen for messages from ChatGPT
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'qr_generated') {
+        const preview = document.getElementById('qrPreview');
+        const image = document.getElementById('qrImage');
+        const message = document.getElementById('qrMessage');
+
+        image.src = event.data.qrCode;
+        message.textContent = event.data.message;
+        preview.classList.add('visible');
+      }
+    });
+
+    function downloadQR() {
+      const image = document.getElementById('qrImage');
+      const link = document.createElement('a');
+      link.download = 'nexus-qr-code.png';
+      link.href = image.src;
+      link.click();
+    }
+
+    // Send ready message to parent
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'nexus_qr_ready' }, '*');
+    }
+  </script>
+</body>
+</html>
