@@ -42,29 +42,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           oauthInProgress = true;
           if (mounted) setAuthStatus('authenticating');
 
-          // Clean URL immediately to prevent issues
-          window.history.replaceState({}, '', url.origin + url.pathname);
-
           console.log('OAuth code found, exchanging for session...');
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-          if (error) {
-            console.error('Code exchange error:', error.message);
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+            // Clean URL after exchange attempt (success or failure)
+            window.history.replaceState({}, '', url.origin + url.pathname);
+
+            if (error) {
+              console.error('Code exchange error:', error.message);
+              oauthInProgress = false;
+              if (mounted) {
+                setAuthStatus('unauthenticated');
+              }
+              // Fall through to getSession below
+            } else if (data.session && mounted) {
+              console.log('Session obtained from code exchange');
+              setAuthStatus('authenticated');
+              setSession(data.session);
+              setUser(data.session.user);
+              // Brief delay to show "Authenticated" state with checkmark
+              await new Promise(resolve => setTimeout(resolve, 1200));
+              oauthInProgress = false;
+              setLoading(false);
+              return;
+            }
+          } catch (err) {
+            console.error('Code exchange exception:', err);
+            window.history.replaceState({}, '', url.origin + url.pathname);
             oauthInProgress = false;
             if (mounted) {
               setAuthStatus('unauthenticated');
             }
-            // Fall through to getSession below
-          } else if (data.session && mounted) {
-            console.log('Session obtained from code exchange');
-            setAuthStatus('authenticated');
-            setSession(data.session);
-            setUser(data.session.user);
-            // Brief delay to show "Authenticated" state with checkmark
-            await new Promise(resolve => setTimeout(resolve, 1200));
-            oauthInProgress = false;
-            setLoading(false);
-            return;
           }
         }
 
