@@ -6,10 +6,11 @@ import { QRInputs } from './components/QRInputs';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code, Crown } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { SubscriptionProvider, useSubscription } from './lib/SubscriptionContext';
 import UpgradeModal from './components/UpgradeModal';
+import PricingPage from './components/PricingPage';
 import { AuthModal } from './components/auth/AuthModal';
 import { AuthLoadingScreen, DashboardSkeleton } from './components/auth/AuthLoadingScreen';
 import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
@@ -121,7 +122,8 @@ const QRGenerator: React.FC<{
   onDashboardClick: () => void;
   onAuthRequired: () => void;
   onApiClick: () => void;
-}> = ({ onDashboardClick, onAuthRequired, onApiClick }) => {
+  onPricingClick: () => void;
+}> = ({ onDashboardClick, onAuthRequired, onApiClick, onPricingClick }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<QRType>('text');
   const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
@@ -220,6 +222,14 @@ const QRGenerator: React.FC<{
 
          {/* Right side: Dashboard button + Profile */}
          <div className="flex items-center gap-3">
+           {/* Pricing button - visible to all */}
+           <button
+             onClick={onPricingClick}
+             className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-2 rounded-xl font-medium text-sm hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
+           >
+             <Crown size={16} />
+             <span className="hidden sm:inline">Pricing</span>
+           </button>
            {user && (
              <>
                <button
@@ -512,7 +522,7 @@ const QRGenerator: React.FC<{
 // Main App Component with Routing
 const AppContent: React.FC = () => {
   const { user, loading, authStatus } = useAuth();
-  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota' | 'api-onboarding' | 'rate-limiting' | 'ip-whitelisting' | 'cors-config' | 'api-key-rotation' | 'api-key-scopes' | 'api-changelog' | 'api-status' | 'api-sdk-examples' | 'postman-export' | 'error-codes' | 'developer-portal' | 'api-testing-sandbox'>('generator');
+  const [view, setView] = useState<'generator' | 'dynamic' | 'business-card' | 'api' | 'api-docs' | 'api-docs-interactive' | 'api-webhooks' | 'api-playground' | 'api-analytics' | 'api-logs' | 'webhook-delivery-logs' | 'team-access' | 'api-performance' | 'custom-domain' | 'webhook-signature' | 'api-audit' | 'api-usage-quota' | 'api-onboarding' | 'rate-limiting' | 'ip-whitelisting' | 'cors-config' | 'api-key-rotation' | 'api-key-scopes' | 'api-changelog' | 'api-status' | 'api-sdk-examples' | 'postman-export' | 'error-codes' | 'developer-portal' | 'api-testing-sandbox' | 'pricing'>('generator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [cardSlug, setCardSlug] = useState<string | null>(null);
@@ -528,6 +538,12 @@ const AppContent: React.FC = () => {
         setView('business-card');
         return;
       }
+    }
+
+    // Check for pricing page route
+    if (path === '/pricing' || path === '/plans') {
+      setView('pricing');
+      return;
     }
 
     // Check for API docs route
@@ -820,6 +836,11 @@ const AppContent: React.FC = () => {
     setShowAuthModal(true);
   };
 
+  const handlePricingClick = () => {
+    setView('pricing');
+    window.history.pushState({}, '', '/pricing');
+  };
+
   const handleApiClick = () => {
     if (user) {
       setView('api');
@@ -870,6 +891,14 @@ const AppContent: React.FC = () => {
       setView('api');
       window.history.pushState({}, '', '/api');
     }} />;
+  }
+
+  // Pricing Page (public)
+  if (view === 'pricing') {
+    return <PricingPage
+      onClose={handleBackToGenerator}
+      onAuthRequired={handleAuthRequired}
+    />;
   }
 
   // API Dashboard (auth required) - Simplified with consolidated features
@@ -1165,7 +1194,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <QRGenerator onDashboardClick={handleDashboardClick} onAuthRequired={handleAuthRequired} onApiClick={handleApiClick} />
+      <QRGenerator onDashboardClick={handleDashboardClick} onAuthRequired={handleAuthRequired} onApiClick={handleApiClick} onPricingClick={handlePricingClick} />
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
