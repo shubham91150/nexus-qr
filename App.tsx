@@ -8,6 +8,8 @@ import { QRPreview } from './components/QRPreview';
 import { generatePayload, encryptPayload } from './services/qrUtils';
 import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+import { SubscriptionProvider, useSubscription } from './lib/SubscriptionContext';
+import UpgradeModal from './components/UpgradeModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { AuthLoadingScreen, DashboardSkeleton } from './components/auth/AuthLoadingScreen';
 import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
@@ -1172,13 +1174,30 @@ const AppContent: React.FC = () => {
   );
 };
 
-// Root App with AuthProvider and ErrorBoundary
+// Upgrade Modal Wrapper Component
+const UpgradeModalWrapper: React.FC = () => {
+  const { showUpgradeModal, upgradeReason, requiredPlan, closeUpgradeModal } = useSubscription();
+
+  return (
+    <UpgradeModal
+      isOpen={showUpgradeModal}
+      onClose={closeUpgradeModal}
+      reason={upgradeReason}
+      requiredPlan={requiredPlan}
+    />
+  );
+};
+
+// Root App with AuthProvider, SubscriptionProvider and ErrorBoundary
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <OfflineBanner />
-        <AppContent />
+        <SubscriptionProvider>
+          <OfflineBanner />
+          <AppContent />
+          <UpgradeModalWrapper />
+        </SubscriptionProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
