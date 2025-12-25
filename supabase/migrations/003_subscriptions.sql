@@ -180,10 +180,13 @@ CREATE POLICY "Users can view own payment history"
     ON payment_history FOR SELECT
     USING (auth.uid() = user_id);
 
+-- Drop existing view first (if exists) to allow column structure changes
+DROP VIEW IF EXISTS user_subscription_status;
+
 -- Create view for easy subscription checking (SECURITY INVOKER - runs as querying user)
 -- Only returns the current user's subscription status from user_subscriptions table
 -- Does NOT join with auth.users to avoid exposing sensitive data
-CREATE OR REPLACE VIEW user_subscription_status
+CREATE VIEW user_subscription_status
 WITH (security_barrier = true, security_invoker = true) AS
 SELECT
     s.user_id,
