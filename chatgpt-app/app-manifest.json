@@ -1,0 +1,66 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/manifest.json",
+  "name": "Nexus QR",
+  "description": "Generate professional QR codes for URLs, WiFi, contacts, social media, payments, and more - directly in ChatGPT",
+  "version": "1.0.0",
+  "author": {
+    "name": "Nexus QR",
+    "email": "support@nexusqr.app",
+    "url": "https://nexusqr.app"
+  },
+  "icon": "./public/logo.png",
+  "categories": ["productivity", "utilities", "design"],
+  "capabilities": {
+    "tools": true,
+    "ui": true
+  },
+  "tools": {
+    "mcp_server": "./src/mcp-server.ts",
+    "definitions": [
+      {
+        "name": "generate_qr_code",
+        "description": "Generate a QR code for any URL or text content"
+      },
+      {
+        "name": "generate_wifi_qr",
+        "description": "Generate a WiFi auto-connect QR code"
+      },
+      {
+        "name": "generate_contact_qr",
+        "description": "Generate a vCard contact QR code"
+      },
+      {
+        "name": "generate_social_qr",
+        "description": "Generate a social media profile QR code"
+      },
+      {
+        "name": "generate_payment_qr",
+        "description": "Generate a payment QR code (UPI, Bitcoin, PayPal)"
+      },
+      {
+        "name": "generate_email_qr",
+        "description": "Generate an email QR code"
+      },
+      {
+        "name": "generate_sms_qr",
+        "description": "Generate an SMS QR code"
+      },
+      {
+        "name": "generate_event_qr",
+        "description": "Generate a calendar event QR code"
+      },
+      {
+        "name": "generate_location_qr",
+        "description": "Generate a location/geo QR code"
+      }
+    ]
+  },
+  "ui": {
+    "iframe_url": "/",
+    "width": 500,
+    "height": 600
+  },
+  "privacy_policy_url": "https://nexusqr.app/privacy",
+  "terms_of_service_url": "https://nexusqr.app/terms",
+  "support_url": "https://nexusqr.app/support"
+}
