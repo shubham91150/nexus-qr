@@ -577,6 +577,23 @@ export const QRPreview: React.FC<Props> = ({
             </svg>
           );
 
+        case 'scan-oval':
+          // Oval frame with SCAN ME text integrated (matching user's SVG design)
+          return (
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              {/* Background */}
+              <rect width="56" height="56" fill="#f9fafb" />
+              {/* Oval frame outline */}
+              <ellipse cx="28" cy="28" rx="24" ry="22" fill="none" stroke={fgColor} strokeWidth="3" />
+              {/* Mini QR inside */}
+              <g transform="translate(17, 15) scale(0.9)">
+                {miniQr}
+              </g>
+              {/* Text at bottom */}
+              <text x="28" y="48" fontSize="5" fill={fgColor} textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
+            </svg>
+          );
+
         default:
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
@@ -683,7 +700,8 @@ export const QRPreview: React.FC<Props> = ({
                       {[
                           {id: 'none', label: 'None'},
                           {id: 'circle', label: 'Circle'},
-                          {id: 'scan-arc', label: 'Scan'}
+                          {id: 'scan-arc', label: 'Scan'},
+                          {id: 'scan-oval', label: 'Oval'}
                       ].map((item) => (
                           <button
                               key={item.id}
