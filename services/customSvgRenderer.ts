@@ -616,15 +616,15 @@ export class CustomSVGRenderer {
     } else if (hasFrame && frameType === 'device') {
       // === DEVICE FRAME MODE ===
       // Using the exact SVG provided by user - scaling from 1024 to current size
-      // White screen area: X=218-812, Y=146-728 (with SCAN ME text at bottom Y=762-808)
+      // White screen area: X=260-769, Y=227-711 (with SCAN ME text at bottom Y=752-798)
       const scale = size / 1024;
       const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
 
       // QR code positioning (centered in the white screen area)
-      // Screen area is from Y=146 to Y=728, center at ~437 (0.427 of 1024)
-      const qrSize = size * 0.50; // Larger QR to fit in bigger screen area
+      // Screen area is from Y=227 to Y=711, center at ~469 (0.458 of 1024)
+      const qrSize = size * 0.42; // Size to fit in screen area with padding
       const qrX = (size - qrSize) / 2;
-      const qrY = size * 0.20; // Positioned in white screen area
+      const qrY = size * 0.26; // Centered in white screen area
       const cellSize = qrSize / this.moduleCount;
 
       // White container for QR code (with padding)
@@ -641,9 +641,9 @@ export class CustomSVGRenderer {
       // 2. Embed the EXACT user-provided SVG frame paths (scaled)
       svg += `<g transform="scale(${scale})">`;
       // Main device frame path from user's SVG (includes outer frame, inner screen cutout, and SCAN ME text)
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.996078431372549" d="M 288.5 122 L 833.5 122 L 835 123.5 L 836 125.5 L 836 807.5 L 833 824.5 L 827 838.5 L 811.5 856 L 793.5 866 L 781.5 869 L 196 869 L 195 866.5 L 195 212.5 L 196 211.5 L 197 199.5 L 202 183.5 Q 209.9 164.4 223.5 151 Q 237.2 137.2 256.5 129 L 272.5 124 L 287.5 123 L 288.5 122 Z M 289 146 L 274 149 L 266 152 L 248 163 Q 224 181 218 217 L 218 728 L 812 728 L 812 146 L 289 146 Z M 395 762 L 386 766 L 383 773 L 384 782 L 393 788 L 404 790 L 407 795 L 406 797 L 403 799 L 392 798 L 383 794 L 384 800 L 383 803 L 384 805 L 395 808 L 404 808 L 413 804 L 416 799 Q 418 791 415 788 L 409 782 L 396 779 Q 392 778 393 774 L 397 771 L 405 771 L 414 775 L 414 765 Q 408 760 395 762 Z M 440 762 L 433 765 Q 425 770 422 780 L 422 790 L 426 799 Q 431 806 442 808 L 451 808 L 460 805 L 461 804 L 461 794 L 451 799 Q 441 800 437 796 L 432 789 Q 431 780 434 777 L 442 771 Q 454 769 460 775 L 461 775 L 461 767 Q 455 760 440 762 Z M 481 762 L 477 768 L 462 806 L 463 807 L 472 807 L 475 801 L 476 799 L 493 799 L 495 806 L 497 807 L 506 807 L 490 764 L 489 762 L 481 762 Z M 508 762 L 508 807 L 509 807 L 517 807 L 518 779 L 539 807 L 546 807 L 546 807 L 546 764 L 545 762 L 536 762 L 536 789 L 519 766 Q 517 760 508 762 Z M 572 762 L 572 807 L 573 807 L 581 807 L 582 779 L 592 797 L 593 798 L 599 798 L 609 780 L 611 779 L 610 780 L 610 807 L 620 807 L 620 807 L 620 764 L 619 762 L 610 762 L 596 785 L 584 765 L 582 762 L 572 762 Z M 630 762 L 628 764 L 628 807 L 661 807 L 661 801 L 662 800 L 661 798 L 638 798 L 638 789 L 660 789 Q 660 789 660 785 L 660 783 L 660 781 L 638 781 L 638 771 L 648 771 L 650 771 L 652 772 L 654 771 L 658 772 L 661 771 L 661 763 L 661 762 L 630 762 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.996078431372549" d="M 179.5 132 L 847.5 132 Q 861.9 135.1 870 144.5 L 878 157.5 L 880 165.5 L 880 830.5 Q 876.4 848.4 863.5 857 Q 856.6 862.1 846.5 864 L 180.5 864 Q 162.5 861 154 848.5 Q 148.9 842.1 147 832.5 L 147 163.5 Q 150.8 147.3 162.5 139 Q 169.1 133.6 179.5 132 Z M 277 227 L 268 231 Q 262 235 260 244 L 260 695 L 263 702 Q 267 709 277 711 L 754 711 L 763 706 L 769 695 L 769 244 L 765 235 Q 761 229 754 227 L 277 227 Z M 394 752 L 390 754 L 384 761 Q 383 769 386 773 L 393 777 L 404 781 Q 407 782 406 788 L 402 791 L 393 791 L 385 786 L 384 796 L 393 799 L 403 799 L 411 795 L 414 790 Q 416 782 413 779 L 409 774 L 393 768 L 392 763 L 396 760 Q 407 758 411 764 L 412 764 L 412 756 Q 406 750 394 752 Z M 438 752 L 428 757 Q 422 762 420 770 Q 418 784 424 791 Q 429 796 438 799 Q 451 801 456 795 L 456 787 L 449 791 Q 439 792 435 789 Q 430 786 428 780 Q 427 771 430 767 L 439 760 Q 450 758 455 764 L 457 764 Q 455 762 456 757 Q 451 750 438 752 Z M 476 752 L 473 756 L 473 759 L 459 797 L 460 798 L 467 798 L 469 792 L 470 788 L 486 788 L 489 796 L 489 798 L 497 798 L 482 754 Q 483 750 476 752 Z M 506 752 L 504 754 L 504 788 L 504 790 L 504 798 L 513 798 L 512 796 L 513 767 L 534 797 L 535 798 L 540 798 L 540 753 L 540 752 L 532 752 L 532 781 L 512 754 Q 513 750 506 752 Z M 565 752 L 562 793 L 561 794 L 561 798 L 569 798 L 570 795 L 572 766 L 584 797 L 587 798 L 601 767 L 601 778 L 602 779 L 602 792 L 603 793 L 603 798 L 611 798 L 610 793 L 608 760 L 607 759 L 607 752 L 599 752 L 587 778 Q 588 781 585 780 L 583 773 L 574 754 L 574 752 L 565 752 Z M 623 752 L 623 798 L 651 798 L 653 793 L 653 790 L 644 790 L 642 790 L 640 791 L 631 791 L 631 779 L 645 779 L 646 778 L 646 771 L 631 771 L 631 760 L 652 760 L 652 753 L 652 752 L 623 752 Z " />`;
       // Inner dot for letter A
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.996078431372549" d="M 484.5 774 L 490 791 L 478.5 791 L 478 789.5 L 484.5 774 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.996078431372549" d="M 477 763 Q 480.3 761.7 479 766.5 L 484 779.5 L 473 780 L 477 763 Z " />`;
       svg += `</g>`;
 
       // 3. Draw white container for QR code
