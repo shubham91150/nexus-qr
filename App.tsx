@@ -5,8 +5,9 @@ import { QRTabs } from './components/QRTabs';
 import { QRInputs } from './components/QRInputs';
 import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
+import { SaveTemplateModal, TemplateGallery } from './components/templates';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code, Crown } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code, Crown, Bookmark, Sparkles } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { SubscriptionProvider, useSubscription } from './lib/SubscriptionContext';
 import UpgradeModal from './components/UpgradeModal';
@@ -135,6 +136,10 @@ const QRGenerator: React.FC<{
   // Onboarding states
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
+
+  // Template states
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
 
   // Check if first visit - only show welcome if user has NEVER seen it before
   useEffect(() => {
@@ -444,6 +449,41 @@ const QRGenerator: React.FC<{
               </div>
             )}
 
+            {/* Template Buttons */}
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Sparkles size={14} className="text-indigo-500" />
+                  Design Templates
+                </h3>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowTemplateGallery(true)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-medium text-sm hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
+                >
+                  <Sparkles size={16} />
+                  Browse Templates
+                </button>
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      onAuthRequired();
+                      return;
+                    }
+                    setShowSaveTemplate(true);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
+                >
+                  <Bookmark size={16} />
+                  Save as Template
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                Save your design to reuse anytime, or browse preset templates
+              </p>
+            </div>
+
             {/* Replaced QRStyling with QRStylePanel which contains the new features */}
             <div data-tour="style-panel">
               <QRStylePanel config={styleConfig} onChange={setStyleConfig} />
@@ -503,6 +543,26 @@ const QRGenerator: React.FC<{
           handleWelcomeClose();
           setShowTour(true);
         }}
+      />
+
+      {/* Template Modals */}
+      <SaveTemplateModal
+        isOpen={showSaveTemplate}
+        onClose={() => setShowSaveTemplate(false)}
+        styleConfig={styleConfig}
+        onSaved={() => {
+          // Optionally show a success message or refresh templates
+        }}
+      />
+
+      <TemplateGallery
+        isOpen={showTemplateGallery}
+        onClose={() => setShowTemplateGallery(false)}
+        onApply={(newStyle) => {
+          setStyleConfig(newStyle);
+          setShowTemplateGallery(false);
+        }}
+        currentStyle={styleConfig}
       />
 
       {/* Guided Tour */}
