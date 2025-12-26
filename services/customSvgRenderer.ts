@@ -525,6 +525,40 @@ export class CustomSVGRenderer {
       }
       svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
 
+    } else if (hasFrame && frameType === 'scan-oval') {
+      // === SCAN-OVAL FRAME MODE ===
+      // Using the exact SVG provided by user - scaling from 1024 to current size
+      const scale = size / 1024;
+      const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
+
+      // QR code positioning (centered, ~40% of size to fit inside oval frame)
+      const qrSize = size * 0.40;
+      const qrX = (size - qrSize) / 2;
+      const qrY = (size - qrSize) / 2 - (size * 0.06); // above center for text space
+      const cellSize = qrSize / this.moduleCount;
+
+      // 1. Draw background
+      if (!this.settings.bgTransparent) {
+        svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
+      }
+
+      // 2. Embed the EXACT user-provided SVG frame paths (scaled)
+      svg += `<g transform="scale(${scale})">`;
+      // Main oval frame path from user's SVG
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.996078431372549" d="M 448.5 137 L 480.5 137 L 481.5 138 L 491.5 138 L 534.5 146 L 578.5 159 L 581.5 161 L 584.5 161 L 669.5 190 L 715.5 209 L 741.5 223 Q 769.3 239.7 791 262.5 Q 808.2 280.8 821 303.5 L 831 323.5 L 845 360.5 L 845 363.5 L 859 403.5 L 891 507.5 L 897 539.5 L 898 574.5 L 897 575.5 L 897 584.5 L 896 585.5 L 895 597.5 L 889 621.5 L 874 656.5 Q 863.6 675.6 850 691.5 L 816.5 725 L 813.5 727 L 715.5 824 Q 696.8 841.8 674.5 856 Q 651.7 870.7 622.5 879 L 596.5 884 L 559.5 885 L 558.5 884 L 547.5 884 L 546.5 883 L 519.5 880 L 458.5 867 L 398.5 851 L 333.5 830 L 308.5 820 L 283.5 806 Q 263.7 792.8 248 775.5 Q 231.4 757.6 219 735.5 L 203 702.5 L 187 660.5 L 157 568.5 L 145 525.5 L 138 488.5 L 137 452.5 L 138 451.5 L 138 441.5 L 139 440.5 L 141 423.5 L 149 395.5 Q 160.6 365.6 178 341.5 L 200 314.5 L 302.5 211 Q 330.4 180.9 367.5 160 Q 386 150.5 407.5 144 L 424.5 140 L 436.5 139 L 437.5 138 L 447.5 138 L 448.5 137 Z M 407 731 L 400 734 L 397 740 L 398 749 L 405 753 L 416 756 L 418 759 Q 419 764 416 765 Q 406 767 404 762 L 404 759 L 396 759 L 398 767 L 408 772 Q 416 773 421 770 L 426 764 L 425 755 L 417 748 L 408 746 Q 404 745 405 741 L 410 737 L 417 739 L 418 742 L 419 743 L 426 743 L 424 737 Q 420 729 407 731 Z M 442 731 L 434 735 L 429 746 Q 427 758 432 765 Q 436 770 443 772 Q 451 773 456 770 Q 461 767 463 760 L 456 759 L 454 762 L 450 765 L 443 764 L 437 757 Q 435 746 439 742 Q 441 736 451 738 L 455 744 L 456 745 L 463 745 L 461 739 Q 457 729 442 731 Z M 478 731 L 471 748 L 465 769 L 463 771 L 472 771 L 475 763 L 476 761 L 488 761 L 491 770 L 492 771 L 499 771 L 487 733 L 486 731 L 483 732 L 478 731 Z M 505 731 L 503 733 L 503 771 L 504 771 L 511 771 L 512 746 L 525 770 L 527 771 Q 532 770 534 772 Q 536 771 534 770 L 534 734 L 535 733 L 528 731 L 527 758 L 512 733 L 510 731 L 507 732 L 505 731 Z M 556 731 L 556 772 L 559 771 L 563 772 L 564 745 L 572 770 L 573 771 L 578 771 L 587 745 L 587 771 L 595 771 L 594 770 L 594 737 L 595 734 L 594 731 L 592 732 L 587 731 L 584 734 L 576 757 Q 577 760 574 759 L 574 756 L 566 732 L 556 731 Z M 603 731 L 601 733 L 601 771 L 627 771 L 628 766 L 627 764 L 612 764 Q 610 766 609 764 L 609 754 L 625 754 L 625 748 L 609 748 L 609 738 L 625 738 L 626 739 Q 629 737 627 731 L 624 732 Q 612 734 605 731 L 603 731 Z " />`;
+      // Inner dot for letter A
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.996078431372549" d="M 481.5 740 L 486 755 L 477.5 755 L 477 752.5 L 481.5 740 Z " />`;
+      svg += `</g>`;
+
+      // 3. Render QR code patterns inside (centered)
+      if (this.settings.dotsType === 'uniform-pills') {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, qrX, this.settings.fgColor, qrY);
+      } else {
+        svg += this.generateStandardPatternSVG(matrix, cellSize, qrX, this.settings.dotsType, this.settings.fgColor, qrY);
+      }
+      svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
+
     } else if (hasFrame) {
       // === OTHER FRAMES - Keep for future ===
       const padding = this.settings.padding || 0;
