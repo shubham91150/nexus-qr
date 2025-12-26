@@ -537,6 +537,12 @@ export class CustomSVGRenderer {
       const qrY = (size - qrSize) / 2 - (size * 0.06); // above center for text space
       const cellSize = qrSize / this.moduleCount;
 
+      // White container for QR code (with padding)
+      const qrPadding = size * 0.02;
+      const whiteContainerSize = qrSize + (qrPadding * 2);
+      const whiteContainerX = qrX - qrPadding;
+      const whiteContainerY = qrY - qrPadding;
+
       // 1. Draw background
       if (!this.settings.bgTransparent) {
         svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
@@ -550,7 +556,10 @@ export class CustomSVGRenderer {
       svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.996078431372549" d="M 481.5 740 L 486 755 L 477.5 755 L 477 752.5 L 481.5 740 Z " />`;
       svg += `</g>`;
 
-      // 3. Render QR code patterns inside (centered)
+      // 3. Draw white container for QR code
+      svg += `<rect x="${whiteContainerX}" y="${whiteContainerY}" width="${whiteContainerSize}" height="${whiteContainerSize}" rx="${whiteContainerSize * 0.02}" fill="white" />`;
+
+      // 4. Render QR code patterns inside (centered)
       if (this.settings.dotsType === 'uniform-pills') {
         const pills = this.findPillGroups(matrix);
         svg += this.generatePillsSVG(pills, cellSize, qrX, this.settings.fgColor, qrY);
