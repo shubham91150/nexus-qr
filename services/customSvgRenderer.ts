@@ -392,28 +392,28 @@ export class CustomSVGRenderer {
     const size = this.settings.size;
     const frameText = (this.settings.frameText || 'SCAN ME').substring(0, 10);
 
+    // Arc parameters matching the reference design (thickness = 22 at size 320)
+    const center = size / 2;
+    const arcThickness = size * 0.07; // 7% of size (was 3.5% - too thin!)
+    const arcRadius = center - arcThickness; // radius = center - thickness
+
     // QR code is 55% of size (fit inside the arc)
-    const qrSize = size * 0.55;
+    const qrSize = size * 0.52;
 
     // QR positioned centered
     const qrX = (size - qrSize) / 2;
-    const qrY = (size - qrSize) / 2;
+    const qrY = (size - qrSize) / 2 - (size * 0.02); // slightly above center
 
     // White container behind QR
-    const qrPadding = size * 0.02;
+    const qrPadding = size * 0.015;
     const whiteContainerSize = qrSize + (qrPadding * 2);
     const whiteContainerX = qrX - qrPadding;
     const whiteContainerY = qrY - qrPadding;
 
-    // Arc parameters
-    const center = size / 2;
-    const arcRadius = size * 0.42;
-    const arcThickness = size * 0.035;
-
-    // Text position (at bottom)
-    const textY = size * 0.88;
+    // Text position (at bottom inside the arc)
+    const textY = size * 0.82;
     const textX = size / 2;
-    const fontSize = size * 0.045;
+    const fontSize = size * 0.055;
 
     return {
       size,
@@ -490,35 +490,33 @@ export class CustomSVGRenderer {
       // === SCAN-ARC FRAME MODE ===
       const layout = this.getScanArcFrameLayout();
       const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
-      const secondaryColor = this.settings.isGradient ? 'url(#qrMainGradient)' : (this.settings.fgColor2 || '#888888');
+      const secondaryColor = '#888888'; // Gray color for secondary arc
 
       // 1. Draw background
       if (!this.settings.bgTransparent) {
         svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
       }
 
-      // 2. Draw the arcs (matching the user's SVG design)
-      // Dark arc (main outer arc) - spans from ~0.4π to ~2.2π
+      // 2. Draw the arcs (matching the reference SVG design exactly)
+      // Dark arc (main outer arc) - spans from ~0.4π to ~2.2π (left side dominant)
       const darkArcPath = this.generateArcPath(
         layout.center, layout.center, layout.arcRadius,
         0.4 * Math.PI, 2.2 * Math.PI
       );
-      svg += `<path d="${darkArcPath}" stroke="${frameColor}" stroke-width="${layout.arcThickness}" fill="none" stroke-linecap="round" opacity="0.95" />`;
+      svg += `<path d="${darkArcPath}" stroke="${frameColor}" stroke-width="${layout.arcThickness}" fill="none" stroke-linecap="round" />`;
 
-      // Light arc (secondary inner arc) - spans from ~1.1π to ~2.9π
+      // Light arc (secondary arc) - spans from ~1.1π to ~2.9π (right side, overlapping)
+      // Slightly thinner than dark arc
       const lightArcPath = this.generateArcPath(
         layout.center, layout.center, layout.arcRadius,
         1.1 * Math.PI, 2.9 * Math.PI
       );
-      svg += `<path d="${lightArcPath}" stroke="${secondaryColor}" stroke-width="${layout.arcThickness * 0.8}" fill="none" stroke-linecap="round" opacity="0.6" />`;
+      svg += `<path d="${lightArcPath}" stroke="${secondaryColor}" stroke-width="${layout.arcThickness * 0.85}" fill="none" stroke-linecap="round" />`;
 
-      // 3. Draw white container for QR code
-      svg += `<rect x="${layout.whiteContainerX}" y="${layout.whiteContainerY}" width="${layout.whiteContainerSize}" height="${layout.whiteContainerSize}" rx="${layout.whiteContainerRadius}" fill="white" />`;
-
-      // 4. Calculate QR rendering parameters
+      // 3. Calculate QR rendering parameters
       const cellSize = layout.qrSize / this.moduleCount;
 
-      // 5. Render QR code patterns inside
+      // 4. Render QR code patterns inside (no white container - transparent)
       if (this.settings.dotsType === 'uniform-pills') {
         const pills = this.findPillGroups(matrix);
         svg += this.generatePillsSVG(pills, cellSize, layout.qrX, this.settings.fgColor, layout.qrY);
@@ -527,7 +525,7 @@ export class CustomSVGRenderer {
       }
       svg += this.generateAdvancedCornerSVG(cellSize, layout.qrX, undefined, layout.qrY);
 
-      // 6. Draw "SCAN ME" text at bottom
+      // 5. Draw "SCAN ME" text at bottom center
       svg += `<text x="${layout.textX}" y="${layout.textY}"
                     font-family="Arial, Helvetica, sans-serif" font-size="${layout.fontSize}" font-weight="600"
                     fill="${frameColor}" text-anchor="middle" dominant-baseline="middle">${layout.frameText}</text>`;
