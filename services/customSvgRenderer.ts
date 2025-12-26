@@ -656,6 +656,57 @@ export class CustomSVGRenderer {
       }
       svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
 
+    } else if (hasFrame && frameType === 'badge') {
+      // === BADGE FRAME MODE ===
+      // Using the exact SVG provided by user - scaling from 503 to current size
+      const scale = size / 503;
+      const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
+
+      // QR code positioning (centered in the circular badge area)
+      const qrSize = size * 0.42;
+      const qrX = (size - qrSize) / 2;
+      const qrY = (size - qrSize) / 2 - (size * 0.02); // slightly above center
+      const cellSize = qrSize / this.moduleCount;
+
+      // White container for QR code (with padding)
+      const qrPadding = size * 0.02;
+      const whiteContainerSize = qrSize + (qrPadding * 2);
+      const whiteContainerX = qrX - qrPadding;
+      const whiteContainerY = qrY - qrPadding;
+
+      // 1. Draw background
+      if (!this.settings.bgTransparent) {
+        svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
+      }
+
+      // 2. Embed the EXACT user-provided SVG frame paths (scaled)
+      svg += `<g transform="scale(${scale})">`;
+      // Main circular badge frame path from user's SVG
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 228.5 46 L 264.5 47 L 293.5 53 Q 321.3 60.7 342 75.5 L 342.5 77 Q 344 74.5 345.5 78 Q 367.1 90.9 383 109.5 Q 402.7 130.8 415 159.5 L 414.5 161 L 416 161.5 L 415 162.5 Q 418.1 164.3 416.5 166 Q 418.8 165.3 418 167.5 L 419 169.5 L 418.5 171 Q 421.1 170.2 420 173.5 L 425 188.5 Q 422.5 190 426 191.5 L 429 203.5 L 430 219.5 L 431 220.5 L 431 247.5 L 430 248.5 L 430 258.5 L 429 259.5 L 427 277.5 Q 422.3 298.8 414 316.5 Q 397.7 350.7 371.5 375 Q 342 402.5 300.5 418 L 265.5 427 L 228.5 427 L 227.5 426 L 219.5 426 L 218.5 425 L 210.5 425 L 200.5 423 L 194.5 420 L 192 421 L 191.5 419 L 189.5 420 Q 188 416.5 186.5 419 Q 135.8 403.8 104 369.5 L 103 366 L 95 359.5 Q 97.3 358.3 94.5 357 L 91 354.5 L 88 350.5 Q 90.2 349.3 87.5 348 L 86 347.5 L 86.5 346 L 83 343.5 L 79 337.5 L 79.5 336 Q 77.3 336.8 78 334.5 Q 70 324 65 310.5 L 65.5 309 Q 62.9 309.8 64 306.5 L 63.5 304 Q 60.9 304.8 62 301.5 L 57 288.5 L 57 284.5 L 53 271.5 L 53 265.5 L 51 257.5 L 50 232.5 L 51 231.5 L 51 214.5 L 55 192 Q 57.7 193.1 57 190.5 L 56 188.5 Q 63.8 159 78 137 L 80 136.5 Q 77.5 135 81 133.5 Q 92.9 112.4 110.5 97 L 113.5 95 Q 135.4 73.9 165.5 61 L 195.5 51 L 217.5 47 L 227.5 47 L 228.5 46 Z M 134 107 L 130 109 Q 123 113 122 122 L 122 154 L 126 155 L 126 122 L 130 115 Q 132 116 131 114 L 135 111 L 169 111 L 170 110 L 170 107 L 134 107 Z M 315 107 L 315 110 L 317 111 L 347 111 L 348 112 Q 350 111 349 114 L 353 116 L 355 121 L 355 153 L 358 154 L 359 153 L 359 143 L 360 136 L 359 130 L 359 128 L 360 124 L 356 114 L 356 111 Q 353 112 354 110 L 353 110 L 348 107 L 315 107 Z M 141 120 L 138 121 L 135 124 L 135 135 L 140 137 L 342 137 L 345 136 L 346 135 L 346 124 L 347 123 L 341 120 L 329 120 L 328 121 L 279 121 L 278 120 L 257 120 L 256 121 L 253 120 L 204 120 L 203 121 L 155 121 L 154 120 L 141 120 Z M 142 139 L 137 141 L 135 145 L 135 345 L 136 347 L 143 351 Q 148 353 150 350 L 284 350 L 285 351 Q 290 353 292 350 L 294 351 L 340 351 L 346 346 L 346 145 L 344 141 L 340 139 L 254 139 L 251 140 L 249 140 Q 244 141 243 139 Q 236 137 235 140 L 231 139 L 224 140 L 222 140 Q 216 142 215 139 L 203 139 L 202 140 L 200 139 L 142 139 Z M 124 317 L 121 324 L 122 327 L 121 328 L 121 344 L 121 346 L 125 358 L 134 364 L 173 364 L 173 362 L 172 360 L 149 360 L 148 359 L 136 359 L 135 360 L 134 358 L 129 355 L 126 351 L 126 318 L 124 317 Z M 355 317 L 355 351 L 354 354 L 347 360 L 317 360 L 315 364 L 349 364 L 354 361 L 359 353 L 359 318 L 355 317 Z " />`;
+      // SCAN ME text - S
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 208.5 122 L 214 124.5 Q 215.1 128.7 211 127 Q 212.1 123.7 208 125 L 209.5 128 Q 213.5 127.5 214 130.5 Q 214.8 134.3 212.5 135 Q 206.5 136.5 205 133.5 L 204 131.5 L 206.5 131 Q 207.6 133.8 211 133 L 209.5 130 Q 205.5 130.5 205 127.5 Q 204.3 123.8 206.5 123 L 208.5 122 Z " />`;
+      // SCAN ME text - C
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 219.5 122 L 225 124.5 L 223.5 128 L 219.5 125 Q 216.8 126.3 218 131.5 L 220.5 133 Q 222.7 127.7 225 131.5 L 224 135 Q 216.9 136.8 215 132.5 Q 213.2 124.7 217.5 123 L 219.5 122 Z " />`;
+      // SCAN ME text - A, N, M, E
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 230.5 122 L 233 123.5 L 236.5 134 L 237 123.5 L 238.5 122 L 242 124.5 L 244.5 129 Q 243.6 123.6 246.5 122 L 248 123.5 L 248 134.5 L 246.5 136 L 243 132.5 L 241.5 130 Q 242.1 134.6 239.5 136 L 236.5 135 L 235.5 136 L 232.5 133 Q 228.1 131.5 229 134.5 L 226 136 L 226 131.5 L 230.5 122 Z M 232 128 L 230 130 L 232 130 L 232 128 Z " />`;
+      // SCAN ME text - M, E continuation
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 254 122 L 258 123.5 Q 257.4 128.6 260.5 130 Q 260.8 124.3 264.5 122 L 267 123.5 L 267 134.5 L 265.5 136 Q 262.9 134.6 263.5 130 L 260.5 136 L 257.5 131 L 255.5 136 L 254 134.5 L 254 122 Z " />`;
+      // SCAN ME text - E
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 269.5 122 L 277 122 L 277 125 L 271.5 125 L 271 126.5 Q 272.2 129 276 128 L 276 130 L 271 130 L 271 133 L 276.5 133 L 277 134.5 Q 275.5 137.5 269.5 136 L 268 134.5 L 268 123.5 L 269.5 122 Z " />`;
+      svg += `</g>`;
+
+      // 3. Draw white container for QR code
+      svg += `<rect x="${whiteContainerX}" y="${whiteContainerY}" width="${whiteContainerSize}" height="${whiteContainerSize}" rx="${whiteContainerSize * 0.02}" fill="white" />`;
+
+      // 4. Render QR code patterns inside
+      if (this.settings.dotsType === 'uniform-pills') {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, qrX, this.settings.fgColor, qrY);
+      } else {
+        svg += this.generateStandardPatternSVG(matrix, cellSize, qrX, this.settings.dotsType, this.settings.fgColor, qrY);
+      }
+      svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
+
     } else if (hasFrame) {
       // === OTHER FRAMES - Keep for future ===
       const padding = this.settings.padding || 0;
