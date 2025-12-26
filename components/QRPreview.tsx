@@ -594,6 +594,27 @@ export const QRPreview: React.FC<Props> = ({
             </svg>
           );
 
+        case 'scan-rect':
+          // Rectangular device-style frame with SCAN ME text at bottom
+          return (
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              {/* Background */}
+              <rect width="56" height="56" fill="#f9fafb" />
+              {/* Outer frame rectangle */}
+              <rect x="6" y="4" width="44" height="40" rx="3" fill="none" stroke={fgColor} strokeWidth="2.5" />
+              {/* Inner frame rectangle */}
+              <rect x="9" y="7" width="38" height="34" rx="2" fill="none" stroke={fgColor} strokeWidth="1.5" />
+              {/* Bottom banner with text */}
+              <path d="M 6 38 Q 6 44 12 44 L 44 44 Q 50 44 50 50 L 50 52 L 6 52 L 6 38 Z" fill={fgColor} />
+              {/* Mini QR inside */}
+              <g transform="translate(17, 12) scale(0.9)">
+                {miniQr}
+              </g>
+              {/* Text at bottom */}
+              <text x="28" y="49" fontSize="5" fill="white" textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
+            </svg>
+          );
+
         default:
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
@@ -701,7 +722,8 @@ export const QRPreview: React.FC<Props> = ({
                           {id: 'none', label: 'None'},
                           {id: 'circle', label: 'Circle'},
                           {id: 'scan-arc', label: 'Scan'},
-                          {id: 'scan-oval', label: 'Oval'}
+                          {id: 'scan-oval', label: 'Oval'},
+                          {id: 'scan-rect', label: 'Rect'}
                       ].map((item) => (
                           <button
                               key={item.id}
