@@ -1043,6 +1043,17 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                         >
                           <FileSpreadsheet size={16} className="text-gray-400" />
                         </button>
+                        {/* Back to Analytics button - only visible in settings view */}
+                        {activeView === 'settings' && (
+                          <button
+                            onClick={() => setActiveView('analytics')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-200 transition-colors"
+                            title="Back to Analytics"
+                          >
+                            <BarChart3 size={14} />
+                            Analytics
+                          </button>
+                        )}
                         <button
                           onClick={() => setActiveView(activeView === 'settings' ? 'analytics' : 'settings')}
                           className={`p-2 rounded-lg transition-colors ${activeView === 'settings' ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 text-gray-400'}`}
@@ -1064,34 +1075,6 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
                   </div>
 
                   {/* Content: Settings or Analytics */}
-                  {/* View Toggle Tabs */}
-                  <div className="px-5 pt-4 border-b border-gray-100">
-                    <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
-                      <button
-                        onClick={() => setActiveView('analytics')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                          activeView === 'analytics'
-                            ? 'bg-white text-indigo-600 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <BarChart3 size={16} />
-                        Analytics
-                      </button>
-                      <button
-                        onClick={() => setActiveView('settings')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                          activeView === 'settings'
-                            ? 'bg-white text-indigo-600 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <Settings size={16} />
-                        Settings
-                      </button>
-                    </div>
-                  </div>
-
                   {activeView === 'settings' ? (
                     <div className="p-5">
                       <QRSettingsPanel qrCode={selectedQR} onUpdate={fetchQRCodes} />
