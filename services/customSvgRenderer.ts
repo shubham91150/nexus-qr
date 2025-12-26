@@ -659,20 +659,17 @@ export class CustomSVGRenderer {
     } else if (hasFrame && frameType === 'badge') {
       // === BADGE FRAME MODE ===
       // Using the exact SVG provided by user - scaling from 503 to current size
+      // White area for QR is from ~135 to ~346 horizontally, ~140 to ~350 vertically
       const scale = size / 503;
       const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
 
-      // QR code positioning (centered in the circular badge area)
-      const qrSize = size * 0.42;
-      const qrX = (size - qrSize) / 2;
-      const qrY = (size - qrSize) / 2 - (size * 0.02); // slightly above center
+      // QR code positioning - inside the white square area (below SCAN ME text)
+      // White area in original SVG: x=135-346, y=140-350 (approximately 211x210 units)
+      // QR should be smaller to fit with padding
+      const qrSize = size * 0.36; // Smaller QR to prevent overflow
+      const qrX = (size - qrSize) / 2; // Centered horizontally
+      const qrY = size * 0.30; // Position in white area (below SCAN ME text)
       const cellSize = qrSize / this.moduleCount;
-
-      // White container for QR code (with padding)
-      const qrPadding = size * 0.02;
-      const whiteContainerSize = qrSize + (qrPadding * 2);
-      const whiteContainerX = qrX - qrPadding;
-      const whiteContainerY = qrY - qrPadding;
 
       // 1. Draw background
       if (!this.settings.bgTransparent) {
@@ -681,24 +678,38 @@ export class CustomSVGRenderer {
 
       // 2. Embed the EXACT user-provided SVG frame paths (scaled)
       svg += `<g transform="scale(${scale})">`;
-      // Main circular badge frame path from user's SVG
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 228.5 46 L 264.5 47 L 293.5 53 Q 321.3 60.7 342 75.5 L 342.5 77 Q 344 74.5 345.5 78 Q 367.1 90.9 383 109.5 Q 402.7 130.8 415 159.5 L 414.5 161 L 416 161.5 L 415 162.5 Q 418.1 164.3 416.5 166 Q 418.8 165.3 418 167.5 L 419 169.5 L 418.5 171 Q 421.1 170.2 420 173.5 L 425 188.5 Q 422.5 190 426 191.5 L 429 203.5 L 430 219.5 L 431 220.5 L 431 247.5 L 430 248.5 L 430 258.5 L 429 259.5 L 427 277.5 Q 422.3 298.8 414 316.5 Q 397.7 350.7 371.5 375 Q 342 402.5 300.5 418 L 265.5 427 L 228.5 427 L 227.5 426 L 219.5 426 L 218.5 425 L 210.5 425 L 200.5 423 L 194.5 420 L 192 421 L 191.5 419 L 189.5 420 Q 188 416.5 186.5 419 Q 135.8 403.8 104 369.5 L 103 366 L 95 359.5 Q 97.3 358.3 94.5 357 L 91 354.5 L 88 350.5 Q 90.2 349.3 87.5 348 L 86 347.5 L 86.5 346 L 83 343.5 L 79 337.5 L 79.5 336 Q 77.3 336.8 78 334.5 Q 70 324 65 310.5 L 65.5 309 Q 62.9 309.8 64 306.5 L 63.5 304 Q 60.9 304.8 62 301.5 L 57 288.5 L 57 284.5 L 53 271.5 L 53 265.5 L 51 257.5 L 50 232.5 L 51 231.5 L 51 214.5 L 55 192 Q 57.7 193.1 57 190.5 L 56 188.5 Q 63.8 159 78 137 L 80 136.5 Q 77.5 135 81 133.5 Q 92.9 112.4 110.5 97 L 113.5 95 Q 135.4 73.9 165.5 61 L 195.5 51 L 217.5 47 L 227.5 47 L 228.5 46 Z M 134 107 L 130 109 Q 123 113 122 122 L 122 154 L 126 155 L 126 122 L 130 115 Q 132 116 131 114 L 135 111 L 169 111 L 170 110 L 170 107 L 134 107 Z M 315 107 L 315 110 L 317 111 L 347 111 L 348 112 Q 350 111 349 114 L 353 116 L 355 121 L 355 153 L 358 154 L 359 153 L 359 143 L 360 136 L 359 130 L 359 128 L 360 124 L 356 114 L 356 111 Q 353 112 354 110 L 353 110 L 348 107 L 315 107 Z M 141 120 L 138 121 L 135 124 L 135 135 L 140 137 L 342 137 L 345 136 L 346 135 L 346 124 L 347 123 L 341 120 L 329 120 L 328 121 L 279 121 L 278 120 L 257 120 L 256 121 L 253 120 L 204 120 L 203 121 L 155 121 L 154 120 L 141 120 Z M 142 139 L 137 141 L 135 145 L 135 345 L 136 347 L 143 351 Q 148 353 150 350 L 284 350 L 285 351 Q 290 353 292 350 L 294 351 L 340 351 L 346 346 L 346 145 L 344 141 L 340 139 L 254 139 L 251 140 L 249 140 Q 244 141 243 139 Q 236 137 235 140 L 231 139 L 224 140 L 222 140 Q 216 142 215 139 L 203 139 L 202 140 L 200 139 L 142 139 Z M 124 317 L 121 324 L 122 327 L 121 328 L 121 344 L 121 346 L 125 358 L 134 364 L 173 364 L 173 362 L 172 360 L 149 360 L 148 359 L 136 359 L 135 360 L 134 358 L 129 355 L 126 351 L 126 318 L 124 317 Z M 355 317 L 355 351 L 354 354 L 347 360 L 317 360 L 315 364 L 349 364 L 354 361 L 359 353 L 359 318 L 355 317 Z " />`;
+      // Main circular badge frame with white inner area
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 223.5 47 L 232 47.5 L 223.5 48 L 223.5 47 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 233.5 47 L 243 47.5 L 233.5 48 L 233.5 47 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 246.5 47 L 259 47.5 L 246.5 48 L 246.5 47 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 214.5 48 L 219 48.5 L 208.5 50 L 208.5 49 Q 213.3 50.2 214.5 48 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 263.5 48 L 268 48.5 L 263.5 49 L 263.5 48 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 269.5 49 L 273 49.5 L 269.5 50 L 269.5 49 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 203.5 50 L 206 50.5 L 193.5 54 L 194.5 52 L 203.5 50 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 279.5 51 L 281.5 51 L 298 55 L 297.5 58 L 297 56 L 285.5 53 L 283.5 54 L 283.5 52 L 279.5 54 L 279.5 51 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 190.5 53 L 192 53.5 L 179.5 58 L 180.5 56 L 190.5 53 Z " />`;
+      // Outer circular frame paths (simplified - main structure)
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="1" d="M 224.5 48 L 256.5 48 L 264.5 50 L 271.5 50 L 283.5 54 L 289.5 54 L 297.5 58 L 301.5 58 L 315.5 64 Q 317 61.5 318.5 65 L 327.5 70 L 330 70 Q 328.8 73 332.5 72 L 336 73 L 337.5 76 L 338.5 75 L 343.5 80 L 344.5 79 L 347.5 82 L 356 87.5 Q 354.7 91.7 359.5 90 L 369 98.5 Q 368.3 100.8 370.5 100 L 373 104 L 377 106.5 Q 376.3 108.8 378.5 108 L 392 124.5 L 390 125.5 L 393 126 L 393 128 Q 395.7 126.9 395 129.5 L 398 135 Q 400.7 133.9 400 136.5 L 402 140.5 L 404 143.5 L 410 153.5 L 409.5 155 L 411 155.5 L 411 157.5 Q 410.3 160.1 413 159 L 413 161.5 L 422 184.5 Q 419.5 186 423 187.5 Q 423.8 189.8 421.5 189 L 413 184 L 413 182 Q 410.3 183.1 411 180.5 Q 408.3 182.4 405.5 177 L 402.5 175 L 399 173 L 399 171 Q 396 172 397 169 L 394 169 L 394 167.5 L 380 157.5 L 379.5 156 L 378 156.5 Q 378.8 154.3 376.5 155 L 367 147.5 Q 367.8 145.3 365.5 146 L 361 142.5 L 361 119.5 L 359 114.5 L 359.5 113 Q 356.9 113.8 358 110.5 L 355 109.5 L 353 106.5 L 351 106.5 L 350.5 105 L 348.5 106 L 345.5 104 L 344.5 105 L 314 105 L 312 109.5 L 315.5 113 L 344.5 113 L 345.5 114 Q 346.8 111.8 348 114.5 L 349.5 117 L 353 119.5 L 352.5 136 L 348 132.5 L 348 130.5 L 348 122.5 L 349 121.5 L 341.5 118 L 328.5 118 L 327.5 119 L 294.5 119 L 289.5 118 L 288.5 119 L 153.5 119 Q 152 116.5 146.5 118 L 142.5 119 L 140.5 118 L 134 120 L 132 128.5 L 134 134.5 L 134 136.5 Q 135.8 142.7 133 144.5 L 133 343.5 L 134 345.5 Q 131.5 347 135 348.5 L 136.5 351 L 139 352.5 L 138.5 354 L 140.5 353 L 142 356 L 145 357.5 L 142.5 358 L 135.5 358 L 131 354.5 L 129 351.5 L 128 350.5 L 128 316.5 L 125.5 314 L 121 315 L 121 322.5 L 120 323.5 L 121 326.5 L 120 327.5 L 120 340.5 L 121 341.5 L 121 354.5 L 123 358.5 L 122 362.5 L 123 362.5 L 123.5 360 L 126.5 364 L 128.5 363 L 130.5 366 L 132.5 365 Q 134.8 367.7 140.5 367 L 141.5 366 L 153.5 366 L 156.5 367 L 166 373.5 Q 165.2 376.1 168.5 375 L 183 387.5 L 183.5 389 Q 185 386.5 186.5 390 L 194 395 Q 192.9 397.7 195.5 397 L 202 401 Q 200.9 403.7 203.5 403 L 209 407.5 Q 208.2 410.1 211.5 409 L 217 413.5 L 216.5 415 L 220.5 416 L 228.5 424 Q 229.8 421.8 231 424.5 L 226.5 425 L 219.5 423 L 210.5 423 Q 207.2 420.3 200.5 421 L 198.5 419 L 192.5 419 L 189.5 417 L 185.5 417 L 182.5 415 L 170.5 412 L 157 405.5 L 157.5 404 L 154.5 404 L 146.5 400 L 126 387 Q 127.1 384.3 124.5 385 L 120 382 Q 121.1 379.3 118.5 380 L 114 377 L 114 375 Q 111.3 376.1 112 373.5 L 109 371.5 L 110 369.5 L 108.5 370 L 107 370 L 107 368 L 105 368 L 105 366 Q 102.3 367.1 103 364.5 Q 97 360.6 95 354 L 92 352.5 L 74 324.5 L 74.5 323 L 73 322.5 L 73.5 321 Q 71.3 321.8 72 319.5 L 63 300.5 L 63 295 L 61 294.5 L 61 292.5 L 59 289.5 L 59 284.5 L 57 281.5 L 57 276.5 L 54 265.5 L 54 256.5 L 52 245.5 L 52 227.5 L 53 226.5 L 54 209.5 L 55 208.5 L 57 191.5 L 59 188.5 L 59 184.5 L 61 181.5 L 63 172.5 L 76 144.5 L 88 125.5 L 96.5 115 Q 98.8 115.8 98 113.5 L 99.5 111 L 101 111.5 Q 99.9 108.2 102.5 109 L 107.5 103 L 111 101.5 Q 108.3 99.8 112.5 98 L 114 98 L 114 96 Q 116.7 97.1 116 94.5 Q 117.8 96.1 119.5 93 L 122 92.5 L 120 91.5 L 123 90.5 Q 122.3 88.3 124.5 89 L 129.5 84 L 131 84.5 L 133.5 81 L 135.5 81 L 149.5 71 L 173.5 60 L 200.5 52 L 205.5 52 L 209.5 50 L 217.5 50 L 224.5 48 Z M 135 104 L 129 108 L 126 108 L 122 116 L 120 120 L 121 121 L 121 158 L 123 157 L 125 158 L 127 157 L 128 156 L 128 122 L 130 119 Q 129 116 132 117 L 131 116 L 133 116 L 133 114 L 136 113 L 170 113 L 173 110 L 172 108 L 170 105 L 136 105 L 135 104 Z " />`;
       // SCAN ME text - S
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 208.5 122 L 214 124.5 Q 215.1 128.7 211 127 Q 212.1 123.7 208 125 L 209.5 128 Q 213.5 127.5 214 130.5 Q 214.8 134.3 212.5 135 Q 206.5 136.5 205 133.5 L 204 131.5 L 206.5 131 Q 207.6 133.8 211 133 L 209.5 130 Q 205.5 130.5 205 127.5 Q 204.3 123.8 206.5 123 L 208.5 122 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 208.5 123 Q 211.8 121.9 211 124.5 L 208.5 125 Q 206.3 124.3 207 126.5 L 213 130.5 L 214 132.5 Q 213 136 207.5 135 Q 203 133 206.5 131 L 208.5 134 L 212 132.5 L 210.5 130 L 207 129 L 207 127 Q 204.3 128.1 205 125.5 L 208.5 123 Z " />`;
       // SCAN ME text - C
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 219.5 122 L 225 124.5 L 223.5 128 L 219.5 125 Q 216.8 126.3 218 131.5 L 220.5 133 Q 222.7 127.7 225 131.5 L 224 135 Q 216.9 136.8 215 132.5 Q 213.2 124.7 217.5 123 L 219.5 122 Z " />`;
-      // SCAN ME text - A, N, M, E
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 230.5 122 L 233 123.5 L 236.5 134 L 237 123.5 L 238.5 122 L 242 124.5 L 244.5 129 Q 243.6 123.6 246.5 122 L 248 123.5 L 248 134.5 L 246.5 136 L 243 132.5 L 241.5 130 Q 242.1 134.6 239.5 136 L 236.5 135 L 235.5 136 L 232.5 133 Q 228.1 131.5 229 134.5 L 226 136 L 226 131.5 L 230.5 122 Z M 232 128 L 230 130 L 232 130 L 232 128 Z " />`;
-      // SCAN ME text - M, E continuation
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 254 122 L 258 123.5 Q 257.4 128.6 260.5 130 Q 260.8 124.3 264.5 122 L 267 123.5 L 267 134.5 L 265.5 136 Q 262.9 134.6 263.5 130 L 260.5 136 L 257.5 131 L 255.5 136 L 254 134.5 L 254 122 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 218.5 123 L 220.5 123 L 224 124.5 L 223.5 127 Q 222.5 124 217.5 125 L 218 126.5 Q 216.5 132.5 219.5 134 L 223.5 131 L 224 134 L 218.5 135 Q 214.2 133.3 217 131.5 L 216 125.5 L 218.5 123 Z " />`;
+      // SCAN ME text - A
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 230.5 123 L 233 124.5 L 235 131.5 L 232.5 132 Q 228.8 131.3 228 133.5 Q 228.8 135.8 226.5 135 L 228 132.5 L 227 131.5 Q 226.3 129.3 228.5 130 L 233 131 L 231.5 125 L 231 127 Q 228 128 229 125 L 231 124.5 L 230.5 123 Z " />`;
+      // SCAN ME text - N
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 238.5 123 L 239.5 125 L 241 124.5 L 244.5 131 Q 247.1 129.6 246.5 125 L 247 131.5 L 247 133.5 Q 247.8 135.8 245.5 135 L 245.5 133 L 243 131.5 L 241 126 L 239 126.5 L 239 128.5 L 240 133.5 L 238 134.5 L 238.5 123 Z " />`;
+      // SCAN ME text - M
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 254 123 L 257 123.5 L 255 124 L 255.5 126 L 258 125 L 260.5 132 L 261.5 130 L 262 132.5 L 260.5 135 L 256.5 127 L 256 135 L 254 134.5 L 254 123 Z " />`;
       // SCAN ME text - E
-      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9490196078431372" d="M 269.5 122 L 277 122 L 277 125 L 271.5 125 L 271 126.5 Q 272.2 129 276 128 L 276 130 L 271 130 L 271 133 L 276.5 133 L 277 134.5 Q 275.5 137.5 269.5 136 L 268 134.5 L 268 123.5 L 269.5 122 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 263 123 Q 267.5 121.3 266 126.5 L 266 128.5 Q 267.5 136.1 264 135 L 263.5 127 L 262.5 129 L 262 127.5 L 265 125.5 L 263 125 L 263 123 Z " />`;
+      // SCAN ME text - continuation
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9411764705882353" d="M 269.5 123 L 271.5 123 L 276 123.5 Q 271.4 122.9 270 125.5 Q 268.6 130.1 274.5 128 L 274.5 129 Q 270.8 128.3 270 130.5 L 271.5 134 L 276 134.5 L 269 135 L 269.5 123 Z " />`;
       svg += `</g>`;
 
-      // 3. Draw white container for QR code
-      svg += `<rect x="${whiteContainerX}" y="${whiteContainerY}" width="${whiteContainerSize}" height="${whiteContainerSize}" rx="${whiteContainerSize * 0.02}" fill="white" />`;
+      // 3. Draw white container for QR code (already part of SVG frame design)
+      // The white area is built into the frame SVG, so we just render QR on top
 
-      // 4. Render QR code patterns inside
+      // 4. Render QR code patterns inside the white area
       if (this.settings.dotsType === 'uniform-pills') {
         const pills = this.findPillGroups(matrix);
         svg += this.generatePillsSVG(pills, cellSize, qrX, this.settings.fgColor, qrY);
