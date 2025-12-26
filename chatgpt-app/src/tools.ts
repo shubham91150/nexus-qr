@@ -374,17 +374,78 @@ export const tools = [
   // ==================== DYNAMIC QR (TRACKABLE) ====================
   {
     name: 'generate_dynamic_qr',
-    description: 'Generate a dynamic/trackable QR code. The destination URL can be changed later without reprinting. Includes scan analytics.',
+    description: 'Generate a dynamic/trackable QR code that is saved to the database. The destination URL can be changed later without reprinting. Includes scan analytics. Requires user_id (API key) for authentication.',
     inputSchema: {
       type: 'object',
       properties: {
         url: { type: 'string', description: 'Destination URL' },
         title: { type: 'string', description: 'QR code title/name for identification' },
-        trackLocation: { type: 'boolean', default: true, description: 'Track scan location' },
-        trackDevice: { type: 'boolean', default: true, description: 'Track device type' },
-        trackTime: { type: 'boolean', default: true, description: 'Track scan time' },
+        user_id: { type: 'string', description: 'User ID or API key for authentication. Required to save to database.' },
+        custom_alias: { type: 'string', description: 'Custom short URL alias (optional, 3-30 chars, letters, numbers, hyphens)' },
       },
-      required: ['url', 'title'],
+      required: ['url', 'title', 'user_id'],
+    },
+  },
+  {
+    name: 'update_dynamic_qr',
+    description: 'Update the destination URL of an existing dynamic QR code. The QR code image stays the same, but it will redirect to the new URL.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        short_code: { type: 'string', description: 'The short code of the dynamic QR (e.g., "abc123" from nexusqr.app/r/abc123)' },
+        new_url: { type: 'string', description: 'New destination URL' },
+        user_id: { type: 'string', description: 'User ID or API key for authentication' },
+      },
+      required: ['short_code', 'new_url', 'user_id'],
+    },
+  },
+  {
+    name: 'get_dynamic_qr_analytics',
+    description: 'Get scan analytics for a dynamic QR code including total scans, device types, countries, browsers, and recent scan history.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        short_code: { type: 'string', description: 'The short code of the dynamic QR' },
+        user_id: { type: 'string', description: 'User ID or API key for authentication' },
+      },
+      required: ['short_code', 'user_id'],
+    },
+  },
+  {
+    name: 'list_dynamic_qrs',
+    description: 'List all dynamic QR codes created by the user. Shows title, short URL, destination, scan count, and status.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        user_id: { type: 'string', description: 'User ID or API key for authentication' },
+        limit: { type: 'number', default: 20, description: 'Maximum number of QR codes to return (default 20, max 50)' },
+      },
+      required: ['user_id'],
+    },
+  },
+  {
+    name: 'delete_dynamic_qr',
+    description: 'Delete a dynamic QR code permanently. The short URL will no longer work after deletion.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        short_code: { type: 'string', description: 'The short code of the dynamic QR to delete' },
+        user_id: { type: 'string', description: 'User ID or API key for authentication' },
+      },
+      required: ['short_code', 'user_id'],
+    },
+  },
+  {
+    name: 'toggle_dynamic_qr',
+    description: 'Activate or deactivate a dynamic QR code. Deactivated QR codes will not redirect when scanned.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        short_code: { type: 'string', description: 'The short code of the dynamic QR' },
+        is_active: { type: 'boolean', description: 'Set to true to activate, false to deactivate' },
+        user_id: { type: 'string', description: 'User ID or API key for authentication' },
+      },
+      required: ['short_code', 'is_active', 'user_id'],
     },
   },
 ];
@@ -412,4 +473,9 @@ export type ToolName =
   | 'generate_location_qr'
   | 'generate_pdf_qr'
   | 'generate_bulk_qr'
-  | 'generate_dynamic_qr';
+  | 'generate_dynamic_qr'
+  | 'update_dynamic_qr'
+  | 'get_dynamic_qr_analytics'
+  | 'list_dynamic_qrs'
+  | 'delete_dynamic_qr'
+  | 'toggle_dynamic_qr';

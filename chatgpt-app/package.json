@@ -12,6 +12,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.86.2",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "qrcode": "^1.5.4",

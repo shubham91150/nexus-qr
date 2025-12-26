@@ -36,13 +36,18 @@ import {
   handleGeneratePDFQR,
   handleGenerateBulkQR,
   handleGenerateDynamicQR,
+  handleUpdateDynamicQR,
+  handleGetDynamicQRAnalytics,
+  handleListDynamicQRs,
+  handleDeleteDynamicQR,
+  handleToggleDynamicQR,
 } from './qr-generator.js';
 
 // Create MCP server
 const server = new Server(
   {
     name: 'nexus-qr',
-    version: '2.0.0',
+    version: '3.0.0',
   },
   {
     capabilities: {
@@ -153,9 +158,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleGenerateBulkQR(args as any);
         break;
 
-      // Dynamic
+      // Dynamic QR Management
       case 'generate_dynamic_qr':
         result = await handleGenerateDynamicQR(args as any);
+        break;
+      case 'update_dynamic_qr':
+        result = await handleUpdateDynamicQR(args as any);
+        break;
+      case 'get_dynamic_qr_analytics':
+        result = await handleGetDynamicQRAnalytics(args as any);
+        break;
+      case 'list_dynamic_qrs':
+        result = await handleListDynamicQRs(args as any);
+        break;
+      case 'delete_dynamic_qr':
+        result = await handleDeleteDynamicQR(args as any);
+        break;
+      case 'toggle_dynamic_qr':
+        result = await handleToggleDynamicQR(args as any);
         break;
 
       default:
@@ -170,44 +190,48 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
     }
 
-    // Return the result
-    if (result.success && result.qrCode) {
+    // Return the result - using type assertion for flexibility
+    const resultAny = result as any;
+
+    if (resultAny.success && resultAny.qrCode) {
+      // QR code generated - return with image
       return {
         content: [
           {
             type: 'text',
-            text: result.message,
+            text: resultAny.message,
           },
           {
             type: 'image',
-            data: result.qrCode.replace(/^data:image\/png;base64,/, ''),
+            data: resultAny.qrCode.replace(/^data:image\/png;base64,/, ''),
             mimeType: 'image/png',
           },
         ],
       };
-    } else if (result.success && 'qrCodes' in result) {
+    } else if (resultAny.success && resultAny.qrCodes) {
       // Bulk QR response
       return {
         content: [
           {
             type: 'text',
-            text: result.message,
+            text: resultAny.message,
           },
-          ...result.qrCodes!.map((qr: { name: string; qrCode: string }) => ({
+          ...resultAny.qrCodes.map((qr: { name: string; qrCode: string }) => ({
             type: 'text' as const,
             text: `\n${qr.name}:`,
           })),
         ],
       };
     } else {
+      // Text-only response (for dynamic QR management tools)
       return {
         content: [
           {
             type: 'text',
-            text: result.message,
+            text: resultAny.message,
           },
         ],
-        isError: !result.success,
+        isError: !resultAny.success,
       };
     }
   } catch (error) {
@@ -227,7 +251,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error(`Nexus QR MCP Server v2.0.0 running on stdio (${tools.length} tools available)`);
+  console.error(`Nexus QR MCP Server v3.0.0 running on stdio (${tools.length} tools available - includes Dynamic QR with database support)`);
 }
 
 main().catch(console.error);

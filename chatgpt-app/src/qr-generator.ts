@@ -733,34 +733,305 @@ export async function handleGenerateBulkQR(params: {
 
 // ==================== DYNAMIC QR ====================
 
+import {
+  createDynamicQR,
+  updateDynamicQRUrl,
+  getDynamicQRAnalytics,
+  listDynamicQRs,
+  deleteDynamicQR,
+  toggleDynamicQRStatus,
+  BASE_URL,
+} from './supabase.js';
+
 export async function handleGenerateDynamicQR(params: {
   url: string;
   title: string;
-  trackLocation?: boolean;
-  trackDevice?: boolean;
-  trackTime?: boolean;
-}): Promise<QRResult> {
+  user_id: string;
+  custom_alias?: string;
+}): Promise<QRResult & { shortUrl?: string; shortCode?: string }> {
   try {
-    // For now, generate a static QR. In production, this would create a
-    // redirect URL through your backend for tracking
-    // Example: https://nexusqr.app/r/abc123 -> params.url
+    if (!params.user_id) {
+      return {
+        success: false,
+        message: 'user_id is required to create a dynamic QR code. Please provide your API key or user ID.',
+      };
+    }
 
-    // Generate a unique short code (in production, save to database)
-    const shortCode = Math.random().toString(36).substring(2, 8);
-    const trackingUrl = `https://nexusqr.app/r/${shortCode}`;
+    // Create dynamic QR in database
+    const result = await createDynamicQR({
+      userId: params.user_id,
+      title: params.title,
+      destinationUrl: params.url,
+      customAlias: params.custom_alias,
+    });
 
-    // For demo, just use the original URL
-    const qrCode = await generateQRBase64(params.url);
+    if (!result.success || !result.data) {
+      return {
+        success: false,
+        message: result.error || 'Failed to create dynamic QR code',
+      };
+    }
+
+    // Generate QR code with the short URL
+    const shortUrl = `${BASE_URL}/r/${result.data.short_code}`;
+    const qrCode = await generateQRBase64(shortUrl);
 
     return {
       success: true,
       qrCode,
-      message: `Dynamic QR code generated for: ${params.title}. Note: For full tracking features, deploy with Nexus QR backend.`,
+      shortUrl,
+      shortCode: result.data.short_code,
+      message: `Dynamic QR code created successfully!\n\nTitle: ${params.title}\nShort URL: ${shortUrl}\nDestination: ${params.url}\n\nYou can update the destination URL anytime using update_dynamic_qr tool.`,
     };
   } catch (error) {
     return {
       success: false,
       message: `Failed to generate dynamic QR code: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
+}
+
+// Update dynamic QR URL
+export async function handleUpdateDynamicQR(params: {
+  short_code: string;
+  new_url: string;
+  user_id: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!params.user_id) {
+      return {
+        success: false,
+        message: 'user_id is required for authentication.',
+      };
+    }
+
+    const result = await updateDynamicQRUrl({
+      userId: params.user_id,
+      shortCode: params.short_code,
+      newUrl: params.new_url,
+    });
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.error || 'Failed to update dynamic QR code',
+      };
+    }
+
+    return {
+      success: true,
+      message: `Dynamic QR updated successfully!\n\nShort Code: ${params.short_code}\nNew Destination: ${params.new_url}\n\nThe existing QR code will now redirect to the new URL.`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to update dynamic QR: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
+}
+
+// Get dynamic QR analytics
+export async function handleGetDynamicQRAnalytics(params: {
+  short_code: string;
+  user_id: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!params.user_id) {
+      return {
+        success: false,
+        message: 'user_id is required for authentication.',
+      };
+    }
+
+    const result = await getDynamicQRAnalytics({
+      userId: params.user_id,
+      shortCode: params.short_code,
+    });
+
+    if (!result.success || !result.qr) {
+      return {
+        success: false,
+        message: result.error || 'Failed to get analytics',
+      };
+    }
+
+    const { qr, analytics } = result;
+    const shortUrl = `${BASE_URL}/r/${qr.short_code}`;
+
+    let analyticsMessage = `📊 Analytics for "${qr.title}"\n\n`;
+    analyticsMessage += `Short URL: ${shortUrl}\n`;
+    analyticsMessage += `Destination: ${qr.destination_url}\n`;
+    analyticsMessage += `Status: ${qr.is_active ? '✅ Active' : '❌ Inactive'}\n`;
+    analyticsMessage += `Created: ${new Date(qr.created_at).toLocaleDateString()}\n\n`;
+
+    if (analytics) {
+      analyticsMessage += `📈 Scan Statistics:\n`;
+      analyticsMessage += `Total Scans: ${analytics.totalScans}\n\n`;
+
+      if (Object.keys(analytics.byDevice as Record<string, number>).length > 0) {
+        analyticsMessage += `📱 By Device:\n`;
+        for (const [device, count] of Object.entries(analytics.byDevice as Record<string, number>)) {
+          analyticsMessage += `  ${device}: ${count}\n`;
+        }
+        analyticsMessage += '\n';
+      }
+
+      if (Object.keys(analytics.byCountry as Record<string, number>).length > 0) {
+        analyticsMessage += `🌍 By Country:\n`;
+        for (const [country, count] of Object.entries(analytics.byCountry as Record<string, number>)) {
+          analyticsMessage += `  ${country}: ${count}\n`;
+        }
+        analyticsMessage += '\n';
+      }
+
+      if (Object.keys(analytics.byBrowser as Record<string, number>).length > 0) {
+        analyticsMessage += `🌐 By Browser:\n`;
+        for (const [browser, count] of Object.entries(analytics.byBrowser as Record<string, number>)) {
+          analyticsMessage += `  ${browser}: ${count}\n`;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      message: analyticsMessage,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to get analytics: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
+}
+
+// List dynamic QR codes
+export async function handleListDynamicQRs(params: {
+  user_id: string;
+  limit?: number;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!params.user_id) {
+      return {
+        success: false,
+        message: 'user_id is required for authentication.',
+      };
+    }
+
+    const result = await listDynamicQRs({
+      userId: params.user_id,
+      limit: Math.min(params.limit || 20, 50),
+    });
+
+    if (!result.success || !result.qrCodes) {
+      return {
+        success: false,
+        message: result.error || 'Failed to list QR codes',
+      };
+    }
+
+    if (result.qrCodes.length === 0) {
+      return {
+        success: true,
+        message: 'You have no dynamic QR codes yet. Use generate_dynamic_qr to create one!',
+      };
+    }
+
+    let listMessage = `📋 Your Dynamic QR Codes (${result.qrCodes.length})\n\n`;
+
+    for (const qr of result.qrCodes) {
+      const shortUrl = `${BASE_URL}/r/${qr.short_code}`;
+      listMessage += `${qr.is_active ? '✅' : '❌'} ${qr.title}\n`;
+      listMessage += `   Short URL: ${shortUrl}\n`;
+      listMessage += `   Destination: ${qr.destination_url.substring(0, 50)}${qr.destination_url.length > 50 ? '...' : ''}\n`;
+      listMessage += `   Scans: ${qr.scan_count || 0}\n`;
+      listMessage += `   Created: ${new Date(qr.created_at).toLocaleDateString()}\n\n`;
+    }
+
+    return {
+      success: true,
+      message: listMessage,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to list QR codes: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
+}
+
+// Delete dynamic QR
+export async function handleDeleteDynamicQR(params: {
+  short_code: string;
+  user_id: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!params.user_id) {
+      return {
+        success: false,
+        message: 'user_id is required for authentication.',
+      };
+    }
+
+    const result = await deleteDynamicQR({
+      userId: params.user_id,
+      shortCode: params.short_code,
+    });
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.error || 'Failed to delete QR code',
+      };
+    }
+
+    return {
+      success: true,
+      message: `Dynamic QR code with short code "${params.short_code}" has been deleted permanently. The short URL will no longer work.`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to delete QR code: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
+}
+
+// Toggle dynamic QR status
+export async function handleToggleDynamicQR(params: {
+  short_code: string;
+  is_active: boolean;
+  user_id: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!params.user_id) {
+      return {
+        success: false,
+        message: 'user_id is required for authentication.',
+      };
+    }
+
+    const result = await toggleDynamicQRStatus({
+      userId: params.user_id,
+      shortCode: params.short_code,
+      isActive: params.is_active,
+    });
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.error || 'Failed to toggle QR code status',
+      };
+    }
+
+    const status = params.is_active ? 'activated' : 'deactivated';
+    return {
+      success: true,
+      message: `Dynamic QR code "${params.short_code}" has been ${status}. ${params.is_active ? 'The QR code will now redirect when scanned.' : 'The QR code will NOT redirect when scanned.'}`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to toggle QR code: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
   }
 }
