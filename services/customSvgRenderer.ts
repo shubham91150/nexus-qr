@@ -492,10 +492,10 @@ export class CustomSVGRenderer {
       const scale = size / 1024;
       const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
 
-      // QR code positioning (centered, ~50% of size)
-      const qrSize = size * 0.50;
+      // QR code positioning (centered, ~42% of size to fit inside frame)
+      const qrSize = size * 0.42;
       const qrX = (size - qrSize) / 2;
-      const qrY = (size - qrSize) / 2 - (size * 0.05); // slightly above center for text space
+      const qrY = (size - qrSize) / 2 - (size * 0.04); // slightly above center for text space
       const cellSize = qrSize / this.moduleCount;
 
       // 1. Draw background
