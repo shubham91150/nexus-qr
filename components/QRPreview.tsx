@@ -559,23 +559,21 @@ export const QRPreview: React.FC<Props> = ({
           );
 
         case 'scan-arc':
-          // Scan arc frame with circular arcs around QR
+          // Scan arc frame with thick circular arcs around QR (matching reference design)
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
               {/* Background */}
               <rect width="56" height="56" fill="#f9fafb" />
-              {/* Dark arc (outer) */}
-              <path d={arcPath(28, 28, 24, 0.4 * Math.PI, 2.2 * Math.PI)} stroke={fgColor} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.95" />
-              {/* Light arc (inner) */}
-              <path d={arcPath(28, 28, 24, 1.1 * Math.PI, 2.9 * Math.PI)} stroke="#888888" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.6" />
-              {/* White container for QR */}
-              <rect x="12" y="12" width="32" height="32" fill="white" rx="2" />
+              {/* Dark arc (main, thick) - left side dominant */}
+              <path d={arcPath(28, 28, 24, 0.4 * Math.PI, 2.2 * Math.PI)} stroke={fgColor} strokeWidth="4" fill="none" strokeLinecap="round" />
+              {/* Light arc (secondary, slightly thinner) - right side, overlapping */}
+              <path d={arcPath(28, 28, 24, 1.1 * Math.PI, 2.9 * Math.PI)} stroke="#888888" strokeWidth="3.5" fill="none" strokeLinecap="round" />
               {/* Mini QR inside */}
               <g transform="translate(17, 17) scale(0.9)">
                 {miniQr}
               </g>
               {/* Text at bottom */}
-              <text x="28" y="52" fontSize="5" fill={fgColor} textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
+              <text x="28" y="50" fontSize="5" fill={fgColor} textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
             </svg>
           );
 
