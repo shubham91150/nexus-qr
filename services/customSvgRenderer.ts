@@ -488,47 +488,42 @@ export class CustomSVGRenderer {
 
     } else if (hasFrame && frameType === 'scan-arc') {
       // === SCAN-ARC FRAME MODE ===
-      const layout = this.getScanArcFrameLayout();
+      // Using the exact SVG provided by user - scaling from 1024 to current size
+      const scale = size / 1024;
       const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
-      const secondaryColor = '#888888'; // Gray color for secondary arc
+
+      // QR code positioning (centered, ~50% of size)
+      const qrSize = size * 0.50;
+      const qrX = (size - qrSize) / 2;
+      const qrY = (size - qrSize) / 2 - (size * 0.05); // slightly above center for text space
+      const cellSize = qrSize / this.moduleCount;
 
       // 1. Draw background
       if (!this.settings.bgTransparent) {
         svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
       }
 
-      // 2. Draw the arcs (matching the reference SVG design exactly)
-      // Dark arc (main outer arc) - spans from ~0.4π to ~2.2π (left side dominant)
-      const darkArcPath = this.generateArcPath(
-        layout.center, layout.center, layout.arcRadius,
-        0.4 * Math.PI, 2.2 * Math.PI
-      );
-      svg += `<path d="${darkArcPath}" stroke="${frameColor}" stroke-width="${layout.arcThickness}" fill="none" stroke-linecap="round" />`;
+      // 2. Embed the EXACT user-provided SVG frame paths (scaled)
+      svg += `<g transform="scale(${scale})">`;
+      // Main arc path from user's SVG
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9647058823529412" d="M 479.5 135 L 507.5 136 L 508.5 135 L 522.5 135 L 523.5 136 L 534.5 136 L 535.5 137 L 543.5 137 L 564.5 141 L 570.5 141 L 575.5 142 L 577.5 144 L 581 143 L 581.5 145 L 585 144 L 585.5 146 L 588.5 145 L 611.5 151 L 637.5 160 L 644 163.5 L 642.5 164 L 618.5 156 L 575.5 148 L 552.5 147 L 551.5 146 L 514.5 146 L 513.5 147 L 502.5 147 L 501.5 148 L 492.5 148 L 491.5 149 L 478.5 150 L 438.5 159 L 393.5 175 L 364.5 190 L 363 189.5 L 361.5 192 L 354.5 195 L 323.5 216 L 293 241 L 293 242.5 L 276.5 259 L 272 262.5 L 273 263.5 L 268 268.5 Q 240.9 299.9 221 338.5 L 207 369.5 L 197 401 L 195 401.5 L 196 404.5 Q 188.6 423.6 186.5 448 L 185 447.5 L 186 453.5 L 185 454.5 L 184 472.5 L 183 473.5 L 182 513.5 L 183 514.5 L 183 530.5 L 184 531.5 L 185 545.5 L 184 549 Q 188 547.6 186 554.5 L 187 558.5 Q 184.5 560 188 561.5 L 189 572.5 L 196 599.5 L 195.5 601 Q 197.8 600.3 197 602.5 L 196.5 604 Q 199.5 603.1 198 607.5 L 204 623.5 L 203.5 625 Q 205.8 624.3 205 626.5 L 206 628.5 L 205.5 630 Q 208.1 629.2 207 632.5 L 225 671.5 L 244 701.5 L 243.5 703 L 246 704.5 L 245.5 706 L 248 707.5 Q 266.6 735.4 290.5 758 L 293 759.5 L 296.5 764 L 325 787.5 L 325.5 789 L 326.5 788 L 329.5 791 L 369 815.5 L 369.5 817 L 371.5 817 L 384.5 824 L 387 824 L 387.5 826 L 389.5 826 Q 391.8 825.3 391 827.5 L 392.5 827 L 402.5 832 L 408 833 L 408.5 835 L 410.5 835 Q 413.8 833.9 413 836.5 L 415.5 837 L 437 843 Q 435.9 845.7 438.5 845 L 441 844 L 441.5 846 L 444 845 L 444.5 847 L 447 846 L 447.5 848 L 449.5 847 L 473.5 853 L 501 856 Q 499.7 859.3 504.5 858 L 505.5 857 L 513.5 857 L 514.5 858 L 557.5 858 L 558.5 857 L 566.5 857 L 572 858 Q 570.9 854.5 578.5 856 Q 580 858.5 581.5 855 L 600.5 853 L 627.5 846 L 629 846.5 Q 628.1 843.5 632.5 845 L 658.5 836 L 660 836.5 Q 659.3 834.3 661.5 835 L 663 835.5 L 663.5 834 Q 665 836.5 666.5 833 L 682.5 826 L 684 826.5 L 685.5 824 L 701.5 816 L 703 816.5 L 704.5 814 L 720.5 805 L 722 805.5 L 723.5 803 L 747.5 786 L 749 786.5 L 752.5 782 Q 776.1 765.1 795 743.5 Q 817.2 719.2 835 690.5 Q 847.2 671.7 856 649.5 L 854 650.5 Q 823.9 715.4 773.5 760 Q 752.1 779.6 727.5 796 L 702.5 811 L 663.5 829 L 633.5 839 L 604.5 846 L 576.5 849 L 575.5 850 L 566.5 850 L 565.5 851 L 537.5 852 L 536.5 851 L 516.5 851 L 515.5 850 L 490.5 848 L 483.5 846 L 475.5 846 L 446.5 839 L 400.5 823 L 371 807.5 L 372.5 807 L 383.5 813 L 404.5 821 L 449.5 833 L 456.5 833 L 479.5 837 L 527.5 838 L 528.5 837 L 551.5 836 L 552.5 835 L 565.5 834 L 587.5 830 L 621.5 820 Q 630.9 813.9 643.5 811 L 682.5 790 L 706.5 773 L 741 740.5 Q 762.3 717.8 779 690.5 L 797 656.5 L 798 651.5 L 807 631.5 L 807 628.5 L 816 602.5 L 824 560.5 L 825 541.5 L 826 540.5 L 826 493.5 L 825 492.5 L 825 482.5 L 824 481.5 L 823 468.5 L 815 432.5 L 799 388.5 Q 769 323 718.5 278 Q 694.6 256.9 666.5 240 L 631.5 222 L 613.5 215 L 589.5 207 L 550.5 199 L 535.5 198 L 534.5 197 L 521.5 197 L 520.5 196 L 485.5 196 L 484.5 197 L 473.5 197 L 472.5 198 L 456.5 199 L 440.5 203 L 430.5 204 L 396.5 214 L 374.5 223 Q 310.1 253.1 266 303.5 Q 239.4 333.9 220 371.5 L 208 397.5 L 196.5 434 L 196 428.5 L 205 394.5 L 210 380.5 L 224 347.5 L 234 328.5 L 264 283.5 L 294.5 250 Q 320.9 223.4 353.5 203 L 394.5 181 L 416.5 172 L 452.5 161 L 493.5 153 L 515.5 152 L 516.5 151 L 556.5 151 L 557.5 152 L 578.5 153 L 621.5 161 L 657.5 172 L 676.5 180 Q 749.1 213.4 799 269.5 L 825 301.5 L 844 331.5 L 856 354.5 L 869 386.5 L 876 408.5 L 885 449.5 L 886 464.5 L 887 465.5 L 887 477.5 L 888 478.5 L 888 519.5 L 887 520.5 L 886 541.5 L 888 545.5 L 887 546.5 L 885 576.5 L 876 621.5 L 865 655.5 L 862 660.5 L 857 675.5 Q 829 738.5 785.5 786 L 783 787.5 L 757.5 814 Q 732.3 836.8 702.5 855 L 675.5 870 L 644.5 884 L 612.5 895 L 604.5 896 L 593.5 900 L 589.5 900 L 571.5 905 L 564.5 905 L 557.5 907 L 551.5 907 L 543.5 909 L 532.5 909 L 531.5 910 L 495.5 911 L 494.5 910 L 461.5 909 L 460.5 908 L 452.5 908 L 451.5 907 L 426 904 L 425.5 902 L 421 903 L 420.5 901 L 417.5 902 L 398.5 896 L 390 895 L 389.5 893 L 387.5 894 L 361.5 885 L 336 874 L 335.5 872 L 333.5 872 L 317 864 L 316.5 862 L 314.5 862 L 300 853.5 L 299.5 852 Q 298 854.5 296.5 851 L 284.5 844 L 261 825.5 L 260.5 824 L 259.5 825 L 254.5 820 L 243 810.5 Q 243.8 808.3 241.5 809 L 218.5 785 L 216 783.5 L 210.5 776 L 208 774.5 L 186 745.5 L 186.5 744 L 184 742.5 L 170 720.5 L 170.5 719 L 168 717.5 L 161 704.5 L 161.5 703 L 160 702.5 L 160.5 701 Q 158.3 701.8 159 699.5 L 148 678.5 L 139 654.5 L 139.5 653 Q 136.5 653.9 138 649.5 L 130 626.5 L 131 624 Q 127.3 625.4 129 619.5 L 123 594.5 L 124 592 Q 121.3 593.1 122 590.5 L 123 587 Q 119 588.4 121 581.5 L 119 573.5 L 117 537.5 L 116 536.5 L 116 507.5 L 117 506.5 L 117 491.5 L 118 490.5 L 118 481.5 L 119 480.5 L 119 471.5 L 120 470.5 L 121 457 Q 124 458.3 123 454.5 L 122 452 Q 124.7 453.1 124 450.5 L 123 447.5 L 126 438.5 L 129 421 L 131 420.5 L 130 417.5 L 132 417.5 L 131 414.5 L 147 370 L 149 369.5 L 148 367.5 Q 154.7 358.4 158 347 L 160 346.5 L 159.5 345 L 161 344.5 L 161 342.5 L 169.5 327 L 171 326.5 Q 168.5 325 172 323.5 Q 177.1 311.1 185.5 302 L 187 301.5 L 186 300.5 L 189 297.5 L 195.5 288 L 198 286.5 L 197 285.5 L 201 281.5 L 228.5 250 L 246.5 233 L 250 231.5 L 253.5 227 Q 256.8 228.1 256 225.5 L 259.5 222 Q 260.8 224.2 262 221.5 L 264.5 218 L 271.5 213 Q 272.8 215.3 274 212.5 L 275.5 210 L 284.5 203 L 286 203.5 L 287.5 201 L 289 201.5 L 289 200 L 292 200 Q 290.9 197.3 293.5 198 Q 295.4 194.4 300 195 L 301.5 192 L 303 192.5 Q 302.3 190.3 304.5 191 L 315.5 184 L 317 184.5 L 318.5 182 L 320 182.5 L 320.5 181 L 322 181.5 Q 321.3 179.3 323.5 180 L 334.5 174 L 336 174.5 L 336.5 173 L 338 173.5 L 338.5 172 L 340 172.5 L 340.5 171 L 342 171.5 Q 341.2 168.9 344.5 170 L 354.5 165 L 356 165.5 L 356.5 164 L 358 164.5 L 358.5 163 L 360 163.5 Q 359.2 160.9 362.5 162 L 380.5 155 L 382 155.5 Q 381.3 153.3 383.5 154 L 385 154.5 L 385.5 153 L 388 154 Q 386.9 151.3 389.5 152 L 391 152.5 Q 390.1 149.5 394.5 151 L 415.5 145 L 417 145.5 Q 416.2 142.9 419.5 144 L 421 144.5 Q 420.2 141.9 423.5 143 L 426 144 Q 424.7 140.7 429.5 142 L 450.5 138 L 478.5 136 L 479.5 135 Z M 882 570 L 881 573 L 882 573 L 882 570 Z M 881 574 L 880 578 L 881 578 L 881 574 Z M 880 578 L 878 583 L 879 585 L 880 583 L 880 578 Z M 873 605 L 872 608 L 873 608 L 873 605 Z M 872 608 L 871 611 L 872 611 L 872 608 Z M 871 611 L 869 615 L 870 617 L 871 615 L 871 611 Z M 869 617 L 868 620 L 869 620 L 869 617 Z M 867 622 L 866 625 L 867 625 L 867 622 Z M 866 625 L 864 628 L 865 630 L 866 628 L 866 625 Z M 864 630 L 856 647 L 857 649 L 864 633 L 864 630 Z " />`;
+      // SCAN ME text path from user's SVG
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9647058823529412" d="M 414.5 749 Q 427.8 746.7 431 754.5 L 432 757.5 L 426.5 758 Q 425 752.5 416.5 754 Q 414.3 754.8 415 758.5 L 430 766.5 L 431 774.5 L 427.5 779 L 415.5 780 L 408 774.5 L 407 770 Q 412.4 768.5 414 771.5 L 416.5 775 Q 423.5 776.5 425 772.5 Q 425.5 767.5 421.5 767 Q 413.8 766.5 410 763 L 408 755.5 L 412.5 750 L 414.5 749 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9647058823529412" d="M 443.5 749 Q 454.3 747.3 458 752.5 L 460 759.5 L 458.5 759 Q 453.1 760.9 454 757.5 L 451.5 754 Q 445.4 753.2 443 755 L 442 757.5 L 442 771.5 Q 443.3 776.3 450.5 775 L 455.5 769 Q 460 768 461 770.5 L 456.5 778 Q 452.8 781.3 444.5 780 L 436 773.5 L 435 757.5 L 441.5 750 L 443.5 749 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9647058823529412" d="M 473 749 Q 478.4 747.5 480 750.5 Q 485.5 761 488 774.5 L 491 779.5 L 484.5 780 L 482 774 L 470.5 774 L 470 776.5 L 467.5 780 L 462 780 L 462 777.5 L 473 749 Z M 477 758 L 473 766 L 473 768 L 480 768 L 477 758 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9647058823529412" d="M 493 749 L 500.5 749 L 501 750.5 L 512.5 769 L 513 749 Q 518.4 747.5 520 750.5 L 519 751.5 L 519 780 L 512.5 780 L 512 778.5 L 500.5 761 L 500 780 L 493 780 L 493 776.5 L 494 775.5 L 494 765.5 L 493 764.5 L 493 749 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9647058823529412" d="M 536 749 L 543.5 749 L 544 750.5 L 552.5 771 L 560 749 L 568.5 749 L 569 749.5 L 569 780 L 562 780 L 562 768.5 Q 564.7 766.8 563 760.5 L 561 761.5 L 555 780 Q 550.4 781.3 549 778.5 Q 547.4 768.1 542.5 761 L 542 780 L 536.5 780 L 536 779.5 L 536 749 Z " />`;
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9647058823529412" d="M 574 749 L 594.5 749 L 595 754 L 581 754 L 581 759.5 Q 578.7 760.8 581.5 762 L 593 762 L 593 767 L 581.5 767 L 580 768.5 Q 578.8 773.8 581.5 775 L 595 775 L 595 780 L 574 780 L 574 749 Z " />`;
+      svg += `</g>`;
 
-      // Light arc (secondary arc) - spans from ~1.1π to ~2.9π (right side, overlapping)
-      // Slightly thinner than dark arc
-      const lightArcPath = this.generateArcPath(
-        layout.center, layout.center, layout.arcRadius,
-        1.1 * Math.PI, 2.9 * Math.PI
-      );
-      svg += `<path d="${lightArcPath}" stroke="${secondaryColor}" stroke-width="${layout.arcThickness * 0.85}" fill="none" stroke-linecap="round" />`;
-
-      // 3. Calculate QR rendering parameters
-      const cellSize = layout.qrSize / this.moduleCount;
-
-      // 4. Render QR code patterns inside (no white container - transparent)
+      // 3. Render QR code patterns inside (centered)
       if (this.settings.dotsType === 'uniform-pills') {
         const pills = this.findPillGroups(matrix);
-        svg += this.generatePillsSVG(pills, cellSize, layout.qrX, this.settings.fgColor, layout.qrY);
+        svg += this.generatePillsSVG(pills, cellSize, qrX, this.settings.fgColor, qrY);
       } else {
-        svg += this.generateStandardPatternSVG(matrix, cellSize, layout.qrX, this.settings.dotsType, this.settings.fgColor, layout.qrY);
+        svg += this.generateStandardPatternSVG(matrix, cellSize, qrX, this.settings.dotsType, this.settings.fgColor, qrY);
       }
-      svg += this.generateAdvancedCornerSVG(cellSize, layout.qrX, undefined, layout.qrY);
-
-      // 5. Draw "SCAN ME" text at bottom center
-      svg += `<text x="${layout.textX}" y="${layout.textY}"
-                    font-family="Arial, Helvetica, sans-serif" font-size="${layout.fontSize}" font-weight="600"
-                    fill="${frameColor}" text-anchor="middle" dominant-baseline="middle">${layout.frameText}</text>`;
+      svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
 
     } else if (hasFrame) {
       // === OTHER FRAMES - Keep for future ===
