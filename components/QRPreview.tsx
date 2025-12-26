@@ -519,6 +519,16 @@ export const QRPreview: React.FC<Props> = ({
         </g>
       );
 
+      // Helper function to generate arc path
+      const arcPath = (cx: number, cy: number, r: number, startAngle: number, endAngle: number) => {
+        const sx = cx + r * Math.cos(startAngle);
+        const sy = cy + r * Math.sin(startAngle);
+        const ex = cx + r * Math.cos(endAngle);
+        const ey = cy + r * Math.sin(endAngle);
+        const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+        return `M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} 1 ${ex} ${ey}`;
+      };
+
       switch (styleId) {
         case 'none':
           // Just QR without frame
@@ -545,6 +555,27 @@ export const QRPreview: React.FC<Props> = ({
               </g>
               {/* Text at bottom */}
               <text x="28" y="52" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold" fontFamily="Arial">SCAN ME</text>
+            </svg>
+          );
+
+        case 'scan-arc':
+          // Scan arc frame with circular arcs around QR
+          return (
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              {/* Background */}
+              <rect width="56" height="56" fill="#f9fafb" />
+              {/* Dark arc (outer) */}
+              <path d={arcPath(28, 28, 24, 0.4 * Math.PI, 2.2 * Math.PI)} stroke={fgColor} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.95" />
+              {/* Light arc (inner) */}
+              <path d={arcPath(28, 28, 24, 1.1 * Math.PI, 2.9 * Math.PI)} stroke="#888888" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.6" />
+              {/* White container for QR */}
+              <rect x="12" y="12" width="32" height="32" fill="white" rx="2" />
+              {/* Mini QR inside */}
+              <g transform="translate(17, 17) scale(0.9)">
+                {miniQr}
+              </g>
+              {/* Text at bottom */}
+              <text x="28" y="52" fontSize="5" fill={fgColor} textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
             </svg>
           );
 
@@ -653,7 +684,8 @@ export const QRPreview: React.FC<Props> = ({
                     <div className="flex gap-3">
                       {[
                           {id: 'none', label: 'None'},
-                          {id: 'circle', label: 'Circle'}
+                          {id: 'circle', label: 'Circle'},
+                          {id: 'scan-arc', label: 'Scan'}
                       ].map((item) => (
                           <button
                               key={item.id}
