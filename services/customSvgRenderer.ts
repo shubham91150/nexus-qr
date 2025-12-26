@@ -387,6 +387,64 @@ export class CustomSVGRenderer {
     };
   }
 
+  // Get frame layout calculations for SCAN-ARC frame
+  private getScanArcFrameLayout() {
+    const size = this.settings.size;
+    const frameText = (this.settings.frameText || 'SCAN ME').substring(0, 10);
+
+    // QR code is 55% of size (fit inside the arc)
+    const qrSize = size * 0.55;
+
+    // QR positioned centered
+    const qrX = (size - qrSize) / 2;
+    const qrY = (size - qrSize) / 2;
+
+    // White container behind QR
+    const qrPadding = size * 0.02;
+    const whiteContainerSize = qrSize + (qrPadding * 2);
+    const whiteContainerX = qrX - qrPadding;
+    const whiteContainerY = qrY - qrPadding;
+
+    // Arc parameters
+    const center = size / 2;
+    const arcRadius = size * 0.42;
+    const arcThickness = size * 0.035;
+
+    // Text position (at bottom)
+    const textY = size * 0.88;
+    const textX = size / 2;
+    const fontSize = size * 0.045;
+
+    return {
+      size,
+      center,
+      arcRadius,
+      arcThickness,
+      qrSize,
+      qrX,
+      qrY,
+      whiteContainerSize,
+      whiteContainerX,
+      whiteContainerY,
+      whiteContainerRadius: whiteContainerSize * 0.02,
+      textX,
+      textY,
+      fontSize,
+      frameText
+    };
+  }
+
+  // Generate arc path for scan-arc frame
+  private generateArcPath(cx: number, cy: number, radius: number, startAngle: number, endAngle: number): string {
+    const startX = cx + radius * Math.cos(startAngle);
+    const startY = cy + radius * Math.sin(startAngle);
+    const endX = cx + radius * Math.cos(endAngle);
+    const endY = cy + radius * Math.sin(endAngle);
+    const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+
+    return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY}`;
+  }
+
   public render(text: string): string {
     const matrix = this.generateMatrix(text);
     if (!matrix) return '';
@@ -428,9 +486,54 @@ export class CustomSVGRenderer {
                     font-family="Arial, Helvetica, sans-serif" font-size="${layout.fontSize}" font-weight="bold"
                     fill="white" text-anchor="middle" dominant-baseline="middle">${layout.frameText}</text>`;
 
+    } else if (hasFrame && frameType === 'scan-arc') {
+      // === SCAN-ARC FRAME MODE ===
+      const layout = this.getScanArcFrameLayout();
+      const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
+      const secondaryColor = this.settings.isGradient ? 'url(#qrMainGradient)' : (this.settings.fgColor2 || '#888888');
+
+      // 1. Draw background
+      if (!this.settings.bgTransparent) {
+        svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
+      }
+
+      // 2. Draw the arcs (matching the user's SVG design)
+      // Dark arc (main outer arc) - spans from ~0.4π to ~2.2π
+      const darkArcPath = this.generateArcPath(
+        layout.center, layout.center, layout.arcRadius,
+        0.4 * Math.PI, 2.2 * Math.PI
+      );
+      svg += `<path d="${darkArcPath}" stroke="${frameColor}" stroke-width="${layout.arcThickness}" fill="none" stroke-linecap="round" opacity="0.95" />`;
+
+      // Light arc (secondary inner arc) - spans from ~1.1π to ~2.9π
+      const lightArcPath = this.generateArcPath(
+        layout.center, layout.center, layout.arcRadius,
+        1.1 * Math.PI, 2.9 * Math.PI
+      );
+      svg += `<path d="${lightArcPath}" stroke="${secondaryColor}" stroke-width="${layout.arcThickness * 0.8}" fill="none" stroke-linecap="round" opacity="0.6" />`;
+
+      // 3. Draw white container for QR code
+      svg += `<rect x="${layout.whiteContainerX}" y="${layout.whiteContainerY}" width="${layout.whiteContainerSize}" height="${layout.whiteContainerSize}" rx="${layout.whiteContainerRadius}" fill="white" />`;
+
+      // 4. Calculate QR rendering parameters
+      const cellSize = layout.qrSize / this.moduleCount;
+
+      // 5. Render QR code patterns inside
+      if (this.settings.dotsType === 'uniform-pills') {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, layout.qrX, this.settings.fgColor, layout.qrY);
+      } else {
+        svg += this.generateStandardPatternSVG(matrix, cellSize, layout.qrX, this.settings.dotsType, this.settings.fgColor, layout.qrY);
+      }
+      svg += this.generateAdvancedCornerSVG(cellSize, layout.qrX, undefined, layout.qrY);
+
+      // 6. Draw "SCAN ME" text at bottom
+      svg += `<text x="${layout.textX}" y="${layout.textY}"
+                    font-family="Arial, Helvetica, sans-serif" font-size="${layout.fontSize}" font-weight="600"
+                    fill="${frameColor}" text-anchor="middle" dominant-baseline="middle">${layout.frameText}</text>`;
+
     } else if (hasFrame) {
-      // === OTHER FRAMES (rounded-box, square-box) - Keep for future ===
-      // For now, render normal QR
+      // === OTHER FRAMES - Keep for future ===
       const padding = this.settings.padding || 0;
       const effectiveSize = size - (padding * 2);
       const cellSize = effectiveSize / this.moduleCount;
