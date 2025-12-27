@@ -3,8 +3,9 @@ import { QRStyleConfig, QRContentData } from '../types';
 import { CustomSVGRenderer } from '../services/customSvgRenderer';
 import { supabase, generateShortCode } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame } from 'lucide-react';
+import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, AlertCircle } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
+import { validateContent } from '../utils/validation';
 
 interface Props {
   data: string;
@@ -86,6 +87,18 @@ export const QRPreview: React.FC<Props> = ({
     timerRef.current = setTimeout(() => {
         if (!isMountedRef.current) return;
 
+        // Check validation before rendering
+        if (contentData) {
+          const validation = validateContent(contentData);
+          if (!validation.isValid) {
+            // Clear the rendered SVG if validation fails
+            if (isMountedRef.current) {
+              setRenderedSvg('');
+            }
+            return;
+          }
+        }
+
         // Use qrEncodedContent (short URL) if set, otherwise use original data
         const contentToRender = qrEncodedContent || data;
         if (!contentToRender || !renderer.current) return;
@@ -103,12 +116,13 @@ export const QRPreview: React.FC<Props> = ({
         clearTimeout(timerRef.current);
       }
     };
-  }, [data, config, qrEncodedContent]);
+  }, [data, config, qrEncodedContent, contentData]);
 
   // Update DOM only when renderedSvg changes
   useEffect(() => {
-    if (renderedSvg && containerRef.current && isMountedRef.current) {
-      containerRef.current.innerHTML = renderedSvg;
+    if (containerRef.current && isMountedRef.current) {
+      // Clear or update the container based on renderedSvg
+      containerRef.current.innerHTML = renderedSvg || '';
     }
   }, [renderedSvg]);
 
@@ -772,25 +786,50 @@ export const QRPreview: React.FC<Props> = ({
               {isBulkMode ? `PREVIEW (1 of ${bulkItems.length})` : 'LIVE PREVIEW'}
           </div>
           
-          <div className="relative group w-full flex justify-center">
+          <div className="relative group w-full flex justify-center overflow-hidden">
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-gradient-to-tr from-gray-200 to-gray-100 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
-             {!data || data.trim() === '' ? (
-               <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
-                 <div className="text-center">
-                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                     <Grid size={32} className="text-gray-400" />
+             {(() => {
+               // Check validation if contentData is available
+               const validation = contentData ? validateContent(contentData) : { isValid: true, error: null };
+               const isEmpty = !data || data.trim() === '';
+               const hasValidationError = !validation.isValid && validation.error;
+
+               if (isEmpty) {
+                 return (
+                   <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
+                     <div className="text-center">
+                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                         <Grid size={32} className="text-gray-400" />
+                       </div>
+                       <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
+                       <p className="text-sm text-gray-500">Enter content to generate QR code</p>
+                     </div>
                    </div>
-                   <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
-                   <p className="text-sm text-gray-500">Enter content to generate QR code</p>
-                 </div>
-               </div>
-             ) : (
-               <div
-                  ref={containerRef}
-                  className={`relative p-4 rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${!config.bgTransparent ? 'bg-white' : ''}`}
-                  style={checkerboardStyle}
-               />
-             )}
+                 );
+               }
+
+               if (hasValidationError) {
+                 return (
+                   <div className="relative p-8 rounded-xl border-2 border-dashed border-red-200 bg-red-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
+                     <div className="text-center">
+                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                         <AlertCircle size={32} className="text-red-400" />
+                       </div>
+                       <h3 className="text-lg font-semibold text-red-700 mb-1">Invalid Content</h3>
+                       <p className="text-sm text-red-500">{validation.error}</p>
+                     </div>
+                   </div>
+                 );
+               }
+
+               return (
+                 <div
+                    ref={containerRef}
+                    className={`relative p-4 rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto max-w-full overflow-hidden ${!config.bgTransparent ? 'bg-white' : ''}`}
+                    style={checkerboardStyle}
+                 />
+               );
+             })()}
           </div>
       </div>
 
