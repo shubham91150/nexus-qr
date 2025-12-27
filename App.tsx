@@ -115,7 +115,7 @@ const INITIAL_STYLE: QRStyleConfig = {
 
 const INITIAL_CONTENT: QRContentData = {
   type: 'text',
-  value: 'Welcome to Nexus QR'
+  value: ''
 };
 
 // Main QR Generator Component

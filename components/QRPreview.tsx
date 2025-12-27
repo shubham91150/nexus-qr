@@ -774,11 +774,23 @@ export const QRPreview: React.FC<Props> = ({
           
           <div className="relative group w-full flex justify-center">
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-gradient-to-tr from-gray-200 to-gray-100 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
-             <div 
-                ref={containerRef} 
-                className={`relative p-4 rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${!config.bgTransparent ? 'bg-white' : ''}`}
-                style={checkerboardStyle}
-             />
+             {!data || data.trim() === '' ? (
+               <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
+                 <div className="text-center">
+                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                     <Grid size={32} className="text-gray-400" />
+                   </div>
+                   <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
+                   <p className="text-sm text-gray-500">Enter content to generate QR code</p>
+                 </div>
+               </div>
+             ) : (
+               <div
+                  ref={containerRef}
+                  className={`relative p-4 rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${!config.bgTransparent ? 'bg-white' : ''}`}
+                  style={checkerboardStyle}
+               />
+             )}
           </div>
       </div>
 
