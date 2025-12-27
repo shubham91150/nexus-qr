@@ -720,6 +720,49 @@ export class CustomSVGRenderer {
       }
       svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
 
+    } else if (hasFrame && frameType === 'tablet') {
+      // === TABLET FRAME MODE ===
+      // Using the exact SVG provided by user - scaling from 1024 to current size
+      // White screen area: X=224-800, Y=154-723 (no text, clean tablet design)
+      const scale = size / 1024;
+      const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
+
+      // QR code positioning (centered in the white screen area)
+      // Screen area is from Y=154 to Y=723, center at ~438 (0.428 of 1024)
+      const qrSize = size * 0.48; // Size to fit in screen area with padding
+      const qrX = (size - qrSize) / 2;
+      const qrY = size * 0.20; // Centered in white screen area
+      const cellSize = qrSize / this.moduleCount;
+
+      // White container for QR code (with padding)
+      const qrPadding = size * 0.02;
+      const whiteContainerSize = qrSize + (qrPadding * 2);
+      const whiteContainerX = qrX - qrPadding;
+      const whiteContainerY = qrY - qrPadding;
+
+      // 1. Draw background
+      if (!this.settings.bgTransparent) {
+        svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
+      }
+
+      // 2. Embed the EXACT user-provided SVG frame paths (scaled)
+      svg += `<g transform="scale(${scale})">`;
+      // Main tablet frame path from user's SVG (clean design without text)
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9882352941176471" d="M 227.5 123 L 795.5 123 Q 818.4 127.6 830 143.5 L 838 158.5 L 840 165.5 L 840 175.5 L 841 176.5 L 841 178.5 L 840 181.5 L 841 183.5 Q 838.2 185.3 840 191.5 L 840 193.5 L 841 195.5 L 840 198.5 L 840 200.5 L 840 210.5 L 841 211.5 L 840 212.5 L 840 313.5 L 840 315.5 L 840 330.5 L 841 331.5 L 840 332.5 L 840 401.5 L 840 403.5 L 840 431.5 L 841 435.5 Q 838.2 437.3 840 443.5 L 840 445.5 L 840 458.5 L 841 459.5 L 840 460.5 L 840 506.5 L 841 508.5 L 840 510.5 L 841 512.5 Q 838.5 514 840 519.5 L 840 523.5 L 841 527.5 Q 838.5 529 840 534.5 L 840 536.5 L 841 546.5 L 840 550.5 L 840 552.5 L 840 570.5 L 841 571.5 L 840 574.5 L 841 576.5 L 841 578.5 L 840 580.5 L 840 582.5 L 840 591.5 L 841 592.5 L 840 595.5 L 841 598.5 L 840 601.5 L 841 606.5 L 840 608.5 L 840 610.5 L 841 614.5 L 840 616.5 L 840 618.5 L 840 639.5 L 841 640.5 L 840 641.5 L 840 694.5 L 840 696.5 Q 838.5 702 841 703.5 L 840 705.5 L 841 707.5 L 840 710.5 L 840 712.5 L 841 714.5 L 840 719.5 L 841 724.5 L 841 726.5 Q 842.3 731.3 840 732.5 L 840 736.5 L 841 739.5 L 841 743.5 L 840 746.5 L 841 749.5 L 841 751.5 L 840 754.5 L 840 756.5 L 841 759.5 L 840 761.5 L 840 763.5 L 841 768.5 L 840 771.5 L 841 777.5 L 840 780.5 L 841 783.5 Q 838.5 785 840 790.5 L 840 792.5 L 840 809.5 L 841 810.5 L 840 815.5 L 841 818.5 L 840 822.5 L 841 826.5 L 840 828.5 L 841 833.5 L 840 835.5 L 841 837.5 L 840 838.5 L 840 847.5 L 836 859.5 Q 831.2 870.2 822.5 877 Q 812.1 886.1 795.5 889 L 224.5 889 Q 203.2 884.3 192 869.5 L 185 856.5 L 182 843.5 L 182 168.5 L 187 151.5 L 198.5 136 L 212.5 127 L 227.5 123 Z M 245 154 L 235 158 Q 227 164 224 174 L 224 703 L 225 708 L 229 715 Q 234 721 244 723 L 779 723 L 793 716 L 795 714 L 800 702 L 800 176 L 796 166 Q 790 157 779 154 L 245 154 Z " />`;
+      svg += `</g>`;
+
+      // 3. Draw white container for QR code
+      svg += `<rect x="${whiteContainerX}" y="${whiteContainerY}" width="${whiteContainerSize}" height="${whiteContainerSize}" rx="${whiteContainerSize * 0.02}" fill="white" />`;
+
+      // 4. Render QR code patterns inside
+      if (this.settings.dotsType === 'uniform-pills') {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, qrX, this.settings.fgColor, qrY);
+      } else {
+        svg += this.generateStandardPatternSVG(matrix, cellSize, qrX, this.settings.dotsType, this.settings.fgColor, qrY);
+      }
+      svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
+
     } else if (hasFrame) {
       // === OTHER FRAMES - Keep for future ===
       const padding = this.settings.padding || 0;

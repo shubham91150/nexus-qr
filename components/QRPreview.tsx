@@ -661,6 +661,23 @@ export const QRPreview: React.FC<Props> = ({
             </svg>
           );
 
+        case 'tablet':
+          // Tablet device frame - clean rectangular frame without text
+          return (
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              {/* Background */}
+              <rect width="56" height="56" fill="#f9fafb" />
+              {/* Tablet outer frame */}
+              <rect x="8" y="6" width="40" height="44" rx="4" fill={fgColor} />
+              {/* Screen area (white) */}
+              <rect x="11" y="10" width="34" height="34" rx="2" fill="white" />
+              {/* Mini QR inside */}
+              <g transform="translate(15, 13) scale(0.95)">
+                {miniQr}
+              </g>
+            </svg>
+          );
+
         default:
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
@@ -771,7 +788,8 @@ export const QRPreview: React.FC<Props> = ({
                           {id: 'scan-oval', label: 'Oval'},
                           {id: 'scan-rect', label: 'Rect'},
                           {id: 'device', label: 'Device'},
-                          {id: 'badge', label: 'Badge'}
+                          {id: 'badge', label: 'Badge'},
+                          {id: 'tablet', label: 'Tablet'}
                       ].map((item) => (
                           <button
                               key={item.id}
