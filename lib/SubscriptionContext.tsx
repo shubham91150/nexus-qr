@@ -187,21 +187,26 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     try {
       // Get dynamic QR count
-      const { count: qrCount } = await supabase
+      const { count: qrCount, data: userQRs } = await supabase
         .from('dynamic_qr_codes')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact' })
         .eq('user_id', user.id);
 
-      // Get scans this month
+      // Get scans this month - qr_scans doesn't have user_id, need to filter by qr_id
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const { count: scanCount } = await supabase
-        .from('qr_scans')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gte('scanned_at', startOfMonth.toISOString());
+      let scanCount = 0;
+      if (userQRs && userQRs.length > 0) {
+        const qrIds = userQRs.map(qr => qr.id);
+        const { count } = await supabase
+          .from('qr_scans')
+          .select('*', { count: 'exact', head: true })
+          .in('qr_id', qrIds)
+          .gte('scanned_at', startOfMonth.toISOString());
+        scanCount = count || 0;
+      }
 
       // Get folders count
       const { count: folderCount } = await supabase
@@ -218,7 +223,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
       setUsage({
         dynamicQRCodesCreated: qrCount || 0,
-        scansThisMonth: scanCount || 0,
+        scansThisMonth: scanCount,
         storageUsed: 0, // TODO: Calculate from storage
         apiRequestsThisMonth: apiCount || 0,
         foldersCreated: folderCount || 0,
