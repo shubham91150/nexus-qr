@@ -19,8 +19,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Module-level flags to prevent double code exchange in StrictMode
+// Reset on page load to handle different devices/sessions
 let codeExchangeAttempted = false;
 let oauthInProgress = false;
+
+// Reset flags on page load
+if (typeof window !== 'undefined') {
+  codeExchangeAttempted = false;
+  oauthInProgress = false;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -35,6 +42,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const url = new URL(window.location.href);
         const code = url.searchParams.get('code');
+        const errorParam = url.searchParams.get('error');
+        const errorDescription = url.searchParams.get('error_description');
+
+        // Handle OAuth error (e.g., user cancelled)
+        if (errorParam) {
+          console.error('OAuth error:', errorParam, errorDescription);
+          window.history.replaceState({}, '', url.origin + url.pathname);
+          if (mounted) {
+            setAuthStatus('unauthenticated');
+            setLoading(false);
+          }
+          return;
+        }
 
         // Handle OAuth code exchange (with StrictMode protection)
         if (code && !codeExchangeAttempted) {
@@ -53,6 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (error) {
               console.error('Code exchange error:', error.message);
               oauthInProgress = false;
+              // Reset flag so user can try again
+              codeExchangeAttempted = false;
               if (mounted) {
                 setAuthStatus('unauthenticated');
               }
@@ -72,6 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('Code exchange exception:', err);
             window.history.replaceState({}, '', url.origin + url.pathname);
             oauthInProgress = false;
+            // Reset flag so user can try again
+            codeExchangeAttempted = false;
             if (mounted) {
               setAuthStatus('unauthenticated');
             }
