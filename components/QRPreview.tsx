@@ -75,6 +75,10 @@ export const QRPreview: React.FC<Props> = ({
   useEffect(() => {
     setQrEncodedContent(null);
     setCreatedShortUrl(null);
+    // Immediately clear SVG when data becomes empty
+    if (!data || data.trim() === '') {
+      setRenderedSvg('');
+    }
   }, [data]);
 
   // Render QR code to SVG string
@@ -84,32 +88,27 @@ export const QRPreview: React.FC<Props> = ({
       clearTimeout(timerRef.current);
     }
 
+    // Use qrEncodedContent (short URL) if set, otherwise use original data
+    const contentToRender = qrEncodedContent || data;
+
+    // If no content to render, clear the SVG immediately (no delay)
+    if (!contentToRender || contentToRender.trim() === '') {
+      setRenderedSvg('');
+      return;
+    }
+
+    // Check validation before rendering
+    if (contentData) {
+      const validation = validateContent(contentData);
+      if (!validation.isValid) {
+        // Clear the rendered SVG if validation fails
+        setRenderedSvg('');
+        return;
+      }
+    }
+
     timerRef.current = setTimeout(() => {
         if (!isMountedRef.current) return;
-
-        // Use qrEncodedContent (short URL) if set, otherwise use original data
-        const contentToRender = qrEncodedContent || data;
-
-        // If no content to render, clear the SVG and return
-        if (!contentToRender || contentToRender.trim() === '') {
-          if (isMountedRef.current) {
-            setRenderedSvg('');
-          }
-          return;
-        }
-
-        // Check validation before rendering
-        if (contentData) {
-          const validation = validateContent(contentData);
-          if (!validation.isValid) {
-            // Clear the rendered SVG if validation fails
-            if (isMountedRef.current) {
-              setRenderedSvg('');
-            }
-            return;
-          }
-        }
-
         if (!renderer.current) return;
 
         renderer.current.updateConfig(config);
@@ -802,7 +801,9 @@ export const QRPreview: React.FC<Props> = ({
                const validation = contentData ? validateContent(contentData) : { isValid: true, error: null };
                const isEmpty = !data || data.trim() === '';
                const hasValidationError = !validation.isValid && validation.error;
+               const hasNoSvg = !renderedSvg;
 
+               // Show placeholder when content is empty
                if (isEmpty) {
                  return (
                    <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
@@ -817,6 +818,7 @@ export const QRPreview: React.FC<Props> = ({
                  );
                }
 
+               // Show validation error
                if (hasValidationError) {
                  return (
                    <div className="relative p-8 rounded-xl border-2 border-dashed border-red-200 bg-red-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
@@ -826,6 +828,21 @@ export const QRPreview: React.FC<Props> = ({
                        </div>
                        <h3 className="text-lg font-semibold text-red-700 mb-1">Invalid Content</h3>
                        <p className="text-sm text-red-500">{validation.error}</p>
+                     </div>
+                   </div>
+                 );
+               }
+
+               // Show placeholder if no SVG is rendered yet (loading or cleared state)
+               if (hasNoSvg) {
+                 return (
+                   <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
+                     <div className="text-center">
+                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                         <Grid size={32} className="text-gray-400" />
+                       </div>
+                       <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
+                       <p className="text-sm text-gray-500">Enter content to generate QR code</p>
                      </div>
                    </div>
                  );
