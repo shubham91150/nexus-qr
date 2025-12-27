@@ -3,9 +3,8 @@ import { QRStyleConfig, QRContentData } from '../types';
 import { CustomSVGRenderer } from '../services/customSvgRenderer';
 import { supabase, generateShortCode } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, AlertCircle } from 'lucide-react';
+import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
-import { validateContent } from '../utils/validation';
 
 interface Props {
   data: string;
@@ -75,14 +74,6 @@ export const QRPreview: React.FC<Props> = ({
   useEffect(() => {
     setQrEncodedContent(null);
     setCreatedShortUrl(null);
-    // Immediately clear SVG and DOM when data becomes empty
-    if (!data || data.trim() === '') {
-      setRenderedSvg('');
-      // Also clear the DOM immediately
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
-    }
   }, [data]);
 
   // Render QR code to SVG string
@@ -92,34 +83,12 @@ export const QRPreview: React.FC<Props> = ({
       clearTimeout(timerRef.current);
     }
 
-    // Use qrEncodedContent (short URL) if set, otherwise use original data
-    const contentToRender = qrEncodedContent || data;
-
-    // If no content to render, clear the SVG and DOM immediately (no delay)
-    if (!contentToRender || contentToRender.trim() === '') {
-      setRenderedSvg('');
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
-      return;
-    }
-
-    // Check validation before rendering
-    if (contentData) {
-      const validation = validateContent(contentData);
-      if (!validation.isValid) {
-        // Clear the rendered SVG if validation fails
-        setRenderedSvg('');
-        if (containerRef.current) {
-          containerRef.current.innerHTML = '';
-        }
-        return;
-      }
-    }
-
     timerRef.current = setTimeout(() => {
         if (!isMountedRef.current) return;
-        if (!renderer.current) return;
+
+        // Use qrEncodedContent (short URL) if set, otherwise use original data
+        const contentToRender = qrEncodedContent || data;
+        if (!contentToRender || !renderer.current) return;
 
         renderer.current.updateConfig(config);
         const svgString = renderer.current.render(contentToRender);
@@ -134,13 +103,12 @@ export const QRPreview: React.FC<Props> = ({
         clearTimeout(timerRef.current);
       }
     };
-  }, [data, config, qrEncodedContent, contentData]);
+  }, [data, config, qrEncodedContent]);
 
   // Update DOM only when renderedSvg changes
   useEffect(() => {
-    if (containerRef.current && isMountedRef.current) {
-      // Clear or update the container based on renderedSvg
-      containerRef.current.innerHTML = renderedSvg || '';
+    if (renderedSvg && containerRef.current && isMountedRef.current) {
+      containerRef.current.innerHTML = renderedSvg;
     }
   }, [renderedSvg]);
 
@@ -804,68 +772,28 @@ export const QRPreview: React.FC<Props> = ({
               {isBulkMode ? `PREVIEW (1 of ${bulkItems.length})` : 'LIVE PREVIEW'}
           </div>
           
-          <div className="relative group w-full flex justify-center overflow-hidden">
+          <div className="relative group w-full flex justify-center">
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-gradient-to-tr from-gray-200 to-gray-100 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
-             {(() => {
-               // Check validation if contentData is available
-               const validation = contentData ? validateContent(contentData) : { isValid: true, error: null };
-               const isEmpty = !data || data.trim() === '';
-               const hasValidationError = !validation.isValid && validation.error;
-               const hasNoSvg = !renderedSvg;
-
-               // Show placeholder when content is empty
-               if (isEmpty) {
-                 return (
-                   <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
-                     <div className="text-center">
-                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                         <Grid size={32} className="text-gray-400" />
-                       </div>
-                       <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
-                       <p className="text-sm text-gray-500">Enter content to generate QR code</p>
-                     </div>
+             {/* Placeholder - shown when no content */}
+             {(!data || data.trim() === '') && (
+               <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
+                 <div className="text-center">
+                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                     <Grid size={32} className="text-gray-400" />
                    </div>
-                 );
-               }
-
-               // Show validation error
-               if (hasValidationError) {
-                 return (
-                   <div className="relative p-8 rounded-xl border-2 border-dashed border-red-200 bg-red-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
-                     <div className="text-center">
-                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
-                         <AlertCircle size={32} className="text-red-400" />
-                       </div>
-                       <h3 className="text-lg font-semibold text-red-700 mb-1">Invalid Content</h3>
-                       <p className="text-sm text-red-500">{validation.error}</p>
-                     </div>
-                   </div>
-                 );
-               }
-
-               // Show placeholder if no SVG is rendered yet (loading or cleared state)
-               if (hasNoSvg) {
-                 return (
-                   <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
-                     <div className="text-center">
-                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                         <Grid size={32} className="text-gray-400" />
-                       </div>
-                       <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
-                       <p className="text-sm text-gray-500">Enter content to generate QR code</p>
-                     </div>
-                   </div>
-                 );
-               }
-
-               return (
-                 <div
-                    ref={containerRef}
-                    className={`relative p-4 rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto max-w-full overflow-hidden ${!config.bgTransparent ? 'bg-white' : ''}`}
-                    style={checkerboardStyle}
-                 />
-               );
-             })()}
+                   <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
+                   <p className="text-sm text-gray-500">Enter content to generate QR code</p>
+                 </div>
+               </div>
+             )}
+             {/* QR Container - shown when has content */}
+             {data && data.trim() !== '' && (
+               <div
+                  ref={containerRef}
+                  className={`relative p-4 rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${!config.bgTransparent ? 'bg-white' : ''}`}
+                  style={checkerboardStyle}
+               />
+             )}
           </div>
       </div>
 
