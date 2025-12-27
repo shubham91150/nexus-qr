@@ -607,22 +607,35 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
           <button
             onClick={() => {
               if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                   // Update both lat and lng together to avoid state race condition
-                   onChange({
-                     ...data,
-                     geo: {
-                       lat: pos.coords.latitude.toString(),
-                       lng: pos.coords.longitude.toString()
-                     }
-                   });
-                });
+                navigator.geolocation.getCurrentPosition(
+                  pos => {
+                    // Update both lat and lng together to avoid state race condition
+                    onChange({
+                      ...data,
+                      geo: {
+                        lat: pos.coords.latitude.toString(),
+                        lng: pos.coords.longitude.toString()
+                      }
+                    });
+                  },
+                  error => {
+                    alert('Unable to get location. Please enter coordinates manually.');
+                  },
+                  {
+                    enableHighAccuracy: true, // Request GPS-level accuracy when available
+                    timeout: 10000,
+                    maximumAge: 0
+                  }
+                );
               }
             }}
             className="w-full py-3 bg-gray-900 text-white rounded-xl font-medium shadow-lg flex items-center justify-center gap-2 mb-2 hover:bg-gray-800 transition-colors"
           >
             <MapPin size={18} /> Get Current Location
           </button>
+          <p className="text-xs text-gray-400 text-center mb-3">
+            📱 Smartphones: Accurate (GPS) • 💻 Desktop: Approximate (IP-based)
+          </p>
           <div className="grid grid-cols-2 gap-3">
              <DebouncedInput placeholder="Latitude" value={data.geo?.lat || ''} onChange={(v) => updateNested('geo', 'lat', v)} validation="latitude" />
              <DebouncedInput placeholder="Longitude" value={data.geo?.lng || ''} onChange={(v) => updateNested('geo', 'lng', v)} validation="longitude" />
