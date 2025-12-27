@@ -87,6 +87,17 @@ export const QRPreview: React.FC<Props> = ({
     timerRef.current = setTimeout(() => {
         if (!isMountedRef.current) return;
 
+        // Use qrEncodedContent (short URL) if set, otherwise use original data
+        const contentToRender = qrEncodedContent || data;
+
+        // If no content to render, clear the SVG and return
+        if (!contentToRender || contentToRender.trim() === '') {
+          if (isMountedRef.current) {
+            setRenderedSvg('');
+          }
+          return;
+        }
+
         // Check validation before rendering
         if (contentData) {
           const validation = validateContent(contentData);
@@ -99,9 +110,7 @@ export const QRPreview: React.FC<Props> = ({
           }
         }
 
-        // Use qrEncodedContent (short URL) if set, otherwise use original data
-        const contentToRender = qrEncodedContent || data;
-        if (!contentToRender || !renderer.current) return;
+        if (!renderer.current) return;
 
         renderer.current.updateConfig(config);
         const svgString = renderer.current.render(contentToRender);
