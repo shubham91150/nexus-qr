@@ -145,9 +145,16 @@ const DebouncedInput = ({
   }, [localValue, onChange, value, validation, touched]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const newValue = e.target.value;
       isTypingRef.current = true;
-      setLocalValue(e.target.value);
+      setLocalValue(newValue);
       setTouched(true);
+
+      // Immediately update parent when content becomes empty (no debounce)
+      // This ensures the QR preview shows placeholder instantly
+      if (newValue.trim() === '') {
+        onChange(newValue);
+      }
   };
 
   const handleBlur = () => {
