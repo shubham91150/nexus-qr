@@ -100,8 +100,12 @@ export const generatePayload = (data: QRContentData): string => {
     case 'event':
       if (!data.event) return '';
       const { title, location, start, end } = data.event;
-      // Basic iCal format
-      return `BEGIN:VEVENT\nSUMMARY:${title}\nLOCATION:${location}\nDTSTART:${start.replace(/[-:]/g, '')}\nDTEND:${end.replace(/[-:]/g, '')}\nEND:VEVENT`;
+      // Only generate if we have at least title or start date
+      if (!title && !start) return '';
+      // Basic iCal format with safety checks for undefined values
+      const startStr = start ? start.replace(/[-:]/g, '') : '';
+      const endStr = end ? end.replace(/[-:]/g, '') : '';
+      return `BEGIN:VEVENT\nSUMMARY:${title || ''}\nLOCATION:${location || ''}\nDTSTART:${startStr}\nDTEND:${endStr}\nEND:VEVENT`;
 
     case 'sms':
       if (!data.sms) return '';
