@@ -700,6 +700,29 @@ export const QRPreview: React.FC<Props> = ({
             </svg>
           );
 
+        case 'ticket':
+          // Ticket/coupon frame with notched sides and SCAN ME text at bottom
+          return (
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              {/* Background */}
+              <rect width="56" height="56" fill="#f9fafb" />
+              {/* Ticket frame with notches */}
+              <path d="M 12 8 L 44 8 Q 46 8 46 10 L 46 46 Q 46 48 44 48 L 12 48 Q 10 48 10 46 L 10 10 Q 10 8 12 8 Z" fill={fgColor} />
+              {/* Left notch */}
+              <circle cx="10" cy="28" r="3" fill="#f9fafb" />
+              {/* Right notch */}
+              <circle cx="46" cy="28" r="3" fill="#f9fafb" />
+              {/* Screen/content area (white) */}
+              <rect x="13" y="11" width="30" height="26" rx="2" fill="white" />
+              {/* Mini QR inside */}
+              <g transform="translate(16, 13) scale(0.9)">
+                {miniQr}
+              </g>
+              {/* SCAN ME text at bottom */}
+              <text x="28" y="44" fontSize="4" fill="white" textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
+            </svg>
+          );
+
         default:
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
@@ -812,7 +835,8 @@ export const QRPreview: React.FC<Props> = ({
                           {id: 'device', label: 'Device'},
                           {id: 'badge', label: 'Badge'},
                           {id: 'tablet', label: 'Tablet'},
-                          {id: 'clipboard', label: 'Clipboard'}
+                          {id: 'clipboard', label: 'Clipboard'},
+                          {id: 'ticket', label: 'Ticket'}
                       ].map((item) => (
                           <button
                               key={item.id}
