@@ -642,6 +642,58 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
         </InputWrapper>
       );
 
+    case 'email':
+      return (
+        <InputWrapper>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-100 mb-1">
+            <h4 className="text-amber-900 font-semibold text-sm flex items-center gap-2 mb-1">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+              Compose Email
+            </h4>
+            <p className="text-xs text-amber-700">Create a QR code that opens email app with pre-filled fields.</p>
+          </div>
+
+          {/* Email Fields */}
+          <div className="space-y-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500 ml-1">Recipient Email *</label>
+              <DebouncedInput
+                placeholder="recipient@example.com"
+                value={data.email?.to || ''}
+                onChange={(v) => updateNested('email', 'to', v)}
+                validation="email"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500 ml-1">Subject</label>
+              <DebouncedInput
+                placeholder="Email subject line..."
+                value={data.email?.subject || ''}
+                onChange={(v) => updateNested('email', 'subject', v)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500 ml-1">Body</label>
+              <DebouncedInput
+                isArea
+                placeholder="Write your email message here..."
+                value={data.email?.body || ''}
+                onChange={(v) => updateNested('email', 'body', v)}
+              />
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-2 px-1">
+            When scanned, the QR code will open the user's email app with these fields pre-filled.
+          </p>
+        </InputWrapper>
+      );
+
     case 'sms':
       return (
         <InputWrapper>
