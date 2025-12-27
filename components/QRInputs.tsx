@@ -10,20 +10,101 @@ interface Props {
   onChange: (data: QRContentData) => void;
 }
 
+// Validation helper functions
+const validators = {
+  url: (value: string): string | null => {
+    if (!value) return null;
+    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?(\?[^\s]*)?$/i;
+    if (!urlPattern.test(value)) {
+      return 'Please enter a valid URL (e.g., https://example.com)';
+    }
+    return null;
+  },
+  email: (value: string): string | null => {
+    if (!value) return null;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(value)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  },
+  phone: (value: string): string | null => {
+    if (!value) return null;
+    // Allow + at start, then digits, spaces, hyphens, parentheses
+    const phonePattern = /^\+?[\d\s\-\(\)]{6,20}$/;
+    if (!phonePattern.test(value)) {
+      return 'Please enter a valid phone number';
+    }
+    return null;
+  },
+  youtubeUrl: (value: string): string | null => {
+    if (!value) return null;
+    const ytPattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/i;
+    if (!ytPattern.test(value)) {
+      return 'Please enter a valid YouTube URL';
+    }
+    return null;
+  },
+  spotifyUrl: (value: string): string | null => {
+    if (!value) return null;
+    const spotifyPattern = /^(https?:\/\/)?(open\.)?spotify\.com\/.+$/i;
+    if (!spotifyPattern.test(value)) {
+      return 'Please enter a valid Spotify URL';
+    }
+    return null;
+  },
+  upiId: (value: string): string | null => {
+    if (!value) return null;
+    const upiPattern = /^[\w\.\-]+@[\w]+$/;
+    if (!upiPattern.test(value)) {
+      return 'Please enter a valid UPI ID (e.g., name@upi)';
+    }
+    return null;
+  },
+  bitcoinAddress: (value: string): string | null => {
+    if (!value) return null;
+    // Basic Bitcoin address validation (P2PKH, P2SH, Bech32)
+    const btcPattern = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/;
+    if (!btcPattern.test(value)) {
+      return 'Please enter a valid Bitcoin address';
+    }
+    return null;
+  },
+  latitude: (value: string): string | null => {
+    if (!value) return null;
+    const lat = parseFloat(value);
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+      return 'Latitude must be between -90 and 90';
+    }
+    return null;
+  },
+  longitude: (value: string): string | null => {
+    if (!value) return null;
+    const lng = parseFloat(value);
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+      return 'Longitude must be between -180 and 180';
+    }
+    return null;
+  }
+};
+
+type ValidationType = keyof typeof validators;
+
 const InputWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex flex-col gap-3 animate-fadeIn">
     {children}
   </div>
 );
 
-// Optimized Debounced Input Component
-const DebouncedInput = ({ 
-  value, 
-  onChange, 
-  placeholder, 
+// Optimized Debounced Input Component with Validation
+const DebouncedInput = ({
+  value,
+  onChange,
+  placeholder,
   isArea = false,
   className = "",
-  type = "text"
+  type = "text",
+  validation
 }: {
   value: string;
   onChange: (val: string) => void;
@@ -31,8 +112,11 @@ const DebouncedInput = ({
   isArea?: boolean;
   className?: string;
   type?: string;
+  validation?: ValidationType;
 }) => {
   const [localValue, setLocalValue] = useState(value);
+  const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
   const isTypingRef = useRef(false);
 
   useEffect(() => {
@@ -47,37 +131,63 @@ const DebouncedInput = ({
         onChange(localValue);
       }
       isTypingRef.current = false;
+
+      // Validate after debounce
+      if (validation && touched && localValue) {
+        const validator = validators[validation];
+        setError(validator ? validator(localValue) : null);
+      } else if (!localValue) {
+        setError(null);
+      }
     }, 500);
 
     return () => clearTimeout(handler);
-  }, [localValue, onChange, value]);
+  }, [localValue, onChange, value, validation, touched]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       isTypingRef.current = true;
       setLocalValue(e.target.value);
+      setTouched(true);
   };
 
-  const baseClass = "w-full p-4 rounded-xl custom-input text-gray-700 text-sm font-medium border border-transparent focus:border-gray-300 focus:bg-white transition-all";
+  const handleBlur = () => {
+    setTouched(true);
+    if (validation && localValue) {
+      const validator = validators[validation];
+      setError(validator ? validator(localValue) : null);
+    }
+  };
+
+  const baseClass = "w-full p-4 rounded-xl custom-input text-gray-700 text-sm font-medium border transition-all";
+  const errorClass = error ? "border-red-300 bg-red-50 focus:border-red-400" : "border-transparent focus:border-gray-300 focus:bg-white";
 
   if (isArea) {
     return (
-      <textarea
-        className={`${baseClass} min-h-[120px] resize-none ${className}`}
-        placeholder={placeholder}
-        value={localValue}
-        onChange={handleChange}
-      />
+      <div className="w-full">
+        <textarea
+          className={`${baseClass} ${errorClass} min-h-[120px] resize-none ${className}`}
+          placeholder={placeholder}
+          value={localValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {error && <p className="text-xs text-red-500 mt-1 px-1 flex items-center gap-1"><AlertCircle size={12} />{error}</p>}
+      </div>
     );
   }
 
   return (
-    <input
-      type={type}
-      className={`${baseClass} ${className}`}
-      placeholder={placeholder}
-      value={localValue}
-      onChange={handleChange}
-    />
+    <div className="w-full">
+      <input
+        type={type}
+        className={`${baseClass} ${errorClass} ${className}`}
+        placeholder={placeholder}
+        value={localValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+      />
+      {error && <p className="text-xs text-red-500 mt-1 px-1 flex items-center gap-1"><AlertCircle size={12} />{error}</p>}
+    </div>
   );
 };
 
@@ -270,7 +380,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
       return <InputWrapper><DebouncedInput isArea placeholder="Enter your text content here..." value={data.value} onChange={(v) => update('value', v)} /></InputWrapper>;
     
     case 'url':
-      return <InputWrapper><DebouncedInput placeholder="https://www.example.com" value={data.value} onChange={(v) => update('value', v)} /></InputWrapper>;
+      return <InputWrapper><DebouncedInput placeholder="https://www.example.com" value={data.value} onChange={(v) => update('value', v)} validation="url" /></InputWrapper>;
 
     case 'bulk':
         const itemCount = data.bulk?.items?.length || 0;
@@ -439,11 +549,11 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-gray-400 ml-1">Mobile</label>
-                <DebouncedInput placeholder="+91 98765 43210" value={data.contact?.mobile || ''} onChange={(v) => updateNested('contact', 'mobile', v)} />
+                <DebouncedInput placeholder="+91 98765 43210" value={data.contact?.mobile || ''} onChange={(v) => updateNested('contact', 'mobile', v)} validation="phone" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-gray-400 ml-1">Work Phone</label>
-                <DebouncedInput placeholder="+91 11 2345 6789" value={data.contact?.phone || ''} onChange={(v) => updateNested('contact', 'phone', v)} />
+                <DebouncedInput placeholder="+91 11 2345 6789" value={data.contact?.phone || ''} onChange={(v) => updateNested('contact', 'phone', v)} validation="phone" />
               </div>
             </div>
             <div className="flex flex-col gap-1">
@@ -453,11 +563,11 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-gray-400 ml-1">Email</label>
-                <DebouncedInput placeholder="personal@email.com" value={data.contact?.email || ''} onChange={(v) => updateNested('contact', 'email', v)} />
+                <DebouncedInput placeholder="personal@email.com" value={data.contact?.email || ''} onChange={(v) => updateNested('contact', 'email', v)} validation="email" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-gray-400 ml-1">Work Email</label>
-                <DebouncedInput placeholder="work@company.com" value={data.contact?.workEmail || ''} onChange={(v) => updateNested('contact', 'workEmail', v)} />
+                <DebouncedInput placeholder="work@company.com" value={data.contact?.workEmail || ''} onChange={(v) => updateNested('contact', 'workEmail', v)} validation="email" />
               </div>
             </div>
           </div>
@@ -479,7 +589,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
           {/* Website Section */}
           <div className="space-y-2">
             <label className="text-xs text-gray-500 uppercase tracking-wider font-medium px-1">Website</label>
-            <DebouncedInput placeholder="https://www.yourwebsite.com" value={data.contact?.website || ''} onChange={(v) => updateNested('contact', 'website', v)} />
+            <DebouncedInput placeholder="https://www.yourwebsite.com" value={data.contact?.website || ''} onChange={(v) => updateNested('contact', 'website', v)} validation="url" />
           </div>
         </InputWrapper>
       );
@@ -501,8 +611,8 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
             <MapPin size={18} /> Get Current Location
           </button>
           <div className="grid grid-cols-2 gap-3">
-             <DebouncedInput placeholder="Latitude" value={data.geo?.lat || ''} onChange={(v) => updateNested('geo', 'lat', v)} />
-             <DebouncedInput placeholder="Longitude" value={data.geo?.lng || ''} onChange={(v) => updateNested('geo', 'lng', v)} />
+             <DebouncedInput placeholder="Latitude" value={data.geo?.lat || ''} onChange={(v) => updateNested('geo', 'lat', v)} validation="latitude" />
+             <DebouncedInput placeholder="Longitude" value={data.geo?.lng || ''} onChange={(v) => updateNested('geo', 'lng', v)} validation="longitude" />
           </div>
         </InputWrapper>
       );
@@ -528,7 +638,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
     case 'sms':
       return (
         <InputWrapper>
-          <DebouncedInput placeholder="Phone Number (e.g., +91XXXXXXXXXX)" value={data.sms?.phone || ''} onChange={(v) => updateNested('sms', 'phone', v)} />
+          <DebouncedInput placeholder="Phone Number (e.g., +91XXXXXXXXXX)" value={data.sms?.phone || ''} onChange={(v) => updateNested('sms', 'phone', v)} validation="phone" />
           <DebouncedInput isArea placeholder="Message (optional)" value={data.sms?.message || ''} onChange={(v) => updateNested('sms', 'message', v)} />
         </InputWrapper>
       );
@@ -544,7 +654,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               </svg>
               iOS App Store URL
             </label>
-            <DebouncedInput placeholder="https://apps.apple.com/app/..." value={data.appstore?.iosUrl || ''} onChange={(v) => updateNested('appstore', 'iosUrl', v)} />
+            <DebouncedInput placeholder="https://apps.apple.com/app/..." value={data.appstore?.iosUrl || ''} onChange={(v) => updateNested('appstore', 'iosUrl', v)} validation="url" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
@@ -556,7 +666,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               </svg>
               Google Play Store URL
             </label>
-            <DebouncedInput placeholder="https://play.google.com/store/apps/..." value={data.appstore?.androidUrl || ''} onChange={(v) => updateNested('appstore', 'androidUrl', v)} />
+            <DebouncedInput placeholder="https://play.google.com/store/apps/..." value={data.appstore?.androidUrl || ''} onChange={(v) => updateNested('appstore', 'androidUrl', v)} validation="url" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500 ml-1 flex items-center gap-2">
@@ -566,7 +676,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               </svg>
               Huawei AppGallery URL (optional)
             </label>
-            <DebouncedInput placeholder="https://appgallery.huawei.com/..." value={data.appstore?.huaweiUrl || ''} onChange={(v) => updateNested('appstore', 'huaweiUrl', v)} />
+            <DebouncedInput placeholder="https://appgallery.huawei.com/..." value={data.appstore?.huaweiUrl || ''} onChange={(v) => updateNested('appstore', 'huaweiUrl', v)} validation="url" />
           </div>
         </InputWrapper>
       );
@@ -581,7 +691,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               </svg>
               WhatsApp Number
             </label>
-            <DebouncedInput placeholder="Phone with country code (e.g., 919876543210)" value={data.whatsapp?.phone || ''} onChange={(v) => updateNested('whatsapp', 'phone', v)} />
+            <DebouncedInput placeholder="Phone with country code (e.g., 919876543210)" value={data.whatsapp?.phone || ''} onChange={(v) => updateNested('whatsapp', 'phone', v)} validation="phone" />
           </div>
           <DebouncedInput isArea placeholder="Pre-filled message (optional)" value={data.whatsapp?.message || ''} onChange={(v) => updateNested('whatsapp', 'message', v)} />
         </InputWrapper>
@@ -597,7 +707,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               </svg>
               YouTube Video URL
             </label>
-            <DebouncedInput placeholder="https://youtube.com/watch?v=..." value={data.youtube?.url || ''} onChange={(v) => updateNested('youtube', 'url', v)} />
+            <DebouncedInput placeholder="https://youtube.com/watch?v=..." value={data.youtube?.url || ''} onChange={(v) => updateNested('youtube', 'url', v)} validation="youtubeUrl" />
           </div>
         </InputWrapper>
       );
@@ -613,7 +723,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               </svg>
               Bitcoin Address
             </label>
-            <DebouncedInput placeholder="bc1q... or 1A1zP1..." value={data.bitcoin?.address || ''} onChange={(v) => updateNested('bitcoin', 'address', v)} />
+            <DebouncedInput placeholder="bc1q... or 1A1zP1..." value={data.bitcoin?.address || ''} onChange={(v) => updateNested('bitcoin', 'address', v)} validation="bitcoinAddress" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <DebouncedInput placeholder="Amount (BTC)" value={data.bitcoin?.amount || ''} onChange={(v) => updateNested('bitcoin', 'amount', v)} />
@@ -651,7 +761,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500 ml-1">UPI ID (VPA) *</label>
-            <DebouncedInput placeholder="yourname@upi or 9876543210@paytm" value={data.upi?.vpa || ''} onChange={(v) => updateNested('upi', 'vpa', v)} />
+            <DebouncedInput placeholder="yourname@upi or 9876543210@paytm" value={data.upi?.vpa || ''} onChange={(v) => updateNested('upi', 'vpa', v)} validation="upiId" />
           </div>
           <DebouncedInput placeholder="Payee Name (optional)" value={data.upi?.name || ''} onChange={(v) => updateNested('upi', 'name', v)} />
           <div className="grid grid-cols-2 gap-3">
@@ -733,7 +843,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               </svg>
               Spotify URL
             </label>
-            <DebouncedInput placeholder="https://open.spotify.com/track/..." value={data.spotify?.url || ''} onChange={(v) => updateNested('spotify', 'url', v)} />
+            <DebouncedInput placeholder="https://open.spotify.com/track/..." value={data.spotify?.url || ''} onChange={(v) => updateNested('spotify', 'url', v)} validation="spotifyUrl" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500 ml-1">Content Type</label>
@@ -1057,7 +1167,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500 ml-1">File URL *</label>
-            <DebouncedInput placeholder="https://example.com/document.pdf" value={data.pdf?.url || ''} onChange={(v) => updateNested('pdf', 'url', v)} />
+            <DebouncedInput placeholder="https://example.com/document.pdf" value={data.pdf?.url || ''} onChange={(v) => updateNested('pdf', 'url', v)} validation="url" />
           </div>
           <DebouncedInput placeholder="Document Title (optional)" value={data.pdf?.title || ''} onChange={(v) => updateNested('pdf', 'title', v)} />
         </InputWrapper>
@@ -1077,7 +1187,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500 ml-1">Menu URL *</label>
-            <DebouncedInput placeholder="https://yourmenu.com/menu.pdf" value={data.menu?.url || ''} onChange={(v) => updateNested('menu', 'url', v)} />
+            <DebouncedInput placeholder="https://yourmenu.com/menu.pdf" value={data.menu?.url || ''} onChange={(v) => updateNested('menu', 'url', v)} validation="url" />
           </div>
           <DebouncedInput placeholder="Restaurant Name (optional)" value={data.menu?.restaurantName || ''} onChange={(v) => updateNested('menu', 'restaurantName', v)} />
         </InputWrapper>
