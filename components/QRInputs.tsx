@@ -604,12 +604,18 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
     case 'geo':
       return (
         <InputWrapper>
-          <button 
+          <button
             onClick={() => {
               if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
-                   updateNested('geo', 'lat', pos.coords.latitude.toString());
-                   updateNested('geo', 'lng', pos.coords.longitude.toString());
+                   // Update both lat and lng together to avoid state race condition
+                   onChange({
+                     ...data,
+                     geo: {
+                       lat: pos.coords.latitude.toString(),
+                       lng: pos.coords.longitude.toString()
+                     }
+                   });
                 });
               }
             }}
