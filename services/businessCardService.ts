@@ -182,6 +182,13 @@ export async function uploadCardPhoto(
   userId: string
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
+    // Refresh session to ensure token is valid (fixes "exp" claim error)
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) {
+      console.error('Session refresh error:', refreshError);
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
@@ -192,7 +199,13 @@ export async function uploadCardPhoto(
         upsert: false,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      // Check if it's a token expiration error
+      if (uploadError.message.includes('exp') || uploadError.message.includes('token')) {
+        return { success: false, error: 'Session expired. Please refresh the page and try again.' };
+      }
+      throw uploadError;
+    }
 
     const { data } = supabase.storage
       .from('business-card-photos')
