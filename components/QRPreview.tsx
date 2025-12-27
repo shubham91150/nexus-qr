@@ -75,9 +75,13 @@ export const QRPreview: React.FC<Props> = ({
   useEffect(() => {
     setQrEncodedContent(null);
     setCreatedShortUrl(null);
-    // Immediately clear SVG when data becomes empty
+    // Immediately clear SVG and DOM when data becomes empty
     if (!data || data.trim() === '') {
       setRenderedSvg('');
+      // Also clear the DOM immediately
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
     }
   }, [data]);
 
@@ -91,9 +95,12 @@ export const QRPreview: React.FC<Props> = ({
     // Use qrEncodedContent (short URL) if set, otherwise use original data
     const contentToRender = qrEncodedContent || data;
 
-    // If no content to render, clear the SVG immediately (no delay)
+    // If no content to render, clear the SVG and DOM immediately (no delay)
     if (!contentToRender || contentToRender.trim() === '') {
       setRenderedSvg('');
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
       return;
     }
 
@@ -103,6 +110,9 @@ export const QRPreview: React.FC<Props> = ({
       if (!validation.isValid) {
         // Clear the rendered SVG if validation fails
         setRenderedSvg('');
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
+        }
         return;
       }
     }
