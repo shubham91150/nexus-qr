@@ -209,16 +209,17 @@ export const generatePayload = (data: QRContentData): string => {
 
     case 'linkedin':
       if (!data.linkedin) return '';
-      const liUsername = data.linkedin.username || '';
+      // Clean up username - remove spaces, @ symbol, and convert to lowercase
+      const liUsername = (data.linkedin.username || '').replace(/[@\s]/g, '').toLowerCase();
       const liType = data.linkedin.type || 'profile';
       if (liType === 'company') {
-        return `https://linkedin.com/company/${liUsername}`;
+        return `https://www.linkedin.com/company/${liUsername}`;
       }
       // Handle both "in/username" and just "username" formats
       if (liUsername.startsWith('in/')) {
-        return `https://linkedin.com/${liUsername}`;
+        return `https://www.linkedin.com/${liUsername}`;
       }
-      return `https://linkedin.com/in/${liUsername}`;
+      return `https://www.linkedin.com/in/${liUsername}`;
 
     case 'zoom':
       if (!data.zoom) return '';
