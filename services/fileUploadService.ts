@@ -96,6 +96,31 @@ async function getCurrentUserId(): Promise<string | null> {
 }
 
 /**
+ * Upload with timeout wrapper
+ */
+async function uploadWithTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error('Upload timeout - please check your connection and try again'));
+    }, timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutId!);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId!);
+    throw error;
+  }
+}
+
+/**
  * Upload a single file to Supabase Storage
  * Path format: <user_id>/<qr_id>/<filename>
  */
@@ -111,6 +136,10 @@ export async function uploadFile(
   if (!validation.valid) {
     return { success: false, error: validation.error };
   }
+
+  // Calculate timeout based on file size (minimum 30s, add 1s per MB)
+  const fileSizeMB = file.size / (1024 * 1024);
+  const timeoutMs = Math.max(30000, Math.min(300000, 30000 + fileSizeMB * 1000));
 
   try {
     // Get current user ID
@@ -132,13 +161,15 @@ export async function uploadFile(
     const folderPath = qrId ? `${userId}/${qrId}` : `${userId}/temp`;
     const filePath = `${folderPath}/${fileName}`;
 
-    // Upload to Supabase Storage (private bucket)
-    const { data, error } = await supabase.storage
+    // Upload to Supabase Storage with timeout
+    const uploadPromise = supabase.storage
       .from(config.bucket)
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
       });
+
+    const { data, error } = await uploadWithTimeout(uploadPromise, timeoutMs);
 
     if (error) {
       console.error('Upload error:', error);
@@ -157,8 +188,11 @@ export async function uploadFile(
       bucket: config.bucket,
       fileName: fileName,
     };
-  } catch (err) {
+  } catch (err: any) {
     console.error('Upload exception:', err);
+    if (err.message?.includes('timeout')) {
+      return { success: false, error: 'Upload timeout - please check your connection and try with a smaller file.' };
+    }
     return { success: false, error: 'Failed to upload file. Please try again.' };
   }
 }

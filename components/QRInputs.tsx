@@ -259,7 +259,7 @@ const MediaUploadZone: React.FC<{
           onChange={handleChange}
         />
         {isUploading ? (
-          <Loader2 size={20} className="animate-spin text-gray-400" />
+          <Loader2 size={20} className="animate-spin text-indigo-500" />
         ) : (
           <div className="text-gray-400">{icon}</div>
         )}
@@ -287,8 +287,9 @@ const MediaUploadZone: React.FC<{
       />
       {isUploading ? (
         <>
-          <Loader2 size={24} className="animate-spin text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500">Uploading...</p>
+          <Loader2 size={24} className="animate-spin text-indigo-500 mb-2" />
+          <p className="text-sm text-indigo-600 font-medium">Uploading...</p>
+          <p className="text-xs text-gray-400 mt-1">Please wait, this may take a moment</p>
         </>
       ) : (
         <>
