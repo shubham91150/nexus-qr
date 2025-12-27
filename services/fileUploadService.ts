@@ -119,6 +119,13 @@ export async function uploadFile(
       return { success: false, error: 'User not authenticated' };
     }
 
+    // Refresh session to ensure token is valid (fixes "exp" claim error)
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) {
+      console.error('Session refresh error:', refreshError);
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
     const fileName = generateFileName(file.name);
 
     // Path format: user_id/qr_id/filename OR user_id/temp/filename
@@ -135,6 +142,10 @@ export async function uploadFile(
 
     if (error) {
       console.error('Upload error:', error);
+      // Check if it's a token expiration error and provide better message
+      if (error.message.includes('exp') || error.message.includes('token')) {
+        return { success: false, error: 'Session expired. Please refresh the page and try again.' };
+      }
       return { success: false, error: error.message };
     }
 
