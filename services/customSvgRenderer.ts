@@ -851,6 +851,54 @@ export class CustomSVGRenderer {
       }
       svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
 
+    } else if (hasFrame && frameType === 'monitor') {
+      // === MONITOR FRAME MODE ===
+      // Using the exact SVG provided by user - scaling from 1024 to current size
+      // Screen area: X=238-756, Y=164-623 (with stand/badge at bottom Y=674-861)
+      const scale = size / 1024;
+      const frameColor = this.settings.isGradient ? 'url(#qrMainGradient)' : this.settings.fgColor;
+
+      // QR code positioning (centered in the screen area)
+      const qrSize = size * 0.42; // Size to fit in screen area with padding
+      const qrX = (size - qrSize) / 2;
+      const qrY = size * 0.18; // Positioned in white screen area
+      const cellSize = qrSize / this.moduleCount;
+
+      // White container for QR code (with padding)
+      const qrPadding = size * 0.02;
+      const whiteContainerSize = qrSize + (qrPadding * 2);
+      const whiteContainerX = qrX - qrPadding;
+      const whiteContainerY = qrY - qrPadding;
+
+      // 1. Draw background
+      if (!this.settings.bgTransparent) {
+        svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
+      }
+
+      // 2. Embed the EXACT user-provided SVG frame paths (scaled)
+      svg += `<g transform="scale(${scale})">`;
+      // Main monitor frame path from user's SVG
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9764705882352941" d="M 217.5 118 L 776.5 118 Q 792.6 120.9 800 132.5 L 805 142.5 Q 803.8 147.3 806 148.5 L 806 639.5 Q 802.8 655.3 791.5 663 L 777.5 669 L 217.5 669 Q 204.4 665.6 197 656.5 Q 191.9 650.1 190 640.5 L 190 147.5 Q 192.5 131.5 203.5 124 L 217.5 118 Z M 225 141 L 220 143 Q 214 146 212 154 L 212 633 L 214 639 Q 218 644 226 646 L 771 646 L 778 643 L 782 638 L 784 631 L 784 156 L 780 147 L 771 141 L 225 141 Z " />`;
+      // Inner screen bezel
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9764705882352941" d="M 242.5 155 L 751.5 155 L 761 161.5 L 764 168.5 L 764 617.5 Q 762.4 626.4 755.5 630 L 749.5 632 L 243.5 632 Q 236.6 630.5 233 625.5 L 230 619.5 L 230 166.5 L 234 159 L 242.5 155 Z M 243 164 L 238 170 L 238 617 L 244 623 L 750 623 L 752 622 L 756 616 L 756 171 L 754 167 L 751 164 L 243 164 Z " />`;
+      // Stand/badge at bottom
+      svg += `<path fill="${frameColor}" stroke="${frameColor}" stroke-width="0" opacity="0.9764705882352941" d="M 492.5 674 Q 508.3 672.3 513 681.5 L 536 714.5 L 543.5 722 L 553.5 726 L 780.5 726 L 794.5 731 L 801 737.5 L 806 749.5 L 806 840.5 Q 802.9 851.4 794.5 857 L 784.5 861 L 211.5 861 Q 200.6 858.4 195 850.5 L 190 839.5 L 190 747.5 Q 192.4 737.4 199.5 732 L 206.5 728 L 214.5 726 L 442.5 726 Q 454.1 722.6 460 713.5 L 486.5 677 L 492.5 674 Z " />`;
+      // SCAN ME text in the stand/badge area (centered at Y=793, X=512)
+      svg += `<text x="512" y="805" font-size="50" fill="white" text-anchor="middle" font-weight="700" font-family="Arial, sans-serif">SCAN ME</text>`;
+      svg += `</g>`;
+
+      // 3. Draw white container for QR code
+      svg += `<rect x="${whiteContainerX}" y="${whiteContainerY}" width="${whiteContainerSize}" height="${whiteContainerSize}" rx="${whiteContainerSize * 0.02}" fill="white" />`;
+
+      // 4. Render QR code patterns inside
+      if (this.settings.dotsType === 'uniform-pills') {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, qrX, this.settings.fgColor, qrY);
+      } else {
+        svg += this.generateStandardPatternSVG(matrix, cellSize, qrX, this.settings.dotsType, this.settings.fgColor, qrY);
+      }
+      svg += this.generateAdvancedCornerSVG(cellSize, qrX, undefined, qrY);
+
     } else if (hasFrame) {
       // === OTHER FRAMES - Keep for future ===
       const padding = this.settings.padding || 0;

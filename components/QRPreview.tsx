@@ -723,6 +723,31 @@ export const QRPreview: React.FC<Props> = ({
             </svg>
           );
 
+        case 'monitor':
+          // Monitor/display frame with stand and SCAN ME text in badge
+          return (
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              {/* Background */}
+              <rect width="56" height="56" fill="#f9fafb" />
+              {/* Monitor outer frame */}
+              <rect x="10" y="6" width="36" height="32" rx="2" fill={fgColor} />
+              {/* Monitor inner bezel */}
+              <rect x="12" y="8" width="32" height="28" rx="1" fill={fgColor} />
+              {/* Screen area (white) */}
+              <rect x="14" y="10" width="28" height="24" rx="1" fill="white" />
+              {/* Stand neck */}
+              <rect x="24" y="38" width="8" height="4" fill={fgColor} />
+              {/* Stand base/badge */}
+              <path d="M 16 42 L 40 42 Q 42 42 42 44 L 42 48 Q 42 50 40 50 L 16 50 Q 14 50 14 48 L 14 44 Q 14 42 16 42 Z" fill={fgColor} />
+              {/* Mini QR inside */}
+              <g transform="translate(17, 12) scale(0.85)">
+                {miniQr}
+              </g>
+              {/* SCAN ME text in stand badge */}
+              <text x="28" y="47" fontSize="3.5" fill="white" textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
+            </svg>
+          );
+
         default:
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
@@ -836,7 +861,8 @@ export const QRPreview: React.FC<Props> = ({
                           {id: 'badge', label: 'Badge'},
                           {id: 'tablet', label: 'Tablet'},
                           {id: 'clipboard', label: 'Clipboard'},
-                          {id: 'ticket', label: 'Ticket'}
+                          {id: 'ticket', label: 'Ticket'},
+                          {id: 'monitor', label: 'Monitor'}
                       ].map((item) => (
                           <button
                               key={item.id}
