@@ -3,7 +3,7 @@ import { QRStyleConfig, QRContentData } from '../types';
 import { CustomSVGRenderer } from '../services/customSvgRenderer';
 import { supabase, generateShortCode } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Grid, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame } from 'lucide-react';
+import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, Grid } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
 
 interface Props {
@@ -105,12 +105,31 @@ export const QRPreview: React.FC<Props> = ({
     };
   }, [data, config, qrEncodedContent]);
 
-  // Update DOM only when renderedSvg changes
+  // Update DOM only when renderedSvg changes or data becomes empty
   useEffect(() => {
-    if (renderedSvg && containerRef.current && isMountedRef.current) {
-      containerRef.current.innerHTML = renderedSvg;
+    if (!containerRef.current || !isMountedRef.current) return;
+
+    // When data is empty, clear any QR SVG (React will render placeholder)
+    if (!data || data.trim() === '') {
+      // Only clear if there's an SVG inside (not the placeholder)
+      const existingSvg = containerRef.current.querySelector('svg:not([class*="text-gray"])');
+      if (existingSvg) {
+        existingSvg.remove();
+      }
+      return;
     }
-  }, [renderedSvg]);
+
+    // When we have QR content, inject the SVG
+    if (renderedSvg) {
+      // First remove any existing QR SVG
+      const existingSvg = containerRef.current.querySelector('svg:not([class*="text-gray"])');
+      if (existingSvg) {
+        existingSvg.remove();
+      }
+      // Insert the new QR SVG
+      containerRef.current.insertAdjacentHTML('beforeend', renderedSvg);
+    }
+  }, [renderedSvg, data]);
 
   const handleConfigUpdate = (key: keyof QRStyleConfig, value: any) => {
     if (onConfigChange) {
@@ -774,26 +793,32 @@ export const QRPreview: React.FC<Props> = ({
           
           <div className="relative group w-full flex justify-center">
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-gradient-to-tr from-gray-200 to-gray-100 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
-             {/* Placeholder - shown when no content */}
-             {(!data || data.trim() === '') && (
-               <div className="relative p-8 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center min-h-[200px] min-w-[200px]">
-                 <div className="text-center">
+             {/* Single container - shows placeholder when empty, QR when has content */}
+             <div
+                ref={containerRef}
+                className={`relative p-4 rounded-xl border ${(!data || data.trim() === '') ? 'border-2 border-dashed border-gray-200 bg-gray-50' : 'border-gray-100 shadow-sm'} transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${data && data.trim() !== '' && !config.bgTransparent ? 'bg-white' : ''} min-h-[200px] min-w-[200px] flex items-center justify-center`}
+                style={data && data.trim() !== '' ? checkerboardStyle : {}}
+             >
+               {/* Placeholder - shown when no content */}
+               {(!data || data.trim() === '') && (
+                 <div className="text-center p-4">
                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                     <Grid size={32} className="text-gray-400" />
+                     {/* QR Code Icon */}
+                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+                       <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                       <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                       <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                       <rect x="14" y="14" width="3" height="3" fill="currentColor"/>
+                       <rect x="18" y="14" width="3" height="3" fill="currentColor"/>
+                       <rect x="14" y="18" width="3" height="3" fill="currentColor"/>
+                       <rect x="18" y="18" width="3" height="3" fill="currentColor"/>
+                     </svg>
                    </div>
                    <h3 className="text-lg font-semibold text-gray-700 mb-1">Generate QR First</h3>
                    <p className="text-sm text-gray-500">Enter content to generate QR code</p>
                  </div>
-               </div>
-             )}
-             {/* QR Container - shown when has content */}
-             {data && data.trim() !== '' && (
-               <div
-                  ref={containerRef}
-                  className={`relative p-4 rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${!config.bgTransparent ? 'bg-white' : ''}`}
-                  style={checkerboardStyle}
-               />
-             )}
+               )}
+             </div>
           </div>
       </div>
 
