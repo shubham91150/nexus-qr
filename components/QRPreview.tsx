@@ -678,6 +678,28 @@ export const QRPreview: React.FC<Props> = ({
             </svg>
           );
 
+        case 'clipboard':
+          // Clipboard frame with clip at top and SCAN ME text at bottom
+          return (
+            <svg width={size} height={size} viewBox="0 0 56 56">
+              {/* Background */}
+              <rect width="56" height="56" fill="#f9fafb" />
+              {/* Clipboard board */}
+              <path d="M 12 10 L 44 10 L 44 48 Q 44 50 42 50 L 14 50 Q 12 50 12 48 L 12 10 Z" fill={fgColor} />
+              {/* Clip at top */}
+              <rect x="20" y="6" width="16" height="8" rx="2" fill={fgColor} />
+              <rect x="22" y="8" width="12" height="4" rx="1" fill="white" />
+              {/* Screen/paper area (white) */}
+              <rect x="14" y="12" width="28" height="32" rx="1" fill="white" />
+              {/* Mini QR inside */}
+              <g transform="translate(17, 14) scale(0.85)">
+                {miniQr}
+              </g>
+              {/* SCAN ME text at bottom */}
+              <text x="28" y="47" fontSize="4" fill="white" textAnchor="middle" fontWeight="600" fontFamily="Arial">SCAN ME</text>
+            </svg>
+          );
+
         default:
           return (
             <svg width={size} height={size} viewBox="0 0 56 56">
@@ -789,7 +811,8 @@ export const QRPreview: React.FC<Props> = ({
                           {id: 'scan-rect', label: 'Rect'},
                           {id: 'device', label: 'Device'},
                           {id: 'badge', label: 'Badge'},
-                          {id: 'tablet', label: 'Tablet'}
+                          {id: 'tablet', label: 'Tablet'},
+                          {id: 'clipboard', label: 'Clipboard'}
                       ].map((item) => (
                           <button
                               key={item.id}
