@@ -500,6 +500,7 @@ const QRGenerator: React.FC<{
                  bulkItems={isBulk ? contentData.bulk?.items : undefined}
                  onConfigChange={setStyleConfig}
                  isDynamic={isDynamic}
+                 isDynamicOnly={getQRTypeCategory(activeTab) === 'only-dynamic'}
                  dynamicTitle={dynamicTitle}
                  contentData={contentData}
                  isEncrypted={isEncrypted}

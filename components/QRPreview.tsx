@@ -14,6 +14,7 @@ interface Props {
   onConfigChange?: (config: QRStyleConfig) => void;
   // Dynamic QR props
   isDynamic?: boolean;
+  isDynamicOnly?: boolean; // For content types that ONLY support dynamic QR
   dynamicTitle?: string;
   contentData?: QRContentData;
   isEncrypted?: boolean;
@@ -28,6 +29,7 @@ export const QRPreview: React.FC<Props> = ({
   bulkItems,
   onConfigChange,
   isDynamic = false,
+  isDynamicOnly = false,
   dynamicTitle = '',
   contentData,
   isEncrypted = false,
@@ -109,10 +111,20 @@ export const QRPreview: React.FC<Props> = ({
   useEffect(() => {
     if (!containerRef.current || !isMountedRef.current) return;
 
+    // For dynamic-only types, don't show QR until it's created
+    if (isDynamicOnly && !createdShortUrl) {
+      // Clear any existing QR SVG
+      const existingSvg = containerRef.current.querySelector('svg:not([class*="text-"])');
+      if (existingSvg) {
+        existingSvg.remove();
+      }
+      return;
+    }
+
     // When data is empty, clear any QR SVG (React will render placeholder)
     if (!data || data.trim() === '') {
       // Only clear if there's an SVG inside (not the placeholder)
-      const existingSvg = containerRef.current.querySelector('svg:not([class*="text-gray"])');
+      const existingSvg = containerRef.current.querySelector('svg:not([class*="text-"])');
       if (existingSvg) {
         existingSvg.remove();
       }
@@ -122,14 +134,14 @@ export const QRPreview: React.FC<Props> = ({
     // When we have QR content, inject the SVG
     if (renderedSvg) {
       // First remove any existing QR SVG
-      const existingSvg = containerRef.current.querySelector('svg:not([class*="text-gray"])');
+      const existingSvg = containerRef.current.querySelector('svg:not([class*="text-"])');
       if (existingSvg) {
         existingSvg.remove();
       }
       // Insert the new QR SVG
       containerRef.current.insertAdjacentHTML('beforeend', renderedSvg);
     }
-  }, [renderedSvg, data]);
+  }, [renderedSvg, data, isDynamicOnly, createdShortUrl]);
 
   const handleConfigUpdate = (key: keyof QRStyleConfig, value: any) => {
     if (onConfigChange) {
@@ -793,14 +805,24 @@ export const QRPreview: React.FC<Props> = ({
           
           <div className="relative group w-full flex justify-center">
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-gradient-to-tr from-gray-200 to-gray-100 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
-             {/* Single container - shows placeholder when empty, QR when has content */}
+             {/* Single container - shows placeholder when empty or dynamic-only waiting for creation */}
              <div
                 ref={containerRef}
-                className={`relative p-4 rounded-xl border ${(!data || data.trim() === '') ? 'border-2 border-dashed border-gray-200 bg-gray-50' : 'border-gray-100 shadow-sm'} transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${data && data.trim() !== '' && !config.bgTransparent ? 'bg-white' : ''} min-h-[200px] min-w-[200px] flex items-center justify-center`}
-                style={data && data.trim() !== '' ? checkerboardStyle : {}}
+                className={`relative p-4 rounded-xl border ${((!data || data.trim() === '') || (isDynamicOnly && !createdShortUrl)) ? 'border-2 border-dashed border-gray-200 bg-gray-50' : 'border-gray-100 shadow-sm'} transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${data && data.trim() !== '' && !isDynamicOnly && !config.bgTransparent ? 'bg-white' : ''} ${createdShortUrl && !config.bgTransparent ? 'bg-white' : ''} min-h-[200px] min-w-[200px] flex items-center justify-center`}
+                style={(data && data.trim() !== '' && !isDynamicOnly) || createdShortUrl ? checkerboardStyle : {}}
              >
-               {/* Placeholder - shown when no content */}
-               {(!data || data.trim() === '') && (
+               {/* Dynamic-only placeholder - shown until dynamic QR is created */}
+               {isDynamicOnly && !createdShortUrl && (
+                 <div className="text-center p-4">
+                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+                     <Zap size={32} className="text-indigo-500" />
+                   </div>
+                   <h3 className="text-lg font-semibold text-gray-700 mb-1">Create Dynamic QR First</h3>
+                   <p className="text-sm text-gray-500">Click the button below to generate your trackable QR code</p>
+                 </div>
+               )}
+               {/* Regular placeholder - shown when no content (for non-dynamic-only types) */}
+               {!isDynamicOnly && (!data || data.trim() === '') && (
                  <div className="text-center p-4">
                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                      {/* QR Code Icon */}
