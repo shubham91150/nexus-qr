@@ -797,10 +797,10 @@ function getPDFLandingPage(title: string, pdfUrl: string): string {
               </button>
             </div>
 
-            <a href="${safePdfUrl}" download class="btn btn-primary" style="margin-bottom: 12px;">
+            <button onclick="downloadPdf()" class="btn btn-primary" id="downloadBtn" style="margin-bottom: 12px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download PDF
-            </a>
+              <span id="downloadText">Download PDF</span>
+            </button>
           </div>
           <div class="footer">
             <span>Shared via</span> <a href="https://nexusqr.app">Nexus QR</a>
@@ -809,6 +809,8 @@ function getPDFLandingPage(title: string, pdfUrl: string): string {
       </div>
       <div class="toast" id="toast">Link copied to clipboard!</div>
       <script>
+        const pdfUrl = '${safePdfUrl}';
+
         function shareContent() {
           if (navigator.share) {
             navigator.share({ title: '${safeTitle}', url: window.location.href });
@@ -817,6 +819,46 @@ function getPDFLandingPage(title: string, pdfUrl: string): string {
             showToast('Link copied to clipboard!');
           }
         }
+
+        let isDownloading = false;
+        async function downloadPdf() {
+          if (isDownloading) return;
+          isDownloading = true;
+          const downloadBtn = document.getElementById('downloadBtn');
+          const downloadText = document.getElementById('downloadText');
+          const originalText = downloadText.textContent;
+
+          try {
+            downloadText.textContent = 'Downloading...';
+            downloadBtn.style.opacity = '0.7';
+            downloadBtn.style.cursor = 'wait';
+
+            const response = await fetch(pdfUrl);
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = '${safeTitle}'.replace(/[^a-zA-Z0-9\\s-]/g, '') + '.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+            showToast('Download started!');
+          } catch (error) {
+            console.error('Download error:', error);
+            showToast('Download failed. Please try again.');
+          } finally {
+            downloadText.textContent = originalText;
+            downloadBtn.style.opacity = '1';
+            downloadBtn.style.cursor = 'pointer';
+            isDownloading = false;
+          }
+        }
+
         function showToast(msg) {
           const toast = document.getElementById('toast');
           toast.textContent = msg;
@@ -918,10 +960,10 @@ function getVideoLandingPage(title: string, videoUrl: string): string {
               </button>
             </div>
 
-            <a href="${safeVideoUrl}" download class="btn btn-primary" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
+            <button onclick="downloadVideo()" class="btn btn-primary" id="downloadBtn" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download Video
-            </a>
+              <span id="downloadText">Download Video</span>
+            </button>
           </div>
           <div class="footer">
             <span>Shared via</span> <a href="https://nexusqr.app">Nexus QR</a>
@@ -965,6 +1007,45 @@ function getVideoLandingPage(title: string, videoUrl: string): string {
           } else {
             navigator.clipboard.writeText(window.location.href);
             showToast('Link copied!');
+          }
+        }
+
+        let isDownloading = false;
+        async function downloadVideo() {
+          if (isDownloading) return;
+          isDownloading = true;
+          const downloadBtn = document.getElementById('downloadBtn');
+          const downloadText = document.getElementById('downloadText');
+          const originalText = downloadText.textContent;
+
+          try {
+            downloadText.textContent = 'Downloading...';
+            downloadBtn.style.opacity = '0.7';
+            downloadBtn.style.cursor = 'wait';
+
+            const response = await fetch(video.src);
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = '${safeTitle}'.replace(/[^a-zA-Z0-9\\s-]/g, '') + '.mp4';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+            showToast('Download started!');
+          } catch (error) {
+            console.error('Download error:', error);
+            showToast('Download failed. Please try again.');
+          } finally {
+            downloadText.textContent = originalText;
+            downloadBtn.style.opacity = '1';
+            downloadBtn.style.cursor = 'pointer';
+            isDownloading = false;
           }
         }
 
@@ -1105,7 +1186,7 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                 <span>Share</span>
               </button>
-              <button class="quick-action" onclick="window.open('${safeAudioUrl}', '_blank')">
+              <button class="quick-action" onclick="downloadAudio()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span>Download</span>
               </button>
@@ -1119,10 +1200,10 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
               </button>
             </div>
 
-            <a href="${safeAudioUrl}" download class="btn btn-primary">
+            <button onclick="downloadAudio()" class="btn btn-primary" id="downloadBtn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download Audio
-            </a>
+              <span id="downloadText">Download Audio</span>
+            </button>
           </div>
           <div class="footer">Powered by <a href="https://nexusqr.com">Nexus QR</a></div>
         </div>
@@ -1252,6 +1333,45 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
           } else {
             navigator.clipboard.writeText(window.location.href);
             showToast('Link copied!');
+          }
+        }
+
+        let isDownloading = false;
+        async function downloadAudio() {
+          if (isDownloading) return;
+          isDownloading = true;
+          const downloadBtn = document.getElementById('downloadBtn');
+          const downloadText = document.getElementById('downloadText');
+          const originalText = downloadText.textContent;
+
+          try {
+            downloadText.textContent = 'Downloading...';
+            downloadBtn.style.opacity = '0.7';
+            downloadBtn.style.cursor = 'wait';
+
+            const response = await fetch(audio.src);
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = '${safeTitle}'.replace(/[^a-zA-Z0-9\\s-]/g, '') + '.mp3';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+            showToast('Download started!');
+          } catch (error) {
+            console.error('Download error:', error);
+            showToast('Download failed. Please try again.');
+          } finally {
+            downloadText.textContent = originalText;
+            downloadBtn.style.opacity = '1';
+            downloadBtn.style.cursor = 'pointer';
+            isDownloading = false;
           }
         }
 
@@ -1503,24 +1623,46 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           document.getElementById('lightbox-img').classList.toggle('zoomed', isZoomed);
         }
 
-        function downloadCurrent() {
-          const link = document.createElement('a');
-          link.href = images[currentIndex];
-          link.download = 'image-' + (currentIndex + 1) + '.jpg';
-          link.click();
+        async function downloadCurrent() {
           showToast('Downloading image...');
+          try {
+            const response = await fetch(images[currentIndex]);
+            if (!response.ok) throw new Error('Download failed');
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = 'image-' + (currentIndex + 1) + '.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+          } catch (error) {
+            console.error('Download error:', error);
+            showToast('Download failed. Please try again.');
+          }
         }
 
-        function downloadAll() {
-          images.forEach((url, i) => {
-            setTimeout(() => {
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = 'image-' + (i + 1) + '.jpg';
-              link.click();
-            }, i * 500);
-          });
+        async function downloadAll() {
           showToast('Downloading ' + images.length + ' images...');
+          for (let i = 0; i < images.length; i++) {
+            try {
+              const response = await fetch(images[i]);
+              if (!response.ok) continue;
+              const blob = await response.blob();
+              const blobUrl = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = blobUrl;
+              link.download = 'image-' + (i + 1) + '.jpg';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+              await new Promise(r => setTimeout(r, 500));
+            } catch (error) {
+              console.error('Download error for image ' + (i + 1) + ':', error);
+            }
+          }
         }
 
         function shareGallery() {
@@ -1698,10 +1840,10 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
               </button>
             </div>
 
-            <a href="${safeDocUrl}" download class="btn btn-primary" style="background: ${config.gradient};">
+            <button onclick="downloadDoc()" class="btn btn-primary" id="downloadBtn" style="background: ${config.gradient};">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download ${safeFileType}
-            </a>
+              <span id="downloadText">Download ${safeFileType}</span>
+            </button>
           </div>
           <div class="footer">Powered by <a href="https://nexusqr.com">Nexus QR</a></div>
         </div>
@@ -1710,6 +1852,11 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
       <div class="toast" id="toast">Link copied!</div>
 
       <script>
+        const docUrl = '${safeDocUrl}';
+        const fileType = '${safeFileType}'.toLowerCase();
+        const fileExtensions = { docx: '.docx', xlsx: '.xlsx', pptx: '.pptx', doc: '.doc', xls: '.xls', ppt: '.ppt' };
+        const ext = fileExtensions[fileType] || '.' + fileType;
+
         function shareDoc() {
           if (navigator.share) {
             navigator.share({ title: '${safeTitle}', text: 'Download this document', url: window.location.href });
@@ -1721,6 +1868,45 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
         function copyLink() {
           navigator.clipboard.writeText(window.location.href);
           showToast('Link copied!');
+        }
+
+        let isDownloading = false;
+        async function downloadDoc() {
+          if (isDownloading) return;
+          isDownloading = true;
+          const downloadBtn = document.getElementById('downloadBtn');
+          const downloadText = document.getElementById('downloadText');
+          const originalText = downloadText.textContent;
+
+          try {
+            downloadText.textContent = 'Downloading...';
+            downloadBtn.style.opacity = '0.7';
+            downloadBtn.style.cursor = 'wait';
+
+            const response = await fetch(docUrl);
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = '${safeTitle}'.replace(/[^a-zA-Z0-9\\s-]/g, '') + ext;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+            showToast('Download started!');
+          } catch (error) {
+            console.error('Download error:', error);
+            showToast('Download failed. Please try again.');
+          } finally {
+            downloadText.textContent = originalText;
+            downloadBtn.style.opacity = '1';
+            downloadBtn.style.cursor = 'pointer';
+            isDownloading = false;
+          }
         }
 
         function showToast(message) {
