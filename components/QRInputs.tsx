@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { QRContentData, QRType } from '../types';
 import { generateSmartQRContent } from '../services/geminiService';
-import { uploadFile, uploadMultipleFiles, FILE_CONFIG, formatFileSize, MediaType } from '../services/fileUploadService';
+import { uploadFile, uploadMultipleFiles, FILE_CONFIG, formatFileSize, MediaType, getSignedUrl } from '../services/fileUploadService';
 import { Loader2, Sparkles, MapPin, Upload, FileText, X, Headphones, Film, Images, File, Trash2, Plus, AlertCircle } from 'lucide-react';
 
 interface Props {
@@ -1381,6 +1381,11 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
       );
 
     case 'images':
+      // Use filePaths for backend storage, previewUrls for display
+      const imagePaths = data.images?.filePaths || data.images?.urls || [];
+      const previewUrls = data.images?.previewUrls || [];
+      const hasImages = imagePaths.length > 0;
+
       return (
         <InputWrapper>
           <div className="bg-gradient-to-r from-green-50 to-teal-50 p-4 rounded-xl border border-green-100 mb-2">
@@ -1390,16 +1395,23 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
             </h4>
             <p className="text-xs text-green-700">Upload multiple images (JPEG, PNG, GIF, WebP - max 5MB each).</p>
           </div>
-          {data.images?.urls && data.images.urls.length > 0 ? (
+          {hasImages ? (
             <div className="space-y-2">
               <div className="grid grid-cols-3 gap-2">
-                {data.images.urls.map((url, idx) => (
-                  <div key={`img-${url}-${idx}`} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200">
-                    <img src={url} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+                {imagePaths.map((path, idx) => (
+                  <div key={`img-${idx}`} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                    {previewUrls[idx] ? (
+                      <img src={previewUrls[idx]} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Loader2 size={20} className="animate-spin text-gray-400" />
+                      </div>
+                    )}
                     <button
                       onClick={() => {
-                        const newUrls = data.images!.urls.filter((_, i) => i !== idx);
-                        onChange({ ...data, images: { ...data.images, urls: newUrls } });
+                        const newPaths = imagePaths.filter((_, i) => i !== idx);
+                        const newPreviews = previewUrls.filter((_, i) => i !== idx);
+                        onChange({ ...data, images: { ...data.images, filePaths: newPaths, previewUrls: newPreviews, urls: newPaths } });
                       }}
                       className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
@@ -1417,11 +1429,15 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                     compact
                     onUpload={async (file) => {
                       updateNested('images', 'isUploading', true);
+                      // Create immediate blob preview
+                      const blobPreview = URL.createObjectURL(file);
                       const result = await uploadFile(file, 'images');
-                      if (result.success && result.url) {
-                        const newUrls = [...(data.images?.urls || []), result.url];
-                        onChange({ ...data, images: { ...data.images, urls: newUrls, isUploading: false } });
+                      if (result.success && result.filePath) {
+                        const newPaths = [...imagePaths, result.filePath];
+                        const newPreviews = [...previewUrls, blobPreview];
+                        onChange({ ...data, images: { ...data.images, filePaths: newPaths, previewUrls: newPreviews, urls: newPaths, isUploading: false } });
                       } else {
+                        URL.revokeObjectURL(blobPreview);
                         updateNested('images', 'isUploading', false);
                         alert(result.error || 'Upload failed');
                       }
@@ -1429,7 +1445,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                   />
                 </div>
               </div>
-              <p className="text-xs text-gray-500">{data.images.urls.length} image(s) uploaded</p>
+              <p className="text-xs text-gray-500">{imagePaths.length} image(s) uploaded</p>
             </div>
           ) : (
             <MediaUploadZone
@@ -1440,10 +1456,13 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               multiple
               onUpload={async (file) => {
                 updateNested('images', 'isUploading', true);
+                // Create immediate blob preview
+                const blobPreview = URL.createObjectURL(file);
                 const result = await uploadFile(file, 'images');
-                if (result.success && result.url) {
-                  onChange({ ...data, images: { urls: [result.url], title: '', isUploading: false } });
+                if (result.success && result.filePath) {
+                  onChange({ ...data, images: { filePaths: [result.filePath], previewUrls: [blobPreview], urls: [result.filePath], title: '', isUploading: false } });
                 } else {
+                  URL.revokeObjectURL(blobPreview);
                   updateNested('images', 'isUploading', false);
                   alert(result.error || 'Upload failed');
                 }

@@ -1397,23 +1397,26 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
   `;
 }
 
-// Images Gallery Landing Page - Premium
+// Images Gallery Landing Page - Modern Design
 function getImagesLandingPage(title: string, imageUrls: string[]): string {
-  const safeTitle = escapeHtml(title || 'Image Gallery');
+  const safeTitle = escapeHtml(title || 'Photo Gallery');
   const safeUrls = imageUrls.map(url => escapeHtml(url));
+  const imageCount = safeUrls.length;
 
-  const imagesHtml = safeUrls.map((url, i) => `
-    <div class="gallery-item" onclick="openLightbox(${i})" style="animation-delay: ${i * 0.1}s">
-      <img src="${url}" alt="Image ${i + 1}" loading="lazy">
-      <div class="gallery-overlay">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+  // Create grid items - first image is hero/featured
+  const gridItemsHtml = safeUrls.map((url, i) => `
+    <div class="grid-item ${i === 0 ? 'featured' : ''}" onclick="openLightbox(${i})" style="--delay: ${i * 0.08}s">
+      <img src="${url}" alt="Photo ${i + 1}" loading="${i < 4 ? 'eager' : 'lazy'}">
+      <div class="item-overlay">
+        <span class="item-number">${i + 1}</span>
       </div>
     </div>
   `).join('');
 
-  const thumbnailsHtml = safeUrls.map((url, i) => `
-    <div class="thumb" onclick="goToImage(${i})" data-index="${i}">
-      <img src="${url}" alt="Thumbnail ${i + 1}">
+  // Thumbnail strip for lightbox
+  const thumbsHtml = safeUrls.map((url, i) => `
+    <div class="lb-thumb ${i === 0 ? 'active' : ''}" onclick="goToImage(${i})" data-index="${i}">
+      <img src="${url}" alt="Thumb ${i + 1}">
     </div>
   `).join('');
 
@@ -1421,148 +1424,433 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
     <!DOCTYPE html>
     <html lang="en">
     <head>
-      <title>${safeTitle} - Gallery</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta name="theme-color" content="#667eea">
+      <title>${safeTitle}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+      <meta name="theme-color" content="#0a0a0a">
       <link rel="preconnect" href="https://fonts.googleapis.com">
-      <style>${commonStyles}
-        /* Gallery Grid */
-        .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .gallery-item { aspect-ratio: 1; border-radius: 16px; overflow: hidden; cursor: pointer; position: relative; animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
-        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .gallery-item:hover img { transform: scale(1.1); }
-        .gallery-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; }
-        .gallery-item:hover .gallery-overlay { opacity: 1; }
-        .gallery-overlay svg { width: 40px; height: 40px; color: white; }
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          background: linear-gradient(180deg, #0f0f0f 0%, #1a1a2e 100%);
+          min-height: 100vh;
+          color: #fff;
+        }
 
-        /* Gallery Info */
-        .gallery-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 20px; }
-        .gallery-stat { text-align: center; padding: 12px 20px; background: #f8f9fa; border-radius: 12px; }
-        .gallery-stat-value { font-size: 24px; font-weight: 700; color: #667eea; }
-        .gallery-stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+        /* Header */
+        .header {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: rgba(15, 15, 15, 0.85);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          padding: 16px 20px;
+        }
+        .header-content {
+          max-width: 800px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .header-icon {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .header-icon svg { width: 20px; height: 20px; color: white; }
+        .header-title h1 { font-size: 16px; font-weight: 600; color: #fff; }
+        .header-title p { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+        .header-actions { display: flex; gap: 8px; }
+        .header-btn {
+          width: 40px;
+          height: 40px;
+          background: rgba(255,255,255,0.08);
+          border: none;
+          border-radius: 12px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
+        .header-btn svg { width: 20px; height: 20px; color: rgba(255,255,255,0.8); }
 
-        /* Premium Lightbox */
-        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000; flex-direction: column; }
-        .lightbox.active { display: flex; animation: fadeIn 0.3s ease-out; }
+        /* Main Content */
+        .main {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          padding-bottom: 100px;
+        }
 
-        .lightbox-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: rgba(255,255,255,0.05); }
-        .lightbox-counter { color: white; font-size: 14px; font-weight: 500; }
-        .lightbox-actions { display: flex; gap: 8px; }
-        .lightbox-btn { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .lightbox-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
-        .lightbox-btn svg { width: 22px; height: 22px; color: white; }
+        /* Photo Grid - Masonry-like */
+        .photo-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 4px;
+          border-radius: 16px;
+          overflow: hidden;
+        }
+        .grid-item {
+          aspect-ratio: 1;
+          position: relative;
+          cursor: pointer;
+          overflow: hidden;
+          opacity: 0;
+          animation: fadeUp 0.5s ease forwards;
+          animation-delay: var(--delay);
+        }
+        .grid-item.featured {
+          grid-column: span 2;
+          grid-row: span 2;
+        }
+        .grid-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .grid-item:hover img { transform: scale(1.08); }
+        .item-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.7) 100%);
+          opacity: 0;
+          transition: opacity 0.3s;
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          padding: 12px;
+        }
+        .grid-item:hover .item-overlay { opacity: 1; }
+        .item-number {
+          font-size: 12px;
+          font-weight: 600;
+          color: rgba(255,255,255,0.9);
+          background: rgba(0,0,0,0.4);
+          padding: 4px 10px;
+          border-radius: 20px;
+        }
 
-        .lightbox-main { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px; overflow: hidden; }
-        .lightbox-img-container { position: relative; max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
-        .lightbox-img { max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); transition: transform 0.3s; object-fit: contain; }
-        .lightbox-img.zoomed { cursor: zoom-out; transform: scale(1.5); }
+        /* Bottom Action Bar */
+        .action-bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: rgba(15, 15, 15, 0.95);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-top: 1px solid rgba(255,255,255,0.08);
+          padding: 12px 20px;
+          padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        }
+        .action-bar-content {
+          max-width: 800px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-around;
+        }
+        .action-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 8px 16px;
+          border-radius: 12px;
+          transition: all 0.2s;
+        }
+        .action-btn:hover { background: rgba(255,255,255,0.08); }
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn svg { width: 24px; height: 24px; color: rgba(255,255,255,0.8); }
+        .action-btn span { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; }
 
-        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: none; width: 56px; height: 56px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .lightbox-nav:hover { background: rgba(255,255,255,0.25); transform: translateY(-50%) scale(1.1); }
-        .lightbox-nav svg { width: 28px; height: 28px; color: white; }
-        .lightbox-prev { left: 20px; }
-        .lightbox-next { right: 20px; }
+        /* Lightbox */
+        .lightbox {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: #000;
+          z-index: 1000;
+          flex-direction: column;
+        }
+        .lightbox.active { display: flex; }
 
-        /* Thumbnails */
-        .lightbox-thumbs { padding: 16px 20px; background: rgba(255,255,255,0.05); overflow-x: auto; display: flex; gap: 8px; justify-content: center; }
-        .thumb { width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; opacity: 0.5; transition: all 0.2s; flex-shrink: 0; border: 2px solid transparent; }
-        .thumb:hover { opacity: 0.8; }
-        .thumb.active { opacity: 1; border-color: #667eea; transform: scale(1.05); }
-        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .lb-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 10;
+        }
+        .lb-counter {
+          font-size: 14px;
+          font-weight: 500;
+          color: rgba(255,255,255,0.9);
+        }
+        .lb-actions { display: flex; gap: 8px; }
+        .lb-btn {
+          width: 44px;
+          height: 44px;
+          background: rgba(255,255,255,0.1);
+          border: none;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+        .lb-btn:hover { background: rgba(255,255,255,0.2); }
+        .lb-btn svg { width: 22px; height: 22px; color: white; }
 
-        /* Quick Actions */
-        .quick-actions { display: flex; gap: 8px; margin-top: 20px; }
-        .quick-action { flex: 1; padding: 14px 12px; background: #f8f9fa; border-radius: 12px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
-        .quick-action:hover { background: #f0f2f5; transform: translateY(-2px); }
-        .quick-action svg { width: 22px; height: 22px; color: #667eea; }
-        .quick-action span { font-size: 11px; color: #666; font-weight: 500; }
+        .lb-main {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          padding: 60px 20px 20px;
+        }
+        .lb-image-wrapper {
+          max-width: 100%;
+          max-height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .lb-image {
+          max-width: 100%;
+          max-height: calc(100vh - 200px);
+          object-fit: contain;
+          border-radius: 8px;
+          box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+          transition: transform 0.3s;
+        }
+        .lb-image.zoomed { transform: scale(1.8); cursor: zoom-out; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 500px) {
-          .lightbox-nav { width: 44px; height: 44px; }
-          .lightbox-prev { left: 10px; }
-          .lightbox-next { right: 10px; }
+        .lb-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255,255,255,0.1);
+          backdrop-filter: blur(8px);
+          border: none;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          z-index: 5;
+        }
+        .lb-nav:hover { background: rgba(255,255,255,0.2); transform: translateY(-50%) scale(1.1); }
+        .lb-nav svg { width: 24px; height: 24px; color: white; }
+        .lb-prev { left: 16px; }
+        .lb-next { right: 16px; }
+
+        /* Thumbnail Strip */
+        .lb-thumbstrip {
+          padding: 16px;
+          background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          justify-content: center;
+          -webkit-overflow-scrolling: touch;
+        }
+        .lb-thumbstrip::-webkit-scrollbar { display: none; }
+        .lb-thumb {
+          width: 56px;
+          height: 56px;
+          border-radius: 8px;
+          overflow: hidden;
+          cursor: pointer;
+          flex-shrink: 0;
+          opacity: 0.4;
+          transition: all 0.2s;
+          border: 2px solid transparent;
+        }
+        .lb-thumb:hover { opacity: 0.7; }
+        .lb-thumb.active {
+          opacity: 1;
+          border-color: #667eea;
+          transform: scale(1.05);
+        }
+        .lb-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Toast */
+        .toast {
+          position: fixed;
+          bottom: 100px;
+          left: 50%;
+          transform: translateX(-50%) translateY(20px);
+          background: rgba(255,255,255,0.95);
+          color: #1a1a2e;
+          padding: 12px 24px;
+          border-radius: 30px;
+          font-size: 14px;
+          font-weight: 500;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+          opacity: 0;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 2000;
+          pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Animations */
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 600px) {
+          .photo-grid { grid-template-columns: repeat(2, 1fr); }
+          .grid-item.featured { grid-column: span 2; grid-row: span 1; aspect-ratio: 16/9; }
+          .lb-nav { width: 40px; height: 40px; }
+          .lb-prev { left: 8px; }
+          .lb-next { right: 8px; }
+          .lb-thumb { width: 48px; height: 48px; }
         }
       </style>
     </head>
     <body>
-      <div class="container animate-fade">
-        <div class="card">
-          <div class="header">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <div class="header-left">
             <div class="header-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
             </div>
-            <h1>${safeTitle}</h1>
-            <p>${safeUrls.length} Photos</p>
-          </div>
-          <div class="content">
-            <div class="gallery-stats">
-              <div class="gallery-stat">
-                <div class="gallery-stat-value">${safeUrls.length}</div>
-                <div class="gallery-stat-label">Photos</div>
-              </div>
-              <div class="gallery-stat">
-                <div class="gallery-stat-value">HD</div>
-                <div class="gallery-stat-label">Quality</div>
-              </div>
-            </div>
-
-            <div class="gallery">${imagesHtml}</div>
-
-            <div class="quick-actions">
-              <button class="quick-action" onclick="shareGallery()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                <span>Share</span>
-              </button>
-              <button class="quick-action" onclick="downloadAll()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Save All</span>
-              </button>
-              <button class="quick-action" onclick="openLightbox(0)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span>Slideshow</span>
-              </button>
+            <div class="header-title">
+              <h1>${safeTitle}</h1>
+              <p>${imageCount} photo${imageCount !== 1 ? 's' : ''}</p>
             </div>
           </div>
-          <div class="footer">Powered by <a href="https://nexusqr.com">Nexus QR</a></div>
+          <div class="header-actions">
+            <button class="header-btn" onclick="shareGallery()" title="Share">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main">
+        <div class="photo-grid">
+          ${gridItemsHtml}
+        </div>
+      </main>
+
+      <!-- Bottom Action Bar -->
+      <div class="action-bar">
+        <div class="action-bar-content">
+          <button class="action-btn" onclick="shareGallery()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            <span>Share</span>
+          </button>
+          <button class="action-btn" onclick="downloadAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Save All</span>
+          </button>
+          <button class="action-btn" onclick="openLightbox(0); startSlideshow()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>Slideshow</span>
+          </button>
         </div>
       </div>
 
-      <!-- Premium Lightbox -->
+      <!-- Lightbox -->
       <div class="lightbox" id="lightbox">
-        <div class="lightbox-header">
-          <span class="lightbox-counter"><span id="currentNum">1</span> / ${safeUrls.length}</span>
-          <div class="lightbox-actions">
-            <button class="lightbox-btn" onclick="toggleZoom()" title="Zoom">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <div class="lb-header">
+          <span class="lb-counter"><span id="currentNum">1</span> / ${imageCount}</span>
+          <div class="lb-actions">
+            <button class="lb-btn" onclick="downloadCurrent()" title="Download">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
             </button>
-            <button class="lightbox-btn" onclick="downloadCurrent()" title="Download">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            </button>
-            <button class="lightbox-btn" onclick="closeLightbox()" title="Close">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <button class="lb-btn" onclick="closeLightbox()" title="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
             </button>
           </div>
         </div>
 
-        <div class="lightbox-main">
-          <button class="lightbox-nav lightbox-prev" onclick="prevImage()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        <div class="lb-main" onclick="closeLightbox()">
+          <button class="lb-nav lb-prev" onclick="event.stopPropagation(); prevImage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
           </button>
-          <div class="lightbox-img-container">
-            <img id="lightbox-img" src="" alt="Full size" class="lightbox-img" onclick="toggleZoom()">
+          <div class="lb-image-wrapper" onclick="event.stopPropagation()">
+            <img id="lb-image" src="" alt="Photo" class="lb-image" onclick="toggleZoom()">
           </div>
-          <button class="lightbox-nav lightbox-next" onclick="nextImage()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <button class="lb-nav lb-next" onclick="event.stopPropagation(); nextImage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
           </button>
         </div>
 
-        <div class="lightbox-thumbs" id="thumbs">
-          ${thumbnailsHtml}
+        <div class="lb-thumbstrip" onclick="event.stopPropagation()">
+          ${thumbsHtml}
         </div>
       </div>
 
-      <div class="toast" id="toast">Link copied!</div>
+      <div class="toast" id="toast"></div>
 
       <script>
         const images = ${JSON.stringify(safeUrls)};
@@ -1585,141 +1873,89 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
         }
 
         function updateLightbox() {
-          document.getElementById('lightbox-img').src = images[currentIndex];
+          document.getElementById('lb-image').src = images[currentIndex];
           document.getElementById('currentNum').textContent = currentIndex + 1;
-
-          // Update thumbnails
-          document.querySelectorAll('.thumb').forEach((thumb, i) => {
-            thumb.classList.toggle('active', i === currentIndex);
-          });
-
-          // Scroll thumbnail into view
-          const activeThumb = document.querySelector('.thumb.active');
-          if (activeThumb) {
-            activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-          }
+          document.querySelectorAll('.lb-thumb').forEach((t, i) => t.classList.toggle('active', i === currentIndex));
+          const activeThumb = document.querySelector('.lb-thumb.active');
+          if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
-        function prevImage() {
-          currentIndex = (currentIndex - 1 + images.length) % images.length;
-          updateLightbox();
-          if (isZoomed) toggleZoom();
-        }
-
-        function nextImage() {
-          currentIndex = (currentIndex + 1) % images.length;
-          updateLightbox();
-          if (isZoomed) toggleZoom();
-        }
-
-        function goToImage(i) {
-          currentIndex = i;
-          updateLightbox();
-          if (isZoomed) toggleZoom();
-        }
-
-        function toggleZoom() {
-          isZoomed = !isZoomed;
-          document.getElementById('lightbox-img').classList.toggle('zoomed', isZoomed);
-        }
+        function prevImage() { currentIndex = (currentIndex - 1 + images.length) % images.length; updateLightbox(); if (isZoomed) toggleZoom(); }
+        function nextImage() { currentIndex = (currentIndex + 1) % images.length; updateLightbox(); if (isZoomed) toggleZoom(); }
+        function goToImage(i) { currentIndex = i; updateLightbox(); if (isZoomed) toggleZoom(); }
+        function toggleZoom() { isZoomed = !isZoomed; document.getElementById('lb-image').classList.toggle('zoomed', isZoomed); }
 
         async function downloadCurrent() {
-          showToast('Downloading image...');
+          showToast('Downloading photo...');
           try {
             const response = await fetch(images[currentIndex]);
-            if (!response.ok) throw new Error('Download failed');
+            if (!response.ok) throw new Error('Failed');
             const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = blobUrl;
-            link.download = 'image-' + (currentIndex + 1) + '.jpg';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-          } catch (error) {
-            console.error('Download error:', error);
-            showToast('Download failed. Please try again.');
-          }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '${safeTitle.replace(/[^a-zA-Z0-9]/g, '_')}_' + (currentIndex + 1) + '.jpg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            showToast('Download started');
+          } catch (e) { showToast('Download failed'); }
         }
 
         async function downloadAll() {
-          showToast('Downloading ' + images.length + ' images...');
+          showToast('Downloading ' + images.length + ' photos...');
           for (let i = 0; i < images.length; i++) {
             try {
               const response = await fetch(images[i]);
               if (!response.ok) continue;
               const blob = await response.blob();
-              const blobUrl = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.href = blobUrl;
-              link.download = 'image-' + (i + 1) + '.jpg';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-              await new Promise(r => setTimeout(r, 500));
-            } catch (error) {
-              console.error('Download error for image ' + (i + 1) + ':', error);
-            }
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = '${safeTitle.replace(/[^a-zA-Z0-9]/g, '_')}_' + (i + 1) + '.jpg';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(() => URL.revokeObjectURL(url), 100);
+              await new Promise(r => setTimeout(r, 400));
+            } catch (e) {}
           }
+          showToast('All photos downloaded');
         }
 
         function shareGallery() {
           if (navigator.share) {
-            navigator.share({ title: '${safeTitle}', text: 'Check out this gallery!', url: window.location.href });
+            navigator.share({ title: '${safeTitle}', text: 'Check out these photos!', url: window.location.href });
           } else {
             navigator.clipboard.writeText(window.location.href);
             showToast('Link copied!');
           }
         }
 
-        function startSlideshow() {
-          stopSlideshow();
-          slideshowInterval = setInterval(nextImage, 3000);
-          showToast('Slideshow started');
+        function startSlideshow() { stopSlideshow(); slideshowInterval = setInterval(nextImage, 3000); showToast('Slideshow started'); }
+        function stopSlideshow() { if (slideshowInterval) { clearInterval(slideshowInterval); slideshowInterval = null; } }
+
+        function showToast(msg) {
+          const t = document.getElementById('toast');
+          t.textContent = msg;
+          t.classList.add('show');
+          setTimeout(() => t.classList.remove('show'), 2500);
         }
 
-        function stopSlideshow() {
-          if (slideshowInterval) {
-            clearInterval(slideshowInterval);
-            slideshowInterval = null;
-          }
-        }
-
-        function showToast(message) {
-          const toast = document.getElementById('toast');
-          toast.textContent = message;
-          toast.classList.add('show');
-          setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        // Keyboard navigation
         document.addEventListener('keydown', (e) => {
           if (!document.getElementById('lightbox').classList.contains('active')) return;
-
           if (e.key === 'Escape') closeLightbox();
           if (e.key === 'ArrowLeft') prevImage();
           if (e.key === 'ArrowRight') nextImage();
         });
 
-        // Touch swipe support
         let touchStartX = 0;
-        document.getElementById('lightbox').addEventListener('touchstart', (e) => {
-          touchStartX = e.changedTouches[0].screenX;
-        });
-        document.getElementById('lightbox').addEventListener('touchend', (e) => {
-          const touchEndX = e.changedTouches[0].screenX;
-          const diff = touchStartX - touchEndX;
-          if (Math.abs(diff) > 50) {
-            if (diff > 0) nextImage();
-            else prevImage();
-          }
-        });
-
-        // Click outside to close
-        document.getElementById('lightbox').addEventListener('click', (e) => {
-          if (e.target.classList.contains('lightbox-main')) closeLightbox();
+        const lb = document.getElementById('lightbox');
+        lb.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+        lb.addEventListener('touchend', (e) => {
+          const diff = touchStartX - e.changedTouches[0].screenX;
+          if (Math.abs(diff) > 50) { diff > 0 ? nextImage() : prevImage(); }
         });
       </script>
     </body>
