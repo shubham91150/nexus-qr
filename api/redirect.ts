@@ -1397,28 +1397,12 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
   `;
 }
 
-// Images Gallery Landing Page - Modern Design
+
+// Images Gallery Landing Page - Clean & Simple Design
 function getImagesLandingPage(title: string, imageUrls: string[]): string {
   const safeTitle = escapeHtml(title || 'Photo Gallery');
   const safeUrls = imageUrls.map(url => escapeHtml(url));
   const imageCount = safeUrls.length;
-
-  // Create grid items - first image is hero/featured
-  const gridItemsHtml = safeUrls.map((url, i) => `
-    <div class="grid-item ${i === 0 ? 'featured' : ''}" onclick="openLightbox(${i})" style="--delay: ${i * 0.08}s">
-      <img src="${url}" alt="Photo ${i + 1}" loading="${i < 4 ? 'eager' : 'lazy'}">
-      <div class="item-overlay">
-        <span class="item-number">${i + 1}</span>
-      </div>
-    </div>
-  `).join('');
-
-  // Thumbnail strip for lightbox
-  const thumbsHtml = safeUrls.map((url, i) => `
-    <div class="lb-thumb ${i === 0 ? 'active' : ''}" onclick="goToImage(${i})" data-index="${i}">
-      <img src="${url}" alt="Thumb ${i + 1}">
-    </div>
-  `).join('');
 
   return `
     <!DOCTYPE html>
@@ -1426,32 +1410,24 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
     <head>
       <title>${safeTitle}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-      <meta name="theme-color" content="#0a0a0a">
+      <meta name="theme-color" content="#000000">
       <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: linear-gradient(180deg, #0f0f0f 0%, #1a1a2e 100%);
+          background: #f5f5f5;
           min-height: 100vh;
-          color: #fff;
+          display: flex;
+          flex-direction: column;
         }
 
         /* Header */
         .header {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          background: rgba(15, 15, 15, 0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: #fff;
+          border-bottom: 1px solid #e5e5e5;
           padding: 16px 20px;
-        }
-        .header-content {
-          max-width: 800px;
-          margin: 0 auto;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1462,108 +1438,132 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           gap: 12px;
         }
         .header-icon {
-          width: 40px;
-          height: 40px;
+          width: 36px;
+          height: 36px;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 12px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
-        .header-icon svg { width: 20px; height: 20px; color: white; }
-        .header-title h1 { font-size: 16px; font-weight: 600; color: #fff; }
-        .header-title p { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
-        .header-actions { display: flex; gap: 8px; }
+        .header-icon svg { width: 18px; height: 18px; color: white; }
+        .header-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+        .header-subtitle { font-size: 12px; color: #888; margin-top: 2px; }
         .header-btn {
-          width: 40px;
-          height: 40px;
-          background: rgba(255,255,255,0.08);
+          width: 36px;
+          height: 36px;
+          background: #f5f5f5;
           border: none;
-          border-radius: 12px;
+          border-radius: 10px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: all 0.2s;
         }
-        .header-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
-        .header-btn svg { width: 20px; height: 20px; color: rgba(255,255,255,0.8); }
+        .header-btn:hover { background: #eee; }
+        .header-btn svg { width: 18px; height: 18px; color: #555; }
 
-        /* Main Content */
-        .main {
-          max-width: 800px;
-          margin: 0 auto;
+        /* Main Content - Image Viewer */
+        .viewer {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           padding: 20px;
-          padding-bottom: 100px;
+          background: #f5f5f5;
         }
-
-        /* Photo Grid - Masonry-like */
-        .photo-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 4px;
-          border-radius: 16px;
-          overflow: hidden;
-        }
-        .grid-item {
-          aspect-ratio: 1;
+        .image-container {
           position: relative;
-          cursor: pointer;
+          max-width: 100%;
+          max-height: calc(100vh - 180px);
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
           overflow: hidden;
-          opacity: 0;
-          animation: fadeUp 0.5s ease forwards;
-          animation-delay: var(--delay);
         }
-        .grid-item.featured {
-          grid-column: span 2;
-          grid-row: span 2;
-        }
-        .grid-item img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .grid-item:hover img { transform: scale(1.08); }
-        .item-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.7) 100%);
-          opacity: 0;
-          transition: opacity 0.3s;
-          display: flex;
-          align-items: flex-end;
-          justify-content: flex-end;
-          padding: 12px;
-        }
-        .grid-item:hover .item-overlay { opacity: 1; }
-        .item-number {
-          font-size: 12px;
-          font-weight: 600;
-          color: rgba(255,255,255,0.9);
-          background: rgba(0,0,0,0.4);
-          padding: 4px 10px;
-          border-radius: 20px;
+        .main-image {
+          display: block;
+          max-width: 100%;
+          max-height: calc(100vh - 180px);
+          object-fit: contain;
+          cursor: pointer;
         }
 
-        /* Bottom Action Bar */
-        .action-bar {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: rgba(15, 15, 15, 0.95);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-top: 1px solid rgba(255,255,255,0.08);
-          padding: 12px 20px;
-          padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        /* Counter Badge */
+        .counter {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          background: rgba(0,0,0,0.6);
+          color: white;
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
         }
-        .action-bar-content {
-          max-width: 800px;
-          margin: 0 auto;
+
+        /* Navigation Arrows */
+        .nav-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 40px;
+          height: 40px;
+          background: rgba(255,255,255,0.95);
+          border: none;
+          border-radius: 50%;
+          cursor: pointer;
           display: flex;
-          justify-content: space-around;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+          transition: all 0.2s;
+          z-index: 10;
+        }
+        .nav-btn:hover { background: #fff; transform: translateY(-50%) scale(1.1); }
+        .nav-btn svg { width: 20px; height: 20px; color: #333; }
+        .nav-prev { left: -20px; }
+        .nav-next { right: -20px; }
+        @media (max-width: 600px) {
+          .nav-prev { left: 8px; }
+          .nav-next { right: 8px; }
+        }
+
+        /* Thumbnail Strip */
+        .thumbs {
+          display: ${imageCount > 1 ? 'flex' : 'none'};
+          gap: 8px;
+          padding: 16px 20px;
+          background: #fff;
+          border-top: 1px solid #e5e5e5;
+          overflow-x: auto;
+          justify-content: center;
+        }
+        .thumbs::-webkit-scrollbar { display: none; }
+        .thumb {
+          width: 52px;
+          height: 52px;
+          border-radius: 8px;
+          overflow: hidden;
+          cursor: pointer;
+          flex-shrink: 0;
+          border: 2px solid transparent;
+          transition: all 0.2s;
+          opacity: 0.6;
+        }
+        .thumb:hover { opacity: 0.9; }
+        .thumb.active { border-color: #667eea; opacity: 1; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Bottom Actions */
+        .actions {
+          display: flex;
+          justify-content: center;
+          gap: 32px;
+          padding: 16px 20px;
+          background: #fff;
+          border-top: 1px solid #e5e5e5;
         }
         .action-btn {
           display: flex;
@@ -1573,45 +1573,29 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           background: none;
           border: none;
           cursor: pointer;
-          padding: 8px 16px;
-          border-radius: 12px;
+          padding: 8px;
+          border-radius: 8px;
           transition: all 0.2s;
         }
-        .action-btn:hover { background: rgba(255,255,255,0.08); }
-        .action-btn:active { transform: scale(0.95); }
-        .action-btn svg { width: 24px; height: 24px; color: rgba(255,255,255,0.8); }
-        .action-btn span { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; }
+        .action-btn:hover { background: #f5f5f5; }
+        .action-btn svg { width: 22px; height: 22px; color: #555; }
+        .action-btn span { font-size: 11px; color: #666; font-weight: 500; }
 
-        /* Lightbox */
+        /* Fullscreen Lightbox */
         .lightbox {
           display: none;
           position: fixed;
           inset: 0;
-          background: #000;
+          background: rgba(0,0,0,0.95);
           z-index: 1000;
-          flex-direction: column;
+          align-items: center;
+          justify-content: center;
         }
         .lightbox.active { display: flex; }
-
-        .lb-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 16px;
-          background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+        .lightbox-close {
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 10;
-        }
-        .lb-counter {
-          font-size: 14px;
-          font-weight: 500;
-          color: rgba(255,255,255,0.9);
-        }
-        .lb-actions { display: flex; gap: 8px; }
-        .lb-btn {
+          top: 20px;
+          right: 20px;
           width: 44px;
           height: 44px;
           background: rgba(255,255,255,0.1);
@@ -1621,91 +1605,42 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          z-index: 10;
         }
-        .lb-btn:hover { background: rgba(255,255,255,0.2); }
-        .lb-btn svg { width: 22px; height: 22px; color: white; }
-
-        .lb-main {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          padding: 60px 20px 20px;
-        }
-        .lb-image-wrapper {
-          max-width: 100%;
-          max-height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .lb-image {
-          max-width: 100%;
-          max-height: calc(100vh - 200px);
+        .lightbox-close:hover { background: rgba(255,255,255,0.2); }
+        .lightbox-close svg { width: 24px; height: 24px; color: white; }
+        .lightbox-image {
+          max-width: 95vw;
+          max-height: 95vh;
           object-fit: contain;
-          border-radius: 8px;
-          box-shadow: 0 20px 80px rgba(0,0,0,0.6);
-          transition: transform 0.3s;
         }
-        .lb-image.zoomed { transform: scale(1.8); cursor: zoom-out; }
-
-        .lb-nav {
+        .lightbox-nav {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
+          width: 50px;
+          height: 50px;
           background: rgba(255,255,255,0.1);
-          backdrop-filter: blur(8px);
           border: none;
-          width: 48px;
-          height: 48px;
           border-radius: 50%;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
-          z-index: 5;
         }
-        .lb-nav:hover { background: rgba(255,255,255,0.2); transform: translateY(-50%) scale(1.1); }
-        .lb-nav svg { width: 24px; height: 24px; color: white; }
-        .lb-prev { left: 16px; }
-        .lb-next { right: 16px; }
-
-        /* Thumbnail Strip */
-        .lb-thumbstrip {
-          padding: 16px;
-          background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+        .lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+        .lightbox-nav svg { width: 24px; height: 24px; color: white; }
+        .lightbox-prev { left: 20px; }
+        .lightbox-next { right: 20px; }
+        .lightbox-counter {
           position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          display: flex;
-          gap: 8px;
-          overflow-x: auto;
-          justify-content: center;
-          -webkit-overflow-scrolling: touch;
+          bottom: 30px;
+          left: 50%;
+          transform: translateX(-50%);
+          color: white;
+          font-size: 14px;
+          font-weight: 500;
         }
-        .lb-thumbstrip::-webkit-scrollbar { display: none; }
-        .lb-thumb {
-          width: 56px;
-          height: 56px;
-          border-radius: 8px;
-          overflow: hidden;
-          cursor: pointer;
-          flex-shrink: 0;
-          opacity: 0.4;
-          transition: all 0.2s;
-          border: 2px solid transparent;
-        }
-        .lb-thumb:hover { opacity: 0.7; }
-        .lb-thumb.active {
-          opacity: 1;
-          border-color: #667eea;
-          transform: scale(1.05);
-        }
-        .lb-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
         /* Toast */
         .toast {
@@ -1713,141 +1648,114 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           bottom: 100px;
           left: 50%;
           transform: translateX(-50%) translateY(20px);
-          background: rgba(255,255,255,0.95);
-          color: #1a1a2e;
+          background: #333;
+          color: white;
           padding: 12px 24px;
-          border-radius: 30px;
+          border-radius: 8px;
           font-size: 14px;
           font-weight: 500;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.3);
           opacity: 0;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.3s;
           z-index: 2000;
-          pointer-events: none;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* Animations */
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 600px) {
-          .photo-grid { grid-template-columns: repeat(2, 1fr); }
-          .grid-item.featured { grid-column: span 2; grid-row: span 1; aspect-ratio: 16/9; }
-          .lb-nav { width: 40px; height: 40px; }
-          .lb-prev { left: 8px; }
-          .lb-next { right: 8px; }
-          .lb-thumb { width: 48px; height: 48px; }
-        }
       </style>
     </head>
     <body>
       <!-- Header -->
       <header class="header">
-        <div class="header-content">
-          <div class="header-left">
-            <div class="header-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-            </div>
-            <div class="header-title">
-              <h1>${safeTitle}</h1>
-              <p>${imageCount} photo${imageCount !== 1 ? 's' : ''}</p>
-            </div>
+        <div class="header-left">
+          <div class="header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
           </div>
-          <div class="header-actions">
-            <button class="header-btn" onclick="shareGallery()" title="Share">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-              </svg>
-            </button>
+          <div>
+            <div class="header-title">${safeTitle}</div>
+            <div class="header-subtitle">${imageCount} photo${imageCount > 1 ? 's' : ''}</div>
           </div>
         </div>
+        <button class="header-btn" onclick="shareGallery()" title="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
       </header>
 
-      <!-- Main Content -->
-      <main class="main">
-        <div class="photo-grid">
-          ${gridItemsHtml}
-        </div>
-      </main>
-
-      <!-- Bottom Action Bar -->
-      <div class="action-bar">
-        <div class="action-bar-content">
-          <button class="action-btn" onclick="shareGallery()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-            </svg>
-            <span>Share</span>
+      <!-- Main Viewer -->
+      <div class="viewer">
+        <div class="image-container">
+          ${imageCount > 1 ? '<div class="counter"><span id="currentNum">1</span> / ' + imageCount + '</div>' : ''}
+          <img id="mainImage" src="${safeUrls[0]}" alt="${safeTitle}" class="main-image" onclick="openLightbox()">
+          ${imageCount > 1 ? `
+          <button class="nav-btn nav-prev" onclick="prevImage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <button class="action-btn" onclick="downloadAll()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            <span>Save All</span>
+          <button class="nav-btn nav-next" onclick="nextImage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
-          <button class="action-btn" onclick="openLightbox(0); startSlideshow()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-            <span>Slideshow</span>
-          </button>
+          ` : ''}
         </div>
       </div>
 
-      <!-- Lightbox -->
-      <div class="lightbox" id="lightbox">
-        <div class="lb-header">
-          <span class="lb-counter"><span id="currentNum">1</span> / ${imageCount}</span>
-          <div class="lb-actions">
-            <button class="lb-btn" onclick="downloadCurrent()" title="Download">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </button>
-            <button class="lb-btn" onclick="closeLightbox()" title="Close">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
+      <!-- Thumbnails -->
+      <div class="thumbs">
+        ${safeUrls.map((url, i) => `
+          <div class="thumb ${i === 0 ? 'active' : ''}" onclick="goToImage(${i})">
+            <img src="${url}" alt="Thumb ${i + 1}">
           </div>
-        </div>
+        `).join('')}
+      </div>
 
-        <div class="lb-main" onclick="closeLightbox()">
-          <button class="lb-nav lb-prev" onclick="event.stopPropagation(); prevImage()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
-          <div class="lb-image-wrapper" onclick="event.stopPropagation()">
-            <img id="lb-image" src="" alt="Photo" class="lb-image" onclick="toggleZoom()">
-          </div>
-          <button class="lb-nav lb-next" onclick="event.stopPropagation(); nextImage()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-        </div>
+      <!-- Actions -->
+      <div class="actions">
+        <button class="action-btn" onclick="downloadCurrent()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Download</span>
+        </button>
+        <button class="action-btn" onclick="shareGallery()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          <span>Share</span>
+        </button>
+        <button class="action-btn" onclick="openLightbox()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+          <span>Fullscreen</span>
+        </button>
+      </div>
 
-        <div class="lb-thumbstrip" onclick="event.stopPropagation()">
-          ${thumbsHtml}
-        </div>
+      <!-- Fullscreen Lightbox -->
+      <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        ${imageCount > 1 ? `
+        <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation(); prevImage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        ` : ''}
+        <img id="lightboxImage" src="${safeUrls[0]}" alt="${safeTitle}" class="lightbox-image" onclick="event.stopPropagation()">
+        ${imageCount > 1 ? `
+        <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation(); nextImage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="lightbox-counter"><span id="lbNum">1</span> / ${imageCount}</div>
+        ` : ''}
       </div>
 
       <div class="toast" id="toast"></div>
@@ -1855,38 +1763,32 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
       <script>
         const images = ${JSON.stringify(safeUrls)};
         let currentIndex = 0;
-        let isZoomed = false;
-        let slideshowInterval = null;
 
-        function openLightbox(i) {
-          currentIndex = i;
-          updateLightbox();
+        function updateImage() {
+          document.getElementById('mainImage').src = images[currentIndex];
+          document.getElementById('lightboxImage').src = images[currentIndex];
+          ${imageCount > 1 ? `
+          document.getElementById('currentNum').textContent = currentIndex + 1;
+          document.getElementById('lbNum').textContent = currentIndex + 1;
+          document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i === currentIndex));
+          ` : ''}
+        }
+
+        function prevImage() { currentIndex = (currentIndex - 1 + images.length) % images.length; updateImage(); }
+        function nextImage() { currentIndex = (currentIndex + 1) % images.length; updateImage(); }
+        function goToImage(i) { currentIndex = i; updateImage(); }
+
+        function openLightbox() {
           document.getElementById('lightbox').classList.add('active');
           document.body.style.overflow = 'hidden';
         }
-
         function closeLightbox() {
           document.getElementById('lightbox').classList.remove('active');
           document.body.style.overflow = '';
-          stopSlideshow();
-          if (isZoomed) toggleZoom();
         }
-
-        function updateLightbox() {
-          document.getElementById('lb-image').src = images[currentIndex];
-          document.getElementById('currentNum').textContent = currentIndex + 1;
-          document.querySelectorAll('.lb-thumb').forEach((t, i) => t.classList.toggle('active', i === currentIndex));
-          const activeThumb = document.querySelector('.lb-thumb.active');
-          if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
-
-        function prevImage() { currentIndex = (currentIndex - 1 + images.length) % images.length; updateLightbox(); if (isZoomed) toggleZoom(); }
-        function nextImage() { currentIndex = (currentIndex + 1) % images.length; updateLightbox(); if (isZoomed) toggleZoom(); }
-        function goToImage(i) { currentIndex = i; updateLightbox(); if (isZoomed) toggleZoom(); }
-        function toggleZoom() { isZoomed = !isZoomed; document.getElementById('lb-image').classList.toggle('zoomed', isZoomed); }
 
         async function downloadCurrent() {
-          showToast('Downloading photo...');
+          showToast('Downloading...');
           try {
             const response = await fetch(images[currentIndex]);
             if (!response.ok) throw new Error('Failed');
@@ -1894,7 +1796,7 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = '${safeTitle.replace(/[^a-zA-Z0-9]/g, '_')}_' + (currentIndex + 1) + '.jpg';
+            a.download = '${safeTitle.replace(/[^a-zA-Z0-9]/g, '_')}' + (images.length > 1 ? '_' + (currentIndex + 1) : '') + '.jpg';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1903,38 +1805,14 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           } catch (e) { showToast('Download failed'); }
         }
 
-        async function downloadAll() {
-          showToast('Downloading ' + images.length + ' photos...');
-          for (let i = 0; i < images.length; i++) {
-            try {
-              const response = await fetch(images[i]);
-              if (!response.ok) continue;
-              const blob = await response.blob();
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = '${safeTitle.replace(/[^a-zA-Z0-9]/g, '_')}_' + (i + 1) + '.jpg';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(() => URL.revokeObjectURL(url), 100);
-              await new Promise(r => setTimeout(r, 400));
-            } catch (e) {}
-          }
-          showToast('All photos downloaded');
-        }
-
         function shareGallery() {
           if (navigator.share) {
-            navigator.share({ title: '${safeTitle}', text: 'Check out these photos!', url: window.location.href });
+            navigator.share({ title: '${safeTitle}', url: window.location.href });
           } else {
             navigator.clipboard.writeText(window.location.href);
             showToast('Link copied!');
           }
         }
-
-        function startSlideshow() { stopSlideshow(); slideshowInterval = setInterval(nextImage, 3000); showToast('Slideshow started'); }
-        function stopSlideshow() { if (slideshowInterval) { clearInterval(slideshowInterval); slideshowInterval = null; } }
 
         function showToast(msg) {
           const t = document.getElementById('toast');
@@ -1944,16 +1822,14 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
         }
 
         document.addEventListener('keydown', (e) => {
-          if (!document.getElementById('lightbox').classList.contains('active')) return;
           if (e.key === 'Escape') closeLightbox();
           if (e.key === 'ArrowLeft') prevImage();
           if (e.key === 'ArrowRight') nextImage();
         });
 
         let touchStartX = 0;
-        const lb = document.getElementById('lightbox');
-        lb.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
-        lb.addEventListener('touchend', (e) => {
+        document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+        document.addEventListener('touchend', (e) => {
           const diff = touchStartX - e.changedTouches[0].screenX;
           if (Math.abs(diff) > 50) { diff > 0 ? nextImage() : prevImage(); }
         });
