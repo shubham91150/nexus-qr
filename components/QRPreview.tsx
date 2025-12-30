@@ -50,6 +50,7 @@ export const QRPreview: React.FC<Props> = ({
   const [creatingDynamic, setCreatingDynamic] = useState(false);
   const [dynamicError, setDynamicError] = useState<string | null>(null);
   const [createdShortUrl, setCreatedShortUrl] = useState<string | null>(null);
+  const [createdShortCode, setCreatedShortCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
@@ -76,6 +77,7 @@ export const QRPreview: React.FC<Props> = ({
   useEffect(() => {
     setQrEncodedContent(null);
     setCreatedShortUrl(null);
+    setCreatedShortCode(null);
   }, [data]);
 
   // Render QR code to SVG string
@@ -339,6 +341,7 @@ export const QRPreview: React.FC<Props> = ({
         // Success - set both the display URL and the QR encoded content
         const shortUrl = `${baseUrl}/r/${newQR.short_code}`;
         setCreatedShortUrl(shortUrl);
+        setCreatedShortCode(newQR.short_code);
         // Update QR code to encode the short URL instead of destination
         setQrEncodedContent(shortUrl);
         break;
@@ -367,9 +370,36 @@ export const QRPreview: React.FC<Props> = ({
     }
   };
 
-  // Reset dynamic success state
-  const handleDynamicDone = () => {
+  // Reset dynamic success state and save any style changes
+  const handleDynamicDone = async () => {
+    // Save current styles to database before resetting
+    if (createdShortCode) {
+      try {
+        const qrStyleData = {
+          styleConfig: config,
+          contentData,
+          isEncrypted,
+          payload: data,
+          analyticsOptions: analyticsOptions || {
+            trackLocation: true,
+            trackDevice: true,
+            trackBrowser: true,
+            trackTime: true,
+            trackReferrer: true,
+          },
+        };
+
+        await supabase
+          .from('dynamic_qr_codes')
+          .update({ qr_style: qrStyleData })
+          .eq('short_code', createdShortCode);
+      } catch (err) {
+        console.error('Error saving style updates:', err);
+      }
+    }
+
     setCreatedShortUrl(null);
+    setCreatedShortCode(null);
     setQrEncodedContent(null);
     onDynamicSuccess?.();
   };
