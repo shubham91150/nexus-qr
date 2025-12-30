@@ -244,14 +244,16 @@ export class CustomSVGRenderer {
 
     if (!fill) {
         fill = this.settings.fgColor;
-        if (this.settings.customCornerColor) fill = this.settings.cornerSquareColor;
+        if (this.settings.customCornerColor) {
+            fill = this.settings.cornerSquareColor || this.settings.fgColor;
+        }
     }
 
     let dotFill = fillOverride;
     if (!dotFill) {
         dotFill = this.settings.fgColor;
-        if (this.settings.customCornerColor && this.settings.cornerDotColor) {
-            dotFill = this.settings.cornerSquareColor;
+        if (this.settings.customCornerColor) {
+            dotFill = this.settings.cornerDotColor || this.settings.cornerSquareColor || this.settings.fgColor;
         }
     }
 
