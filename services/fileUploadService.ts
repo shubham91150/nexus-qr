@@ -163,9 +163,10 @@ export async function uploadFile(
     // If progress callback provided, use XMLHttpRequest for progress tracking
     if (onProgress) {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const accessToken = sessionData?.session?.access_token;
 
-      if (!supabaseUrl || !accessToken) {
+      if (!supabaseUrl || !supabaseKey || !accessToken) {
         return { success: false, error: 'Authentication error' };
       }
 
@@ -210,6 +211,7 @@ export async function uploadFile(
 
         xhr.open('POST', uploadUrl);
         xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+        xhr.setRequestHeader('apikey', supabaseKey);
         xhr.setRequestHeader('x-upsert', 'false');
         xhr.timeout = 300000; // 5 minute timeout
 
