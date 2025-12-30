@@ -84,7 +84,10 @@ export const QRStyling: React.FC<Props> = ({ config, onChange }) => {
            
            {config.customCornerColor && (
              <div className="flex gap-3 animate-fadeIn">
-                <ColorInput label="Corner Color" value={config.cornerSquareColor} onChange={(v: string) => update('cornerSquareColor', v)} />
+                <ColorInput label="Corner Color" value={config.cornerSquareColor} onChange={(v: string) => {
+                  update('cornerSquareColor', v);
+                  update('cornerDotColor', v);
+                }} />
              </div>
            )}
         </div>
