@@ -925,8 +925,7 @@ function getVideoLandingPage(title: string, videoUrl: string): string {
               <button class="pip-btn" onclick="togglePiP()" title="Picture in Picture">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="11" y="10" width="10" height="7" rx="1"/></svg>
               </button>
-              <video id="videoPlayer" controls class="video-player" playsinline preload="metadata">
-                <source src="${safeVideoUrl}" type="video/mp4">
+              <video id="videoPlayer" controls class="video-player" playsinline preload="metadata" src="${safeVideoUrl}">
                 Your browser does not support the video tag.
               </video>
             </div>
