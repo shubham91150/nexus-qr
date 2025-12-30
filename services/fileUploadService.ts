@@ -160,75 +160,15 @@ export async function uploadFile(
     const folderPath = qrId ? `${userId}/${qrId}` : `${userId}/temp`;
     const filePath = `${folderPath}/${fileName}`;
 
-    // If progress callback provided, use XMLHttpRequest for progress tracking
+    // Show progress simulation while uploading
     if (onProgress) {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const accessToken = sessionData?.session?.access_token;
-
-      if (!supabaseUrl || !supabaseKey || !accessToken) {
-        return { success: false, error: 'Authentication error' };
-      }
-
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/${config.bucket}/${filePath}`;
-
-      return new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-
-        // Create FormData exactly like Supabase client does
-        const formData = new FormData();
-        formData.append('cacheControl', '3600');
-        formData.append('', file); // Empty key is what Supabase uses
-
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            onProgress(progress);
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve({
-              success: true,
-              url: filePath,
-              filePath: filePath,
-              bucket: config.bucket,
-              fileName: fileName,
-            });
-          } else {
-            let errorMsg = 'Upload failed';
-            try {
-              const response = JSON.parse(xhr.responseText);
-              errorMsg = response.message || response.error || errorMsg;
-            } catch {
-              // Ignore JSON parse errors
-            }
-            console.error('Upload error:', xhr.status, xhr.responseText);
-            resolve({ success: false, error: `${errorMsg} (${xhr.status})` });
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          resolve({ success: false, error: 'Network error during upload' });
-        });
-
-        xhr.addEventListener('timeout', () => {
-          resolve({ success: false, error: 'Upload timeout - please try with a smaller file' });
-        });
-
-        xhr.open('POST', uploadUrl);
-        xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
-        xhr.setRequestHeader('apikey', supabaseKey);
-        xhr.setRequestHeader('x-upsert', 'false');
-        // Do NOT set Content-Type - browser sets it automatically with FormData boundary
-        xhr.timeout = 300000; // 5 minute timeout
-
-        xhr.send(formData);
-      });
+      // Simulate progress - start at 10%, then 50%, upload will complete at 100%
+      onProgress(10);
+      setTimeout(() => onProgress(30), 200);
+      setTimeout(() => onProgress(50), 500);
     }
 
-    // Fallback to Supabase client if no progress callback
+    // Use Supabase client directly - this is the proven working method
     const { data, error } = await supabase.storage
       .from(config.bucket)
       .upload(filePath, file, {
@@ -238,11 +178,15 @@ export async function uploadFile(
 
     if (error) {
       console.error('Upload error:', error);
+      if (onProgress) onProgress(0);
       if (error.message.includes('exp') || error.message.includes('token')) {
         return { success: false, error: 'Session expired. Please refresh the page and try again.' };
       }
       return { success: false, error: error.message };
     }
+
+    // Upload complete
+    if (onProgress) onProgress(100);
 
     return {
       success: true,
@@ -251,9 +195,11 @@ export async function uploadFile(
       bucket: config.bucket,
       fileName: fileName,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Upload exception:', err);
-    if (err.message?.includes('timeout')) {
+    if (onProgress) onProgress(0);
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    if (errorMessage.includes('timeout')) {
       return { success: false, error: 'Upload timeout - please check your connection and try with a smaller file.' };
     }
     return { success: false, error: 'Failed to upload file. Please try again.' };
