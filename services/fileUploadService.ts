@@ -175,6 +175,11 @@ export async function uploadFile(
       return new Promise((resolve) => {
         const xhr = new XMLHttpRequest();
 
+        // Create FormData exactly like Supabase client does
+        const formData = new FormData();
+        formData.append('cacheControl', '3600');
+        formData.append('', file); // Empty key is what Supabase uses
+
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
             const progress = Math.round((event.loaded / event.total) * 100);
@@ -196,8 +201,11 @@ export async function uploadFile(
             try {
               const response = JSON.parse(xhr.responseText);
               errorMsg = response.message || response.error || errorMsg;
-            } catch {}
-            resolve({ success: false, error: errorMsg });
+            } catch {
+              // Ignore JSON parse errors
+            }
+            console.error('Upload error:', xhr.status, xhr.responseText);
+            resolve({ success: false, error: `${errorMsg} (${xhr.status})` });
           }
         });
 
@@ -212,11 +220,11 @@ export async function uploadFile(
         xhr.open('POST', uploadUrl);
         xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
         xhr.setRequestHeader('apikey', supabaseKey);
-        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
         xhr.setRequestHeader('x-upsert', 'false');
+        // Do NOT set Content-Type - browser sets it automatically with FormData boundary
         xhr.timeout = 300000; // 5 minute timeout
 
-        xhr.send(file);
+        xhr.send(formData);
       });
     }
 
