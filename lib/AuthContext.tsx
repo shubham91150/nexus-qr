@@ -29,6 +29,35 @@ if (typeof window !== 'undefined') {
   oauthInProgress = false;
 }
 
+// Helper to check if PKCE code verifier exists in localStorage
+function hasPKCECodeVerifier(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+
+  // Supabase stores code verifier with key pattern: sb-<project-ref>-auth-token-code-verifier
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.includes('auth-token-code-verifier')) {
+      const value = localStorage.getItem(key);
+      return !!value && value.length > 0;
+    }
+  }
+  return false;
+}
+
+// Helper to clear stale PKCE state
+function clearPKCEState(): void {
+  if (typeof localStorage === 'undefined') return;
+
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.includes('auth-token-code-verifier')) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(key => localStorage.removeItem(key));
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -64,40 +93,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           console.log('OAuth code found, exchanging for session...');
 
-          try {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-            // Clean URL after exchange attempt (success or failure)
+          // Check if PKCE code verifier exists before attempting exchange
+          if (!hasPKCECodeVerifier()) {
+            console.warn('PKCE code verifier not found - user may have opened callback in different browser/tab');
+            // Clean URL and clear any stale state
             window.history.replaceState({}, '', url.origin + url.pathname);
+            clearPKCEState();
+            oauthInProgress = false;
+            codeExchangeAttempted = false;
+            if (mounted) {
+              setAuthStatus('unauthenticated');
+              setLoading(false);
+            }
+            // Fall through to getSession to check if user has an existing session
+          } else {
+            try {
+              const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-            if (error) {
-              console.error('Code exchange error:', error.message);
+              // Clean URL after exchange attempt (success or failure)
+              window.history.replaceState({}, '', url.origin + url.pathname);
+
+              if (error) {
+                console.error('Code exchange error:', error.message);
+                // Clear stale PKCE state on error
+                clearPKCEState();
+                oauthInProgress = false;
+                // Reset flag so user can try again
+                codeExchangeAttempted = false;
+                if (mounted) {
+                  setAuthStatus('unauthenticated');
+                }
+                // Fall through to getSession below
+              } else if (data.session && mounted) {
+                console.log('Session obtained from code exchange');
+                setAuthStatus('authenticated');
+                setSession(data.session);
+                setUser(data.session.user);
+                // Brief delay to show "Authenticated" state with checkmark
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                oauthInProgress = false;
+                setLoading(false);
+                return;
+              }
+            } catch (err) {
+              console.error('Code exchange exception:', err);
+              window.history.replaceState({}, '', url.origin + url.pathname);
+              // Clear stale PKCE state on exception
+              clearPKCEState();
               oauthInProgress = false;
               // Reset flag so user can try again
               codeExchangeAttempted = false;
               if (mounted) {
                 setAuthStatus('unauthenticated');
               }
-              // Fall through to getSession below
-            } else if (data.session && mounted) {
-              console.log('Session obtained from code exchange');
-              setAuthStatus('authenticated');
-              setSession(data.session);
-              setUser(data.session.user);
-              // Brief delay to show "Authenticated" state with checkmark
-              await new Promise(resolve => setTimeout(resolve, 1200));
-              oauthInProgress = false;
-              setLoading(false);
-              return;
-            }
-          } catch (err) {
-            console.error('Code exchange exception:', err);
-            window.history.replaceState({}, '', url.origin + url.pathname);
-            oauthInProgress = false;
-            // Reset flag so user can try again
-            codeExchangeAttempted = false;
-            if (mounted) {
-              setAuthStatus('unauthenticated');
             }
           }
         }
