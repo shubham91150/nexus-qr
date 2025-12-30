@@ -212,6 +212,7 @@ export async function uploadFile(
         xhr.open('POST', uploadUrl);
         xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
         xhr.setRequestHeader('apikey', supabaseKey);
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
         xhr.setRequestHeader('x-upsert', 'false');
         xhr.timeout = 300000; // 5 minute timeout
 
