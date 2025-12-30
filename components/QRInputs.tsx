@@ -204,10 +204,11 @@ const MediaUploadZone: React.FC<{
   icon: React.ReactNode;
   accept: string;
   isUploading: boolean;
+  uploadProgress?: number;
   multiple?: boolean;
   compact?: boolean;
   onUpload: (file: File) => void;
-}> = ({ mediaType, icon, accept, isUploading, multiple, compact, onUpload }) => {
+}> = ({ mediaType, icon, accept, isUploading, uploadProgress = 0, multiple, compact, onUpload }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -287,9 +288,19 @@ const MediaUploadZone: React.FC<{
       />
       {isUploading ? (
         <>
-          <Loader2 size={24} className="animate-spin text-indigo-500 mb-2" />
-          <p className="text-sm text-indigo-600 font-medium">Uploading...</p>
-          <p className="text-xs text-gray-400 mt-1">Please wait, this may take a moment</p>
+          <div className="w-full max-w-[200px] mb-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm text-indigo-600 font-medium">Uploading...</span>
+              <span className="text-sm text-indigo-600 font-bold">{uploadProgress}%</span>
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-400">Please wait, this may take a moment</p>
         </>
       ) : (
         <>
@@ -305,6 +316,7 @@ const MediaUploadZone: React.FC<{
 export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAiGenerate = async () => {
@@ -1307,15 +1319,18 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               icon={<Headphones size={24} />}
               accept={FILE_CONFIG.audio.accept}
               isUploading={data.audio?.isUploading || false}
+              uploadProgress={uploadProgress}
               onUpload={async (file) => {
                 updateNested('audio', 'isUploading', true);
-                const result = await uploadFile(file, 'audio');
+                setUploadProgress(0);
+                const result = await uploadFile(file, 'audio', undefined, setUploadProgress);
                 if (result.success && result.url) {
                   onChange({ ...data, audio: { url: result.url, title: file.name.replace(/\.[^/.]+$/, ''), isUploading: false } });
                 } else {
                   updateNested('audio', 'isUploading', false);
                   alert(result.error || 'Upload failed');
                 }
+                setUploadProgress(0);
               }}
             />
           )}
@@ -1360,15 +1375,18 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               icon={<Film size={24} />}
               accept={FILE_CONFIG.video.accept}
               isUploading={data.video?.isUploading || false}
+              uploadProgress={uploadProgress}
               onUpload={async (file) => {
                 updateNested('video', 'isUploading', true);
-                const result = await uploadFile(file, 'video');
+                setUploadProgress(0);
+                const result = await uploadFile(file, 'video', undefined, setUploadProgress);
                 if (result.success && result.url) {
                   onChange({ ...data, video: { url: result.url, title: file.name.replace(/\.[^/.]+$/, ''), isUploading: false } });
                 } else {
                   updateNested('video', 'isUploading', false);
                   alert(result.error || 'Upload failed');
                 }
+                setUploadProgress(0);
               }}
             />
           )}
@@ -1425,13 +1443,15 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                     icon={<Plus size={20} />}
                     accept={FILE_CONFIG.images.accept}
                     isUploading={data.images?.isUploading || false}
+                    uploadProgress={uploadProgress}
                     multiple
                     compact
                     onUpload={async (file) => {
                       updateNested('images', 'isUploading', true);
+                      setUploadProgress(0);
                       // Create immediate blob preview
                       const blobPreview = URL.createObjectURL(file);
-                      const result = await uploadFile(file, 'images');
+                      const result = await uploadFile(file, 'images', undefined, setUploadProgress);
                       if (result.success && result.filePath) {
                         const newPaths = [...imagePaths, result.filePath];
                         const newPreviews = [...previewUrls, blobPreview];
@@ -1441,6 +1461,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                         updateNested('images', 'isUploading', false);
                         alert(result.error || 'Upload failed');
                       }
+                      setUploadProgress(0);
                     }}
                   />
                 </div>
@@ -1453,12 +1474,14 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               icon={<Images size={24} />}
               accept={FILE_CONFIG.images.accept}
               isUploading={data.images?.isUploading || false}
+              uploadProgress={uploadProgress}
               multiple
               onUpload={async (file) => {
                 updateNested('images', 'isUploading', true);
+                setUploadProgress(0);
                 // Create immediate blob preview
                 const blobPreview = URL.createObjectURL(file);
-                const result = await uploadFile(file, 'images');
+                const result = await uploadFile(file, 'images', undefined, setUploadProgress);
                 if (result.success && result.filePath) {
                   onChange({ ...data, images: { filePaths: [result.filePath], previewUrls: [blobPreview], urls: [result.filePath], title: '', isUploading: false } });
                 } else {
@@ -1466,6 +1489,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                   updateNested('images', 'isUploading', false);
                   alert(result.error || 'Upload failed');
                 }
+                setUploadProgress(0);
               }}
             />
           )}
@@ -1505,9 +1529,11 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
               icon={<File size={24} />}
               accept={FILE_CONFIG.document.accept}
               isUploading={data.document?.isUploading || false}
+              uploadProgress={uploadProgress}
               onUpload={async (file) => {
                 updateNested('document', 'isUploading', true);
-                const result = await uploadFile(file, 'document');
+                setUploadProgress(0);
+                const result = await uploadFile(file, 'document', undefined, setUploadProgress);
                 if (result.success && result.url) {
                   const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
                   onChange({ ...data, document: { url: result.url, title: file.name.replace(/\.[^/.]+$/, ''), fileType: ext, isUploading: false } });
@@ -1515,6 +1541,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                   updateNested('document', 'isUploading', false);
                   alert(result.error || 'Upload failed');
                 }
+                setUploadProgress(0);
               }}
             />
           )}

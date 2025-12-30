@@ -168,6 +168,44 @@ const QRGenerator: React.FC<{
     trackReferrer: true,
   });
 
+  // Auto-generate title based on content type and data
+  const generateAutoTitle = (type: QRType, data: QRContentData): string => {
+    const timestamp = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const typeLabels: Record<string, string> = {
+      url: 'Link', text: 'Text', wifi: 'WiFi', contact: 'Contact', email: 'Email',
+      phone: 'Phone', geo: 'Location', event: 'Event', social: 'Social', sms: 'SMS',
+      whatsapp: 'WhatsApp', youtube: 'YouTube', bitcoin: 'Bitcoin', coupon: 'Coupon',
+      upi: 'UPI', paypal: 'PayPal', telegram: 'Telegram', spotify: 'Spotify',
+      instagram: 'Instagram', twitter: 'Twitter', linkedin: 'LinkedIn', zoom: 'Zoom',
+      facebook: 'Facebook', tiktok: 'TikTok', pinterest: 'Pinterest', snapchat: 'Snapchat',
+      discord: 'Discord', skype: 'Skype', facetime: 'FaceTime', googlemeet: 'Meet',
+      googlereview: 'Review', pdf: 'PDF', menu: 'Menu', audio: 'Audio', video: 'Video',
+      images: 'Gallery', document: 'Document', appstore: 'App', ai: 'AI'
+    };
+
+    const label = typeLabels[type] || type.charAt(0).toUpperCase() + type.slice(1);
+
+    // Try to get a meaningful name from the data
+    let name = '';
+    if (data.contact?.firstName) name = data.contact.firstName;
+    else if (data.wifi?.ssid) name = data.wifi.ssid;
+    else if (data.event?.title) name = data.event.title;
+    else if (data.audio?.title) name = data.audio.title;
+    else if (data.video?.title) name = data.video.title;
+    else if (data.pdf?.title) name = data.pdf.title;
+    else if (data.images?.title) name = data.images.title;
+    else if (data.document?.title) name = data.document.title;
+    else if (data.coupon?.code) name = data.coupon.code;
+    else if (data.instagram?.username) name = `@${data.instagram.username}`;
+    else if (data.twitter?.username) name = `@${data.twitter.username}`;
+    else if (data.linkedin?.username) name = data.linkedin.username;
+
+    if (name) {
+      return `${label} - ${name}`;
+    }
+    return `${label} QR - ${timestamp}`;
+  };
+
   // Handle Dynamic QR toggle
   const handleDynamicToggle = (checked: boolean) => {
     if (checked && !user) {
@@ -175,6 +213,9 @@ const QRGenerator: React.FC<{
       return;
     }
     setIsDynamic(checked);
+    if (checked && !dynamicTitle) {
+      setDynamicTitle(generateAutoTitle(activeTab, contentData));
+    }
     if (!checked) {
       setDynamicTitle('');
     }
@@ -182,7 +223,8 @@ const QRGenerator: React.FC<{
 
   const handleTabChange = (type: QRType) => {
     setActiveTab(type);
-    setContentData({ ...contentData, type });
+    const newContentData = { ...contentData, type };
+    setContentData(newContentData);
 
     // Auto-manage isDynamic based on QR type category
     const category = getQRTypeCategory(type);
@@ -190,6 +232,8 @@ const QRGenerator: React.FC<{
       // Auto-enable dynamic for file-based content types
       if (user) {
         setIsDynamic(true);
+        // Auto-generate title for dynamic-only types
+        setDynamicTitle(generateAutoTitle(type, newContentData));
       } else {
         // If not logged in, prompt login when switching to dynamic-only types
         onAuthRequired();
@@ -197,6 +241,7 @@ const QRGenerator: React.FC<{
     } else if (category === 'only-static') {
       // Force disable dynamic for native protocol types
       setIsDynamic(false);
+      setDynamicTitle('');
     }
     // For 'both' category, keep the current state - user decides
   };
@@ -502,6 +547,7 @@ const QRGenerator: React.FC<{
                  isDynamic={isDynamic}
                  isDynamicOnly={getQRTypeCategory(activeTab) === 'only-dynamic'}
                  dynamicTitle={dynamicTitle}
+                 onTitleChange={setDynamicTitle}
                  contentData={contentData}
                  isEncrypted={isEncrypted}
                  analyticsOptions={analyticsOptions}

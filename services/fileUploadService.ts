@@ -54,6 +54,8 @@ export interface UploadResult {
   fileName?: string;
 }
 
+export type ProgressCallback = (progress: number) => void;
+
 /**
  * Generate a unique file name to prevent collisions
  */
@@ -121,13 +123,14 @@ async function uploadWithTimeout<T>(
 }
 
 /**
- * Upload a single file to Supabase Storage
+ * Upload a single file to Supabase Storage with progress tracking
  * Path format: <user_id>/<qr_id>/<filename>
  */
 export async function uploadFile(
   file: File,
   mediaType: MediaType,
-  qrId?: string
+  qrId?: string,
+  onProgress?: ProgressCallback
 ): Promise<UploadResult> {
   const config = FILE_CONFIG[mediaType];
 
@@ -137,10 +140,6 @@ export async function uploadFile(
     return { success: false, error: validation.error };
   }
 
-  // Calculate timeout based on file size (minimum 30s, add 1s per MB)
-  const fileSizeMB = file.size / (1024 * 1024);
-  const timeoutMs = Math.max(30000, Math.min(300000, 30000 + fileSizeMB * 1000));
-
   try {
     // Get current user ID
     const userId = await getCurrentUserId();
@@ -149,7 +148,7 @@ export async function uploadFile(
     }
 
     // Refresh session to ensure token is valid (fixes "exp" claim error)
-    const { error: refreshError } = await supabase.auth.refreshSession();
+    const { data: sessionData, error: refreshError } = await supabase.auth.refreshSession();
     if (refreshError) {
       console.error('Session refresh error:', refreshError);
       return { success: false, error: 'Session expired. Please login again.' };
@@ -161,29 +160,82 @@ export async function uploadFile(
     const folderPath = qrId ? `${userId}/${qrId}` : `${userId}/temp`;
     const filePath = `${folderPath}/${fileName}`;
 
-    // Upload to Supabase Storage with timeout
-    const uploadPromise = supabase.storage
+    // If progress callback provided, use XMLHttpRequest for progress tracking
+    if (onProgress) {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const accessToken = sessionData?.session?.access_token;
+
+      if (!supabaseUrl || !accessToken) {
+        return { success: false, error: 'Authentication error' };
+      }
+
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/${config.bucket}/${filePath}`;
+
+      return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            onProgress(progress);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve({
+              success: true,
+              url: filePath,
+              filePath: filePath,
+              bucket: config.bucket,
+              fileName: fileName,
+            });
+          } else {
+            let errorMsg = 'Upload failed';
+            try {
+              const response = JSON.parse(xhr.responseText);
+              errorMsg = response.message || response.error || errorMsg;
+            } catch {}
+            resolve({ success: false, error: errorMsg });
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          resolve({ success: false, error: 'Network error during upload' });
+        });
+
+        xhr.addEventListener('timeout', () => {
+          resolve({ success: false, error: 'Upload timeout - please try with a smaller file' });
+        });
+
+        xhr.open('POST', uploadUrl);
+        xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+        xhr.setRequestHeader('x-upsert', 'false');
+        xhr.timeout = 300000; // 5 minute timeout
+
+        xhr.send(file);
+      });
+    }
+
+    // Fallback to Supabase client if no progress callback
+    const { data, error } = await supabase.storage
       .from(config.bucket)
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
       });
 
-    const { data, error } = await uploadWithTimeout(uploadPromise, timeoutMs);
-
     if (error) {
       console.error('Upload error:', error);
-      // Check if it's a token expiration error and provide better message
       if (error.message.includes('exp') || error.message.includes('token')) {
         return { success: false, error: 'Session expired. Please refresh the page and try again.' };
       }
       return { success: false, error: error.message };
     }
 
-    // Return file path (NOT public URL - we'll use signed URLs)
     return {
       success: true,
-      url: filePath,           // Store path for signed URL generation
+      url: filePath,
       filePath: filePath,
       bucket: config.bucket,
       fileName: fileName,
