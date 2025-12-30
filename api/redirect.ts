@@ -733,11 +733,11 @@ function getPDFLandingPage(title: string, pdfUrl: string): string {
         .pdf-container { position: relative; background: #1a1a2e; border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
         .pdf-preview { width: 100%; height: 450px; border: none; display: block; }
         .pdf-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 80%, rgba(0,0,0,0.8)); pointer-events: none; }
-        .pdf-badge { position: absolute; top: 16px; left: 16px; background: rgba(255,59,48,0.9); color: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(10px); }
+        .pdf-badge { position: absolute; top: 16px; left: 16px; background: rgba(99,102,241,0.9); color: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(10px); }
         .fullscreen-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .fullscreen-btn:hover { background: white; transform: scale(1.1); }
         .file-meta { display: flex; align-items: center; gap: 16px; padding: 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 20px; }
-        .file-icon-lg { width: 56px; height: 56px; background: linear-gradient(135deg, #ff3b30, #ff6b6b); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .file-icon-lg { width: 56px; height: 56px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
         .file-icon-lg svg { width: 28px; height: 28px; color: white; }
         .file-info-text { flex: 1; }
         .file-info-text h3 { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 4px; line-height: 1.3; }
@@ -783,9 +783,9 @@ function getPDFLandingPage(title: string, pdfUrl: string): string {
             </div>
 
             <div class="quick-actions">
-              <button class="quick-action" onclick="window.open('${safePdfUrl}', '_blank')">
+              <button class="quick-action" onclick="openPdfSecure()" id="openBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                <span>Open</span>
+                <span id="openText">Open</span>
               </button>
               <button class="quick-action" onclick="window.print()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -817,6 +817,40 @@ function getPDFLandingPage(title: string, pdfUrl: string): string {
           } else {
             navigator.clipboard.writeText(window.location.href);
             showToast('Link copied to clipboard!');
+          }
+        }
+
+        // Secure open - fetches file as blob and opens without exposing storage URL
+        let isOpening = false;
+        async function openPdfSecure() {
+          if (isOpening) return;
+          isOpening = true;
+          const openBtn = document.getElementById('openBtn');
+          const openText = document.getElementById('openText');
+
+          try {
+            openText.textContent = 'Loading...';
+            openBtn.style.opacity = '0.7';
+
+            const response = await fetch(pdfUrl);
+            if (!response.ok) throw new Error('Failed to load');
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Open in new tab with blob URL (hides original storage URL)
+            window.open(blobUrl, '_blank');
+
+            // Revoke blob URL after delay to allow tab to load
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+
+          } catch (error) {
+            console.error('Open error:', error);
+            showToast('Failed to open. Try downloading instead.');
+          } finally {
+            openText.textContent = 'Open';
+            openBtn.style.opacity = '1';
+            isOpening = false;
           }
         }
 
@@ -1845,16 +1879,16 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
   const safeFileType = fileType ? escapeHtml(fileType.toUpperCase()) : 'DOC';
 
   const fileTypeConfig: Record<string, { color: string; gradient: string; icon: string; description: string }> = {
-    'PDF': { color: '#E53E3E', gradient: 'linear-gradient(135deg, #E53E3E, #FC8181)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Portable Document' },
-    'DOC': { color: '#3182CE', gradient: 'linear-gradient(135deg, #3182CE, #63B3ED)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Word Document' },
-    'DOCX': { color: '#3182CE', gradient: 'linear-gradient(135deg, #3182CE, #63B3ED)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Word Document' },
-    'XLS': { color: '#38A169', gradient: 'linear-gradient(135deg, #38A169, #68D391)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Excel Spreadsheet' },
-    'XLSX': { color: '#38A169', gradient: 'linear-gradient(135deg, #38A169, #68D391)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Excel Spreadsheet' },
-    'PPT': { color: '#DD6B20', gradient: 'linear-gradient(135deg, #DD6B20, #F6AD55)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'PowerPoint Presentation' },
-    'PPTX': { color: '#DD6B20', gradient: 'linear-gradient(135deg, #DD6B20, #F6AD55)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'PowerPoint Presentation' },
-    'TXT': { color: '#718096', gradient: 'linear-gradient(135deg, #718096, #A0AEC0)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Text File' },
-    'ZIP': { color: '#805AD5', gradient: 'linear-gradient(135deg, #805AD5, #B794F4)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Compressed Archive' },
-    'RAR': { color: '#805AD5', gradient: 'linear-gradient(135deg, #805AD5, #B794F4)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Compressed Archive' },
+    'PDF': { color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Portable Document' },
+    'DOC': { color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Word Document' },
+    'DOCX': { color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Word Document' },
+    'XLS': { color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Excel Spreadsheet' },
+    'XLSX': { color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Excel Spreadsheet' },
+    'PPT': { color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'PowerPoint Presentation' },
+    'PPTX': { color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'PowerPoint Presentation' },
+    'TXT': { color: '#6b7280', gradient: 'linear-gradient(135deg, #6b7280, #9ca3af)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Text File' },
+    'ZIP': { color: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Compressed Archive' },
+    'RAR': { color: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Compressed Archive' },
   };
 
   const config = fileTypeConfig[safeFileType] || { color: '#667eea', gradient: 'linear-gradient(135deg, #667eea, #764ba2)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Document File' };
@@ -1941,9 +1975,9 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                 <span>Share</span>
               </button>
-              <button class="quick-action" onclick="window.open('${safeDocUrl}', '_blank')">
+              <button class="quick-action" onclick="openDocSecure()" id="openBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                <span>Open</span>
+                <span id="openText">Open</span>
               </button>
               <button class="quick-action" onclick="copyLink()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -1979,6 +2013,40 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
         function copyLink() {
           navigator.clipboard.writeText(window.location.href);
           showToast('Link copied!');
+        }
+
+        // Secure open - fetches file as blob and opens without exposing storage URL
+        let isOpening = false;
+        async function openDocSecure() {
+          if (isOpening) return;
+          isOpening = true;
+          const openBtn = document.getElementById('openBtn');
+          const openText = document.getElementById('openText');
+
+          try {
+            openText.textContent = 'Loading...';
+            openBtn.style.opacity = '0.7';
+
+            const response = await fetch(docUrl);
+            if (!response.ok) throw new Error('Failed to load');
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Open in new tab with blob URL (hides original storage URL)
+            window.open(blobUrl, '_blank');
+
+            // Revoke blob URL after delay to allow tab to load
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+
+          } catch (error) {
+            console.error('Open error:', error);
+            showToast('Failed to open. Try downloading instead.');
+          } finally {
+            openText.textContent = 'Open';
+            openBtn.style.opacity = '1';
+            isOpening = false;
+          }
         }
 
         let isDownloading = false;
