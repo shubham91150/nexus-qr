@@ -232,7 +232,7 @@ export const QRStyling: React.FC<Props> = ({ config, onChange }) => {
                        </div>
                        <p className="text-[10px] text-gray-400 mt-1">
                            {config.logoBackgroundType === 'match-qr'
-                               ? 'Uses QR pattern color (solid or gradient)'
+                               ? 'Uses QR background color for logo visibility'
                                : 'Select a custom background color'}
                        </p>
                    </div>
