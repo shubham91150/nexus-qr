@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { QRStyleConfig } from '../types';
 import { Palette, Grid, Sliders, Image as ImageIcon, Zap, Monitor, Printer, Tv } from 'lucide-react';
+import { extractLogoColors } from '../services/colorExtractor';
 
 interface Props {
   config: QRStyleConfig;
@@ -275,11 +276,29 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
          <div className="flex items-center gap-4">
              <label className="flex-1 cursor-pointer bg-gray-50 border border-dashed border-gray-300 rounded-xl h-20 flex flex-col items-center justify-center hover:bg-gray-100 transition-colors">
                  <span className="text-xs font-medium text-gray-500">Upload Image</span>
-                 <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                 <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
                      const file = e.target.files?.[0];
                      if (file) {
                          const reader = new FileReader();
-                         reader.onload = (evt) => update('logoImage', evt.target?.result);
+                         reader.onload = async (evt) => {
+                             const imageDataUrl = evt.target?.result as string;
+                             if (imageDataUrl) {
+                                 // Extract colors from logo and apply to QR
+                                 try {
+                                     const colors = await extractLogoColors(imageDataUrl);
+                                     onChange({
+                                         ...config,
+                                         logoImage: imageDataUrl,
+                                         fgColor: colors.foreground,
+                                         bgColor: colors.background,
+                                         isGradient: false // Reset gradient when applying logo colors
+                                     });
+                                 } catch (error) {
+                                     // Fallback: just set the logo without color extraction
+                                     update('logoImage', imageDataUrl);
+                                 }
+                             }
+                         };
                          reader.readAsDataURL(file);
                      }
                  }} />
@@ -322,49 +341,12 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                      <p className="text-[10px] text-gray-400 mt-1">Auto detects logo shape and applies matching padding</p>
                  </div>
 
-                 {/* Custom Color Toggle */}
-                 <div>
-                     <button
-                         onClick={() => update('logoUseCustomColors', !config.logoUseCustomColors)}
-                         className={`w-full py-2 rounded-lg text-xs font-medium border transition-all flex items-center justify-center gap-2 ${config.logoUseCustomColors ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-                     >
-                         <span>Custom Colors</span>
-                         <div className={`w-4 h-4 rounded-full border ${config.logoUseCustomColors ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}></div>
-                     </button>
-                     <p className="text-[10px] text-gray-400 mt-1">
-                         {config.logoUseCustomColors
-                             ? 'Using custom colors for logo'
-                             : 'Auto-matching QR foreground & background colors'}
+                 {/* Logo Color Info */}
+                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                     <p className="text-[11px] text-blue-700">
+                         <span className="font-medium">Auto Color Match:</span> QR colors are automatically extracted from your logo. You can manually adjust colors in the Colors section above.
                      </p>
                  </div>
-
-                 {/* Custom Color Pickers - Only shown when custom colors enabled */}
-                 {config.logoUseCustomColors && (
-                     <div className="space-y-2">
-                         <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                             <span className="text-xs font-medium text-gray-600">Foreground</span>
-                             <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm ml-auto">
-                                 <input
-                                     type="color"
-                                     value={config.logoForegroundColor || '#000000'}
-                                     onChange={(e) => update('logoForegroundColor', e.target.value)}
-                                     className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
-                                 />
-                             </div>
-                         </div>
-                         <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                             <span className="text-xs font-medium text-gray-600">Background</span>
-                             <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm ml-auto">
-                                 <input
-                                     type="color"
-                                     value={config.logoBackgroundColor || '#ffffff'}
-                                     onChange={(e) => update('logoBackgroundColor', e.target.value)}
-                                     className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
-                                 />
-                             </div>
-                         </div>
-                     </div>
-                 )}
 
                  {/* Logo Size Slider */}
                  <div>
