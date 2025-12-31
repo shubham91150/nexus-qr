@@ -50,7 +50,9 @@ const DEFAULT_QR_STYLE: QRStyleConfig = {
   logoImage: null,
   logoSize: 0.25,
   logoPadding: 0,
-  logoBackground: 'transparent',
+  logoBackgroundType: 'match-qr',
+  logoBackgroundColor: '#ffffff',
+  logoShape: 'auto',
 };
 
 // Compact QR Code Preview Component for dashboard

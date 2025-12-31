@@ -190,31 +190,79 @@ export const QRStyling: React.FC<Props> = ({ config, onChange }) => {
            </div>
            
            {config.logoImage && (
-               <div className="mt-4 space-y-3">
+               <div className="mt-4 space-y-4">
+                   {/* Logo Shape Selection */}
                    <div>
-                       <div className="flex items-center gap-2 mb-2">
-                            <button 
-                                onClick={() => update('logoBackground', 'transparent')}
-                                className={`flex-1 py-1.5 text-xs rounded-lg border ${config.logoBackground === 'transparent' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600'}`}
-                            >
-                                Transparent
-                            </button>
-                            <button 
-                                onClick={() => update('logoBackground', 'solid')}
-                                className={`flex-1 py-1.5 text-xs rounded-lg border ${config.logoBackground === 'solid' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600'}`}
-                            >
-                                White Bg
-                            </button>
+                       <label className="text-xs font-medium text-gray-500 mb-2 block">Padding Shape</label>
+                       <div className="grid grid-cols-4 gap-2">
+                           {[
+                               { id: 'auto', label: 'Auto' },
+                               { id: 'square', label: 'Square' },
+                               { id: 'circle', label: 'Circle' },
+                               { id: 'rounded', label: 'Rounded' }
+                           ].map((shape) => (
+                               <button
+                                   key={shape.id}
+                                   onClick={() => update('logoShape', shape.id)}
+                                   className={`py-2 rounded-lg text-xs font-medium border transition-all ${config.logoShape === shape.id ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                               >
+                                   {shape.label}
+                               </button>
+                           ))}
                        </div>
+                       <p className="text-[10px] text-gray-400 mt-1">Auto detects logo shape and applies matching padding</p>
+                   </div>
+
+                   {/* Logo Background Color */}
+                   <div>
+                       <label className="text-xs font-medium text-gray-500 mb-2 block">Background Color</label>
+                       <div className="flex items-center gap-2">
+                           <button
+                               onClick={() => update('logoBackgroundType', 'match-qr')}
+                               className={`flex-1 py-2 text-xs rounded-lg border transition-all ${config.logoBackgroundType === 'match-qr' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                           >
+                               Match QR
+                           </button>
+                           <button
+                               onClick={() => update('logoBackgroundType', 'custom')}
+                               className={`flex-1 py-2 text-xs rounded-lg border transition-all ${config.logoBackgroundType === 'custom' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                           >
+                               Custom Color
+                           </button>
+                       </div>
+                       <p className="text-[10px] text-gray-400 mt-1">
+                           {config.logoBackgroundType === 'match-qr'
+                               ? 'Uses QR pattern color (solid or gradient)'
+                               : 'Select a custom background color'}
+                       </p>
+                   </div>
+
+                   {/* Custom Color Picker */}
+                   {config.logoBackgroundType === 'custom' && (
+                       <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                           <span className="text-xs font-medium text-gray-600">Logo Background</span>
+                           <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm ml-auto">
+                               <input
+                                   type="color"
+                                   value={config.logoBackgroundColor || '#ffffff'}
+                                   onChange={(e) => update('logoBackgroundColor', e.target.value)}
+                                   className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
+                               />
+                           </div>
+                       </div>
+                   )}
+
+                   {/* Logo Size Slider */}
+                   <div>
                        <div className="flex justify-between text-xs text-gray-500 mb-1">
                            <span>Size</span>
-                           <span>{(config.logoSize * 100).toFixed(0)}%</span>
+                           <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{(config.logoSize * 100).toFixed(0)}%</span>
                        </div>
-                       <input 
-                           type="range" min="0.1" max="0.5" step="0.05" 
-                           value={config.logoSize} 
+                       <input
+                           type="range" min="0.1" max="0.5" step="0.05"
+                           value={config.logoSize}
                            onChange={e => update('logoSize', Number(e.target.value))}
-                           className="w-full accent-gray-800"
+                           className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                        />
                    </div>
                </div>

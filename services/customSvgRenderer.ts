@@ -324,17 +324,112 @@ export class CustomSVGRenderer {
     return svg;
   }
 
+  // Generate logo gradient definition for match-qr mode
+  private generateLogoGradientDef(): string {
+    if (!this.settings.isGradient) return '';
+
+    const { gradientType, gradientRotation, fgColor, fgColor2 } = this.settings;
+    const id = 'logoGradient';
+    const stops = `
+      <stop offset="0%" stop-color="${fgColor}" stop-opacity="1"/>
+      <stop offset="100%" stop-color="${fgColor2}" stop-opacity="1"/>
+    `;
+
+    if (gradientType === 'linear') {
+      const rad = gradientRotation * (Math.PI / 180);
+      const x1 = 50 - 50 * Math.cos(rad + Math.PI/2);
+      const y1 = 50 - 50 * Math.sin(rad + Math.PI/2);
+      const x2 = 50 + 50 * Math.cos(rad + Math.PI/2);
+      const y2 = 50 + 50 * Math.sin(rad + Math.PI/2);
+      return `<linearGradient id="${id}" x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%">${stops}</linearGradient>`;
+    } else {
+      return `<radialGradient id="${id}" cx="50%" cy="50%" r="50%">${stops}</radialGradient>`;
+    }
+  }
+
+  // Determine the effective logo shape based on settings
+  private getEffectiveLogoShape(): 'square' | 'circle' | 'rounded' {
+    const shape = this.settings.logoShape || 'auto';
+
+    if (shape !== 'auto') {
+      return shape as 'square' | 'circle' | 'rounded';
+    }
+
+    // Auto detection: default to 'rounded' for most cases
+    // In a real implementation, we could analyze the image to detect its shape
+    // For now, 'rounded' provides a good middle-ground
+    return 'rounded';
+  }
+
+  // Get the fill color for logo background based on settings
+  private getLogoBackgroundFill(): string {
+    // Backward compatibility: Handle old logoBackground property
+    const oldBg = (this.settings as any).logoBackground;
+    if (oldBg === 'transparent') {
+      // For transparent, use a very light version of the foreground color
+      // or return the background color for contrast
+      return this.settings.bgColor || '#ffffff';
+    }
+    if (oldBg === 'solid') {
+      return '#ffffff'; // Old 'solid' meant white background
+    }
+
+    // New properties
+    const bgType = this.settings.logoBackgroundType || 'match-qr';
+
+    if (bgType === 'custom') {
+      return this.settings.logoBackgroundColor || '#ffffff';
+    }
+
+    // match-qr: Use QR pattern color
+    if (this.settings.isGradient) {
+      return 'url(#logoGradient)';
+    } else {
+      return this.settings.fgColor;
+    }
+  }
+
   private generateLogoSVG(): string {
     if (!this.settings.logoImage) return '';
+
     const size = this.settings.size;
     const logoSize = size * this.settings.logoSize;
-    const x = (size - logoSize) / 2;
-    const y = (size - logoSize) / 2;
+    const cx = size / 2;  // Center x
+    const cy = size / 2;  // Center y
+    const padding = 8;    // Padding around logo
+    const bgSize = logoSize + (padding * 2);
+    const bgX = cx - bgSize / 2;
+    const bgY = cy - bgSize / 2;
+    const logoX = cx - logoSize / 2;
+    const logoY = cy - logoSize / 2;
+
     let svg = '';
-    if (this.settings.logoBackground === 'solid') {
-       svg += `<circle cx="${size/2}" cy="${size/2}" r="${logoSize/2 + 5}" fill="white" />`;
+    const shape = this.getEffectiveLogoShape();
+    const fill = this.getLogoBackgroundFill();
+
+    // Add gradient definition if needed
+    if (this.settings.logoBackgroundType !== 'custom' && this.settings.isGradient) {
+      svg += '<defs>' + this.generateLogoGradientDef() + '</defs>';
     }
-    svg += `<image x="${x}" y="${y}" width="${logoSize}" height="${logoSize}" href="${this.settings.logoImage}" preserveAspectRatio="xMidYMid meet" />`;
+
+    // Generate background shape based on logo shape setting
+    switch (shape) {
+      case 'circle':
+        svg += `<circle cx="${cx}" cy="${cy}" r="${bgSize / 2}" fill="${fill}" />`;
+        break;
+      case 'rounded':
+        const cornerRadius = bgSize * 0.15; // 15% corner radius for rounded rectangle
+        svg += `<rect x="${bgX}" y="${bgY}" width="${bgSize}" height="${bgSize}" rx="${cornerRadius}" ry="${cornerRadius}" fill="${fill}" />`;
+        break;
+      case 'square':
+      default:
+        svg += `<rect x="${bgX}" y="${bgY}" width="${bgSize}" height="${bgSize}" fill="${fill}" />`;
+        break;
+    }
+
+    // Add the logo image on top
+    svg += `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${this.settings.logoImage}" preserveAspectRatio="xMidYMid meet" />`;
+
     return svg;
   }
 
