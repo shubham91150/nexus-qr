@@ -50,7 +50,8 @@ const DEFAULT_QR_STYLE: QRStyleConfig = {
   logoImage: null,
   logoSize: 0.25,
   logoPadding: 0,
-  logoBackgroundType: 'match-qr',
+  logoUseCustomColors: false,
+  logoForegroundColor: '#000000',
   logoBackgroundColor: '#ffffff',
   logoShape: 'auto',
 };

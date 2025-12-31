@@ -361,26 +361,33 @@ export class CustomSVGRenderer {
     return 'rounded';
   }
 
-  // Get the fill color for logo background based on settings
-  private getLogoBackgroundFill(): string {
-    // Backward compatibility: Handle old logoBackground property
+  // Get colors for logo based on settings
+  private getLogoColors(): { foreground: string; background: string } {
+    // Backward compatibility
     const oldBg = (this.settings as any).logoBackground;
-    if (oldBg === 'transparent') {
-      return this.settings.bgColor || '#ffffff';
-    }
-    if (oldBg === 'solid') {
-      return '#ffffff';
-    }
+    const oldBgType = (this.settings as any).logoBackgroundType;
 
-    // New properties
-    const bgType = this.settings.logoBackgroundType || 'match-qr';
-
-    if (bgType === 'custom') {
-      return this.settings.logoBackgroundColor || '#ffffff';
+    if (oldBg === 'transparent' || oldBg === 'solid' || oldBgType) {
+      // Old format - use QR colors
+      return {
+        foreground: this.settings.fgColor,
+        background: this.settings.bgColor || '#ffffff'
+      };
     }
 
-    // match-qr: Use QR BACKGROUND color so logo is visible against QR pattern
-    return this.settings.bgColor || '#ffffff';
+    // New format: logoUseCustomColors
+    if (this.settings.logoUseCustomColors) {
+      return {
+        foreground: this.settings.logoForegroundColor || '#000000',
+        background: this.settings.logoBackgroundColor || '#ffffff'
+      };
+    }
+
+    // Auto-match QR colors (default)
+    return {
+      foreground: this.settings.fgColor,
+      background: this.settings.bgColor || '#ffffff'
+    };
   }
 
   private generateLogoSVG(): string {
@@ -388,9 +395,9 @@ export class CustomSVGRenderer {
 
     const size = this.settings.size;
     const logoSize = size * this.settings.logoSize;
-    const cx = size / 2;  // Center x
-    const cy = size / 2;  // Center y
-    const padding = 2;    // Minimal padding around logo
+    const cx = size / 2;
+    const cy = size / 2;
+    const padding = 2;    // Minimal padding
     const bgSize = logoSize + (padding * 2);
     const bgX = cx - bgSize / 2;
     const bgY = cy - bgSize / 2;
@@ -399,7 +406,8 @@ export class CustomSVGRenderer {
 
     let svg = '';
     const shape = this.getEffectiveLogoShape();
-    const fill = this.getLogoBackgroundFill();
+    const colors = this.getLogoColors();
+    const fill = colors.background;
 
 
     // Generate background shape based on logo shape setting
