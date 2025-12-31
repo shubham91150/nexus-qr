@@ -390,6 +390,90 @@ export class CustomSVGRenderer {
     };
   }
 
+  // Apply foreground color to SVG logo by modifying fill/stroke colors
+  private applyColorToSvgLogo(svgDataUrl: string, foregroundColor: string): string {
+    try {
+      // Check if it's an SVG data URL
+      if (!svgDataUrl.startsWith('data:image/svg+xml')) {
+        return svgDataUrl;
+      }
+
+      // Decode the SVG
+      let svgContent = '';
+      if (svgDataUrl.includes('base64,')) {
+        const base64 = svgDataUrl.split('base64,')[1];
+        svgContent = atob(base64);
+      } else {
+        // URL encoded
+        const encoded = svgDataUrl.split(',')[1];
+        svgContent = decodeURIComponent(encoded);
+      }
+
+      // Replace fill and stroke colors in the SVG
+      // Match fill="..." and stroke="..." attributes, excluding 'none' and 'transparent'
+      svgContent = svgContent.replace(
+        /fill\s*=\s*["'](?!none|transparent)([^"']+)["']/gi,
+        `fill="${foregroundColor}"`
+      );
+      svgContent = svgContent.replace(
+        /stroke\s*=\s*["'](?!none|transparent)([^"']+)["']/gi,
+        `stroke="${foregroundColor}"`
+      );
+
+      // Also handle inline styles: fill:...; and stroke:...;
+      svgContent = svgContent.replace(
+        /fill\s*:\s*(?!none|transparent)([^;}"']+)/gi,
+        `fill:${foregroundColor}`
+      );
+      svgContent = svgContent.replace(
+        /stroke\s*:\s*(?!none|transparent)([^;}"']+)/gi,
+        `stroke:${foregroundColor}`
+      );
+
+      // Re-encode as base64 data URL
+      const base64Encoded = btoa(unescape(encodeURIComponent(svgContent)));
+      return `data:image/svg+xml;base64,${base64Encoded}`;
+    } catch (e) {
+      // If parsing fails, return original
+      console.warn('Failed to apply color to SVG logo:', e);
+      return svgDataUrl;
+    }
+  }
+
+  // Generate a unique filter ID for colorizing non-SVG images
+  private generateColorFilterId(): string {
+    return `logoColorFilter_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // Create SVG filter definition for colorizing raster images
+  private createColorFilter(filterId: string, foregroundColor: string): string {
+    // Parse the hex color to RGB values (0-1 range)
+    const hex = foregroundColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+    // Create a color matrix filter that converts image to grayscale then applies the target color
+    return `
+      <defs>
+        <filter id="${filterId}" color-interpolation-filters="sRGB">
+          <!-- Convert to grayscale first -->
+          <feColorMatrix type="matrix"
+            values="0.299 0.587 0.114 0 0
+                    0.299 0.587 0.114 0 0
+                    0.299 0.587 0.114 0 0
+                    0     0     0     1 0"/>
+          <!-- Apply the target color -->
+          <feColorMatrix type="matrix"
+            values="${r} 0 0 0 0
+                    0 ${g} 0 0 0
+                    0 0 ${b} 0 0
+                    0 0 0 1 0"/>
+        </filter>
+      </defs>
+    `;
+  }
+
   private generateLogoSVG(): string {
     if (!this.settings.logoImage) return '';
 
@@ -408,7 +492,7 @@ export class CustomSVGRenderer {
     const shape = this.getEffectiveLogoShape();
     const colors = this.getLogoColors();
     const fill = colors.background;
-
+    const foreground = colors.foreground;
 
     // Generate background shape based on logo shape setting
     switch (shape) {
@@ -425,8 +509,20 @@ export class CustomSVGRenderer {
         break;
     }
 
-    // Add the logo image on top
-    svg += `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${this.settings.logoImage}" preserveAspectRatio="xMidYMid meet" />`;
+    // Apply foreground color to logo
+    const logoImage = this.settings.logoImage;
+    const isSvgLogo = logoImage.startsWith('data:image/svg+xml');
+
+    if (isSvgLogo) {
+      // For SVG logos: directly modify the SVG colors
+      const colorizedLogo = this.applyColorToSvgLogo(logoImage, foreground);
+      svg += `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${colorizedLogo}" preserveAspectRatio="xMidYMid meet" />`;
+    } else {
+      // For raster images (PNG, JPG, etc.): use SVG filter to colorize
+      const filterId = this.generateColorFilterId();
+      svg += this.createColorFilter(filterId, foreground);
+      svg += `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${logoImage}" preserveAspectRatio="xMidYMid meet" filter="url(#${filterId})" />`;
+    }
 
     return svg;
   }
