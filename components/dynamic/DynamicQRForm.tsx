@@ -34,7 +34,9 @@ const INITIAL_STYLE: QRStyleConfig = {
   logoImage: null,
   logoSize: 0.25,
   logoPadding: 0,
-  logoBackground: 'transparent',
+  logoBackgroundType: 'match-qr',
+  logoBackgroundColor: '#ffffff',
+  logoShape: 'auto',
 };
 
 const INITIAL_CONTENT: QRContentData = {
