@@ -490,39 +490,27 @@ export class CustomSVGRenderer {
 
     let svg = '';
     const shape = this.getEffectiveLogoShape();
-    const colors = this.getLogoColors();
-    const fill = colors.background;
-    const foreground = colors.foreground;
+
+    // Use white background for logo visibility (logo keeps original colors)
+    const bgFill = '#ffffff';
 
     // Generate background shape based on logo shape setting
     switch (shape) {
       case 'circle':
-        svg += `<circle cx="${cx}" cy="${cy}" r="${bgSize / 2}" fill="${fill}" />`;
+        svg += `<circle cx="${cx}" cy="${cy}" r="${bgSize / 2}" fill="${bgFill}" />`;
         break;
       case 'rounded':
         const cornerRadius = bgSize * 0.15; // 15% corner radius for rounded rectangle
-        svg += `<rect x="${bgX}" y="${bgY}" width="${bgSize}" height="${bgSize}" rx="${cornerRadius}" ry="${cornerRadius}" fill="${fill}" />`;
+        svg += `<rect x="${bgX}" y="${bgY}" width="${bgSize}" height="${bgSize}" rx="${cornerRadius}" ry="${cornerRadius}" fill="${bgFill}" />`;
         break;
       case 'square':
       default:
-        svg += `<rect x="${bgX}" y="${bgY}" width="${bgSize}" height="${bgSize}" fill="${fill}" />`;
+        svg += `<rect x="${bgX}" y="${bgY}" width="${bgSize}" height="${bgSize}" fill="${bgFill}" />`;
         break;
     }
 
-    // Apply foreground color to logo
-    const logoImage = this.settings.logoImage;
-    const isSvgLogo = logoImage.startsWith('data:image/svg+xml');
-
-    if (isSvgLogo) {
-      // For SVG logos: directly modify the SVG colors
-      const colorizedLogo = this.applyColorToSvgLogo(logoImage, foreground);
-      svg += `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${colorizedLogo}" preserveAspectRatio="xMidYMid meet" />`;
-    } else {
-      // For raster images (PNG, JPG, etc.): use SVG filter to colorize
-      const filterId = this.generateColorFilterId();
-      svg += this.createColorFilter(filterId, foreground);
-      svg += `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${logoImage}" preserveAspectRatio="xMidYMid meet" filter="url(#${filterId})" />`;
-    }
+    // Add the logo image with original colors (no color transformation)
+    svg += `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${this.settings.logoImage}" preserveAspectRatio="xMidYMid meet" />`;
 
     return svg;
   }
