@@ -322,41 +322,46 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                      <p className="text-[10px] text-gray-400 mt-1">Auto detects logo shape and applies matching padding</p>
                  </div>
 
-                 {/* Logo Background Color */}
+                 {/* Custom Color Toggle */}
                  <div>
-                     <label className="text-xs font-medium text-gray-500 mb-2 block">Background Color</label>
-                     <div className="flex items-center gap-2">
-                         <button
-                             onClick={() => update('logoBackgroundType', 'match-qr')}
-                             className={`flex-1 py-2 text-xs rounded-lg border transition-all ${config.logoBackgroundType === 'match-qr' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-                         >
-                             Match QR
-                         </button>
-                         <button
-                             onClick={() => update('logoBackgroundType', 'custom')}
-                             className={`flex-1 py-2 text-xs rounded-lg border transition-all flex items-center justify-center gap-2 ${config.logoBackgroundType === 'custom' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-                         >
-                             Custom Color
-                         </button>
-                     </div>
+                     <button
+                         onClick={() => update('logoUseCustomColors', !config.logoUseCustomColors)}
+                         className={`w-full py-2 rounded-lg text-xs font-medium border transition-all flex items-center justify-center gap-2 ${config.logoUseCustomColors ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                     >
+                         <span>Custom Colors</span>
+                         <div className={`w-4 h-4 rounded-full border ${config.logoUseCustomColors ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}></div>
+                     </button>
                      <p className="text-[10px] text-gray-400 mt-1">
-                         {config.logoBackgroundType === 'match-qr'
-                             ? 'Uses QR background color for logo visibility'
-                             : 'Select a custom background color'}
+                         {config.logoUseCustomColors
+                             ? 'Using custom colors for logo'
+                             : 'Auto-matching QR foreground & background colors'}
                      </p>
                  </div>
 
-                 {/* Custom Color Picker - Only shown when custom is selected */}
-                 {config.logoBackgroundType === 'custom' && (
-                     <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                         <span className="text-xs font-medium text-gray-600">Logo Background</span>
-                         <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm ml-auto">
-                             <input
-                                 type="color"
-                                 value={config.logoBackgroundColor || '#ffffff'}
-                                 onChange={(e) => update('logoBackgroundColor', e.target.value)}
-                                 className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
-                             />
+                 {/* Custom Color Pickers - Only shown when custom colors enabled */}
+                 {config.logoUseCustomColors && (
+                     <div className="space-y-2">
+                         <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                             <span className="text-xs font-medium text-gray-600">Foreground</span>
+                             <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm ml-auto">
+                                 <input
+                                     type="color"
+                                     value={config.logoForegroundColor || '#000000'}
+                                     onChange={(e) => update('logoForegroundColor', e.target.value)}
+                                     className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
+                                 />
+                             </div>
+                         </div>
+                         <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                             <span className="text-xs font-medium text-gray-600">Background</span>
+                             <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm ml-auto">
+                                 <input
+                                     type="color"
+                                     value={config.logoBackgroundColor || '#ffffff'}
+                                     onChange={(e) => update('logoBackgroundColor', e.target.value)}
+                                     className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
+                                 />
+                             </div>
                          </div>
                      </div>
                  )}

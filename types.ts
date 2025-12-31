@@ -34,9 +34,10 @@ export interface QRStyleConfig {
   logoImage: string | null;
   logoSize: number;
   logoPadding: number;
-  logoBackgroundType: 'match-qr' | 'custom';  // match-qr uses QR pattern color, custom uses logoBackgroundColor
-  logoBackgroundColor: string;  // Custom color for logo background
-  logoShape: 'auto' | 'square' | 'circle' | 'rounded';  // Shape of logo padding - auto detects from image
+  logoUseCustomColors: boolean;  // false = auto match QR colors, true = use custom colors
+  logoForegroundColor: string;   // Custom foreground color for logo
+  logoBackgroundColor: string;   // Custom background color for logo
+  logoShape: 'auto' | 'square' | 'circle' | 'rounded';  // Shape of logo padding
 }
 
 export interface QRContentData {
