@@ -164,7 +164,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
           <div className="flex items-center gap-3">
               <ColorInput label="Background" value={config.bgColor} onChange={(v: string) => update('bgColor', v)} />
-              <button 
+              <button
                   onClick={() => update('bgTransparent', !config.bgTransparent)}
                   className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all h-[50px] ${config.bgTransparent ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
               >
@@ -172,6 +172,14 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                   <div className={`w-4 h-4 rounded-full border ${config.bgTransparent ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}></div>
               </button>
           </div>
+
+          {/* Warning if colors are same */}
+          {config.fgColor.toLowerCase() === config.bgColor.toLowerCase() && !config.bgTransparent && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+              <span className="text-red-500 text-lg">⚠️</span>
+              <span className="text-xs text-red-600">Foreground and background colors are same. QR code won't be visible!</span>
+            </div>
+          )}
 
           {/* Custom Corner Colors Toggle */}
           <div className="pt-4 border-t border-dashed border-gray-200">
@@ -333,7 +341,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                      </div>
                      <p className="text-[10px] text-gray-400 mt-1">
                          {config.logoBackgroundType === 'match-qr'
-                             ? 'Uses QR pattern color (solid or gradient)'
+                             ? 'Uses QR background color for logo visibility'
                              : 'Select a custom background color'}
                      </p>
                  </div>

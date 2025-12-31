@@ -366,12 +366,10 @@ export class CustomSVGRenderer {
     // Backward compatibility: Handle old logoBackground property
     const oldBg = (this.settings as any).logoBackground;
     if (oldBg === 'transparent') {
-      // For transparent, use a very light version of the foreground color
-      // or return the background color for contrast
       return this.settings.bgColor || '#ffffff';
     }
     if (oldBg === 'solid') {
-      return '#ffffff'; // Old 'solid' meant white background
+      return '#ffffff';
     }
 
     // New properties
@@ -381,12 +379,8 @@ export class CustomSVGRenderer {
       return this.settings.logoBackgroundColor || '#ffffff';
     }
 
-    // match-qr: Use QR pattern color
-    if (this.settings.isGradient) {
-      return 'url(#logoGradient)';
-    } else {
-      return this.settings.fgColor;
-    }
+    // match-qr: Use QR BACKGROUND color so logo is visible against QR pattern
+    return this.settings.bgColor || '#ffffff';
   }
 
   private generateLogoSVG(): string {
@@ -396,7 +390,7 @@ export class CustomSVGRenderer {
     const logoSize = size * this.settings.logoSize;
     const cx = size / 2;  // Center x
     const cy = size / 2;  // Center y
-    const padding = 8;    // Padding around logo
+    const padding = 2;    // Minimal padding around logo
     const bgSize = logoSize + (padding * 2);
     const bgX = cx - bgSize / 2;
     const bgY = cy - bgSize / 2;
@@ -407,10 +401,6 @@ export class CustomSVGRenderer {
     const shape = this.getEffectiveLogoShape();
     const fill = this.getLogoBackgroundFill();
 
-    // Add gradient definition if needed
-    if (this.settings.logoBackgroundType !== 'custom' && this.settings.isGradient) {
-      svg += '<defs>' + this.generateLogoGradientDef() + '</defs>';
-    }
 
     // Generate background shape based on logo shape setting
     switch (shape) {
