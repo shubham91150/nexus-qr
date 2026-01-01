@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { QRStyleConfig } from '../types';
 import { Palette, Grid, Sliders, Image as ImageIcon, Zap, Monitor, Printer, Tv } from 'lucide-react';
 import { extractLogoColors } from '../services/colorExtractor';
+import { getAllIcons, getCategories, IconItem } from '../services/iconLibrary';
 
 interface Props {
   config: QRStyleConfig;
@@ -10,6 +11,30 @@ interface Props {
 
 export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
   const update = (key: keyof QRStyleConfig, val: any) => onChange({ ...config, [key]: val });
+  const [iconCategory, setIconCategory] = useState<'social' | 'business' | 'general'>('social');
+  const allIcons = getAllIcons();
+  const categories = getCategories();
+  const filteredIcons = allIcons.filter(icon => icon.category === iconCategory);
+
+  // Helper to apply icon with color extraction
+  const applyIcon = async (icon: IconItem) => {
+    const svgDataUrl = `data:image/svg+xml,${encodeURIComponent(icon.svg)}`;
+    try {
+      const colors = await extractLogoColors(svgDataUrl);
+      onChange({
+        ...config,
+        logoImage: svgDataUrl,
+        fgColor: colors.foreground,
+        bgColor: colors.background,
+        isGradient: colors.isGradient,
+        fgColor2: colors.foreground2 || colors.foreground,
+        gradientType: colors.gradientType || 'linear',
+        gradientRotation: colors.gradientRotation || 45
+      });
+    } catch {
+      update('logoImage', svgDataUrl);
+    }
+  };
 
   const ColorInput = ({ label, value, onChange }: any) => (
     <div className="flex-1 min-w-[120px] bg-gray-50 p-2 rounded-xl border border-gray-200 flex items-center justify-between">
@@ -270,9 +295,37 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
             <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
               <ImageIcon size={14} />
             </div>
-            <h3 className="text-sm font-semibold text-gray-800">Add Logo</h3>
+            <h3 className="text-sm font-semibold text-gray-800">Add Logo / Icon</h3>
          </div>
-         
+
+         {/* Icon Library */}
+         <div className="mb-4">
+            <div className="flex gap-1 mb-3">
+               {categories.map((cat) => (
+                  <button
+                     key={cat.id}
+                     onClick={() => setIconCategory(cat.id)}
+                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${iconCategory === cat.id ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                     {cat.name}
+                  </button>
+               ))}
+            </div>
+            <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-1">
+               {filteredIcons.map((icon) => (
+                  <button
+                     key={icon.id}
+                     onClick={() => applyIcon(icon)}
+                     className="w-10 h-10 rounded-lg bg-white border border-gray-200 hover:border-gray-400 hover:shadow-sm transition-all flex items-center justify-center p-1.5"
+                     title={icon.name}
+                  >
+                     <div dangerouslySetInnerHTML={{ __html: icon.svg }} className="w-full h-full" />
+                  </button>
+               ))}
+            </div>
+         </div>
+
+         {/* Upload Custom Logo */}
          <div className="flex items-center gap-4">
              <label className="flex-1 cursor-pointer bg-gray-50 border border-dashed border-gray-300 rounded-xl h-20 flex flex-col items-center justify-center hover:bg-gray-100 transition-colors">
                  <span className="text-xs font-medium text-gray-500">Upload Image</span>
