@@ -184,64 +184,56 @@ const QRGenerator: React.FC<{
 }> = ({ onDashboardClick, onAuthRequired, onApiClick, onPricingClick }) => {
   const { user, loading: authLoading } = useAuth();
 
-  // Read pending state ONCE at component initialization
-  // This runs before any useEffect and ensures values are available immediately
-  const [initialPendingState] = useState(() => {
-    try {
-      const saved = localStorage.getItem(PENDING_QR_STATE_KEY);
-      if (saved) {
-        const state = JSON.parse(saved) as PendingQRState;
-        // Check if state is fresh (less than 30 min old)
-        if (Date.now() - state.timestamp < 30 * 60 * 1000) {
-          console.log('📦 Found pending QR state in localStorage');
-          return state;
-        }
-        // Stale state - remove it
-        localStorage.removeItem(PENDING_QR_STATE_KEY);
-      }
-    } catch (e) {
-      console.error('Error reading pending state:', e);
-    }
-    return null;
-  });
+  // Standard state initialization
+  const [activeTab, setActiveTab] = useState<QRType>('text');
+  const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
+  const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(INITIAL_STYLE);
 
-  // Initialize states - use pending state values if available
-  const [activeTab, setActiveTab] = useState<QRType>(
-    initialPendingState?.activeTab || 'text'
-  );
-  const [contentData, setContentData] = useState<QRContentData>(
-    initialPendingState?.contentData || INITIAL_CONTENT
-  );
-  const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(
-    initialPendingState?.styleConfig || INITIAL_STYLE
-  );
+  // Track if we've restored state for the CURRENT login session
+  const lastRestoredForUser = React.useRef<string | null>(null);
 
-  // Track restoration status
-  const hasEnabledDynamic = React.useRef(false);
-
-  // Enable dynamic QR once user is authenticated
+  // Restore state when user logs in - works for EVERY login, not just first
   useEffect(() => {
-    // Skip if already done or no pending state
-    if (hasEnabledDynamic.current || !initialPendingState) return;
-
     // Wait for auth to finish
     if (authLoading) return;
 
-    // Once user is logged in, enable dynamic if requested
-    if (user && initialPendingState.enableDynamicAfterLogin) {
-      console.log('✅ Enabling dynamic QR after login');
-      hasEnabledDynamic.current = true;
-      setIsDynamic(true);
-      setDynamicTitle(initialPendingState.dynamicTitle);
-      setAnalyticsOptions(initialPendingState.analyticsOptions);
-      // Clear pending state from localStorage
-      clearPendingQRState();
-    } else if (user) {
-      // User logged in but dynamic wasn't requested, just clear
-      hasEnabledDynamic.current = true;
-      clearPendingQRState();
+    // If user logged out, reset the tracker so next login can restore
+    if (!user) {
+      lastRestoredForUser.current = null;
+      return;
     }
-  }, [user, authLoading, initialPendingState]);
+
+    // If we already restored for THIS user session, skip
+    if (lastRestoredForUser.current === user.id) return;
+
+    // Try to get FRESH pending state from localStorage
+    const pendingState = getPendingQRState();
+
+    if (pendingState) {
+      console.log('✅ Restoring QR state after login');
+
+      // Mark as restored for this user
+      lastRestoredForUser.current = user.id;
+
+      // Restore all state
+      setActiveTab(pendingState.activeTab);
+      setContentData(pendingState.contentData);
+      setStyleConfig(pendingState.styleConfig);
+      setDynamicTitle(pendingState.dynamicTitle);
+      setAnalyticsOptions(pendingState.analyticsOptions);
+
+      // Enable dynamic if requested
+      if (pendingState.enableDynamicAfterLogin) {
+        setIsDynamic(true);
+      }
+
+      // Clear from localStorage
+      clearPendingQRState();
+    } else {
+      // No pending state, just mark as done for this user
+      lastRestoredForUser.current = user.id;
+    }
+  }, [user, authLoading]);
 
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
