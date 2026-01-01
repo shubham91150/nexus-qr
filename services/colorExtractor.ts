@@ -106,6 +106,67 @@ function isUsableColor(hex: string): boolean {
 }
 
 /**
+ * Boost color vibrancy/saturation
+ * Makes colors more intense and vibrant
+ */
+function boostVibrancy(hex: string, factor: number = 1.3): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+
+  // Convert RGB to HSL
+  const r = rgb.r / 255;
+  const g = rgb.g / 255;
+  const b = rgb.b / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+
+  // Boost saturation
+  const boostedS = Math.min(1, s * factor);
+
+  // Convert back to RGB
+  let newR, newG, newB;
+
+  if (boostedS === 0) {
+    newR = newG = newB = l;
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + boostedS) : l + boostedS - l * boostedS;
+    const p = 2 * l - q;
+    newR = hue2rgb(p, q, h + 1/3);
+    newG = hue2rgb(p, q, h);
+    newB = hue2rgb(p, q, h - 1/3);
+  }
+
+  return rgbToHex(
+    Math.round(newR * 255),
+    Math.round(newG * 255),
+    Math.round(newB * 255)
+  );
+}
+
+/**
  * Extract dominant colors from an image (with gradient detection)
  * Improved to detect gradient direction and preserve color intensity
  */
@@ -250,9 +311,13 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
           foreground = usableColors[0].color;
         }
 
+        // Boost vibrancy for gradient colors - stronger boost for end color
+        const boostedForeground = boostVibrancy(foreground, 1.2);
+        const boostedForeground2 = foreground2 ? boostVibrancy(foreground2, 1.5) : undefined;
+
         resolve({
-          foreground,
-          foreground2,
+          foreground: boostedForeground,
+          foreground2: boostedForeground2,
           background: '#ffffff',
           isGradient,
           gradientType: isGradient ? 'linear' : undefined,
@@ -392,9 +457,13 @@ export async function extractColorsFromSvg(svgDataUrl: string): Promise<Extracte
       const foreground = gradientStops[0].color;
       const foreground2 = gradientStops[gradientStops.length - 1].color;
 
+      // Boost vibrancy for gradient colors - stronger boost for end color
+      const boostedForeground = boostVibrancy(foreground, 1.2);
+      const boostedForeground2 = boostVibrancy(foreground2, 1.5);
+
       return {
-        foreground,
-        foreground2,
+        foreground: boostedForeground,
+        foreground2: boostedForeground2,
         background: '#ffffff',
         isGradient: true,
         gradientType: hasRadialGradient ? 'radial' : 'linear',
