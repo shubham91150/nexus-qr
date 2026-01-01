@@ -2,6 +2,7 @@
  * Color Extractor Utility
  * Extracts dominant foreground and background colors from logo images
  * Supports gradient detection
+ * ENSURES proper contrast between foreground and background
  */
 
 export interface ExtractedColors {
@@ -23,7 +24,7 @@ interface ColorCount {
  * Convert RGB to hex color
  */
 function rgbToHex(r: number, g: number, b: number): string {
-  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return '#' + [r, g, b].map(x => Math.min(255, Math.max(0, x)).toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -31,6 +32,15 @@ function rgbToHex(r: number, g: number, b: number): string {
  */
 function getBrightness(r: number, g: number, b: number): number {
   return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+/**
+ * Get brightness from hex color
+ */
+function getHexBrightness(hex: string): number {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return 128;
+  return getBrightness(rgb.r, rgb.g, rgb.b);
 }
 
 /**
@@ -49,17 +59,39 @@ function colorDistance(hex1: string, hex2: string): number {
 }
 
 /**
+ * Ensure contrast between foreground and background
+ * Returns corrected colors with guaranteed contrast
+ */
+function ensureContrast(fg: string, bg: string, fg2?: string): { foreground: string; background: string; foreground2?: string } {
+  const fgBrightness = getHexBrightness(fg);
+  const bgBrightness = getHexBrightness(bg);
+  const brightnessDiff = Math.abs(fgBrightness - bgBrightness);
+
+  // Need at least 100 brightness difference for good contrast
+  if (brightnessDiff < 100) {
+    // If foreground is dark (< 128), use white background
+    // If foreground is light (>= 128), use dark foreground or white bg
+    if (fgBrightness < 128) {
+      // Dark foreground - use white background
+      return { foreground: fg, background: '#ffffff', foreground2: fg2 };
+    } else {
+      // Light foreground - use white background and make foreground darker
+      // Or just use the color as-is with white background
+      return { foreground: fg, background: '#ffffff', foreground2: fg2 };
+    }
+  }
+
+  return { foreground: fg, background: bg, foreground2: fg2 };
+}
+
+/**
  * Quantize color to reduce similar colors
  */
 function quantizeColor(r: number, g: number, b: number, factor: number = 32): string {
   const qr = Math.round(r / factor) * factor;
   const qg = Math.round(g / factor) * factor;
   const qb = Math.round(b / factor) * factor;
-  return rgbToHex(
-    Math.min(255, qr),
-    Math.min(255, qg),
-    Math.min(255, qb)
-  );
+  return rgbToHex(qr, qg, qb);
 }
 
 /**
@@ -72,7 +104,6 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
 
     img.onload = () => {
       try {
-        // Create canvas
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) {
@@ -80,20 +111,16 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
           return;
         }
 
-        // Scale down for performance (max 100x100)
         const maxSize = 100;
         const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
         canvas.width = Math.floor(img.width * scale);
         canvas.height = Math.floor(img.height * scale);
 
-        // Draw image
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // Get pixel data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const pixels = imageData.data;
 
-        // Count colors
         const colorCounts: Map<string, ColorCount> = new Map();
 
         for (let i = 0; i < pixels.length; i += 4) {
@@ -102,7 +129,6 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
           const b = pixels[i + 2];
           const a = pixels[i + 3];
 
-          // Skip transparent pixels
           if (a < 128) continue;
 
           const quantized = quantizeColor(r, g, b);
@@ -112,89 +138,43 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
           if (existing) {
             existing.count++;
           } else {
-            colorCounts.set(quantized, {
-              color: quantized,
-              count: 1,
-              brightness
-            });
+            colorCounts.set(quantized, { color: quantized, count: 1, brightness });
           }
         }
 
-        // Convert to array and sort by count
-        const sortedColors = Array.from(colorCounts.values())
-          .sort((a, b) => b.count - a.count);
+        const sortedColors = Array.from(colorCounts.values()).sort((a, b) => b.count - a.count);
 
         if (sortedColors.length === 0) {
           resolve({ foreground: '#000000', background: '#ffffff', isGradient: false });
           return;
         }
 
-        // Separate into light and dark colors
-        const lightColors = sortedColors.filter(c => c.brightness > 128);
-        const darkColors = sortedColors.filter(c => c.brightness <= 128);
+        // Get the most dominant color as foreground
+        const dominantColor = sortedColors[0].color;
 
-        // Get background (lightest prominent color)
-        let background: string;
-        if (lightColors.length > 0) {
-          background = lightColors[0].color;
-        } else {
-          const brightest = [...sortedColors].sort((a, b) => b.brightness - a.brightness)[0];
-          background = brightest.color;
-        }
-
-        // Get foreground colors (for potential gradient)
-        let foreground: string;
+        // Default background to white for best contrast
+        let background = '#ffffff';
+        let foreground = dominantColor;
         let foreground2: string | undefined;
         let isGradient = false;
 
-        if (darkColors.length >= 2) {
-          // Check if we have two distinct dark colors (potential gradient)
-          foreground = darkColors[0].color;
-
-          // Find a second color that's different enough
-          for (let i = 1; i < darkColors.length; i++) {
-            const distance = colorDistance(foreground, darkColors[i].color);
-            // If colors are different enough (distance > 80) and second color has significant presence
-            if (distance > 80 && darkColors[i].count > darkColors[0].count * 0.3) {
-              foreground2 = darkColors[i].color;
-              isGradient = true;
-              break;
-            }
+        // Check if there's a second significantly different color for gradient
+        for (let i = 1; i < sortedColors.length && i < 5; i++) {
+          const distance = colorDistance(foreground, sortedColors[i].color);
+          if (distance > 100 && sortedColors[i].count > sortedColors[0].count * 0.2) {
+            foreground2 = sortedColors[i].color;
+            isGradient = true;
+            break;
           }
-        } else if (darkColors.length === 1) {
-          foreground = darkColors[0].color;
-        } else {
-          // No dark colors, use darkest available
-          const darkest = [...sortedColors].sort((a, b) => a.brightness - b.brightness)[0];
-          foreground = darkest.color;
         }
 
         // Ensure contrast
-        const fgBrightness = getBrightness(
-          parseInt(foreground.slice(1, 3), 16),
-          parseInt(foreground.slice(3, 5), 16),
-          parseInt(foreground.slice(5, 7), 16)
-        );
-        const bgBrightness = getBrightness(
-          parseInt(background.slice(1, 3), 16),
-          parseInt(background.slice(3, 5), 16),
-          parseInt(background.slice(5, 7), 16)
-        );
-
-        if (Math.abs(fgBrightness - bgBrightness) < 50) {
-          if (bgBrightness > 128) {
-            foreground = '#000000';
-            foreground2 = undefined;
-            isGradient = false;
-          } else {
-            background = '#ffffff';
-          }
-        }
+        const corrected = ensureContrast(foreground, background, foreground2);
 
         resolve({
-          foreground,
-          foreground2,
-          background,
+          foreground: corrected.foreground,
+          foreground2: corrected.foreground2,
+          background: corrected.background,
           isGradient,
           gradientType: isGradient ? 'linear' : undefined,
           gradientRotation: isGradient ? 45 : undefined
@@ -206,7 +186,6 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
     };
 
     img.onerror = () => {
-      console.error('Failed to load image for color extraction');
       resolve({ foreground: '#000000', background: '#ffffff', isGradient: false });
     };
 
@@ -219,7 +198,6 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
  */
 export async function extractColorsFromSvg(svgDataUrl: string): Promise<ExtractedColors> {
   try {
-    // Decode SVG content
     let svgContent = '';
     if (svgDataUrl.includes('base64,')) {
       const base64 = svgDataUrl.split('base64,')[1];
@@ -236,93 +214,77 @@ export async function extractColorsFromSvg(svgDataUrl: string): Promise<Extracte
     const hasRadialGradient = /<radialGradient/i.test(svgContent);
     const hasGradient = hasLinearGradient || hasRadialGradient;
 
-    // Extract gradient colors if present
-    let gradientColors: string[] = [];
+    // Extract all colors from SVG
+    const allColors: { color: string; brightness: number }[] = [];
+
+    // Extract gradient stop colors
     if (hasGradient) {
-      // Match stop colors in gradients
-      const stopColorMatches = svgContent.matchAll(/stop[^>]*(?:stop-color\s*[=:]\s*["']?([^"';>\s]+)|style\s*=\s*["'][^"']*stop-color\s*:\s*([^"';>\s]+))/gi);
-      for (const match of stopColorMatches) {
+      const stopMatches = svgContent.matchAll(/<stop[^>]*(?:stop-color\s*[=:]\s*["']?([^"';>\s]+)|style\s*=\s*["'][^"']*stop-color\s*:\s*([^"';>\s]+))[^>]*>/gi);
+      for (const match of stopMatches) {
         const colorStr = match[1] || match[2];
         if (colorStr) {
           const color = parseColor(colorStr);
-          if (color && color !== 'none' && color !== 'transparent') {
-            gradientColors.push(color);
-          }
-        }
-      }
-
-      // Also try matching offset colors
-      const offsetMatches = svgContent.matchAll(/<stop[^>]*offset[^>]*(?:stop-color|style)[^>]*>/gi);
-      for (const match of offsetMatches) {
-        const colorMatch = match[0].match(/(?:stop-color\s*[=:]\s*["']?|stop-color\s*:\s*)([^"';>\s]+)/i);
-        if (colorMatch) {
-          const color = parseColor(colorMatch[1]);
-          if (color && color !== 'none' && color !== 'transparent' && !gradientColors.includes(color)) {
-            gradientColors.push(color);
+          if (color) {
+            allColors.push({ color, brightness: getHexBrightness(color) });
           }
         }
       }
     }
 
-    // Extract regular fill/stroke colors
-    const colors: { color: string; brightness: number }[] = [];
-
-    // Match fill colors
+    // Extract fill colors
     const fillMatches = svgContent.matchAll(/fill\s*[=:]\s*["']?(#[0-9a-fA-F]{3,6}|rgb\([^)]+\)|[a-z]+)["']?/gi);
     for (const match of fillMatches) {
       const color = parseColor(match[1]);
-      if (color && color !== 'none' && color !== 'transparent') {
-        const rgb = hexToRgb(color);
-        if (rgb) {
-          colors.push({
-            color,
-            brightness: getBrightness(rgb.r, rgb.g, rgb.b)
-          });
-        }
+      if (color && color !== '#none' && color !== '#transparent') {
+        allColors.push({ color, brightness: getHexBrightness(color) });
       }
     }
 
-    // Match stroke colors
+    // Extract stroke colors
     const strokeMatches = svgContent.matchAll(/stroke\s*[=:]\s*["']?(#[0-9a-fA-F]{3,6}|rgb\([^)]+\)|[a-z]+)["']?/gi);
     for (const match of strokeMatches) {
       const color = parseColor(match[1]);
-      if (color && color !== 'none' && color !== 'transparent') {
-        const rgb = hexToRgb(color);
-        if (rgb) {
-          colors.push({
-            color,
-            brightness: getBrightness(rgb.r, rgb.g, rgb.b)
-          });
+      if (color && color !== '#none' && color !== '#transparent') {
+        allColors.push({ color, brightness: getHexBrightness(color) });
+      }
+    }
+
+    if (allColors.length === 0) {
+      return { foreground: '#000000', background: '#ffffff', isGradient: false };
+    }
+
+    // Remove white/near-white colors from foreground candidates
+    const foregroundCandidates = allColors.filter(c => c.brightness < 240);
+
+    // If no non-white colors, use the first color
+    const primaryColor = foregroundCandidates.length > 0 ? foregroundCandidates[0] : allColors[0];
+    let foreground = primaryColor.color;
+    let foreground2: string | undefined;
+    let isGradient = false;
+
+    // Check for gradient (two distinct colors)
+    if (hasGradient && foregroundCandidates.length >= 2) {
+      const first = foregroundCandidates[0];
+      for (let i = 1; i < foregroundCandidates.length; i++) {
+        const distance = colorDistance(first.color, foregroundCandidates[i].color);
+        if (distance > 80) {
+          foreground2 = foregroundCandidates[i].color;
+          isGradient = true;
+          break;
         }
       }
     }
 
-    // If we have gradient colors, use them
-    if (gradientColors.length >= 2) {
-      // Sort by brightness
-      const sortedGradientColors = gradientColors.map(color => {
-        const rgb = hexToRgb(color);
-        return {
-          color,
-          brightness: rgb ? getBrightness(rgb.r, rgb.g, rgb.b) : 128
-        };
-      }).sort((a, b) => a.brightness - b.brightness);
+    // ALWAYS use white background for proper contrast
+    const background = '#ffffff';
 
-      // Get two most different colors
-      const darkest = sortedGradientColors[0];
-      const secondColor = sortedGradientColors.find(c => colorDistance(darkest.color, c.color) > 50) || sortedGradientColors[sortedGradientColors.length - 1];
-
-      // Background from other colors or default white
-      const bgColors = colors.filter(c => c.brightness > 128);
-      const background = bgColors.length > 0 ? bgColors[0].color : '#ffffff';
-
-      // Extract gradient rotation from SVG if possible
-      let gradientRotation = 45;
+    // Extract gradient rotation if available
+    let gradientRotation = 45;
+    if (hasGradient) {
       const rotationMatch = svgContent.match(/gradientTransform\s*=\s*["'][^"']*rotate\s*\(\s*([0-9.-]+)/i);
       if (rotationMatch) {
         gradientRotation = parseFloat(rotationMatch[1]);
       } else {
-        // Try to calculate from x1,y1,x2,y2
         const coordMatch = svgContent.match(/x1\s*=\s*["']?([0-9.%]+)["']?\s*y1\s*=\s*["']?([0-9.%]+)["']?\s*x2\s*=\s*["']?([0-9.%]+)["']?\s*y2\s*=\s*["']?([0-9.%]+)/i);
         if (coordMatch) {
           const x1 = parseFloat(coordMatch[1]);
@@ -332,56 +294,22 @@ export async function extractColorsFromSvg(svgDataUrl: string): Promise<Extracte
           gradientRotation = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
         }
       }
-
-      return {
-        foreground: darkest.color,
-        foreground2: secondColor.color,
-        background,
-        isGradient: true,
-        gradientType: hasRadialGradient ? 'radial' : 'linear',
-        gradientRotation
-      };
     }
 
-    // Fallback to regular color extraction
-    if (colors.length === 0) {
-      return extractColorsFromImage(svgDataUrl);
-    }
-
-    // Separate light and dark
-    const lightColors = colors.filter(c => c.brightness > 128);
-    const darkColors = colors.filter(c => c.brightness <= 128);
-
-    const foreground = darkColors.length > 0
-      ? darkColors[0].color
-      : (colors.sort((a, b) => a.brightness - b.brightness)[0]?.color || '#000000');
-
-    const background = lightColors.length > 0
-      ? lightColors[0].color
-      : (colors.sort((a, b) => b.brightness - a.brightness)[0]?.color || '#ffffff');
-
-    // Check for multiple dark colors (possible gradient effect)
-    let foreground2: string | undefined;
-    let isGradient = false;
-    if (darkColors.length >= 2) {
-      const distance = colorDistance(darkColors[0].color, darkColors[1].color);
-      if (distance > 80) {
-        foreground2 = darkColors[1].color;
-        isGradient = true;
-      }
-    }
+    // Final contrast check
+    const corrected = ensureContrast(foreground, background, foreground2);
 
     return {
-      foreground,
-      foreground2,
-      background,
+      foreground: corrected.foreground,
+      foreground2: corrected.foreground2,
+      background: corrected.background,
       isGradient,
-      gradientType: isGradient ? 'linear' : undefined,
-      gradientRotation: isGradient ? 45 : undefined
+      gradientType: hasRadialGradient ? 'radial' : 'linear',
+      gradientRotation
     };
   } catch (error) {
     console.error('Error extracting colors from SVG:', error);
-    return extractColorsFromImage(svgDataUrl);
+    return { foreground: '#000000', background: '#ffffff', isGradient: false };
   }
 }
 
@@ -393,10 +321,12 @@ function parseColor(color: string): string | null {
 
   color = color.trim().toLowerCase();
 
+  // Skip none/transparent
+  if (color === 'none' || color === 'transparent') return null;
+
   // Already hex
   if (color.startsWith('#')) {
     if (color.length === 4) {
-      // Convert #RGB to #RRGGBB
       return '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
     }
     return color;
@@ -405,33 +335,16 @@ function parseColor(color: string): string | null {
   // RGB format
   const rgbMatch = color.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
   if (rgbMatch) {
-    return rgbToHex(
-      parseInt(rgbMatch[1]),
-      parseInt(rgbMatch[2]),
-      parseInt(rgbMatch[3])
-    );
+    return rgbToHex(parseInt(rgbMatch[1]), parseInt(rgbMatch[2]), parseInt(rgbMatch[3]));
   }
 
-  // Named colors (common ones)
+  // Named colors
   const namedColors: Record<string, string> = {
-    black: '#000000',
-    white: '#ffffff',
-    red: '#ff0000',
-    green: '#008000',
-    blue: '#0000ff',
-    yellow: '#ffff00',
-    orange: '#ffa500',
-    purple: '#800080',
-    pink: '#ffc0cb',
-    gray: '#808080',
-    grey: '#808080',
-    cyan: '#00ffff',
-    magenta: '#ff00ff',
-    lime: '#00ff00',
-    navy: '#000080',
-    teal: '#008080',
-    maroon: '#800000',
-    olive: '#808000',
+    black: '#000000', white: '#ffffff', red: '#ff0000', green: '#008000',
+    blue: '#0000ff', yellow: '#ffff00', orange: '#ffa500', purple: '#800080',
+    pink: '#ffc0cb', gray: '#808080', grey: '#808080', cyan: '#00ffff',
+    magenta: '#ff00ff', lime: '#00ff00', navy: '#000080', teal: '#008080',
+    maroon: '#800000', olive: '#808000', silver: '#c0c0c0', aqua: '#00ffff',
   };
 
   return namedColors[color] || null;
