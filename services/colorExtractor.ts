@@ -95,34 +95,19 @@ function quantizeColor(r: number, g: number, b: number, factor: number = 32): st
 }
 
 /**
- * Check if a color is "colorful" (not white, black, or gray)
+ * Check if a color is usable (not pure white)
  */
-function isColorful(hex: string): boolean {
+function isUsableColor(hex: string): boolean {
   const rgb = hexToRgb(hex);
   if (!rgb) return false;
-
-  const { r, g, b } = rgb;
-  const brightness = getBrightness(r, g, b);
-
-  // Check if it's too white (brightness > 240)
-  if (brightness > 240) return false;
-
-  // Check if it's too black (brightness < 15)
-  if (brightness < 15) return false;
-
-  // Check if it's grayscale (r, g, b are very similar)
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const saturation = max === 0 ? 0 : (max - min) / max;
-
-  // If saturation is very low, it's grayish
-  if (saturation < 0.15) return false;
-
-  return true;
+  const brightness = getBrightness(rgb.r, rgb.g, rgb.b);
+  // Only exclude pure white/near-white
+  return brightness < 250;
 }
 
 /**
  * Extract dominant colors from an image (with gradient detection)
+ * Improved to detect gradient direction and preserve color intensity
  */
 export async function extractColorsFromImage(imageDataUrl: string): Promise<ExtractedColors> {
   return new Promise((resolve) => {
@@ -147,27 +132,53 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const pixels = imageData.data;
+        const width = canvas.width;
+        const height = canvas.height;
 
+        // Use smaller quantization factor for more accurate colors
         const colorCounts: Map<string, ColorCount> = new Map();
 
-        for (let i = 0; i < pixels.length; i += 4) {
-          const r = pixels[i];
-          const g = pixels[i + 1];
-          const b = pixels[i + 2];
-          const a = pixels[i + 3];
+        // Also track colors by position for gradient direction detection
+        let topLeftBrightness = 0, topRightBrightness = 0;
+        let bottomLeftBrightness = 0, bottomRightBrightness = 0;
+        let tlCount = 0, trCount = 0, blCount = 0, brCount = 0;
 
-          if (a < 128) continue;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
+            const r = pixels[i];
+            const g = pixels[i + 1];
+            const b = pixels[i + 2];
+            const a = pixels[i + 3];
 
-          const quantized = quantizeColor(r, g, b);
-          const brightness = getBrightness(r, g, b);
+            if (a < 128) continue;
 
-          const existing = colorCounts.get(quantized);
-          if (existing) {
-            existing.count++;
-          } else {
-            colorCounts.set(quantized, { color: quantized, count: 1, brightness });
+            // Less aggressive quantization (factor 24 instead of 32)
+            const quantized = quantizeColor(r, g, b, 24);
+            const brightness = getBrightness(r, g, b);
+
+            const existing = colorCounts.get(quantized);
+            if (existing) {
+              existing.count++;
+            } else {
+              colorCounts.set(quantized, { color: quantized, count: 1, brightness });
+            }
+
+            // Track corner brightness for gradient direction
+            const midX = width / 2;
+            const midY = height / 2;
+            if (x < midX && y < midY) { topLeftBrightness += brightness; tlCount++; }
+            else if (x >= midX && y < midY) { topRightBrightness += brightness; trCount++; }
+            else if (x < midX && y >= midY) { bottomLeftBrightness += brightness; blCount++; }
+            else { bottomRightBrightness += brightness; brCount++; }
           }
         }
+
+        // Calculate average brightness per corner
+        const avgTL = tlCount > 0 ? topLeftBrightness / tlCount : 128;
+        const avgTR = trCount > 0 ? topRightBrightness / trCount : 128;
+        const avgBL = blCount > 0 ? bottomLeftBrightness / blCount : 128;
+        const avgBR = brCount > 0 ? bottomRightBrightness / brCount : 128;
 
         const sortedColors = Array.from(colorCounts.values()).sort((a, b) => b.count - a.count);
 
@@ -176,51 +187,76 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
           return;
         }
 
-        // Separate colorful colors from neutral (white/black/gray)
-        const colorfulColors = sortedColors.filter(c => isColorful(c.color));
-        const darkColors = sortedColors.filter(c => c.brightness < 128);
+        // Get usable colors (non-white)
+        const usableColors = sortedColors.filter(c => isUsableColor(c.color));
+
+        if (usableColors.length === 0) {
+          resolve({ foreground: '#000000', background: '#ffffff', isGradient: false });
+          return;
+        }
+
+        // Sort by brightness to find lightest and darkest
+        const sortedByBrightness = [...usableColors].sort((a, b) => b.brightness - a.brightness);
+        const lightestColor = sortedByBrightness[0];
+        const darkestColor = sortedByBrightness[sortedByBrightness.length - 1];
+
+        // Check if there's enough difference for a gradient
+        const brightnessDiff = lightestColor.brightness - darkestColor.brightness;
+        const colorDist = colorDistance(lightestColor.color, darkestColor.color);
 
         let foreground: string;
         let foreground2: string | undefined;
         let isGradient = false;
+        let gradientRotation = 45;
 
-        // Priority: Use most dominant COLORFUL color
-        if (colorfulColors.length > 0) {
-          foreground = colorfulColors[0].color;
+        if (brightnessDiff > 50 || colorDist > 80) {
+          // We have a gradient
+          isGradient = true;
 
-          // Check for second colorful color for gradient
-          for (let i = 1; i < colorfulColors.length && i < 5; i++) {
-            const distance = colorDistance(foreground, colorfulColors[i].color);
-            if (distance > 80 && colorfulColors[i].count > colorfulColors[0].count * 0.15) {
-              foreground2 = colorfulColors[i].color;
-              isGradient = true;
-              break;
+          // Determine gradient direction based on corner brightness
+          // Find which diagonal has the biggest brightness difference
+          const diag1Diff = Math.abs(avgTL - avgBR); // top-left to bottom-right
+          const diag2Diff = Math.abs(avgTR - avgBL); // top-right to bottom-left
+
+          if (diag1Diff >= diag2Diff) {
+            // Gradient is along top-left to bottom-right diagonal
+            if (avgTL > avgBR) {
+              // Light at top-left, dark at bottom-right (angle ~135deg in CSS)
+              foreground = lightestColor.color;
+              foreground2 = darkestColor.color;
+              gradientRotation = 45; // Will render as 135 with +90 offset
+            } else {
+              // Dark at top-left, light at bottom-right
+              foreground = darkestColor.color;
+              foreground2 = lightestColor.color;
+              gradientRotation = 225; // Will render as 315 with +90 offset
+            }
+          } else {
+            // Gradient is along top-right to bottom-left diagonal
+            if (avgTR > avgBL) {
+              // Light at top-right, dark at bottom-left
+              foreground = lightestColor.color;
+              foreground2 = darkestColor.color;
+              gradientRotation = 315;
+            } else {
+              // Dark at top-right, light at bottom-left
+              foreground = darkestColor.color;
+              foreground2 = lightestColor.color;
+              gradientRotation = 135;
             }
           }
+        } else {
+          // Single color - use the most dominant usable color
+          foreground = usableColors[0].color;
         }
-        // Fallback: Use darkest color if no colorful colors
-        else if (darkColors.length > 0) {
-          foreground = darkColors[0].color;
-        }
-        // Last fallback: Use most dominant non-white color
-        else {
-          const nonWhite = sortedColors.filter(c => c.brightness < 240);
-          foreground = nonWhite.length > 0 ? nonWhite[0].color : '#000000';
-        }
-
-        // Background is always white for best contrast
-        const background = '#ffffff';
-
-        // Final contrast check
-        const corrected = ensureContrast(foreground, background, foreground2);
 
         resolve({
-          foreground: corrected.foreground,
-          foreground2: corrected.foreground2,
-          background: corrected.background,
+          foreground,
+          foreground2,
+          background: '#ffffff',
           isGradient,
           gradientType: isGradient ? 'linear' : undefined,
-          gradientRotation: isGradient ? 45 : undefined
+          gradientRotation: isGradient ? gradientRotation : undefined
         });
       } catch (error) {
         console.error('Error extracting colors:', error);
