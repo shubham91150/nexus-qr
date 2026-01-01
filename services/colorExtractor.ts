@@ -321,44 +321,40 @@ export async function extractColorsFromSvg(svgDataUrl: string): Promise<Extracte
           const x2 = parseFloat(x2Match[1]);
           const y2 = parseFloat(y2Match[1]);
 
-          // Calculate angle from coordinates
-          // Note: SVG y-axis is inverted (0 at top), so we adjust
+          // Calculate angle from SVG coordinates
+          // SVG: x1,y1 is start, x2,y2 is end
+          // CSS gradient: 0deg=bottom-to-top, 90deg=left-to-right
           const deltaX = x2 - x1;
-          const deltaY = y1 - y2; // Inverted for SVG coordinate system
-          gradientRotation = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+          const deltaY = y2 - y1;
+
+          // Calculate angle in CSS gradient convention
+          // atan2 gives angle from positive X axis, CSS gradients measure from positive Y axis
+          let angle = Math.atan2(deltaX, -deltaY) * (180 / Math.PI);
+
+          // QR renderer adds +90deg internally, so we compensate by subtracting 90
+          gradientRotation = angle - 90;
 
           // Normalize to 0-360 range
-          if (gradientRotation < 0) gradientRotation += 360;
+          while (gradientRotation < 0) gradientRotation += 360;
+          while (gradientRotation >= 360) gradientRotation -= 360;
         }
 
         // Also check for gradientTransform rotate
         const rotateMatch = gradientTag.match(/gradientTransform\s*=\s*["'][^"']*rotate\s*\(\s*([0-9.-]+)/i);
         if (rotateMatch) {
-          gradientRotation = parseFloat(rotateMatch[1]);
+          // Apply same compensation for renderer's +90deg offset
+          gradientRotation = parseFloat(rotateMatch[1]) - 90;
+          while (gradientRotation < 0) gradientRotation += 360;
         }
       }
     }
 
-    // If we have gradient stops, use first and last colors
+    // If we have gradient stops, use first and last colors in ORIGINAL order
     if (gradientStops.length >= 2) {
-      const firstColor = gradientStops[0].color;
-      const lastColor = gradientStops[gradientStops.length - 1].color;
-
-      // Determine which should be foreground (darker) and which for gradient
-      const firstBrightness = getHexBrightness(firstColor);
-      const lastBrightness = getHexBrightness(lastColor);
-
-      let foreground: string;
-      let foreground2: string;
-
-      // Use the darker color as primary foreground
-      if (firstBrightness <= lastBrightness) {
-        foreground = firstColor;
-        foreground2 = lastColor;
-      } else {
-        foreground = lastColor;
-        foreground2 = firstColor;
-      }
+      // Use colors in their original gradient order (first stop → last stop)
+      // Don't swap based on brightness - keep the gradient direction intact
+      const foreground = gradientStops[0].color;
+      const foreground2 = gradientStops[gradientStops.length - 1].color;
 
       return {
         foreground,
