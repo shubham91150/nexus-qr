@@ -182,10 +182,21 @@ const QRGenerator: React.FC<{
   onApiClick: () => void;
   onPricingClick: () => void;
 }> = ({ onDashboardClick, onAuthRequired, onApiClick, onPricingClick }) => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<QRType>('text');
-  const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
-  const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(INITIAL_STYLE);
+  const { user, loading: authLoading } = useAuth();
+
+  // Check for pending state on initial render (for restoration after login)
+  const pendingStateOnMount = React.useMemo(() => getPendingQRState(), []);
+
+  // Initialize state - use pending state values if available, otherwise defaults
+  const [activeTab, setActiveTab] = useState<QRType>(
+    pendingStateOnMount?.activeTab || 'text'
+  );
+  const [contentData, setContentData] = useState<QRContentData>(
+    pendingStateOnMount?.contentData || INITIAL_CONTENT
+  );
+  const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(
+    pendingStateOnMount?.styleConfig || INITIAL_STYLE
+  );
 
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
@@ -214,16 +225,45 @@ const QRGenerator: React.FC<{
     setShowWelcome(false);
   };
 
-  // Dynamic QR states
+  // Dynamic QR states - also initialize from pending state if available
   const [isDynamic, setIsDynamic] = useState(false);
-  const [dynamicTitle, setDynamicTitle] = useState('');
-  const [analyticsOptions, setAnalyticsOptions] = useState<AnalyticsOptions>({
-    trackLocation: true,
-    trackDevice: true,
-    trackBrowser: true,
-    trackTime: true,
-    trackReferrer: true,
-  });
+  const [dynamicTitle, setDynamicTitle] = useState(
+    pendingStateOnMount?.dynamicTitle || ''
+  );
+  const [analyticsOptions, setAnalyticsOptions] = useState<AnalyticsOptions>(
+    pendingStateOnMount?.analyticsOptions || {
+      trackLocation: true,
+      trackDevice: true,
+      trackBrowser: true,
+      trackTime: true,
+      trackReferrer: true,
+    }
+  );
+
+  // Track if we've already processed pending state
+  const hasClearedPendingState = React.useRef(false);
+
+  // Enable dynamic QR after user logs in (if they were trying to enable it)
+  // Content/styling is already restored via initial state, this just enables dynamic toggle
+  useEffect(() => {
+    // Skip if already processed or no pending state
+    if (hasClearedPendingState.current || !pendingStateOnMount) return;
+
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    // Once user is logged in and there was pending state with dynamic enabled
+    if (user && pendingStateOnMount.enableDynamicAfterLogin) {
+      console.log('Enabling dynamic QR after successful login');
+      setIsDynamic(true);
+      hasClearedPendingState.current = true;
+      clearPendingQRState();
+    } else if (!user && !authLoading) {
+      // User is not logged in and auth finished loading - clear stale pending state
+      // This prevents stale state from being applied on next login
+      hasClearedPendingState.current = true;
+    }
+  }, [user, authLoading, pendingStateOnMount]);
 
   // Restore pending QR state after login
   useEffect(() => {
