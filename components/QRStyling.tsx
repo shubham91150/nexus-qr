@@ -23,11 +23,19 @@ export const QRStyling: React.FC<Props> = ({ config, onChange }) => {
     }, [value, isEditing]);
 
     const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      let newValue = e.target.value;
+      let newValue = e.target.value.toUpperCase();
       if (!newValue.startsWith('#')) {
         newValue = '#' + newValue.replace('#', '');
       }
       setLocalValue(newValue);
+
+      // Apply color in real-time if valid
+      if (/^#[0-9A-Fa-f]{6}$/.test(newValue)) {
+        onChange(newValue);
+      } else if (/^#[0-9A-Fa-f]{3}$/.test(newValue)) {
+        const expanded = '#' + newValue[1] + newValue[1] + newValue[2] + newValue[2] + newValue[3] + newValue[3];
+        onChange(expanded);
+      }
     };
 
     const handleHexBlur = () => {
