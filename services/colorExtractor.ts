@@ -167,8 +167,19 @@ function boostVibrancy(hex: string, factor: number = 1.3): string {
 }
 
 /**
+ * Get color saturation (0-1)
+ */
+function getColorSaturation(r: number, g: number, b: number): number {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max === 0) return 0;
+  return (max - min) / max;
+}
+
+/**
  * Extract dominant colors from an image (with gradient detection)
- * Finds the two most distinct colors from actual visible pixels
+ * For multi-colored logos (like Google), picks the two most prominent colors
+ * For gradient logos, detects the gradient direction and colors
  */
 export async function extractColorsFromImage(imageDataUrl: string): Promise<ExtractedColors> {
   return new Promise((resolve) => {
@@ -184,7 +195,7 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
           return;
         }
 
-        const maxSize = 150; // Larger for better sampling
+        const maxSize = 150;
         const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
         canvas.width = Math.floor(img.width * scale);
         canvas.height = Math.floor(img.height * scale);
@@ -196,16 +207,9 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
         const width = canvas.width;
         const height = canvas.height;
 
-        // Collect ALL visible pixel colors with their positions
-        interface PixelInfo {
-          r: number;
-          g: number;
-          b: number;
-          x: number;
-          y: number;
-          brightness: number;
-        }
-        const visiblePixels: PixelInfo[] = [];
+        // Step 1: Collect all visible pixels and bucket them by color
+        // Use larger buckets (32) to group similar colors together
+        const colorBuckets: Map<string, { r: number; g: number; b: number; count: number; totalR: number; totalG: number; totalB: number }> = new Map();
 
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
@@ -218,160 +222,120 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
             const b = pixels[i + 2];
             const brightness = getBrightness(r, g, b);
 
-            // Skip pure white/near-white
-            if (brightness > 250) continue;
+            // Skip pure white/near-white and very light colors
+            if (brightness > 240) continue;
 
-            visiblePixels.push({ r, g, b, x, y, brightness });
+            // Skip very desaturated colors (grays)
+            const saturation = getColorSaturation(r, g, b);
+            if (saturation < 0.15 && brightness > 100) continue;
+
+            // Bucket colors with larger grouping for distinct color detection
+            const bucketSize = 32;
+            const br = Math.round(r / bucketSize) * bucketSize;
+            const bg = Math.round(g / bucketSize) * bucketSize;
+            const bb = Math.round(b / bucketSize) * bucketSize;
+            const key = `${br},${bg},${bb}`;
+
+            const existing = colorBuckets.get(key);
+            if (existing) {
+              existing.count++;
+              existing.totalR += r;
+              existing.totalG += g;
+              existing.totalB += b;
+            } else {
+              colorBuckets.set(key, { r: br, g: bg, b: bb, count: 1, totalR: r, totalG: g, totalB: b });
+            }
           }
         }
 
-        if (visiblePixels.length === 0) {
+        if (colorBuckets.size === 0) {
           resolve({ foreground: '#000000', background: '#ffffff', isGradient: false });
           return;
         }
 
-        // Find the two most extreme colors by sampling from different parts of the image
-        // Sort by position to find colors at opposite ends
-        const sortedByY = [...visiblePixels].sort((a, b) => a.y - b.y);
-        const sortedByX = [...visiblePixels].sort((a, b) => a.x - b.x);
+        // Step 2: Convert buckets to array and calculate average colors
+        const colorGroups = Array.from(colorBuckets.values()).map(bucket => ({
+          r: Math.round(bucket.totalR / bucket.count),
+          g: Math.round(bucket.totalG / bucket.count),
+          b: Math.round(bucket.totalB / bucket.count),
+          count: bucket.count,
+          saturation: getColorSaturation(
+            Math.round(bucket.totalR / bucket.count),
+            Math.round(bucket.totalG / bucket.count),
+            Math.round(bucket.totalB / bucket.count)
+          )
+        }));
 
-        // Get colors from top 10% and bottom 10% of visible pixels
-        const topCount = Math.max(1, Math.floor(visiblePixels.length * 0.1));
-        const bottomCount = Math.max(1, Math.floor(visiblePixels.length * 0.1));
+        // Step 3: Sort by count (most pixels) but also consider saturation
+        // Prioritize vibrant colors over dull ones
+        colorGroups.sort((a, b) => {
+          // Score = count * (1 + saturation bonus)
+          const scoreA = a.count * (1 + a.saturation * 0.5);
+          const scoreB = b.count * (1 + b.saturation * 0.5);
+          return scoreB - scoreA;
+        });
 
-        // Average colors from top edge
-        let topR = 0, topG = 0, topB = 0;
-        for (let i = 0; i < topCount; i++) {
-          topR += sortedByY[i].r;
-          topG += sortedByY[i].g;
-          topB += sortedByY[i].b;
+        // Step 4: Get top colors that are sufficiently different from each other
+        const distinctColors: { r: number; g: number; b: number; count: number }[] = [];
+        const minColorDistance = 80; // Minimum distance to be considered a different color
+
+        for (const color of colorGroups) {
+          // Check if this color is sufficiently different from already selected colors
+          let isDistinct = true;
+          for (const selected of distinctColors) {
+            const dist = Math.sqrt(
+              Math.pow(color.r - selected.r, 2) +
+              Math.pow(color.g - selected.g, 2) +
+              Math.pow(color.b - selected.b, 2)
+            );
+            if (dist < minColorDistance) {
+              isDistinct = false;
+              break;
+            }
+          }
+
+          if (isDistinct) {
+            distinctColors.push(color);
+            if (distinctColors.length >= 4) break; // Get up to 4 distinct colors
+          }
         }
-        const topColor = {
-          r: Math.round(topR / topCount),
-          g: Math.round(topG / topCount),
-          b: Math.round(topB / topCount)
-        };
 
-        // Average colors from bottom edge
-        let botR = 0, botG = 0, botB = 0;
-        for (let i = 0; i < bottomCount; i++) {
-          const idx = sortedByY.length - 1 - i;
-          botR += sortedByY[idx].r;
-          botG += sortedByY[idx].g;
-          botB += sortedByY[idx].b;
+        // Ensure we have at least one color
+        if (distinctColors.length === 0 && colorGroups.length > 0) {
+          distinctColors.push(colorGroups[0]);
         }
-        const bottomColor = {
-          r: Math.round(botR / bottomCount),
-          g: Math.round(botG / bottomCount),
-          b: Math.round(botB / bottomCount)
-        };
-
-        // Average colors from left edge
-        let leftR = 0, leftG = 0, leftB = 0;
-        for (let i = 0; i < topCount; i++) {
-          leftR += sortedByX[i].r;
-          leftG += sortedByX[i].g;
-          leftB += sortedByX[i].b;
-        }
-        const leftColor = {
-          r: Math.round(leftR / topCount),
-          g: Math.round(leftG / topCount),
-          b: Math.round(leftB / topCount)
-        };
-
-        // Average colors from right edge
-        let rightR = 0, rightG = 0, rightB = 0;
-        for (let i = 0; i < bottomCount; i++) {
-          const idx = sortedByX.length - 1 - i;
-          rightR += sortedByX[idx].r;
-          rightG += sortedByX[idx].g;
-          rightB += sortedByX[idx].b;
-        }
-        const rightColor = {
-          r: Math.round(rightR / bottomCount),
-          g: Math.round(rightG / bottomCount),
-          b: Math.round(rightB / bottomCount)
-        };
-
-        // Calculate color distances between opposite edges
-        const verticalDist = Math.sqrt(
-          Math.pow(topColor.r - bottomColor.r, 2) +
-          Math.pow(topColor.g - bottomColor.g, 2) +
-          Math.pow(topColor.b - bottomColor.b, 2)
-        );
-        const horizontalDist = Math.sqrt(
-          Math.pow(leftColor.r - rightColor.r, 2) +
-          Math.pow(leftColor.g - rightColor.g, 2) +
-          Math.pow(leftColor.b - rightColor.b, 2)
-        );
 
         let foreground: string;
         let foreground2: string | undefined;
         let isGradient = false;
         let gradientRotation = 45;
 
-        // If significant color difference, we have a gradient
-        const maxDist = Math.max(verticalDist, horizontalDist);
-
-        if (maxDist > 50) {
+        if (distinctColors.length >= 2) {
+          // Multiple distinct colors found - use as gradient
           isGradient = true;
 
-          let startColor: { r: number; g: number; b: number };
-          let endColor: { r: number; g: number; b: number };
+          // Pick the two most prominent distinct colors
+          const color1 = distinctColors[0];
+          const color2 = distinctColors[1];
 
-          if (verticalDist >= horizontalDist) {
-            // Vertical gradient
-            const topBrightness = getBrightness(topColor.r, topColor.g, topColor.b);
-            const bottomBrightness = getBrightness(bottomColor.r, bottomColor.g, bottomColor.b);
+          // Order by brightness - lighter color first (gradient start)
+          const brightness1 = getBrightness(color1.r, color1.g, color1.b);
+          const brightness2 = getBrightness(color2.r, color2.g, color2.b);
 
-            if (topBrightness >= bottomBrightness) {
-              startColor = topColor;
-              endColor = bottomColor;
-              gradientRotation = 180; // Top to bottom
-            } else {
-              startColor = bottomColor;
-              endColor = topColor;
-              gradientRotation = 0; // Bottom to top
-            }
+          if (brightness1 >= brightness2) {
+            foreground = rgbToHex(color1.r, color1.g, color1.b);
+            foreground2 = rgbToHex(color2.r, color2.g, color2.b);
           } else {
-            // Horizontal gradient
-            const leftBrightness = getBrightness(leftColor.r, leftColor.g, leftColor.b);
-            const rightBrightness = getBrightness(rightColor.r, rightColor.g, rightColor.b);
-
-            if (leftBrightness >= rightBrightness) {
-              startColor = leftColor;
-              endColor = rightColor;
-              gradientRotation = 90; // Left to right
-            } else {
-              startColor = rightColor;
-              endColor = leftColor;
-              gradientRotation = 270; // Right to left
-            }
+            foreground = rgbToHex(color2.r, color2.g, color2.b);
+            foreground2 = rgbToHex(color1.r, color1.g, color1.b);
           }
 
-          // Use EXACT colors - NO modification
-          foreground = rgbToHex(startColor.r, startColor.g, startColor.b);
-          foreground2 = rgbToHex(endColor.r, endColor.g, endColor.b);
+          // Default diagonal gradient for multi-color logos
+          gradientRotation = 135;
         } else {
-          // Single dominant color - find most common
-          const colorCounts: Map<string, number> = new Map();
-          for (const p of visiblePixels) {
-            // Group similar colors (reduce precision slightly)
-            const key = `${Math.round(p.r / 8) * 8},${Math.round(p.g / 8) * 8},${Math.round(p.b / 8) * 8}`;
-            colorCounts.set(key, (colorCounts.get(key) || 0) + 1);
-          }
-
-          let maxCount = 0;
-          let dominantKey = '0,0,0';
-          for (const [key, count] of colorCounts) {
-            if (count > maxCount) {
-              maxCount = count;
-              dominantKey = key;
-            }
-          }
-
-          const [r, g, b] = dominantKey.split(',').map(Number);
-          foreground = rgbToHex(r, g, b);
+          // Single dominant color
+          const dominant = distinctColors[0];
+          foreground = rgbToHex(dominant.r, dominant.g, dominant.b);
         }
 
         resolve({
@@ -531,27 +495,78 @@ export async function extractColorsFromSvg(svgDataUrl: string): Promise<Extracte
     }
 
     // Fallback: extract fill/stroke colors for non-gradient SVGs
-    const allColors: { color: string; brightness: number }[] = [];
+    // Collect all colors with their counts
+    const colorCounts: Map<string, number> = new Map();
 
     // Extract fill colors
     const fillMatches = svgContent.matchAll(/fill\s*[=:]\s*["']?(#[0-9a-fA-F]{3,6}|rgb\([^)]+\)|[a-z]+)["']?/gi);
     for (const match of fillMatches) {
       const color = parseColor(match[1]);
       if (color) {
-        allColors.push({ color, brightness: getHexBrightness(color) });
+        const brightness = getHexBrightness(color);
+        // Skip white/near-white colors
+        if (brightness < 240) {
+          colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        }
       }
     }
 
-    if (allColors.length === 0) {
+    if (colorCounts.size === 0) {
       return { foreground: '#000000', background: '#ffffff', isGradient: false };
     }
 
-    // Remove white/near-white colors from foreground candidates
-    const foregroundCandidates = allColors.filter(c => c.brightness < 240);
-    const primaryColor = foregroundCandidates.length > 0 ? foregroundCandidates[0] : allColors[0];
+    // Convert to array and sort by count
+    const sortedColors = Array.from(colorCounts.entries())
+      .map(([color, count]) => ({ color, count, brightness: getHexBrightness(color) }))
+      .sort((a, b) => b.count - a.count);
 
+    // Find distinct colors (with minimum distance)
+    const distinctColors: { color: string; count: number; brightness: number }[] = [];
+    const minDistance = 80;
+
+    for (const item of sortedColors) {
+      let isDistinct = true;
+      for (const selected of distinctColors) {
+        const dist = colorDistance(item.color, selected.color);
+        if (dist < minDistance) {
+          isDistinct = false;
+          break;
+        }
+      }
+      if (isDistinct) {
+        distinctColors.push(item);
+        if (distinctColors.length >= 2) break;
+      }
+    }
+
+    // If we have 2+ distinct colors, create a gradient
+    if (distinctColors.length >= 2) {
+      const color1 = distinctColors[0];
+      const color2 = distinctColors[1];
+
+      // Order by brightness - lighter first
+      let foreground: string, foreground2: string;
+      if (color1.brightness >= color2.brightness) {
+        foreground = color1.color;
+        foreground2 = color2.color;
+      } else {
+        foreground = color2.color;
+        foreground2 = color1.color;
+      }
+
+      return {
+        foreground,
+        foreground2,
+        background: '#ffffff',
+        isGradient: true,
+        gradientType: 'linear',
+        gradientRotation: 135 // Diagonal gradient for multi-color logos
+      };
+    }
+
+    // Single color
     return {
-      foreground: primaryColor.color,
+      foreground: distinctColors[0]?.color || sortedColors[0].color,
       background: '#ffffff',
       isGradient: false
     };
