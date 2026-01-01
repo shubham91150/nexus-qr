@@ -168,7 +168,7 @@ function boostVibrancy(hex: string, factor: number = 1.3): string {
 
 /**
  * Extract dominant colors from an image (with gradient detection)
- * Improved to detect gradient direction and preserve color intensity
+ * Samples actual corner colors for accurate gradient extraction
  */
 export async function extractColorsFromImage(imageDataUrl: string): Promise<ExtractedColors> {
   return new Promise((resolve) => {
@@ -196,124 +196,140 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
         const width = canvas.width;
         const height = canvas.height;
 
-        // Use smaller quantization factor for more accurate colors
-        const colorCounts: Map<string, ColorCount> = new Map();
-
-        // Also track colors by position for gradient direction detection
-        let topLeftBrightness = 0, topRightBrightness = 0;
-        let bottomLeftBrightness = 0, bottomRightBrightness = 0;
-        let tlCount = 0, trCount = 0, blCount = 0, brCount = 0;
-
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const i = (y * width + x) * 4;
-            const r = pixels[i];
-            const g = pixels[i + 1];
-            const b = pixels[i + 2];
-            const a = pixels[i + 3];
-
-            if (a < 128) continue;
-
-            // Less aggressive quantization (factor 24 instead of 32)
-            const quantized = quantizeColor(r, g, b, 24);
-            const brightness = getBrightness(r, g, b);
-
-            const existing = colorCounts.get(quantized);
-            if (existing) {
-              existing.count++;
-            } else {
-              colorCounts.set(quantized, { color: quantized, count: 1, brightness });
+        // Helper to get average color from a region
+        const getRegionColor = (startX: number, startY: number, regionSize: number): { r: number; g: number; b: number } => {
+          let totalR = 0, totalG = 0, totalB = 0, count = 0;
+          for (let y = startY; y < Math.min(startY + regionSize, height); y++) {
+            for (let x = startX; x < Math.min(startX + regionSize, width); x++) {
+              const i = (y * width + x) * 4;
+              const a = pixels[i + 3];
+              if (a < 128) continue;
+              totalR += pixels[i];
+              totalG += pixels[i + 1];
+              totalB += pixels[i + 2];
+              count++;
             }
-
-            // Track corner brightness for gradient direction
-            const midX = width / 2;
-            const midY = height / 2;
-            if (x < midX && y < midY) { topLeftBrightness += brightness; tlCount++; }
-            else if (x >= midX && y < midY) { topRightBrightness += brightness; trCount++; }
-            else if (x < midX && y >= midY) { bottomLeftBrightness += brightness; blCount++; }
-            else { bottomRightBrightness += brightness; brCount++; }
           }
-        }
+          if (count === 0) return { r: 128, g: 128, b: 128 };
+          return {
+            r: Math.round(totalR / count),
+            g: Math.round(totalG / count),
+            b: Math.round(totalB / count)
+          };
+        };
 
-        // Calculate average brightness per corner
-        const avgTL = tlCount > 0 ? topLeftBrightness / tlCount : 128;
-        const avgTR = trCount > 0 ? topRightBrightness / trCount : 128;
-        const avgBL = blCount > 0 ? bottomLeftBrightness / blCount : 128;
-        const avgBR = brCount > 0 ? bottomRightBrightness / brCount : 128;
+        // Sample from 4 corners (using 10% of image size as sample region)
+        const sampleSize = Math.max(3, Math.floor(Math.min(width, height) * 0.1));
 
-        const sortedColors = Array.from(colorCounts.values()).sort((a, b) => b.count - a.count);
+        const topLeft = getRegionColor(0, 0, sampleSize);
+        const topRight = getRegionColor(width - sampleSize, 0, sampleSize);
+        const bottomLeft = getRegionColor(0, height - sampleSize, sampleSize);
+        const bottomRight = getRegionColor(width - sampleSize, height - sampleSize, sampleSize);
 
-        if (sortedColors.length === 0) {
-          resolve({ foreground: '#000000', background: '#ffffff', isGradient: false });
-          return;
-        }
+        // Calculate brightness for each corner
+        const tlBrightness = getBrightness(topLeft.r, topLeft.g, topLeft.b);
+        const trBrightness = getBrightness(topRight.r, topRight.g, topRight.b);
+        const blBrightness = getBrightness(bottomLeft.r, bottomLeft.g, bottomLeft.b);
+        const brBrightness = getBrightness(bottomRight.r, bottomRight.g, bottomRight.b);
 
-        // Get usable colors (non-white)
-        const usableColors = sortedColors.filter(c => isUsableColor(c.color));
+        // Find gradient direction by comparing diagonal brightness differences
+        const diag1Diff = Math.abs(tlBrightness - brBrightness); // TL to BR
+        const diag2Diff = Math.abs(trBrightness - blBrightness); // TR to BL
+        const horizDiff = Math.abs((tlBrightness + blBrightness) / 2 - (trBrightness + brBrightness) / 2);
+        const vertDiff = Math.abs((tlBrightness + trBrightness) / 2 - (blBrightness + brBrightness) / 2);
 
-        if (usableColors.length === 0) {
-          resolve({ foreground: '#000000', background: '#ffffff', isGradient: false });
-          return;
-        }
-
-        // Sort by brightness to find lightest and darkest
-        const sortedByBrightness = [...usableColors].sort((a, b) => b.brightness - a.brightness);
-        const lightestColor = sortedByBrightness[0];
-        const darkestColor = sortedByBrightness[sortedByBrightness.length - 1];
-
-        // Check if there's enough difference for a gradient
-        const brightnessDiff = lightestColor.brightness - darkestColor.brightness;
-        const colorDist = colorDistance(lightestColor.color, darkestColor.color);
+        // Determine if this is a gradient and get endpoint colors
+        const maxDiff = Math.max(diag1Diff, diag2Diff, horizDiff, vertDiff);
 
         let foreground: string;
         let foreground2: string | undefined;
         let isGradient = false;
         let gradientRotation = 45;
 
-        if (brightnessDiff > 50 || colorDist > 80) {
-          // We have a gradient
+        if (maxDiff > 30) {
+          // We have a gradient - determine direction and get actual endpoint colors
           isGradient = true;
 
-          // Determine gradient direction based on corner brightness
-          // Find which diagonal has the biggest brightness difference
-          const diag1Diff = Math.abs(avgTL - avgBR); // top-left to bottom-right
-          const diag2Diff = Math.abs(avgTR - avgBL); // top-right to bottom-left
+          let startColor: { r: number; g: number; b: number };
+          let endColor: { r: number; g: number; b: number };
 
-          if (diag1Diff >= diag2Diff) {
-            // Gradient is along top-left to bottom-right diagonal
-            if (avgTL > avgBR) {
-              // Light at top-left, dark at bottom-right (angle ~135deg in CSS)
-              foreground = lightestColor.color;
-              foreground2 = darkestColor.color;
-              gradientRotation = 45; // Will render as 135 with +90 offset
+          if (diag1Diff >= diag2Diff && diag1Diff >= horizDiff && diag1Diff >= vertDiff) {
+            // Diagonal TL to BR
+            if (tlBrightness > brBrightness) {
+              startColor = topLeft;
+              endColor = bottomRight;
+              gradientRotation = 45;
             } else {
-              // Dark at top-left, light at bottom-right
-              foreground = darkestColor.color;
-              foreground2 = lightestColor.color;
-              gradientRotation = 225; // Will render as 315 with +90 offset
+              startColor = bottomRight;
+              endColor = topLeft;
+              gradientRotation = 225;
             }
-          } else {
-            // Gradient is along top-right to bottom-left diagonal
-            if (avgTR > avgBL) {
-              // Light at top-right, dark at bottom-left
-              foreground = lightestColor.color;
-              foreground2 = darkestColor.color;
+          } else if (diag2Diff >= horizDiff && diag2Diff >= vertDiff) {
+            // Diagonal TR to BL
+            if (trBrightness > blBrightness) {
+              startColor = topRight;
+              endColor = bottomLeft;
               gradientRotation = 315;
             } else {
-              // Dark at top-right, light at bottom-left
-              foreground = darkestColor.color;
-              foreground2 = lightestColor.color;
+              startColor = bottomLeft;
+              endColor = topRight;
               gradientRotation = 135;
             }
+          } else if (horizDiff >= vertDiff) {
+            // Horizontal
+            const leftBrightness = (tlBrightness + blBrightness) / 2;
+            const rightBrightness = (trBrightness + brBrightness) / 2;
+            if (leftBrightness > rightBrightness) {
+              startColor = { r: (topLeft.r + bottomLeft.r) / 2, g: (topLeft.g + bottomLeft.g) / 2, b: (topLeft.b + bottomLeft.b) / 2 };
+              endColor = { r: (topRight.r + bottomRight.r) / 2, g: (topRight.g + bottomRight.g) / 2, b: (topRight.b + bottomRight.b) / 2 };
+              gradientRotation = 0;
+            } else {
+              startColor = { r: (topRight.r + bottomRight.r) / 2, g: (topRight.g + bottomRight.g) / 2, b: (topRight.b + bottomRight.b) / 2 };
+              endColor = { r: (topLeft.r + bottomLeft.r) / 2, g: (topLeft.g + bottomLeft.g) / 2, b: (topLeft.b + bottomLeft.b) / 2 };
+              gradientRotation = 180;
+            }
+          } else {
+            // Vertical
+            const topBrightness = (tlBrightness + trBrightness) / 2;
+            const bottomBrightness = (blBrightness + brBrightness) / 2;
+            if (topBrightness > bottomBrightness) {
+              startColor = { r: (topLeft.r + topRight.r) / 2, g: (topLeft.g + topRight.g) / 2, b: (topLeft.b + topRight.b) / 2 };
+              endColor = { r: (bottomLeft.r + bottomRight.r) / 2, g: (bottomLeft.g + bottomRight.g) / 2, b: (bottomLeft.b + bottomRight.b) / 2 };
+              gradientRotation = 270;
+            } else {
+              startColor = { r: (bottomLeft.r + bottomRight.r) / 2, g: (bottomLeft.g + bottomRight.g) / 2, b: (bottomLeft.b + bottomRight.b) / 2 };
+              endColor = { r: (topLeft.r + topRight.r) / 2, g: (topLeft.g + topRight.g) / 2, b: (topLeft.b + topRight.b) / 2 };
+              gradientRotation = 90;
+            }
           }
+
+          // Convert to hex - use EXACT colors, no quantization
+          foreground = rgbToHex(Math.round(startColor.r), Math.round(startColor.g), Math.round(startColor.b));
+          foreground2 = rgbToHex(Math.round(endColor.r), Math.round(endColor.g), Math.round(endColor.b));
         } else {
-          // Single color - use the most dominant usable color
-          foreground = usableColors[0].color;
+          // Single color - get the most common non-white color
+          const colorCounts: Map<string, number> = new Map();
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] < 128) continue;
+            const hex = rgbToHex(pixels[i], pixels[i + 1], pixels[i + 2]);
+            const brightness = getBrightness(pixels[i], pixels[i + 1], pixels[i + 2]);
+            if (brightness > 245) continue; // Skip white
+            colorCounts.set(hex, (colorCounts.get(hex) || 0) + 1);
+          }
+
+          let maxCount = 0;
+          foreground = '#000000';
+          for (const [color, count] of colorCounts) {
+            if (count > maxCount) {
+              maxCount = count;
+              foreground = color;
+            }
+          }
         }
 
-        // Boost vibrancy for gradient colors - stronger boost for end color
-        const boostedForeground = boostVibrancy(foreground, 1.2);
-        const boostedForeground2 = foreground2 ? boostVibrancy(foreground2, 1.5) : undefined;
+        // Apply vibrancy boost - stronger for end color
+        const boostedForeground = boostVibrancy(foreground, 1.15);
+        const boostedForeground2 = foreground2 ? boostVibrancy(foreground2, 1.25) : undefined;
 
         resolve({
           foreground: boostedForeground,
