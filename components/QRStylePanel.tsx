@@ -291,7 +291,11 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                                          logoImage: imageDataUrl,
                                          fgColor: colors.foreground,
                                          bgColor: colors.background,
-                                         isGradient: false // Reset gradient when applying logo colors
+                                         // Apply gradient if detected in logo
+                                         isGradient: colors.isGradient,
+                                         fgColor2: colors.foreground2 || colors.foreground,
+                                         gradientType: colors.gradientType || 'linear',
+                                         gradientRotation: colors.gradientRotation || 45
                                      });
                                  } catch (error) {
                                      // Fallback: just set the logo without color extraction
@@ -344,7 +348,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                  {/* Logo Color Info */}
                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                      <p className="text-[11px] text-blue-700">
-                         <span className="font-medium">Auto Color Match:</span> QR colors are automatically extracted from your logo. You can manually adjust colors in the Colors section above.
+                         <span className="font-medium">Auto Color Match:</span> QR colors (including gradients) are automatically extracted from your logo. You can manually adjust colors in the Colors section above.
                      </p>
                  </div>
 
