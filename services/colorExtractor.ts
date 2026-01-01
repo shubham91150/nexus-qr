@@ -214,37 +214,127 @@ export async function extractColorsFromSvg(svgDataUrl: string): Promise<Extracte
     const hasRadialGradient = /<radialGradient/i.test(svgContent);
     const hasGradient = hasLinearGradient || hasRadialGradient;
 
-    // Extract all colors from SVG
-    const allColors: { color: string; brightness: number }[] = [];
+    // Extract gradient stop colors in ORDER (important for first/last)
+    const gradientStops: { offset: number; color: string }[] = [];
 
-    // Extract gradient stop colors
     if (hasGradient) {
-      const stopMatches = svgContent.matchAll(/<stop[^>]*(?:stop-color\s*[=:]\s*["']?([^"';>\s]+)|style\s*=\s*["'][^"']*stop-color\s*:\s*([^"';>\s]+))[^>]*>/gi);
-      for (const match of stopMatches) {
-        const colorStr = match[1] || match[2];
+      // Match all stop elements with their offset and color
+      const stopRegex = /<stop[^>]*>/gi;
+      const stops = svgContent.match(stopRegex) || [];
+
+      for (const stop of stops) {
+        // Extract offset
+        const offsetMatch = stop.match(/offset\s*[=:]\s*["']?([0-9.]+%?)/i);
+        let offset = 0;
+        if (offsetMatch) {
+          offset = parseFloat(offsetMatch[1].replace('%', ''));
+          if (offsetMatch[1].includes('%')) offset = offset; // Already percentage
+          else offset = offset * 100; // Convert decimal to percentage
+        }
+
+        // Extract color from stop-color attribute or style
+        let colorStr = '';
+        const colorMatch = stop.match(/stop-color\s*[=:]\s*["']?([^"';>\s]+)/i);
+        if (colorMatch) {
+          colorStr = colorMatch[1];
+        } else {
+          // Try style attribute
+          const styleMatch = stop.match(/style\s*=\s*["'][^"']*stop-color\s*:\s*([^"';>\s]+)/i);
+          if (styleMatch) {
+            colorStr = styleMatch[1];
+          }
+        }
+
         if (colorStr) {
           const color = parseColor(colorStr);
           if (color) {
-            allColors.push({ color, brightness: getHexBrightness(color) });
+            gradientStops.push({ offset, color });
           }
         }
       }
+
+      // Sort by offset to ensure first and last are correct
+      gradientStops.sort((a, b) => a.offset - b.offset);
     }
+
+    // Extract gradient direction/angle
+    let gradientRotation = 45; // Default diagonal
+
+    if (hasLinearGradient) {
+      // Try to get coordinates from linearGradient
+      const gradientMatch = svgContent.match(/<linearGradient[^>]*>/i);
+      if (gradientMatch) {
+        const gradientTag = gradientMatch[0];
+
+        // Extract x1, y1, x2, y2
+        const x1Match = gradientTag.match(/x1\s*=\s*["']?([0-9.]+%?)/i);
+        const y1Match = gradientTag.match(/y1\s*=\s*["']?([0-9.]+%?)/i);
+        const x2Match = gradientTag.match(/x2\s*=\s*["']?([0-9.]+%?)/i);
+        const y2Match = gradientTag.match(/y2\s*=\s*["']?([0-9.]+%?)/i);
+
+        if (x1Match && y1Match && x2Match && y2Match) {
+          const x1 = parseFloat(x1Match[1]);
+          const y1 = parseFloat(y1Match[1]);
+          const x2 = parseFloat(x2Match[1]);
+          const y2 = parseFloat(y2Match[1]);
+
+          // Calculate angle from coordinates
+          // Note: SVG y-axis is inverted (0 at top), so we adjust
+          const deltaX = x2 - x1;
+          const deltaY = y1 - y2; // Inverted for SVG coordinate system
+          gradientRotation = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+          // Normalize to 0-360 range
+          if (gradientRotation < 0) gradientRotation += 360;
+        }
+
+        // Also check for gradientTransform rotate
+        const rotateMatch = gradientTag.match(/gradientTransform\s*=\s*["'][^"']*rotate\s*\(\s*([0-9.-]+)/i);
+        if (rotateMatch) {
+          gradientRotation = parseFloat(rotateMatch[1]);
+        }
+      }
+    }
+
+    // If we have gradient stops, use first and last colors
+    if (gradientStops.length >= 2) {
+      const firstColor = gradientStops[0].color;
+      const lastColor = gradientStops[gradientStops.length - 1].color;
+
+      // Determine which should be foreground (darker) and which for gradient
+      const firstBrightness = getHexBrightness(firstColor);
+      const lastBrightness = getHexBrightness(lastColor);
+
+      let foreground: string;
+      let foreground2: string;
+
+      // Use the darker color as primary foreground
+      if (firstBrightness <= lastBrightness) {
+        foreground = firstColor;
+        foreground2 = lastColor;
+      } else {
+        foreground = lastColor;
+        foreground2 = firstColor;
+      }
+
+      return {
+        foreground,
+        foreground2,
+        background: '#ffffff',
+        isGradient: true,
+        gradientType: hasRadialGradient ? 'radial' : 'linear',
+        gradientRotation
+      };
+    }
+
+    // Fallback: extract fill/stroke colors for non-gradient SVGs
+    const allColors: { color: string; brightness: number }[] = [];
 
     // Extract fill colors
     const fillMatches = svgContent.matchAll(/fill\s*[=:]\s*["']?(#[0-9a-fA-F]{3,6}|rgb\([^)]+\)|[a-z]+)["']?/gi);
     for (const match of fillMatches) {
       const color = parseColor(match[1]);
-      if (color && color !== '#none' && color !== '#transparent') {
-        allColors.push({ color, brightness: getHexBrightness(color) });
-      }
-    }
-
-    // Extract stroke colors
-    const strokeMatches = svgContent.matchAll(/stroke\s*[=:]\s*["']?(#[0-9a-fA-F]{3,6}|rgb\([^)]+\)|[a-z]+)["']?/gi);
-    for (const match of strokeMatches) {
-      const color = parseColor(match[1]);
-      if (color && color !== '#none' && color !== '#transparent') {
+      if (color) {
         allColors.push({ color, brightness: getHexBrightness(color) });
       }
     }
@@ -255,57 +345,12 @@ export async function extractColorsFromSvg(svgDataUrl: string): Promise<Extracte
 
     // Remove white/near-white colors from foreground candidates
     const foregroundCandidates = allColors.filter(c => c.brightness < 240);
-
-    // If no non-white colors, use the first color
     const primaryColor = foregroundCandidates.length > 0 ? foregroundCandidates[0] : allColors[0];
-    let foreground = primaryColor.color;
-    let foreground2: string | undefined;
-    let isGradient = false;
-
-    // Check for gradient (two distinct colors)
-    if (hasGradient && foregroundCandidates.length >= 2) {
-      const first = foregroundCandidates[0];
-      for (let i = 1; i < foregroundCandidates.length; i++) {
-        const distance = colorDistance(first.color, foregroundCandidates[i].color);
-        if (distance > 80) {
-          foreground2 = foregroundCandidates[i].color;
-          isGradient = true;
-          break;
-        }
-      }
-    }
-
-    // ALWAYS use white background for proper contrast
-    const background = '#ffffff';
-
-    // Extract gradient rotation if available
-    let gradientRotation = 45;
-    if (hasGradient) {
-      const rotationMatch = svgContent.match(/gradientTransform\s*=\s*["'][^"']*rotate\s*\(\s*([0-9.-]+)/i);
-      if (rotationMatch) {
-        gradientRotation = parseFloat(rotationMatch[1]);
-      } else {
-        const coordMatch = svgContent.match(/x1\s*=\s*["']?([0-9.%]+)["']?\s*y1\s*=\s*["']?([0-9.%]+)["']?\s*x2\s*=\s*["']?([0-9.%]+)["']?\s*y2\s*=\s*["']?([0-9.%]+)/i);
-        if (coordMatch) {
-          const x1 = parseFloat(coordMatch[1]);
-          const y1 = parseFloat(coordMatch[2]);
-          const x2 = parseFloat(coordMatch[3]);
-          const y2 = parseFloat(coordMatch[4]);
-          gradientRotation = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-        }
-      }
-    }
-
-    // Final contrast check
-    const corrected = ensureContrast(foreground, background, foreground2);
 
     return {
-      foreground: corrected.foreground,
-      foreground2: corrected.foreground2,
-      background: corrected.background,
-      isGradient,
-      gradientType: hasRadialGradient ? 'radial' : 'linear',
-      gradientRotation
+      foreground: primaryColor.color,
+      background: '#ffffff',
+      isGradient: false
     };
   } catch (error) {
     console.error('Error extracting colors from SVG:', error);
