@@ -189,51 +189,49 @@ const QRGenerator: React.FC<{
   const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
   const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(INITIAL_STYLE);
 
-  // Ref to track if we've restored pending state this session
-  const hasRestoredState = React.useRef(false);
-  // Ref to track if user was previously logged out
-  const wasLoggedOutRef = React.useRef(true);
+  // Flag to track if we've already restored state (persists across renders)
+  const restorationDone = React.useRef(false);
 
-  // Single useEffect to handle state restoration after login
-  // Works for both email/password (no reload) and OAuth (page reload)
+  // Restore pending state after login - check on EVERY render until done
+  // This is more reliable than tracking state transitions
   useEffect(() => {
-    // Skip if already restored this session
-    if (hasRestoredState.current) return;
+    // Only try restoration once
+    if (restorationDone.current) return;
 
-    // Skip while auth is still loading
+    // Wait for auth to finish loading
     if (authLoading) return;
 
-    // Check if user just logged in (was logged out, now logged in)
-    const isLoggedIn = user !== null;
-    const wasLoggedOut = wasLoggedOutRef.current;
+    // Only restore if user is logged in
+    if (!user) return;
 
-    // Update the ref for next render
-    wasLoggedOutRef.current = !isLoggedIn;
+    // Try to get pending state from localStorage
+    const pendingState = getPendingQRState();
 
-    // If user is now logged in and was previously logged out
-    if (isLoggedIn && wasLoggedOut) {
-      const pendingState = getPendingQRState();
-      if (pendingState) {
-        console.log('Restoring QR state after login:', pendingState);
-        hasRestoredState.current = true;
+    if (pendingState) {
+      console.log('✅ Restoring QR state after login');
 
-        // Restore all state
-        setActiveTab(pendingState.activeTab);
-        setContentData(pendingState.contentData);
-        setStyleConfig(pendingState.styleConfig);
-        setDynamicTitle(pendingState.dynamicTitle);
-        setAnalyticsOptions(pendingState.analyticsOptions);
+      // Mark as done BEFORE setting state to prevent loops
+      restorationDone.current = true;
 
-        // Enable dynamic if user was trying to enable it
-        if (pendingState.enableDynamicAfterLogin) {
-          setIsDynamic(true);
-        }
+      // Restore all state values
+      setActiveTab(pendingState.activeTab);
+      setContentData(pendingState.contentData);
+      setStyleConfig(pendingState.styleConfig);
+      setDynamicTitle(pendingState.dynamicTitle);
+      setAnalyticsOptions(pendingState.analyticsOptions);
 
-        // Clear pending state after restoration
-        clearPendingQRState();
+      // Enable dynamic QR if that's what user wanted
+      if (pendingState.enableDynamicAfterLogin) {
+        setIsDynamic(true);
       }
+
+      // Clear from localStorage after successful restoration
+      clearPendingQRState();
+    } else {
+      // No pending state, but user is logged in - mark as done
+      restorationDone.current = true;
     }
-  }, [user, authLoading]);
+  }); // No dependencies - run on every render until done
 
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
