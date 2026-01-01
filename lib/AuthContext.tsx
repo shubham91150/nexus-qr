@@ -221,10 +221,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    // Use the full current URL as redirect, not just origin
+    // This ensures PKCE verifier is found after redirect on Vercel preview deployments
+    const currentUrl = window.location.href.split('?')[0]; // Remove any query params
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: currentUrl,
       },
     });
     return { error: error ? new Error(error.message) : null };
