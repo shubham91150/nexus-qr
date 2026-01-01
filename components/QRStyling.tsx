@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { QRStyleConfig } from '../types';
 import { Palette, Grid, Image as ImageIcon } from 'lucide-react';
 
@@ -10,19 +10,76 @@ interface Props {
 export const QRStyling: React.FC<Props> = ({ config, onChange }) => {
   const update = (key: keyof QRStyleConfig, val: any) => onChange({ ...config, [key]: val });
 
-  const ColorInput = ({ label, value, onChange }: any) => (
-    <div className="flex-1 min-w-[120px] bg-gray-50 p-2 rounded-xl border border-gray-200 flex items-center justify-between">
-      <span className="text-xs font-medium text-gray-600 uppercase">{label}</span>
-      <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-        <input 
-          type="color" 
-          value={value} 
-          onChange={(e) => onChange(e.target.value)}
-          className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
-        />
+  const ColorInput = ({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) => {
+    const [localValue, setLocalValue] = useState(value);
+    const [isEditing, setIsEditing] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Sync local value when prop changes (but not while editing)
+    useEffect(() => {
+      if (!isEditing) {
+        setLocalValue(value);
+      }
+    }, [value, isEditing]);
+
+    const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      let newValue = e.target.value;
+      if (!newValue.startsWith('#')) {
+        newValue = '#' + newValue.replace('#', '');
+      }
+      setLocalValue(newValue);
+    };
+
+    const handleHexBlur = () => {
+      setIsEditing(false);
+      const hex = localValue.trim();
+      if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        onChange(hex);
+      } else if (/^#[0-9A-Fa-f]{3}$/.test(hex)) {
+        const expanded = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+        onChange(expanded);
+        setLocalValue(expanded);
+      } else {
+        setLocalValue(value);
+      }
+    };
+
+    const handleHexKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        inputRef.current?.blur();
+      }
+    };
+
+    return (
+      <div className="flex-1 min-w-[140px] bg-gray-50 p-2 rounded-xl border border-gray-200">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-gray-600 uppercase">{label}</span>
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={localValue}
+              onChange={handleHexChange}
+              onFocus={() => setIsEditing(true)}
+              onBlur={handleHexBlur}
+              onKeyDown={handleHexKeyDown}
+              className="w-[70px] text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-1 text-center uppercase focus:outline-none focus:border-gray-400"
+              maxLength={7}
+            />
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+              <input
+                type="color"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
+              />
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="mt-8">
