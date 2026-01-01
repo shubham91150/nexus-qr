@@ -95,6 +95,33 @@ function quantizeColor(r: number, g: number, b: number, factor: number = 32): st
 }
 
 /**
+ * Check if a color is "colorful" (not white, black, or gray)
+ */
+function isColorful(hex: string): boolean {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+
+  const { r, g, b } = rgb;
+  const brightness = getBrightness(r, g, b);
+
+  // Check if it's too white (brightness > 240)
+  if (brightness > 240) return false;
+
+  // Check if it's too black (brightness < 15)
+  if (brightness < 15) return false;
+
+  // Check if it's grayscale (r, g, b are very similar)
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const saturation = max === 0 ? 0 : (max - min) / max;
+
+  // If saturation is very low, it's grayish
+  if (saturation < 0.15) return false;
+
+  return true;
+}
+
+/**
  * Extract dominant colors from an image (with gradient detection)
  */
 export async function extractColorsFromImage(imageDataUrl: string): Promise<ExtractedColors> {
@@ -149,26 +176,42 @@ export async function extractColorsFromImage(imageDataUrl: string): Promise<Extr
           return;
         }
 
-        // Get the most dominant color as foreground
-        const dominantColor = sortedColors[0].color;
+        // Separate colorful colors from neutral (white/black/gray)
+        const colorfulColors = sortedColors.filter(c => isColorful(c.color));
+        const darkColors = sortedColors.filter(c => c.brightness < 128);
 
-        // Default background to white for best contrast
-        let background = '#ffffff';
-        let foreground = dominantColor;
+        let foreground: string;
         let foreground2: string | undefined;
         let isGradient = false;
 
-        // Check if there's a second significantly different color for gradient
-        for (let i = 1; i < sortedColors.length && i < 5; i++) {
-          const distance = colorDistance(foreground, sortedColors[i].color);
-          if (distance > 100 && sortedColors[i].count > sortedColors[0].count * 0.2) {
-            foreground2 = sortedColors[i].color;
-            isGradient = true;
-            break;
+        // Priority: Use most dominant COLORFUL color
+        if (colorfulColors.length > 0) {
+          foreground = colorfulColors[0].color;
+
+          // Check for second colorful color for gradient
+          for (let i = 1; i < colorfulColors.length && i < 5; i++) {
+            const distance = colorDistance(foreground, colorfulColors[i].color);
+            if (distance > 80 && colorfulColors[i].count > colorfulColors[0].count * 0.15) {
+              foreground2 = colorfulColors[i].color;
+              isGradient = true;
+              break;
+            }
           }
         }
+        // Fallback: Use darkest color if no colorful colors
+        else if (darkColors.length > 0) {
+          foreground = darkColors[0].color;
+        }
+        // Last fallback: Use most dominant non-white color
+        else {
+          const nonWhite = sortedColors.filter(c => c.brightness < 240);
+          foreground = nonWhite.length > 0 ? nonWhite[0].color : '#000000';
+        }
 
-        // Ensure contrast
+        // Background is always white for best contrast
+        const background = '#ffffff';
+
+        // Final contrast check
         const corrected = ensureContrast(foreground, background, foreground2);
 
         resolve({
