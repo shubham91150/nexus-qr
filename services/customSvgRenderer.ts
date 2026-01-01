@@ -481,7 +481,7 @@ export class CustomSVGRenderer {
     const logoSize = size * this.settings.logoSize;
     const cx = size / 2;
     const cy = size / 2;
-    const padding = 2;    // Minimal padding
+    const padding = 0;    // No padding - logo fills the space
     const bgSize = logoSize + (padding * 2);
     const bgX = cx - bgSize / 2;
     const bgY = cy - bgSize / 2;
