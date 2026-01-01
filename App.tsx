@@ -121,6 +121,60 @@ const INITIAL_CONTENT: QRContentData = {
   value: ''
 };
 
+// Key for saving QR state before login
+const PENDING_QR_STATE_KEY = 'nexus_qr_pending_state';
+
+// Interface for saved QR state
+interface PendingQRState {
+  activeTab: QRType;
+  contentData: QRContentData;
+  styleConfig: QRStyleConfig;
+  enableDynamicAfterLogin: boolean;
+  dynamicTitle: string;
+  analyticsOptions: AnalyticsOptions;
+  timestamp: number;
+}
+
+// Save QR state before login redirect
+const savePendingQRState = (state: Omit<PendingQRState, 'timestamp'>) => {
+  try {
+    const stateWithTimestamp: PendingQRState = {
+      ...state,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(PENDING_QR_STATE_KEY, JSON.stringify(stateWithTimestamp));
+  } catch (e) {
+    console.error('Failed to save pending QR state:', e);
+  }
+};
+
+// Get saved QR state after login
+const getPendingQRState = (): PendingQRState | null => {
+  try {
+    const saved = localStorage.getItem(PENDING_QR_STATE_KEY);
+    if (!saved) return null;
+
+    const state = JSON.parse(saved) as PendingQRState;
+
+    // Check if state is not older than 30 minutes
+    const thirtyMinutes = 30 * 60 * 1000;
+    if (Date.now() - state.timestamp > thirtyMinutes) {
+      localStorage.removeItem(PENDING_QR_STATE_KEY);
+      return null;
+    }
+
+    return state;
+  } catch (e) {
+    console.error('Failed to get pending QR state:', e);
+    return null;
+  }
+};
+
+// Clear saved QR state
+const clearPendingQRState = () => {
+  localStorage.removeItem(PENDING_QR_STATE_KEY);
+};
+
 // Main QR Generator Component
 const QRGenerator: React.FC<{
   onDashboardClick: () => void;
@@ -128,10 +182,21 @@ const QRGenerator: React.FC<{
   onApiClick: () => void;
   onPricingClick: () => void;
 }> = ({ onDashboardClick, onAuthRequired, onApiClick, onPricingClick }) => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<QRType>('text');
-  const [contentData, setContentData] = useState<QRContentData>(INITIAL_CONTENT);
-  const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(INITIAL_STYLE);
+  const { user, loading: authLoading } = useAuth();
+
+  // Check for pending state on initial render (for restoration after login)
+  const pendingStateOnMount = React.useMemo(() => getPendingQRState(), []);
+
+  // Initialize state - use pending state values if available, otherwise defaults
+  const [activeTab, setActiveTab] = useState<QRType>(
+    pendingStateOnMount?.activeTab || 'text'
+  );
+  const [contentData, setContentData] = useState<QRContentData>(
+    pendingStateOnMount?.contentData || INITIAL_CONTENT
+  );
+  const [styleConfig, setStyleConfig] = useState<QRStyleConfig>(
+    pendingStateOnMount?.styleConfig || INITIAL_STYLE
+  );
 
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
@@ -160,16 +225,45 @@ const QRGenerator: React.FC<{
     setShowWelcome(false);
   };
 
-  // Dynamic QR states
+  // Dynamic QR states - also initialize from pending state if available
   const [isDynamic, setIsDynamic] = useState(false);
-  const [dynamicTitle, setDynamicTitle] = useState('');
-  const [analyticsOptions, setAnalyticsOptions] = useState<AnalyticsOptions>({
-    trackLocation: true,
-    trackDevice: true,
-    trackBrowser: true,
-    trackTime: true,
-    trackReferrer: true,
-  });
+  const [dynamicTitle, setDynamicTitle] = useState(
+    pendingStateOnMount?.dynamicTitle || ''
+  );
+  const [analyticsOptions, setAnalyticsOptions] = useState<AnalyticsOptions>(
+    pendingStateOnMount?.analyticsOptions || {
+      trackLocation: true,
+      trackDevice: true,
+      trackBrowser: true,
+      trackTime: true,
+      trackReferrer: true,
+    }
+  );
+
+  // Track if we've already processed pending state
+  const hasClearedPendingState = React.useRef(false);
+
+  // Enable dynamic QR after user logs in (if they were trying to enable it)
+  // Content/styling is already restored via initial state, this just enables dynamic toggle
+  useEffect(() => {
+    // Skip if already processed or no pending state
+    if (hasClearedPendingState.current || !pendingStateOnMount) return;
+
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    // Once user is logged in and there was pending state with dynamic enabled
+    if (user && pendingStateOnMount.enableDynamicAfterLogin) {
+      console.log('Enabling dynamic QR after successful login');
+      setIsDynamic(true);
+      hasClearedPendingState.current = true;
+      clearPendingQRState();
+    } else if (!user && !authLoading) {
+      // User is not logged in and auth finished loading - clear stale pending state
+      // This prevents stale state from being applied on next login
+      hasClearedPendingState.current = true;
+    }
+  }, [user, authLoading, pendingStateOnMount]);
 
   // Auto-generate title based on content type and data
   const generateAutoTitle = (type: QRType, data: QRContentData): string => {
@@ -212,6 +306,16 @@ const QRGenerator: React.FC<{
   // Handle Dynamic QR toggle
   const handleDynamicToggle = (checked: boolean) => {
     if (checked && !user) {
+      // Save current state before login redirect
+      const autoTitle = generateAutoTitle(activeTab, contentData);
+      savePendingQRState({
+        activeTab,
+        contentData,
+        styleConfig,
+        enableDynamicAfterLogin: true,
+        dynamicTitle: autoTitle,
+        analyticsOptions
+      });
       onAuthRequired();
       return;
     }
@@ -238,6 +342,16 @@ const QRGenerator: React.FC<{
         // Auto-generate title for dynamic-only types
         setDynamicTitle(generateAutoTitle(type, newContentData));
       } else {
+        // Save current state before login redirect for dynamic-only types
+        const autoTitle = generateAutoTitle(type, newContentData);
+        savePendingQRState({
+          activeTab: type,
+          contentData: newContentData,
+          styleConfig,
+          enableDynamicAfterLogin: true,
+          dynamicTitle: autoTitle,
+          analyticsOptions
+        });
         // If not logged in, prompt login when switching to dynamic-only types
         onAuthRequired();
       }
