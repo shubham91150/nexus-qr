@@ -448,28 +448,33 @@ const QRGenerator: React.FC<{
     return `${label} QR - ${timestamp}`;
   };
 
+  // Wrapper function that saves state BEFORE opening auth modal
+  // This ensures state is preserved regardless of which login button is clicked
+  const handleAuthWithStateSave = (enableDynamicAfterLogin: boolean = false) => {
+    console.log('🔐 handleAuthWithStateSave called - saving current state before auth');
+
+    const autoTitle = dynamicTitle || generateAutoTitle(activeTab, contentData);
+
+    savePendingQRState({
+      activeTab,
+      contentData,
+      styleConfig,
+      enableDynamicAfterLogin,
+      dynamicTitle: autoTitle,
+      analyticsOptions
+    });
+
+    onAuthRequired();
+  };
+
   // Handle Dynamic QR toggle
   const handleDynamicToggle = (checked: boolean) => {
     console.log('🔘 handleDynamicToggle called:', { checked, hasUser: !!user });
 
     if (checked && !user) {
-      // Save current state before login redirect
-      const autoTitle = generateAutoTitle(activeTab, contentData);
-      console.log('🔘 Saving state before auth - activeTab:', activeTab, 'content:', contentData.value?.slice(0, 50));
-
-      savePendingQRState({
-        activeTab,
-        contentData,
-        styleConfig,
-        enableDynamicAfterLogin: true,
-        dynamicTitle: autoTitle,
-        analyticsOptions
-      });
-
-      // Verify save worked
-      console.log('🔘 After save - localStorage has data:', !!localStorage.getItem(PENDING_QR_STATE_KEY));
-
-      onAuthRequired();
+      // Use wrapper that saves state and opens auth modal
+      // enableDynamicAfterLogin=true so dynamic gets enabled after login
+      handleAuthWithStateSave(true);
       return;
     }
     setIsDynamic(checked);
@@ -576,7 +581,7 @@ const QRGenerator: React.FC<{
            >
              <HelpCircle size={20} />
            </button>
-           <ProfileMenu onLoginClick={onAuthRequired} />
+           <ProfileMenu onLoginClick={() => handleAuthWithStateSave()} />
          </div>
       </div>
 
@@ -783,7 +788,7 @@ const QRGenerator: React.FC<{
                 <button
                   onClick={() => {
                     if (!user) {
-                      onAuthRequired();
+                      handleAuthWithStateSave();
                       return;
                     }
                     setShowSaveTemplate(true);
