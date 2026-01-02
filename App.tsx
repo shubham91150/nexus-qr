@@ -165,61 +165,103 @@ const deleteCookie = (name: string) => {
 // Generate a unique session ID
 const generateSessionId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-// Save QR state before login redirect - use COOKIES + localStorage + sessionStorage
+// Save QR state before login redirect
+// Strategy: Cookie is used as a FLAG only (small size), actual data in localStorage
 const savePendingQRState = (state: Omit<PendingQRState, 'timestamp' | 'sessionId'>) => {
   try {
     const sessionId = generateSessionId();
-    const stateWithMeta: PendingQRState = {
+
+    // Create a lightweight version for cookie (exclude large data like logoImage)
+    const lightState = {
+      ...state,
+      styleConfig: {
+        ...state.styleConfig,
+        logoImage: null // Exclude logo from cookie (too large)
+      },
+      timestamp: Date.now(),
+      sessionId
+    };
+
+    // Full state for localStorage (includes logoImage)
+    const fullState: PendingQRState = {
       ...state,
       timestamp: Date.now(),
       sessionId
     };
-    const jsonData = JSON.stringify(stateWithMeta);
 
-    // Save to ALL three storage mechanisms for maximum reliability
-    // 1. Cookie - works across subdomains (most reliable for OAuth)
-    setCookie(COOKIE_NAME, jsonData, 30);
+    const lightJson = JSON.stringify(lightState);
+    const fullJson = JSON.stringify(fullState);
 
-    // 2. localStorage - fallback
-    localStorage.setItem(PENDING_QR_STATE_KEY, jsonData);
+    console.log('💾 Saving state...');
+    console.log('💾 Light data size:', lightJson.length, 'bytes');
+    console.log('💾 Full data size:', fullJson.length, 'bytes');
 
-    // 3. sessionStorage - another fallback
-    sessionStorage.setItem(PENDING_QR_STATE_KEY, jsonData);
+    // 1. Set cookie FLAG with light data (must be < 4KB)
+    if (lightJson.length < 4000) {
+      setCookie(COOKIE_NAME, lightJson, 30);
+      console.log('💾 Cookie set successfully');
+    } else {
+      console.warn('💾 Light data too large for cookie, skipping cookie');
+    }
+
+    // 2. localStorage - full data including logo
+    localStorage.setItem(PENDING_QR_STATE_KEY, fullJson);
+    console.log('💾 localStorage set successfully');
+
+    // 3. sessionStorage - full data
+    sessionStorage.setItem(PENDING_QR_STATE_KEY, fullJson);
+    console.log('💾 sessionStorage set successfully');
 
     // Clear any previous restoration flags
     deleteCookie(RESTORATION_FLAG_KEY);
     localStorage.removeItem(RESTORATION_FLAG_KEY);
     sessionStorage.removeItem(RESTORATION_FLAG_KEY);
 
-    console.log('💾 SAVED to cookie + localStorage + sessionStorage');
-    console.log('💾 Session ID:', sessionId);
+    console.log('💾 SAVE COMPLETE - Session ID:', sessionId);
     console.log('💾 Active tab:', state.activeTab);
+    console.log('💾 Content preview:', state.contentData?.value?.slice(0, 50) || '(empty)');
+
+    // Verify save worked
+    const verifyLocal = localStorage.getItem(PENDING_QR_STATE_KEY);
+    const verifyCookie = getCookie(COOKIE_NAME);
+    console.log('💾 VERIFY - localStorage:', !!verifyLocal, 'cookie:', !!verifyCookie);
+
   } catch (e) {
-    console.error('Failed to save pending QR state:', e);
+    console.error('❌ Failed to save pending QR state:', e);
   }
 };
 
 // Get saved QR state after login - check ALL storages
+// Priority: localStorage (full data) > sessionStorage > cookie (light data)
 const getPendingQRState = (): PendingQRState | null => {
   try {
-    // Try cookie FIRST (most reliable for OAuth redirects)
-    let saved = getCookie(COOKIE_NAME);
-    let source = 'cookie';
+    console.log('📥 Checking for pending state...');
 
-    // Fallback to localStorage
-    if (!saved) {
-      saved = localStorage.getItem(PENDING_QR_STATE_KEY);
-      source = 'localStorage';
-    }
+    // Check all sources
+    const fromLocal = localStorage.getItem(PENDING_QR_STATE_KEY);
+    const fromSession = sessionStorage.getItem(PENDING_QR_STATE_KEY);
+    const fromCookie = getCookie(COOKIE_NAME);
+
+    console.log('📥 Sources available - localStorage:', !!fromLocal, 'sessionStorage:', !!fromSession, 'cookie:', !!fromCookie);
+
+    // Prefer localStorage (has full data including logo)
+    let saved = fromLocal;
+    let source = 'localStorage';
 
     // Fallback to sessionStorage
     if (!saved) {
-      saved = sessionStorage.getItem(PENDING_QR_STATE_KEY);
+      saved = fromSession;
       source = 'sessionStorage';
     }
 
+    // Last resort: cookie (may not have logo)
     if (!saved) {
-      console.log('📭 No pending state found in cookie, localStorage, or sessionStorage');
+      saved = fromCookie;
+      source = 'cookie';
+    }
+
+    if (!saved) {
+      console.log('📭 No pending state found in any storage');
       return null;
     }
 
@@ -236,18 +278,21 @@ const getPendingQRState = (): PendingQRState | null => {
     }
 
     // Check if we already restored this session
-    const restoredSession = getCookie(RESTORATION_FLAG_KEY) ||
-                           localStorage.getItem(RESTORATION_FLAG_KEY) ||
-                           sessionStorage.getItem(RESTORATION_FLAG_KEY);
+    const restoredSession = localStorage.getItem(RESTORATION_FLAG_KEY) ||
+                           sessionStorage.getItem(RESTORATION_FLAG_KEY) ||
+                           getCookie(RESTORATION_FLAG_KEY);
     if (restoredSession === state.sessionId) {
       console.log('🔄 Already restored session:', state.sessionId);
       return null;
     }
 
-    console.log('📦 Valid pending state, session:', state.sessionId, 'tab:', state.activeTab);
+    console.log('📦 Valid pending state found!');
+    console.log('📦 Session:', state.sessionId);
+    console.log('📦 Tab:', state.activeTab);
+    console.log('📦 Has logo:', !!state.styleConfig?.logoImage);
     return state;
   } catch (e) {
-    console.error('Failed to get pending QR state:', e);
+    console.error('❌ Failed to get pending QR state:', e);
     return null;
   }
 };
