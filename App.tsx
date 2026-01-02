@@ -121,9 +121,10 @@ const INITIAL_CONTENT: QRContentData = {
   value: ''
 };
 
-// Key for saving QR state before login - use sessionStorage for OAuth flow
+// Key for saving QR state before login
 const PENDING_QR_STATE_KEY = 'nexus_qr_pending_state';
 const RESTORATION_FLAG_KEY = 'nexus_qr_restoration_done';
+const COOKIE_NAME = 'nqr_pending';
 
 // Interface for saved QR state
 interface PendingQRState {
@@ -134,13 +135,37 @@ interface PendingQRState {
   dynamicTitle: string;
   analyticsOptions: AnalyticsOptions;
   timestamp: number;
-  sessionId: string; // Unique ID for this save session
+  sessionId: string;
 }
+
+// Cookie helpers - cookies persist across subdomains unlike localStorage
+const setCookie = (name: string, value: string, minutes: number = 30) => {
+  const expires = new Date(Date.now() + minutes * 60 * 1000).toUTCString();
+  // Set cookie with path=/ so it's available on all paths
+  // SameSite=Lax allows the cookie to be sent on OAuth redirects
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  console.log('🍪 Cookie set:', name);
+};
+
+const getCookie = (name: string): string | null => {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (match) {
+    console.log('🍪 Cookie found:', name);
+    return decodeURIComponent(match[2]);
+  }
+  console.log('🍪 Cookie not found:', name);
+  return null;
+};
+
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  console.log('🍪 Cookie deleted:', name);
+};
 
 // Generate a unique session ID
 const generateSessionId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-// Save QR state before login redirect - use BOTH localStorage and sessionStorage for reliability
+// Save QR state before login redirect - use COOKIES + localStorage + sessionStorage
 const savePendingQRState = (state: Omit<PendingQRState, 'timestamp' | 'sessionId'>) => {
   try {
     const sessionId = generateSessionId();
@@ -151,38 +176,50 @@ const savePendingQRState = (state: Omit<PendingQRState, 'timestamp' | 'sessionId
     };
     const jsonData = JSON.stringify(stateWithMeta);
 
-    // Save to BOTH storages for maximum reliability
+    // Save to ALL three storage mechanisms for maximum reliability
+    // 1. Cookie - works across subdomains (most reliable for OAuth)
+    setCookie(COOKIE_NAME, jsonData, 30);
+
+    // 2. localStorage - fallback
     localStorage.setItem(PENDING_QR_STATE_KEY, jsonData);
+
+    // 3. sessionStorage - another fallback
     sessionStorage.setItem(PENDING_QR_STATE_KEY, jsonData);
 
-    // Clear any previous restoration flags from BOTH
+    // Clear any previous restoration flags
+    deleteCookie(RESTORATION_FLAG_KEY);
     localStorage.removeItem(RESTORATION_FLAG_KEY);
     sessionStorage.removeItem(RESTORATION_FLAG_KEY);
 
-    console.log('💾 SAVED to both storages, session:', sessionId);
-    console.log('💾 Verify localStorage:', !!localStorage.getItem(PENDING_QR_STATE_KEY));
-    console.log('💾 Verify sessionStorage:', !!sessionStorage.getItem(PENDING_QR_STATE_KEY));
+    console.log('💾 SAVED to cookie + localStorage + sessionStorage');
+    console.log('💾 Session ID:', sessionId);
+    console.log('💾 Active tab:', state.activeTab);
   } catch (e) {
     console.error('Failed to save pending QR state:', e);
   }
 };
 
-// Get saved QR state after login - check BOTH storages
+// Get saved QR state after login - check ALL storages
 const getPendingQRState = (): PendingQRState | null => {
   try {
-    // Try localStorage first (more reliable across redirects), then sessionStorage
-    let saved = localStorage.getItem(PENDING_QR_STATE_KEY);
-    let source = 'localStorage';
+    // Try cookie FIRST (most reliable for OAuth redirects)
+    let saved = getCookie(COOKIE_NAME);
+    let source = 'cookie';
 
+    // Fallback to localStorage
+    if (!saved) {
+      saved = localStorage.getItem(PENDING_QR_STATE_KEY);
+      source = 'localStorage';
+    }
+
+    // Fallback to sessionStorage
     if (!saved) {
       saved = sessionStorage.getItem(PENDING_QR_STATE_KEY);
       source = 'sessionStorage';
     }
 
     if (!saved) {
-      console.log('📭 No pending state in EITHER storage');
-      console.log('📭 localStorage check:', localStorage.getItem(PENDING_QR_STATE_KEY));
-      console.log('📭 sessionStorage check:', sessionStorage.getItem(PENDING_QR_STATE_KEY));
+      console.log('📭 No pending state found in cookie, localStorage, or sessionStorage');
       return null;
     }
 
@@ -198,8 +235,9 @@ const getPendingQRState = (): PendingQRState | null => {
       return null;
     }
 
-    // Check if we already restored this session (check both storages)
-    const restoredSession = localStorage.getItem(RESTORATION_FLAG_KEY) ||
+    // Check if we already restored this session
+    const restoredSession = getCookie(RESTORATION_FLAG_KEY) ||
+                           localStorage.getItem(RESTORATION_FLAG_KEY) ||
                            sessionStorage.getItem(RESTORATION_FLAG_KEY);
     if (restoredSession === state.sessionId) {
       console.log('🔄 Already restored session:', state.sessionId);
@@ -214,20 +252,23 @@ const getPendingQRState = (): PendingQRState | null => {
   }
 };
 
-// Mark state as restored in BOTH storages
+// Mark state as restored in ALL storages
 const markStateRestored = (sessionId: string) => {
+  setCookie(RESTORATION_FLAG_KEY, sessionId, 30);
   localStorage.setItem(RESTORATION_FLAG_KEY, sessionId);
   sessionStorage.setItem(RESTORATION_FLAG_KEY, sessionId);
   console.log('✅ Marked session as restored in both storages:', sessionId);
 };
 
-// Clear saved QR state from BOTH storages
+// Clear saved QR state from ALL storages (cookies + localStorage + sessionStorage)
 const clearPendingQRState = () => {
+  deleteCookie(COOKIE_NAME);
+  deleteCookie(RESTORATION_FLAG_KEY);
   localStorage.removeItem(PENDING_QR_STATE_KEY);
   sessionStorage.removeItem(PENDING_QR_STATE_KEY);
   localStorage.removeItem(RESTORATION_FLAG_KEY);
   sessionStorage.removeItem(RESTORATION_FLAG_KEY);
-  console.log('🧹 Cleared pending state from both storages');
+  console.log('🧹 Cleared pending state from all storages');
 };
 
 // Main QR Generator Component
