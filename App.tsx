@@ -1601,6 +1601,43 @@ const UpgradeModalWrapper: React.FC = () => {
 
 // Root App with AuthProvider, SubscriptionProvider and ErrorBoundary
 const App: React.FC = () => {
+  // Initialize Eruda debug console in debug mode
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const debugParam = urlParams.get('debug');
+
+    // Save debug preference to localStorage
+    if (debugParam === 'true') {
+      localStorage.setItem('nexus_debug', 'true');
+    } else if (debugParam === 'false') {
+      localStorage.removeItem('nexus_debug');
+    }
+
+    // Check if debug mode enabled
+    const isDebugMode = debugParam === 'true' || localStorage.getItem('nexus_debug') === 'true';
+
+    if (isDebugMode && typeof window !== 'undefined') {
+      // Check if Eruda is already loaded
+      if (!(window as any).eruda) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js';
+        script.onload = () => {
+          (window as any).eruda.init({
+            tool: ['console', 'elements', 'network', 'resources', 'info'],
+            useShadowDom: true,
+            defaults: {
+              displaySize: 50,
+              transparency: 0.9
+            }
+          });
+          console.log('🔧 Eruda Debug Console loaded!');
+          console.log('📱 To disable: Add ?debug=false to URL');
+        };
+        document.body.appendChild(script);
+      }
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <AuthProvider>
