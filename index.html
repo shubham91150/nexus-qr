@@ -106,12 +106,25 @@
 </script>
 </head>
   <body class="p-2 md:p-4 min-h-screen notranslate">
-    <!-- Eruda Console for Mobile Debugging - Only loads when URL has ?debug=true -->
+    <!-- Eruda Console for Mobile Debugging -->
+    <!-- Enable: Add ?debug=true to URL OR type localStorage.setItem('debug','true') in console -->
+    <!-- Disable: Add ?debug=false OR type localStorage.removeItem('debug') -->
     <script>
       (function() {
-        // Only enable debug console if URL contains ?debug=true
         var urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('debug') === 'true') {
+        var debugParam = urlParams.get('debug');
+
+        // If URL has debug parameter, save preference
+        if (debugParam === 'true') {
+          localStorage.setItem('nexus_debug', 'true');
+        } else if (debugParam === 'false') {
+          localStorage.removeItem('nexus_debug');
+        }
+
+        // Check if debug mode is enabled (from URL or localStorage)
+        var isDebugMode = debugParam === 'true' || localStorage.getItem('nexus_debug') === 'true';
+
+        if (isDebugMode) {
           var script = document.createElement('script');
           script.src = 'https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js';
           script.integrity = 'sha512-KsDfJaH1p7V7Yr2pHfXfnnnDk0PoaH4u4H81NPZHrGNDABwPJBxjjjQOEZHlM02xq3ORhBytww8yuogxav0Glg==';
@@ -119,9 +132,17 @@
           script.onload = function() {
             eruda.init({
               tool: ['console', 'elements', 'network', 'resources', 'info'],
-              useShadowDom: true
+              useShadowDom: true,
+              defaults: {
+                displaySize: 50,
+                transparency: 0.9
+              }
             });
-            console.log('🔧 Debug mode enabled - Eruda console loaded');
+            console.log('🔧 Eruda Debug Console loaded!');
+            console.log('📱 To disable: Add ?debug=false to URL');
+          };
+          script.onerror = function() {
+            console.error('Failed to load Eruda debug console');
           };
           document.head.appendChild(script);
         }
