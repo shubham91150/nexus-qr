@@ -1599,6 +1599,87 @@ const UpgradeModalWrapper: React.FC = () => {
   );
 };
 
+// Persistent console logging - survives page reloads for debugging OAuth redirects
+const PERSISTENT_LOGS_KEY = 'nexus_debug_logs';
+const MAX_LOGS = 100;
+
+interface PersistentLog {
+  type: 'log' | 'warn' | 'error' | 'info';
+  args: string[];
+  timestamp: number;
+}
+
+// Initialize persistent logging early (before React)
+const initPersistentLogging = () => {
+  if (typeof window === 'undefined') return;
+
+  const isDebugMode = localStorage.getItem('nexus_debug') === 'true';
+  if (!isDebugMode) return;
+
+  // Get existing logs
+  const existingLogs: PersistentLog[] = JSON.parse(localStorage.getItem(PERSISTENT_LOGS_KEY) || '[]');
+
+  // Store original console methods
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  const originalInfo = console.info;
+
+  const saveLog = (type: PersistentLog['type'], args: any[]) => {
+    try {
+      const logs: PersistentLog[] = JSON.parse(localStorage.getItem(PERSISTENT_LOGS_KEY) || '[]');
+
+      // Convert args to strings safely
+      const stringArgs = args.map(arg => {
+        try {
+          if (typeof arg === 'string') return arg;
+          if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+          return JSON.stringify(arg);
+        } catch {
+          return String(arg);
+        }
+      });
+
+      logs.push({
+        type,
+        args: stringArgs,
+        timestamp: Date.now()
+      });
+
+      // Keep only last MAX_LOGS
+      while (logs.length > MAX_LOGS) logs.shift();
+
+      localStorage.setItem(PERSISTENT_LOGS_KEY, JSON.stringify(logs));
+    } catch (e) {
+      // Ignore storage errors
+    }
+  };
+
+  // Override console methods
+  console.log = (...args: any[]) => {
+    saveLog('log', args);
+    originalLog.apply(console, args);
+  };
+  console.warn = (...args: any[]) => {
+    saveLog('warn', args);
+    originalWarn.apply(console, args);
+  };
+  console.error = (...args: any[]) => {
+    saveLog('error', args);
+    originalError.apply(console, args);
+  };
+  console.info = (...args: any[]) => {
+    saveLog('info', args);
+    originalInfo.apply(console, args);
+  };
+
+  // Add marker for page load
+  console.log('📄 PAGE LOAD:', new Date().toISOString(), window.location.href);
+};
+
+// Initialize immediately
+initPersistentLogging();
+
 // Root App with AuthProvider, SubscriptionProvider and ErrorBoundary
 const App: React.FC = () => {
   const [debugMode, setDebugMode] = useState(false);
@@ -1653,6 +1734,27 @@ const App: React.FC = () => {
               });
               console.log('🔧 Eruda Debug Console loaded successfully!');
               console.log('📱 Debug mode is ON. To disable: Add ?debug=false to URL');
+
+              // Replay stored logs from before page reload
+              try {
+                const storedLogs: PersistentLog[] = JSON.parse(localStorage.getItem(PERSISTENT_LOGS_KEY) || '[]');
+                if (storedLogs.length > 0) {
+                  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                  console.log('📜 STORED LOGS FROM PREVIOUS PAGE LOADS:');
+                  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                  storedLogs.forEach((log) => {
+                    const time = new Date(log.timestamp).toLocaleTimeString();
+                    const prefix = log.type === 'error' ? '❌' : log.type === 'warn' ? '⚠️' : '📝';
+                    console.log(`[${time}] ${prefix}`, ...log.args);
+                  });
+                  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                  console.log('📜 END OF STORED LOGS');
+                  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                }
+              } catch (e) {
+                console.error('Failed to replay stored logs:', e);
+              }
+
               setErudaStatus('loaded');
             } else {
               throw new Error('Eruda object not found after script load');
@@ -1714,12 +1816,24 @@ const App: React.FC = () => {
                  erudaStatus === 'error' ? '❌ Eruda Failed' : '🔧 Debug'}
               </span>
               {erudaStatus === 'loaded' && (
-                <button
-                  onClick={() => (window as any).eruda?.show?.()}
-                  className="ml-1 px-2 py-0.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-                >
-                  Open
-                </button>
+                <>
+                  <button
+                    onClick={() => (window as any).eruda?.show?.()}
+                    className="ml-1 px-2 py-0.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                  >
+                    Open
+                  </button>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem(PERSISTENT_LOGS_KEY);
+                      console.log('🧹 Stored logs cleared!');
+                    }}
+                    className="px-2 py-0.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                    title="Clear stored logs"
+                  >
+                    Clear
+                  </button>
+                </>
               )}
             </div>
           )}
