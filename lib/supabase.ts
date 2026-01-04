@@ -9,7 +9,9 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    // Use implicit flow instead of PKCE for universal browser compatibility
+    // Implicit flow doesn't require code_verifier exchange, works on all devices
+    flowType: 'implicit',
   },
 });
 

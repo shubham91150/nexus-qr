@@ -18,44 +18,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Module-level flags to prevent double code exchange in StrictMode
-// Reset on page load to handle different devices/sessions
-let codeExchangeAttempted = false;
+// Module-level flag to track OAuth in progress
 let oauthInProgress = false;
 
-// Reset flags on page load
+// Reset flag on page load
 if (typeof window !== 'undefined') {
-  codeExchangeAttempted = false;
   oauthInProgress = false;
-}
-
-// Helper to check if PKCE code verifier exists in localStorage
-function hasPKCECodeVerifier(): boolean {
-  if (typeof localStorage === 'undefined') return false;
-
-  // Supabase stores code verifier with key pattern: sb-<project-ref>-auth-token-code-verifier
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.includes('auth-token-code-verifier')) {
-      const value = localStorage.getItem(key);
-      return !!value && value.length > 0;
-    }
-  }
-  return false;
-}
-
-// Helper to clear stale PKCE state
-function clearPKCEState(): void {
-  if (typeof localStorage === 'undefined') return;
-
-  const keysToRemove: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.includes('auth-token-code-verifier')) {
-      keysToRemove.push(key);
-    }
-  }
-  keysToRemove.forEach(key => localStorage.removeItem(key));
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -70,7 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initSession = async () => {
       try {
         const url = new URL(window.location.href);
-        const code = url.searchParams.get('code');
         const errorParam = url.searchParams.get('error');
         const errorDescription = url.searchParams.get('error_description');
 
@@ -85,72 +52,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Handle OAuth code exchange (with StrictMode protection)
-        if (code && !codeExchangeAttempted) {
-          codeExchangeAttempted = true; // Prevent double execution
+        // Check for OAuth callback (tokens in URL hash for implicit flow)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+
+        if (accessToken) {
+          console.log('OAuth callback detected, processing session...');
           oauthInProgress = true;
           if (mounted) setAuthStatus('authenticating');
 
-          console.log('OAuth code found, exchanging for session...');
-
-          // Check if PKCE code verifier exists before attempting exchange
-          if (!hasPKCECodeVerifier()) {
-            console.warn('PKCE code verifier not found - user may have opened callback in different browser/tab');
-            // Clean URL and clear any stale state
-            window.history.replaceState({}, '', url.origin + url.pathname);
-            clearPKCEState();
-            oauthInProgress = false;
-            codeExchangeAttempted = false;
-            if (mounted) {
-              setAuthStatus('unauthenticated');
-              setLoading(false);
-            }
-            // Fall through to getSession to check if user has an existing session
-          } else {
-            try {
-              const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-              // Clean URL after exchange attempt (success or failure)
-              window.history.replaceState({}, '', url.origin + url.pathname);
-
-              if (error) {
-                console.error('Code exchange error:', error.message);
-                // Clear stale PKCE state on error
-                clearPKCEState();
-                oauthInProgress = false;
-                // Reset flag so user can try again
-                codeExchangeAttempted = false;
-                if (mounted) {
-                  setAuthStatus('unauthenticated');
-                }
-                // Fall through to getSession below
-              } else if (data.session && mounted) {
-                console.log('Session obtained from code exchange');
-                setAuthStatus('authenticated');
-                setSession(data.session);
-                setUser(data.session.user);
-                // Brief delay to show "Authenticated" state with checkmark
-                await new Promise(resolve => setTimeout(resolve, 1200));
-                oauthInProgress = false;
-                setLoading(false);
-                return;
-              }
-            } catch (err) {
-              console.error('Code exchange exception:', err);
-              window.history.replaceState({}, '', url.origin + url.pathname);
-              // Clear stale PKCE state on exception
-              clearPKCEState();
-              oauthInProgress = false;
-              // Reset flag so user can try again
-              codeExchangeAttempted = false;
-              if (mounted) {
-                setAuthStatus('unauthenticated');
-              }
-            }
-          }
+          // Clean URL (remove hash with tokens)
+          window.history.replaceState({}, '', url.origin + url.pathname);
         }
 
-        // Get existing session (or after failed code exchange)
+        // Get session - Supabase automatically handles token from URL with detectSessionInUrl: true
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -161,9 +76,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (mounted) {
-          setSession(currentSession);
-          setUser(currentSession?.user ?? null);
-          setAuthStatus(currentSession ? 'authenticated' : 'unauthenticated');
+          if (currentSession) {
+            console.log('Session found, user authenticated:', currentSession.user.email);
+            setSession(currentSession);
+            setUser(currentSession.user);
+            setAuthStatus('authenticated');
+
+            // Brief delay to show authenticated state if coming from OAuth
+            if (oauthInProgress) {
+              await new Promise(resolve => setTimeout(resolve, 1200));
+              oauthInProgress = false;
+            }
+          } else {
+            console.log('No session found');
+            setAuthStatus('unauthenticated');
+          }
           setLoading(false);
         }
       } catch (err) {
