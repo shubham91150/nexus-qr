@@ -1601,6 +1601,9 @@ const UpgradeModalWrapper: React.FC = () => {
 
 // Root App with AuthProvider, SubscriptionProvider and ErrorBoundary
 const App: React.FC = () => {
+  const [debugMode, setDebugMode] = useState(false);
+  const [erudaStatus, setErudaStatus] = useState<'loading' | 'loaded' | 'error' | 'idle'>('idle');
+
   // Initialize Eruda debug console in debug mode
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1609,32 +1612,80 @@ const App: React.FC = () => {
     // Save debug preference to localStorage
     if (debugParam === 'true') {
       localStorage.setItem('nexus_debug', 'true');
+      // Clean URL after saving preference
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
     } else if (debugParam === 'false') {
       localStorage.removeItem('nexus_debug');
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
     }
 
     // Check if debug mode enabled
     const isDebugMode = debugParam === 'true' || localStorage.getItem('nexus_debug') === 'true';
+    setDebugMode(isDebugMode);
 
     if (isDebugMode && typeof window !== 'undefined') {
-      // Check if Eruda is already loaded
-      if (!(window as any).eruda) {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js';
-        script.onload = () => {
-          (window as any).eruda.init({
-            tool: ['console', 'elements', 'network', 'resources', 'info'],
-            useShadowDom: true,
-            defaults: {
-              displaySize: 50,
-              transparency: 0.9
-            }
-          });
-          console.log('🔧 Eruda Debug Console loaded!');
-          console.log('📱 To disable: Add ?debug=false to URL');
-        };
-        document.body.appendChild(script);
+      // Check if Eruda is already initialized
+      if ((window as any).eruda && (window as any).eruda._isInit) {
+        console.log('🔧 Eruda already initialized');
+        setErudaStatus('loaded');
+        return;
       }
+
+      setErudaStatus('loading');
+
+      // Load Eruda from CDN
+      const loadEruda = (cdnUrl: string, fallbackUrl?: string) => {
+        const script = document.createElement('script');
+        script.src = cdnUrl;
+
+        script.onload = () => {
+          try {
+            if ((window as any).eruda) {
+              (window as any).eruda.init({
+                tool: ['console', 'elements', 'network', 'resources', 'info'],
+                useShadowDom: true,
+                defaults: {
+                  displaySize: 50,
+                  transparency: 0.9
+                }
+              });
+              console.log('🔧 Eruda Debug Console loaded successfully!');
+              console.log('📱 Debug mode is ON. To disable: Add ?debug=false to URL');
+              setErudaStatus('loaded');
+            } else {
+              throw new Error('Eruda object not found after script load');
+            }
+          } catch (initError) {
+            console.error('❌ Eruda init error:', initError);
+            if (fallbackUrl) {
+              console.log('🔄 Trying fallback CDN...');
+              loadEruda(fallbackUrl);
+            } else {
+              setErudaStatus('error');
+            }
+          }
+        };
+
+        script.onerror = () => {
+          console.error('❌ Failed to load Eruda from:', cdnUrl);
+          if (fallbackUrl) {
+            console.log('🔄 Trying fallback CDN...');
+            loadEruda(fallbackUrl);
+          } else {
+            setErudaStatus('error');
+          }
+        };
+
+        document.body.appendChild(script);
+      };
+
+      // Primary CDN with fallback
+      loadEruda(
+        'https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js',
+        'https://unpkg.com/eruda@3.0.1/eruda.js'
+      );
     }
   }, []);
 
@@ -1645,6 +1696,33 @@ const App: React.FC = () => {
           <OfflineBanner />
           <AppContent />
           <UpgradeModalWrapper />
+
+          {/* Debug Mode Badge - shows when debug is active */}
+          {debugMode && (
+            <div
+              className="fixed bottom-4 left-4 z-40 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium shadow-lg"
+              style={{
+                backgroundColor: erudaStatus === 'loaded' ? '#22c55e' :
+                                erudaStatus === 'loading' ? '#f59e0b' :
+                                erudaStatus === 'error' ? '#ef4444' : '#6b7280',
+                color: 'white'
+              }}
+            >
+              <span className={erudaStatus === 'loading' ? 'animate-pulse' : ''}>
+                {erudaStatus === 'loaded' ? '🔧 Debug ON' :
+                 erudaStatus === 'loading' ? '⏳ Loading...' :
+                 erudaStatus === 'error' ? '❌ Eruda Failed' : '🔧 Debug'}
+              </span>
+              {erudaStatus === 'loaded' && (
+                <button
+                  onClick={() => (window as any).eruda?.show?.()}
+                  className="ml-1 px-2 py-0.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                >
+                  Open
+                </button>
+              )}
+            </div>
+          )}
         </SubscriptionProvider>
       </AuthProvider>
     </ErrorBoundary>
