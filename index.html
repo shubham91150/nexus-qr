@@ -106,6 +106,28 @@
 </script>
 </head>
   <body class="p-2 md:p-4 min-h-screen notranslate">
+    <!-- Eruda Console for Mobile Debugging - Only loads when URL has ?debug=true -->
+    <script>
+      (function() {
+        // Only enable debug console if URL contains ?debug=true
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('debug') === 'true') {
+          var script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js';
+          script.integrity = 'sha512-KsDfJaH1p7V7Yr2pHfXfnnnDk0PoaH4u4H81NPZHrGNDABwPJBxjjjQOEZHlM02xq3ORhBytww8yuogxav0Glg==';
+          script.crossOrigin = 'anonymous';
+          script.onload = function() {
+            eruda.init({
+              tool: ['console', 'elements', 'network', 'resources', 'info'],
+              useShadowDom: true
+            });
+            console.log('🔧 Debug mode enabled - Eruda console loaded');
+          };
+          document.head.appendChild(script);
+        }
+      })();
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
