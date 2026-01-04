@@ -55,17 +55,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Check for OAuth callback (tokens in URL hash for implicit flow)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
 
         if (accessToken) {
           console.log('OAuth callback detected, processing session...');
           oauthInProgress = true;
           if (mounted) setAuthStatus('authenticating');
 
-          // Clean URL (remove hash with tokens)
+          // For implicit flow, we need to set the session manually from URL tokens
+          // BEFORE clearing the URL
+          try {
+            const { data, error: setSessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+
+            if (setSessionError) {
+              console.error('Failed to set session from tokens:', setSessionError.message);
+            } else if (data.session) {
+              console.log('Session established from OAuth tokens:', data.session.user.email);
+            }
+          } catch (e) {
+            console.error('Error setting session:', e);
+          }
+
+          // NOW clean URL (after session is set)
           window.history.replaceState({}, '', url.origin + url.pathname);
         }
 
-        // Get session - Supabase automatically handles token from URL with detectSessionInUrl: true
+        // Get session - should now have the session we just set
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
         if (error) {

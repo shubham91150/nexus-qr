@@ -1825,8 +1825,14 @@ const App: React.FC = () => {
                   </button>
                   <button
                     onClick={() => {
+                      // Clear stored logs
                       localStorage.removeItem(PERSISTENT_LOGS_KEY);
-                      console.log('🧹 Stored logs cleared!');
+                      // Also clear Eruda console
+                      if ((window as any).eruda) {
+                        (window as any).eruda.get('console').clear();
+                      }
+                      // Use alert since console.log would save to storage again
+                      alert('Logs cleared! Console is now empty.');
                     }}
                     className="px-2 py-0.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
                     title="Clear stored logs"
