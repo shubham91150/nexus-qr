@@ -84,13 +84,14 @@ export const QRPreview: React.FC<Props> = ({
     setCreatedShortCode(null);
   }, [data]);
 
-  // Render QR code to SVG string
+  // Render QR code to SVG string - with debounce to prevent INP issues
   useEffect(() => {
     // Clear any existing timer
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
 
+    // Use longer debounce (300ms) to prevent UI blocking during rapid changes
     timerRef.current = setTimeout(() => {
         if (!isMountedRef.current) return;
 
@@ -98,13 +99,23 @@ export const QRPreview: React.FC<Props> = ({
         const contentToRender = qrEncodedContent || data;
         if (!contentToRender || !renderer.current) return;
 
-        renderer.current.updateConfig(config);
-        const svgString = renderer.current.render(contentToRender);
+        // Use requestIdleCallback for non-blocking rendering if available
+        const renderQR = () => {
+          if (!isMountedRef.current) return;
+          renderer.current!.updateConfig(config);
+          const svgString = renderer.current!.render(contentToRender);
 
-        if (isMountedRef.current) {
-          setRenderedSvg(svgString);
+          if (isMountedRef.current) {
+            setRenderedSvg(svgString);
+          }
+        };
+
+        if ('requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(renderQR, { timeout: 500 });
+        } else {
+          renderQR();
         }
-    }, 100);
+    }, 300);
 
     return () => {
       if (timerRef.current) {
