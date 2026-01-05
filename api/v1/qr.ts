@@ -2,6 +2,38 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
+import { z } from 'zod';
+
+// =====================================================
+// Zod Validation Schemas (Security Layer)
+// =====================================================
+
+const HexColorSchema = z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional();
+
+const SafeURLSchema = z.string()
+  .url()
+  .max(2048)
+  .refine(url => !url.includes('javascript:') && !url.includes('data:'), 'Unsafe URL protocol');
+
+const QRCreateRequestSchema = z.object({
+  type: z.enum(['url', 'text', 'vcard', 'wifi', 'email', 'sms', 'phone', 'geo', 'event']),
+  content: z.union([z.string().min(1).max(10000), z.record(z.any())]),
+  title: z.string().max(255).optional(),
+  is_dynamic: z.boolean().optional().default(false),
+  options: z.object({
+    width: z.number().min(100).max(2000).optional(),
+    margin: z.number().min(0).max(10).optional(),
+    color: HexColorSchema,
+    background: HexColorSchema,
+    format: z.enum(['png', 'svg', 'base64']).optional(),
+    error_correction: z.enum(['L', 'M', 'Q', 'H']).optional(),
+  }).optional(),
+  metadata: z.record(z.any()).optional(),
+});
+
+const BulkQRCreateSchema = z.object({
+  items: z.array(QRCreateRequestSchema).min(1).max(100),
+});
 
 // =====================================================
 // Error Codes & Types
@@ -167,65 +199,51 @@ function validatePhone(phone: string): boolean {
   return phoneRegex.test(phone);
 }
 
-function validateQRCreateRequest(body: any): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
+function validateQRCreateRequest(body: any): { valid: boolean; errors: string[]; data?: z.infer<typeof QRCreateRequestSchema> } {
+  // Use Zod for robust validation
+  const result = QRCreateRequestSchema.safeParse(body);
 
-  if (!body) {
-    errors.push('Request body is required');
+  if (!result.success) {
+    const errors = result.error.errors.map(e => {
+      const path = e.path.join('.');
+      return path ? `${path}: ${e.message}` : e.message;
+    });
     return { valid: false, errors };
   }
 
-  if (!body.type) {
-    errors.push('type is required');
-  } else if (!VALID_QR_TYPES.includes(body.type)) {
-    errors.push(`Invalid type. Must be one of: ${VALID_QR_TYPES.join(', ')}`);
-  }
+  // Additional type-specific validation
+  const errors: string[] = [];
+  const data = result.data;
 
-  if (body.content === undefined || body.content === null || body.content === '') {
-    errors.push('content is required');
-  }
-
-  // Type-specific validation
-  if (body.type === 'url' && typeof body.content === 'string') {
-    if (!validateUrl(body.content)) {
-      errors.push('Invalid URL format');
+  // URL validation for url type
+  if (data.type === 'url' && typeof data.content === 'string') {
+    const urlResult = SafeURLSchema.safeParse(data.content);
+    if (!urlResult.success) {
+      errors.push('Invalid or unsafe URL format');
     }
   }
 
-  if (body.type === 'email') {
-    const email = typeof body.content === 'string' ? body.content : body.content?.address;
+  // Email validation
+  if (data.type === 'email') {
+    const email = typeof data.content === 'string' ? data.content : (data.content as any)?.address;
     if (email && !validateEmail(email)) {
       errors.push('Invalid email format');
     }
   }
 
-  if (body.type === 'phone' || body.type === 'sms') {
-    const phone = typeof body.content === 'string' ? body.content : body.content?.phone || body.content?.number;
+  // Phone validation
+  if (data.type === 'phone' || data.type === 'sms') {
+    const phone = typeof data.content === 'string' ? data.content : (data.content as any)?.phone || (data.content as any)?.number;
     if (phone && !validatePhone(phone)) {
       errors.push('Invalid phone number format');
     }
   }
 
-  if (body.options) {
-    if (body.options.width && (body.options.width < 100 || body.options.width > 2000)) {
-      errors.push('width must be between 100 and 2000');
-    }
-    if (body.options.margin && (body.options.margin < 0 || body.options.margin > 10)) {
-      errors.push('margin must be between 0 and 10');
-    }
-    if (body.options.format && !['png', 'svg', 'base64'].includes(body.options.format)) {
-      errors.push('format must be png, svg, or base64');
-    }
-    if (body.options.error_correction && !['L', 'M', 'Q', 'H'].includes(body.options.error_correction)) {
-      errors.push('error_correction must be L, M, Q, or H');
-    }
+  if (errors.length > 0) {
+    return { valid: false, errors };
   }
 
-  if (body.title && body.title.length > 255) {
-    errors.push('title must be 255 characters or less');
-  }
-
-  return { valid: errors.length === 0, errors };
+  return { valid: true, errors: [], data: result.data };
 }
 
 // =====================================================
