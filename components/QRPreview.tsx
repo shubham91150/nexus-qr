@@ -6,133 +6,75 @@ import { useAuth } from '../lib/AuthContext';
 import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, Grid, Pencil, AlertCircle } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
 
-// Enhanced Toast Component with smooth animations and best practices
+// Clean Toast Component - Dark theme with amber accent
 const Toast: React.FC<{ message: string; type: 'error' | 'success' | 'warning'; onClose: () => void }> = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [progress, setProgress] = useState(100);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const progressRef = useRef<NodeJS.Timeout | null>(null);
-  const duration = 4000; // 4 seconds display time
 
   useEffect(() => {
-    // Entry animation - 400ms recommended
+    // Smooth entry animation
     requestAnimationFrame(() => setIsVisible(true));
 
-    const startTimer = () => {
-      const startTime = Date.now();
-      const remainingTime = (progress / 100) * duration;
+    // Auto dismiss after 3.5 seconds
+    const timer = setTimeout(() => {
+      setIsExiting(true);
+      setTimeout(onClose, 300);
+    }, 3500);
 
-      timerRef.current = setTimeout(() => {
-        setIsExiting(true);
-        // Exit animation - allow 400ms before removing
-        setTimeout(onClose, 400);
-      }, remainingTime);
+    return () => clearTimeout(timer);
+  }, [onClose]);
 
-      // Progress bar animation
-      progressRef.current = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const newProgress = Math.max(0, ((remainingTime - elapsed) / duration) * 100);
-        setProgress(newProgress);
-      }, 50);
-    };
-
-    if (!isPaused) {
-      startTimer();
-    }
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (progressRef.current) clearInterval(progressRef.current);
-    };
-  }, [isPaused]);
-
-  const handleMouseEnter = () => {
-    setIsPaused(true);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (progressRef.current) clearInterval(progressRef.current);
+  // Icon based on type - all use amber/yellow color scheme on dark bg
+  const icons = {
+    success: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="10" fill="#F59E0B"/>
+        <path d="M6 10L9 13L14 7" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    warning: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="10" fill="#F59E0B"/>
+        <path d="M10 6V11M10 14V14.5" stroke="#1F2937" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    error: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="10" fill="#F59E0B"/>
+        <path d="M7 7L13 13M13 7L7 13" stroke="#1F2937" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    )
   };
-
-  const handleMouseLeave = () => {
-    setIsPaused(false);
-  };
-
-  // Colors and icons based on type
-  const styles = {
-    error: {
-      bg: 'bg-gradient-to-r from-red-500 to-red-600',
-      border: 'border-red-400/30',
-      icon: '❌',
-      shadow: 'shadow-red-500/25'
-    },
-    success: {
-      bg: 'bg-gradient-to-r from-emerald-500 to-green-600',
-      border: 'border-emerald-400/30',
-      icon: '✓',
-      shadow: 'shadow-emerald-500/25'
-    },
-    warning: {
-      bg: 'bg-gradient-to-r from-amber-500 to-orange-500',
-      border: 'border-amber-400/30',
-      icon: '⚠',
-      shadow: 'shadow-amber-500/25'
-    }
-  };
-
-  const style = styles[type];
 
   return (
     <div
-      className={`fixed top-4 left-1/2 z-[9999] transition-all ${
+      className={`fixed top-6 left-1/2 z-[9999] transition-all ${
         isVisible && !isExiting
-          ? 'opacity-100 translate-y-0 -translate-x-1/2'
+          ? 'opacity-100 translate-y-0 -translate-x-1/2 scale-100'
           : isExiting
-          ? 'opacity-0 -translate-y-2 -translate-x-1/2'
-          : 'opacity-0 -translate-y-4 -translate-x-1/2'
+          ? 'opacity-0 -translate-y-3 -translate-x-1/2 scale-95'
+          : 'opacity-0 translate-y-4 -translate-x-1/2 scale-95'
       }`}
       style={{
-        transitionDuration: isExiting ? '400ms' : '400ms',
-        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
+        transitionDuration: '300ms',
+        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
       }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      <div className={`${style.bg} ${style.shadow} text-white pl-4 pr-5 py-3.5 rounded-2xl shadow-xl border ${style.border} backdrop-blur-sm flex items-center gap-3 min-w-[280px] max-w-[400px]`}>
-        {/* Icon with subtle animation */}
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base animate-pulse">
-          {style.icon}
+      <div
+        className="bg-gray-900 px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-3 whitespace-nowrap"
+        style={{
+          boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)'
+        }}
+      >
+        {/* Icon */}
+        <div className="flex-shrink-0">
+          {icons[type]}
         </div>
 
-        {/* Message */}
-        <div className="flex-1">
-          <p className="text-sm font-semibold leading-tight">{message}</p>
-          {isPaused && (
-            <p className="text-[10px] text-white/70 mt-0.5">Paused • Hover to keep open</p>
-          )}
-        </div>
-
-        {/* Close button */}
-        <button
-          onClick={() => {
-            setIsExiting(true);
-            setTimeout(onClose, 400);
-          }}
-          className="flex-shrink-0 w-6 h-6 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors ml-1"
-        >
-          <span className="text-white/80 hover:text-white text-lg leading-none">×</span>
-        </button>
-      </div>
-
-      {/* Progress bar at bottom */}
-      <div className="absolute bottom-0 left-4 right-4 h-1 bg-white/20 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-white/60 rounded-full transition-all ease-linear"
-          style={{
-            width: `${progress}%`,
-            transitionDuration: isPaused ? '0ms' : '50ms'
-          }}
-        />
+        {/* Message - single line, amber color */}
+        <span className="text-amber-400 font-medium text-[15px] tracking-tight">
+          {message}
+        </span>
       </div>
     </div>
   );
