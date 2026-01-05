@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef, useEffect } from 'react';
+import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import { QRStyleConfig } from '../types';
 import { Palette, Grid, Sliders, Image as ImageIcon, Zap, Monitor, Printer, Tv } from 'lucide-react';
 import { extractLogoColors } from '../services/colorExtractor';
@@ -10,11 +10,39 @@ interface Props {
 }
 
 export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
-  const update = (key: keyof QRStyleConfig, val: any) => onChange({ ...config, [key]: val });
+  // Debounced update for sliders to prevent INP issues
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const update = useCallback((key: keyof QRStyleConfig, val: any) => {
+    onChange({ ...config, [key]: val });
+  }, [config, onChange]);
+
+  // Debounced update for sliders (prevents UI blocking during rapid changes)
+  const updateDebounced = useCallback((key: keyof QRStyleConfig, val: any) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      onChange({ ...config, [key]: val });
+    }, 50);
+  }, [config, onChange]);
+
+  // Cleanup debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   const [iconCategory, setIconCategory] = useState<'social' | 'business' | 'general'>('social');
-  const allIcons = getAllIcons();
-  const categories = getCategories();
-  const filteredIcons = allIcons.filter(icon => icon.category === iconCategory);
+  const allIcons = useMemo(() => getAllIcons(), []);
+  const categories = useMemo(() => getCategories(), []);
+  const filteredIcons = useMemo(() =>
+    allIcons.filter(icon => icon.category === iconCategory),
+    [allIcons, iconCategory]
+  );
 
   // Helper to apply icon with color extraction
   const applyIcon = async (icon: IconItem) => {
@@ -167,13 +195,13 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                     <span className="font-medium">Manual Resolution</span>
                     <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{config.size}px</span>
                 </div>
-                <input 
-                    type="range" 
-                    min="200" 
-                    max="4096" 
-                    step="50" 
-                    value={config.size} 
-                    onChange={e => update('size', Number(e.target.value))}
+                <input
+                    type="range"
+                    min="200"
+                    max="4096"
+                    step="50"
+                    value={config.size}
+                    onChange={e => updateDebounced('size', Number(e.target.value))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 mt-1 px-1">
@@ -245,13 +273,13 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                     <span>Gradient Angle</span>
                     <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{config.gradientRotation}°</span>
                 </div>
-                <input 
-                    type="range" 
-                    min="0" 
-                    max="360" 
-                    step="15" 
-                    value={config.gradientRotation} 
-                    onChange={e => update('gradientRotation', Number(e.target.value))}
+                <input
+                    type="range"
+                    min="0"
+                    max="360"
+                    step="15"
+                    value={config.gradientRotation}
+                    onChange={e => updateDebounced('gradientRotation', Number(e.target.value))}
                     className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                 />
              </div>
@@ -483,7 +511,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                      <input
                          type="range" min="0.1" max="0.4" step="0.05"
                          value={config.logoSize}
-                         onChange={e => update('logoSize', Number(e.target.value))}
+                         onChange={e => updateDebounced('logoSize', Number(e.target.value))}
                          className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                      />
                  </div>
