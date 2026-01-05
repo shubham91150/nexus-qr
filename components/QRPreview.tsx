@@ -954,10 +954,10 @@ export const QRPreview: React.FC<Props> = ({
           
           <div className="relative group w-full flex justify-center">
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-gradient-to-tr from-gray-200 to-gray-100 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
-             {/* Single container - shows placeholder when empty or dynamic-only waiting for creation */}
+             {/* Single container - fixed preview size, scales SVG to fit */}
              <div
                 ref={containerRef}
-                className={`relative p-4 rounded-xl border ${((!data || data.trim() === '') || (isDynamicOnly && !createdShortUrl)) ? 'border-2 border-dashed border-gray-200 bg-gray-50' : 'border-gray-100 shadow-sm'} transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:max-w-full [&>svg]:h-auto ${data && data.trim() !== '' && !isDynamicOnly && !config.bgTransparent ? 'bg-white' : ''} ${createdShortUrl && !config.bgTransparent ? 'bg-white' : ''} min-h-[200px] min-w-[200px] flex items-center justify-center`}
+                className={`relative p-4 rounded-xl border ${((!data || data.trim() === '') || (isDynamicOnly && !createdShortUrl)) ? 'border-2 border-dashed border-gray-200 bg-gray-50' : 'border-gray-100 shadow-sm'} transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-[220px] [&>svg]:max-h-[220px] ${data && data.trim() !== '' && !isDynamicOnly && !config.bgTransparent ? 'bg-white' : ''} ${createdShortUrl && !config.bgTransparent ? 'bg-white' : ''} w-[250px] h-[250px] flex items-center justify-center`}
                 style={(data && data.trim() !== '' && !isDynamicOnly) || createdShortUrl ? checkerboardStyle : {}}
              >
                {/* Dynamic-only placeholder - shown until dynamic QR is created */}
@@ -1208,8 +1208,10 @@ export const QRPreview: React.FC<Props> = ({
                   <div className="p-4 pt-0 space-y-4 animate-fadeIn">
                       <div className="pt-2">
                           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-                              <span>Size</span>
-                              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{config.size}px</span>
+                              <span>Export Quality</span>
+                              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">
+                                {config.size <= 500 ? 'Standard' : config.size <= 1000 ? 'High' : config.size <= 2000 ? 'Ultra' : 'Print'} ({config.size}px)
+                              </span>
                           </div>
                           <input
                               type="range" min="200" max="4096" step="50"
@@ -1217,6 +1219,10 @@ export const QRPreview: React.FC<Props> = ({
                               onChange={(e) => handleConfigUpdate('size', Number(e.target.value))}
                               className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                           />
+                          <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                              <span>Web</span>
+                              <span>Print</span>
+                          </div>
                       </div>
 
                       <div>
