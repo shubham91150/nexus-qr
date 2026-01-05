@@ -6,19 +6,134 @@ import { useAuth } from '../lib/AuthContext';
 import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, Grid, Pencil, AlertCircle } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
 
-// Toast Component for notifications
+// Enhanced Toast Component with smooth animations and best practices
 const Toast: React.FC<{ message: string; type: 'error' | 'success' | 'warning'; onClose: () => void }> = ({ message, type, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(100);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressRef = useRef<NodeJS.Timeout | null>(null);
+  const duration = 4000; // 4 seconds display time
 
-  const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-amber-500';
+  useEffect(() => {
+    // Entry animation - 400ms recommended
+    requestAnimationFrame(() => setIsVisible(true));
+
+    const startTimer = () => {
+      const startTime = Date.now();
+      const remainingTime = (progress / 100) * duration;
+
+      timerRef.current = setTimeout(() => {
+        setIsExiting(true);
+        // Exit animation - allow 400ms before removing
+        setTimeout(onClose, 400);
+      }, remainingTime);
+
+      // Progress bar animation
+      progressRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const newProgress = Math.max(0, ((remainingTime - elapsed) / duration) * 100);
+        setProgress(newProgress);
+      }, 50);
+    };
+
+    if (!isPaused) {
+      startTimer();
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, [isPaused]);
+
+  const handleMouseEnter = () => {
+    setIsPaused(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (progressRef.current) clearInterval(progressRef.current);
+  };
+
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+  };
+
+  // Colors and icons based on type
+  const styles = {
+    error: {
+      bg: 'bg-gradient-to-r from-red-500 to-red-600',
+      border: 'border-red-400/30',
+      icon: '❌',
+      shadow: 'shadow-red-500/25'
+    },
+    success: {
+      bg: 'bg-gradient-to-r from-emerald-500 to-green-600',
+      border: 'border-emerald-400/30',
+      icon: '✓',
+      shadow: 'shadow-emerald-500/25'
+    },
+    warning: {
+      bg: 'bg-gradient-to-r from-amber-500 to-orange-500',
+      border: 'border-amber-400/30',
+      icon: '⚠',
+      shadow: 'shadow-amber-500/25'
+    }
+  };
+
+  const style = styles[type];
 
   return (
-    <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 ${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-slideUp`}>
-      <AlertCircle size={18} />
-      <span className="text-sm font-medium">{message}</span>
+    <div
+      className={`fixed top-4 left-1/2 z-[9999] transition-all ${
+        isVisible && !isExiting
+          ? 'opacity-100 translate-y-0 -translate-x-1/2'
+          : isExiting
+          ? 'opacity-0 -translate-y-2 -translate-x-1/2'
+          : 'opacity-0 -translate-y-4 -translate-x-1/2'
+      }`}
+      style={{
+        transitionDuration: isExiting ? '400ms' : '400ms',
+        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className={`${style.bg} ${style.shadow} text-white pl-4 pr-5 py-3.5 rounded-2xl shadow-xl border ${style.border} backdrop-blur-sm flex items-center gap-3 min-w-[280px] max-w-[400px]`}>
+        {/* Icon with subtle animation */}
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base animate-pulse">
+          {style.icon}
+        </div>
+
+        {/* Message */}
+        <div className="flex-1">
+          <p className="text-sm font-semibold leading-tight">{message}</p>
+          {isPaused && (
+            <p className="text-[10px] text-white/70 mt-0.5">Paused • Hover to keep open</p>
+          )}
+        </div>
+
+        {/* Close button */}
+        <button
+          onClick={() => {
+            setIsExiting(true);
+            setTimeout(onClose, 400);
+          }}
+          className="flex-shrink-0 w-6 h-6 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors ml-1"
+        >
+          <span className="text-white/80 hover:text-white text-lg leading-none">×</span>
+        </button>
+      </div>
+
+      {/* Progress bar at bottom */}
+      <div className="absolute bottom-0 left-4 right-4 h-1 bg-white/20 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-white/60 rounded-full transition-all ease-linear"
+          style={{
+            width: `${progress}%`,
+            transitionDuration: isPaused ? '0ms' : '50ms'
+          }}
+        />
+      </div>
     </div>
   );
 };
