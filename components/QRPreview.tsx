@@ -60,22 +60,22 @@ const Toast: React.FC<{ message: string; type: 'error' | 'success' | 'warning'; 
         transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
       }}
     >
-      <div
-        className="bg-gray-900 px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-3 whitespace-nowrap"
-        style={{
-          boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)'
-        }}
-      >
-        {/* Icon */}
-        <div className="flex-shrink-0">
-          {icons[type]}
-        </div>
-
-        {/* Message - single line, amber color */}
-        <span className="text-amber-400 font-medium text-[15px] tracking-tight">
-          {message}
-        </span>
+    <div
+      className="bg-gray-900 px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-3 whitespace-nowrap"
+      style={{
+        boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)'
+      }}
+    >
+      {/* Icon */}
+      <div className="flex-shrink-0">
+        {icons[type]}
       </div>
+
+      {/* Message - single line, amber color */}
+      <span className="text-amber-400 font-semibold text-base">
+        {message}
+      </span>
+    </div>
     </div>
   );
 };
@@ -237,7 +237,15 @@ export const QRPreview: React.FC<Props> = ({
 
   const handleConfigUpdate = (key: keyof QRStyleConfig, value: any) => {
     if (onConfigChange) {
-        onConfigChange({ ...config, [key]: value });
+      // When size changes, auto-clamp padding to max 40% of new size
+      if (key === 'size') {
+        const maxPadding = Math.floor(value * 0.4);
+        if (config.padding > maxPadding) {
+          onConfigChange({ ...config, [key]: value, padding: maxPadding });
+          return;
+        }
+      }
+      onConfigChange({ ...config, [key]: value });
     }
   };
 
@@ -1216,9 +1224,10 @@ export const QRPreview: React.FC<Props> = ({
                               <span>Padding</span>
                               <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{config.padding}px</span>
                           </div>
+                          {/* Max padding = 40% of size to ensure QR remains visible */}
                           <input
-                              type="range" min="0" max="100" step="5"
-                              value={config.padding}
+                              type="range" min="0" max={Math.floor(config.size * 0.4)} step="5"
+                              value={Math.min(config.padding, Math.floor(config.size * 0.4))}
                               onChange={(e) => handleConfigUpdate('padding', Number(e.target.value))}
                               className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                           />
