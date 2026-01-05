@@ -957,7 +957,7 @@ export const QRPreview: React.FC<Props> = ({
              {/* Single container - fixed preview size, scales SVG to fit */}
              <div
                 ref={containerRef}
-                className={`relative p-1 rounded-xl border overflow-hidden ${((!data || data.trim() === '') || (isDynamicOnly && !createdShortUrl)) ? 'border-2 border-dashed border-gray-200 bg-gray-50' : 'border-gray-100 shadow-sm'} transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:w-full [&>svg]:h-full ${config.frameType && config.frameType !== 'none' ? '[&>svg]:scale-110' : ''} ${data && data.trim() !== '' && !isDynamicOnly && !config.bgTransparent ? 'bg-white' : ''} ${createdShortUrl && !config.bgTransparent ? 'bg-white' : ''} w-[280px] h-[280px] flex items-center justify-center`}
+                className={`relative p-1 rounded-xl border overflow-hidden ${((!data || data.trim() === '') || (isDynamicOnly && !createdShortUrl)) ? 'border-2 border-dashed border-gray-200 bg-gray-50' : 'border-gray-100 shadow-sm'} transition-transform duration-300 group-hover:scale-[1.02] [&>svg]:w-full [&>svg]:h-full ${config.frameType && config.frameType !== 'none' && config.frameType !== 'circle' ? '[&>svg]:scale-110' : ''} ${data && data.trim() !== '' && !isDynamicOnly && !config.bgTransparent ? 'bg-white' : ''} ${createdShortUrl && !config.bgTransparent ? 'bg-white' : ''} w-[280px] h-[280px] flex items-center justify-center`}
                 style={(data && data.trim() !== '' && !isDynamicOnly) || createdShortUrl ? checkerboardStyle : {}}
              >
                {/* Dynamic-only placeholder - shown until dynamic QR is created */}
