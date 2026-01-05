@@ -3,8 +3,25 @@ import { QRStyleConfig, QRContentData } from '../types';
 import { CustomSVGRenderer } from '../services/customSvgRenderer';
 import { supabase, generateShortCode } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, Grid, Pencil } from 'lucide-react';
+import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, Grid, Pencil, AlertCircle } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
+
+// Toast Component for notifications
+const Toast: React.FC<{ message: string; type: 'error' | 'success' | 'warning'; onClose: () => void }> = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-amber-500';
+
+  return (
+    <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 ${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-slideUp`}>
+      <AlertCircle size={18} />
+      <span className="text-sm font-medium">{message}</span>
+    </div>
+  );
+};
 
 interface Props {
   data: string;
@@ -56,6 +73,7 @@ export const QRPreview: React.FC<Props> = ({
   const [copied, setCopied] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' | 'warning' } | null>(null);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   // Track what content is encoded in the QR code
@@ -167,9 +185,15 @@ export const QRPreview: React.FC<Props> = ({
   };
 
   const handleDownload = async (ext: 'png' | 'svg') => {
+    // Validate content exists before downloading
+    if (!data || data.trim() === '') {
+      setToast({ message: 'Enter some content first', type: 'warning' });
+      return;
+    }
+
     if (!renderer.current || !containerRef.current) return;
     setDownloading(true);
-    
+
     const svgElement = containerRef.current.querySelector('svg');
     if (!svgElement) return;
     
@@ -281,6 +305,12 @@ export const QRPreview: React.FC<Props> = ({
   };
 
   const handlePrint = () => {
+      // Validate content exists before printing
+      if (!data || data.trim() === '') {
+        setToast({ message: 'Enter some content first', type: 'warning' });
+        return;
+      }
+
       const svgElement = containerRef.current?.innerHTML;
       if (svgElement) {
         const win = window.open('', '_blank');
@@ -842,6 +872,15 @@ export const QRPreview: React.FC<Props> = ({
 
   return (
     <div className={`bg-white rounded-[24px] shadow-card p-6 md:p-8 flex flex-col items-center ${className}`}>
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="mb-4 flex flex-col items-center w-full">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 mb-4">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
