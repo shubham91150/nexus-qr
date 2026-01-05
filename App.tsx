@@ -532,51 +532,54 @@ const QRGenerator: React.FC<{
   const isBulk = contentData.type === 'bulk';
 
   return (
-    <div className="max-w-[1000px] mx-auto pt-6 pb-20">
+    <div className="max-w-[1000px] mx-auto pt-4 sm:pt-6 pb-20 overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 px-4">
-         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
-              <LayoutGrid size={20} />
+      <div className="flex items-center justify-between mb-6 sm:mb-8 px-2 sm:px-4">
+         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
+              <LayoutGrid size={16} className="sm:hidden" />
+              <LayoutGrid size={20} className="hidden sm:block" />
            </div>
            <div>
-              <h1 className="text-xl font-bold text-gray-800">Nexus QR</h1>
-              <p className="text-xs text-gray-500 font-medium">Professional AI Generator</p>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800">Nexus QR</h1>
+              <p className="text-[10px] sm:text-xs text-gray-500 font-medium">Professional AI Generator</p>
            </div>
          </div>
 
          {/* Right side: Dashboard button + Profile */}
-         <div className="flex items-center gap-3">
+         <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
            {/* Pricing button - visible to all */}
            <button
              onClick={onPricingClick}
-             className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-2 rounded-xl font-medium text-sm hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
+             className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
            >
-             <Crown size={16} />
+             <Crown size={14} className="sm:hidden" />
+             <Crown size={16} className="hidden sm:block" />
              <span className="hidden sm:inline">Pricing</span>
            </button>
            {user && (
              <>
                <button
                  onClick={onApiClick}
-                 className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-indigo-200 transition-all"
+                 className="hidden sm:flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-indigo-200 transition-all"
                >
                  <Code size={16} />
-                 <span className="hidden sm:inline">API</span>
+                 <span className="hidden md:inline">API</span>
                </button>
                <button
                  onClick={onDashboardClick}
-                 className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
+                 className="flex items-center gap-1 sm:gap-2 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm hover:bg-gray-200 transition-all"
                >
-                 <BarChart3 size={16} />
-                 <span className="hidden sm:inline">Dashboard</span>
+                 <BarChart3 size={14} className="sm:hidden" />
+                 <BarChart3 size={16} className="hidden sm:block" />
+                 <span className="hidden md:inline">Dashboard</span>
                </button>
              </>
            )}
-           {/* Help button to restart tour */}
+           {/* Help button to restart tour - hidden on very small screens */}
            <button
              onClick={() => setShowTour(true)}
-             className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500 hover:text-indigo-600"
+             className="hidden sm:flex p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500 hover:text-indigo-600"
              title="App Tour"
            >
              <HelpCircle size={20} />
@@ -585,11 +588,11 @@ const QRGenerator: React.FC<{
          </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 px-2 md:px-4">
-        
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 px-1 sm:px-2 md:px-4">
+
         {/* Left Column: Input & Styling */}
-        <div className="md:col-span-7 space-y-6">
-          <div className="bg-white rounded-[24px] shadow-card p-6 md:p-8">
+        <div className="md:col-span-7 space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-2xl sm:rounded-[24px] shadow-card p-4 sm:p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6" data-tour="content-type">
                <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
                   <LayoutGrid size={14} />
@@ -777,13 +780,14 @@ const QRGenerator: React.FC<{
                   Design Templates
                 </h3>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button
                   onClick={() => setShowTemplateGallery(true)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-medium text-sm hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-medium text-xs sm:text-sm hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
                 >
-                  <Sparkles size={16} />
-                  Browse Templates
+                  <Sparkles size={14} className="sm:hidden" />
+                  <Sparkles size={16} className="hidden sm:block" />
+                  <span>Browse Templates</span>
                 </button>
                 <button
                   onClick={() => {
@@ -793,10 +797,11 @@ const QRGenerator: React.FC<{
                     }
                     setShowSaveTemplate(true);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-100 text-gray-700 rounded-xl font-medium text-xs sm:text-sm hover:bg-gray-200 transition-all"
                 >
-                  <Bookmark size={16} />
-                  Save as Template
+                  <Bookmark size={14} className="sm:hidden" />
+                  <Bookmark size={16} className="hidden sm:block" />
+                  <span>Save as Template</span>
                 </button>
               </div>
               <p className="text-xs text-gray-400 mt-2 text-center">
