@@ -2,21 +2,24 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 
+// Hardcoded Supabase URL (same as frontend) - service key from env
+const SUPABASE_URL = 'https://tyuambzppjfvwxkmpgma.supabase.co';
+
 // Lazy initialization of Supabase client
 let supabase: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient | null {
   if (supabase) return supabase;
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Supabase environment variables not configured');
+  if (!supabaseServiceKey) {
+    console.error('[SUPABASE] SUPABASE_SERVICE_KEY not configured in environment variables!');
     return null;
   }
 
-  supabase = createClient(supabaseUrl, supabaseServiceKey);
+  console.log('[SUPABASE] Creating client with URL:', SUPABASE_URL);
+  supabase = createClient(SUPABASE_URL, supabaseServiceKey);
   return supabase;
 }
 
@@ -3336,8 +3339,18 @@ export default async function handler(
       referer.includes('/preview') ||
       referer.includes('localhost:3000') ||
       referer.includes('localhost:5173')
-      // Removed: same origin check was blocking legitimate scans
     );
+
+    // Debug logging for scan tracking
+    console.log('[DEBUG] Scan tracking check:', {
+      referer: referer || 'none',
+      isInternalRequest,
+      willRecordScan: !isInternalRequest,
+      clientIP,
+      device,
+      browser,
+      os
+    });
 
     // Get geolocation (don't wait too long)
     const geo = await getGeoLocation(clientIP);
@@ -3423,9 +3436,7 @@ export default async function handler(
 
       // Record scan before serving landing page - MUST await to ensure it completes before function terminates
       if (!isInternalRequest) {
-        console.log('[SCAN] Recording landing page scan for QR:', qrCode.id, qrCode.title);
-
-        const { error: scanError } = await db.from('qr_scans').insert({
+        const scanData = {
           qr_id: qrCode.id,
           ip_address: clientIP || null,
           country: geo?.country || null,
@@ -3437,13 +3448,23 @@ export default async function handler(
           language: language,
           user_agent: userAgent,
           ab_variant_id: abVariantId || null,
-        });
+        };
 
-        if (scanError) {
-          console.error('[SCAN ERROR] Error recording landing page scan:', scanError);
-        } else {
-          console.log('[SCAN SUCCESS] Landing page scan recorded for QR:', qrCode.id);
+        console.log('[SCAN] Recording landing page scan:', JSON.stringify(scanData));
+
+        try {
+          const { error: scanError, data: scanResult } = await db.from('qr_scans').insert(scanData).select();
+
+          if (scanError) {
+            console.error('[SCAN ERROR] Insert failed:', JSON.stringify(scanError));
+          } else {
+            console.log('[SCAN SUCCESS] Landing page scan recorded:', JSON.stringify(scanResult));
+          }
+        } catch (insertError) {
+          console.error('[SCAN EXCEPTION] Exception during insert:', insertError);
         }
+      } else {
+        console.log('[SCAN SKIP] Skipping scan recording - internal request');
       }
 
       // Serve appropriate landing page based on content type
@@ -3524,9 +3545,7 @@ export default async function handler(
 
       // Record scan before redirect - MUST await to ensure it completes before function terminates
       if (!isInternalRequest) {
-        console.log('[SCAN] Recording smart redirect scan for QR:', qrCode.id, qrCode.title);
-
-        const { error: scanError } = await db.from('qr_scans').insert({
+        const scanData = {
           qr_id: qrCode.id,
           ip_address: clientIP || null,
           country: geo?.country || null,
@@ -3538,12 +3557,20 @@ export default async function handler(
           language: language,
           user_agent: userAgent,
           ab_variant_id: abVariantId || null,
-        });
+        };
 
-        if (scanError) {
-          console.error('[SCAN ERROR] Error recording smart redirect scan:', scanError);
-        } else {
-          console.log('[SCAN SUCCESS] Smart redirect scan recorded for QR:', qrCode.id);
+        console.log('[SCAN] Recording smart redirect scan:', JSON.stringify(scanData));
+
+        try {
+          const { error: scanError, data: scanResult } = await db.from('qr_scans').insert(scanData).select();
+
+          if (scanError) {
+            console.error('[SCAN ERROR] Smart redirect insert failed:', JSON.stringify(scanError));
+          } else {
+            console.log('[SCAN SUCCESS] Smart redirect scan recorded:', JSON.stringify(scanResult));
+          }
+        } catch (insertError) {
+          console.error('[SCAN EXCEPTION] Smart redirect exception:', insertError);
         }
       }
 
@@ -3644,31 +3671,36 @@ export default async function handler(
 
     // Record the scan - MUST await to ensure it completes before function terminates
     // Skip recording for internal requests (from dashboard preview only)
-    console.log('[SCAN] isInternalRequest:', isInternalRequest, 'referer:', referer);
     if (!isInternalRequest) {
-      // Always record all analytics data - location, device, browser, etc.
-      console.log('[SCAN] Recording scan for QR:', qrCode.id, qrCode.title);
+      const scanData = {
+        qr_id: qrCode.id,
+        ip_address: clientIP || null,
+        country: geo?.country || null,
+        city: geo?.city || null,
+        device_type: device,
+        browser: browser,
+        os: os,
+        referrer: referer,
+        language: language,
+        user_agent: userAgent,
+        ab_variant_id: abVariantId || null,
+      };
 
-      const { error: scanError } = await db
-        .from('qr_scans')
-        .insert({
-          qr_id: qrCode.id,
-          ip_address: clientIP || null,
-          country: geo?.country || null,
-          city: geo?.city || null,
-          device_type: device,
-          browser: browser,
-          os: os,
-          referrer: referer,
-          language: language,
-          user_agent: userAgent,
-          ab_variant_id: abVariantId || null,
-        });
+      console.log('[SCAN] Recording URL redirect scan:', JSON.stringify(scanData));
 
-      if (scanError) {
-        console.error('[SCAN ERROR] Error recording scan:', scanError);
-      } else {
-        console.log('[SCAN SUCCESS] Scan recorded for QR:', qrCode.id);
+      try {
+        const { error: scanError, data: scanResult } = await db
+          .from('qr_scans')
+          .insert(scanData)
+          .select();
+
+        if (scanError) {
+          console.error('[SCAN ERROR] URL redirect insert failed:', JSON.stringify(scanError));
+        } else {
+          console.log('[SCAN SUCCESS] URL redirect scan recorded:', JSON.stringify(scanResult));
+        }
+      } catch (insertError) {
+        console.error('[SCAN EXCEPTION] URL redirect exception:', insertError);
       }
 
       // Send email notification if enabled
