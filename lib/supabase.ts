@@ -250,6 +250,9 @@ export interface DynamicQRCode {
 
   // NEW: Scheduled Campaign Configuration
   campaign_config?: CampaignConfig;
+
+  // QR Category: 'url' (destination changeable) or 'landing_page' (destination locked)
+  qr_category?: 'url' | 'landing_page';
 }
 
 // QR Scan Record

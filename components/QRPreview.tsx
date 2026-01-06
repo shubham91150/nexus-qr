@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { QRStyleConfig, QRContentData } from '../types';
+import { QRStyleConfig, QRContentData, QRType } from '../types';
 import { CustomSVGRenderer } from '../services/customSvgRenderer';
 import { supabase, generateShortCode } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { Download, Printer, CheckCircle, Package, Loader2, Sliders, Maximize, ChevronDown, ChevronUp, Zap, Copy, Check, ExternalLink, Frame, Grid, Pencil, AlertCircle } from 'lucide-react';
 import { AnalyticsOptions } from '../App';
+
+// Landing page content types - these QR codes have locked destination URLs
+// Users can update files but not change the destination URL
+const LANDING_PAGE_TYPES: QRType[] = ['pdf', 'menu', 'audio', 'video', 'images', 'document', 'coupon', 'text'];
 
 // Clean Toast Component - Dark theme with amber accent
 const Toast: React.FC<{ message: string; type: 'error' | 'success' | 'warning'; onClose: () => void }> = ({ message, type, onClose }) => {
@@ -426,6 +430,10 @@ export const QRPreview: React.FC<Props> = ({
       let attempts = 0;
       const maxAttempts = 5;
 
+      // Determine QR category based on content type
+      // Landing page types have locked destination URLs
+      const qrCategory = LANDING_PAGE_TYPES.includes(contentData.type) ? 'landing_page' : 'url';
+
       while (attempts < maxAttempts) {
         const { data: newQR, error: insertError } = await supabase
           .from('dynamic_qr_codes')
@@ -435,6 +443,7 @@ export const QRPreview: React.FC<Props> = ({
             title: dynamicTitle.trim(),
             destination_url: data,
             qr_style: qrStyleData,
+            qr_category: qrCategory, // 'landing_page' or 'url'
           })
           .select()
           .single();
