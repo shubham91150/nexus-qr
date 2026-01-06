@@ -43,6 +43,7 @@ export interface QRStyleConfig {
 export interface QRContentData {
   type: QRType;
   value: string;
+  url?: string; // Optional URL field for direct URL content types
   wifi?: { ssid: string; pass: string; type: string; hidden: boolean };
   contact?: {
     // Basic Info
@@ -111,7 +112,7 @@ export interface QRContentData {
   // Media file types
   audio?: { url: string; title?: string; artist?: string; isUploading?: boolean };
   video?: { url: string; title?: string; isUploading?: boolean };
-  images?: { urls: string[]; title?: string; isUploading?: boolean };
+  images?: { urls: string[]; filePaths?: string[]; previewUrls?: string[]; title?: string; isUploading?: boolean };
   document?: { url: string; title?: string; fileType?: string; isUploading?: boolean };
 }
 
