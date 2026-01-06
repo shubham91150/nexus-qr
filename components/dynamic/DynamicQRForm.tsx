@@ -1,10 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Copy, Check, ExternalLink, ChevronDown, ChevronUp, Link2, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Loader2, Copy, Check, ExternalLink, ChevronDown, ChevronUp, Link2, AlertCircle, CheckCircle, Lock, FileText, Video, Music, Image, Utensils, Tag, FileType } from 'lucide-react';
 import { supabase, generateShortCode, DynamicQRCode } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
-import { QRContentData, QRStyleConfig } from '../../types';
+import { QRContentData, QRStyleConfig, QRType } from '../../types';
 import { QRStylePanel } from '../QRStylePanel';
 import { CustomSVGRenderer } from '../../services/customSvgRenderer';
+
+// Landing page content types - these QR codes have locked destination URLs
+// Users can update files but not change the destination URL
+const LANDING_PAGE_TYPES: QRType[] = ['pdf', 'menu', 'audio', 'video', 'images', 'document', 'coupon', 'text'];
+
+// Helper to check if content type is a landing page type
+const isLandingPageType = (type: QRType): boolean => LANDING_PAGE_TYPES.includes(type);
+
+// Helper to get friendly name and icon for content type
+const getContentTypeInfo = (contentType: QRType): { name: string; icon: React.ReactNode; color: string } => {
+  const types: Record<string, { name: string; icon: React.ReactNode; color: string }> = {
+    'pdf': { name: 'PDF Document', icon: <FileText size={16} />, color: 'text-red-600 bg-red-50' },
+    'document': { name: 'Document', icon: <FileType size={16} />, color: 'text-blue-600 bg-blue-50' },
+    'video': { name: 'Video', icon: <Video size={16} />, color: 'text-purple-600 bg-purple-50' },
+    'audio': { name: 'Audio', icon: <Music size={16} />, color: 'text-green-600 bg-green-50' },
+    'images': { name: 'Image Gallery', icon: <Image size={16} />, color: 'text-pink-600 bg-pink-50' },
+    'menu': { name: 'Restaurant Menu', icon: <Utensils size={16} />, color: 'text-amber-600 bg-amber-50' },
+    'coupon': { name: 'Coupon/Discount', icon: <Tag size={16} />, color: 'text-emerald-600 bg-emerald-50' },
+    'text': { name: 'Text Content', icon: <FileText size={16} />, color: 'text-gray-600 bg-gray-50' },
+  };
+  return types[contentType] || { name: 'Content', icon: <FileText size={16} />, color: 'text-gray-600 bg-gray-50' };
+};
 
 interface DynamicQRFormProps {
   isOpen: boolean;
@@ -294,6 +316,9 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
         let attempts = 0;
         const maxAttempts = customAlias ? 1 : 5; // Only 1 attempt if using custom alias
 
+        // Determine QR category - landing_page types have locked destination URLs
+        const qrCategory = isLandingPageType(contentData.type) ? 'landing_page' : 'url';
+
         while (attempts < maxAttempts) {
           const { data, error: insertError } = await supabase
             .from('dynamic_qr_codes')
@@ -303,6 +328,7 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
               title: title.trim(),
               destination_url: payload,
               qr_style: qrStyleData,
+              qr_category: qrCategory, // 'landing_page' or 'url'
             })
             .select()
             .single();
@@ -520,38 +546,73 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* Left: URL Input */}
                   <div className="lg:col-span-2 space-y-4">
-                    {/* Destination URL */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Destination URL *
-                      </label>
-                      <input
-                        type="url"
-                        value={contentData.url || ''}
-                        onChange={(e) => setContentData({ ...contentData, type: 'url', url: e.target.value, value: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
-                        placeholder="https://example.com/my-page"
-                        required
-                      />
-                      <p className="text-xs text-gray-400 mt-2">
-                        This URL can be changed anytime from the dashboard after QR is created.
-                      </p>
-                    </div>
+                    {/* Destination URL - Locked for landing_page QRs */}
+                    {editingQR?.qr_category === 'landing_page' ? (
+                      // LOCKED - Landing page QR codes cannot change destination URL
+                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`p-2 rounded-lg ${getContentTypeInfo(contentData.type).color}`}>
+                            {getContentTypeInfo(contentData.type).icon}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-800">
+                              {getContentTypeInfo(contentData.type).name}
+                            </h4>
+                            <p className="text-xs text-gray-500">Landing Page QR</p>
+                          </div>
+                          <div className="ml-auto flex items-center gap-1 text-amber-700 bg-amber-100 px-3 py-1 rounded-full text-xs font-medium">
+                            <Lock size={12} />
+                            <span>URL Locked</span>
+                          </div>
+                        </div>
 
-                    {/* Use Cases */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Common Use Cases
-                      </label>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-white p-2 rounded-lg text-gray-600">📄 PDF Documents</div>
-                        <div className="bg-white p-2 rounded-lg text-gray-600">🎥 Video Links</div>
-                        <div className="bg-white p-2 rounded-lg text-gray-600">🍽️ Restaurant Menus</div>
-                        <div className="bg-white p-2 rounded-lg text-gray-600">📱 App Download Links</div>
-                        <div className="bg-white p-2 rounded-lg text-gray-600">🎫 Event Pages</div>
-                        <div className="bg-white p-2 rounded-lg text-gray-600">🛒 Product Pages</div>
+                        <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-100/50 rounded-lg p-3">
+                          <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium mb-1">Destination URL is locked</p>
+                            <p className="text-amber-700">
+                              Landing page QR codes ka destination URL change nahi ho sakta.
+                              Aap files/content update kar sakte hain, title aur styling change kar sakte hain.
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      // EDITABLE - Regular URL QR codes or new QR creation
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Destination URL *
+                        </label>
+                        <input
+                          type="url"
+                          value={contentData.url || ''}
+                          onChange={(e) => setContentData({ ...contentData, type: 'url', url: e.target.value, value: e.target.value })}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
+                          placeholder="https://example.com/my-page"
+                          required
+                        />
+                        <p className="text-xs text-gray-400 mt-2">
+                          This URL can be changed anytime from the dashboard after QR is created.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Use Cases - Only show for new QR */}
+                    {!editingQR && (
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Common Use Cases
+                        </label>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-white p-2 rounded-lg text-gray-600">📄 PDF Documents</div>
+                          <div className="bg-white p-2 rounded-lg text-gray-600">🎥 Video Links</div>
+                          <div className="bg-white p-2 rounded-lg text-gray-600">🍽️ Restaurant Menus</div>
+                          <div className="bg-white p-2 rounded-lg text-gray-600">📱 App Download Links</div>
+                          <div className="bg-white p-2 rounded-lg text-gray-600">🎫 Event Pages</div>
+                          <div className="bg-white p-2 rounded-lg text-gray-600">🛒 Product Pages</div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Styling Section (Collapsible) */}
                     <div className="bg-gray-50 rounded-xl overflow-hidden">

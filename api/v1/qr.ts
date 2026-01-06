@@ -792,16 +792,30 @@ async function handleUpdate(
   requestId: string
 ): Promise<{ status: number; data: any }> {
   try {
-    // Check if QR exists
+    // Check if QR exists and get its category
     const { data: existing } = await db
       .from('dynamic_qr_codes')
-      .select('id, is_dynamic')
+      .select('id, is_dynamic, qr_category')
       .eq('id', qrId)
       .eq('user_id', userId)
       .single();
 
     if (!existing) {
       return { status: 404, data: createErrorResponse('QR_NOT_FOUND', null, requestId) };
+    }
+
+    // Check if trying to update destination URL for landing_page QR
+    // Landing page QRs (PDF, document, video, audio, images, menu, coupon, text) have locked destination URLs
+    if (existing.qr_category === 'landing_page' && body.content !== undefined) {
+      return {
+        status: 400,
+        data: createErrorResponse('DESTINATION_URL_LOCKED', {
+          message: 'Landing page QR codes ka destination URL change nahi ho sakta. Aap sirf title, styling aur files update kar sakte hain.',
+          message_en: 'Landing page QR codes cannot have their destination URL changed. You can only update title, styling, and files.',
+          qr_category: 'landing_page',
+          allowed_updates: ['title', 'is_active', 'qr_style', 'files']
+        }, requestId)
+      };
     }
 
     const updates: any = { updated_at: new Date().toISOString() };
