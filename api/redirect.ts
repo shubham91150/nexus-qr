@@ -3328,13 +3328,15 @@ export default async function handler(
     const language = getLanguage(req);
     const { device, browser, os } = parseUserAgent(userAgent);
 
-    // Check if this is an internal request (from dashboard/same origin) - don't count as scan
+    // Check if this is an internal request (from dashboard preview) - don't count as scan
+    // Be very specific to avoid blocking legitimate scans from QR scanners
     const isInternalRequest = referer && (
       referer.includes('/dashboard') ||
       referer.includes('/dynamic') ||
-      referer.includes('localhost:') ||
-      // Check if referer is from same origin (app itself)
-      (typeof referer === 'string' && referer.includes(req.headers.host || ''))
+      referer.includes('/preview') ||
+      referer.includes('localhost:3000') ||
+      referer.includes('localhost:5173')
+      // Removed: same origin check was blocking legitimate scans
     );
 
     // Get geolocation (don't wait too long)
@@ -3421,15 +3423,13 @@ export default async function handler(
 
       // Record scan before serving landing page
       if (!isInternalRequest) {
-        const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
-        const locationData = locationTrackingConfig?.enabled
-          ? { country: geo?.country || null, city: geo?.city || null }
-          : { country: null, city: null };
+        console.log('[SCAN] Recording landing page scan for QR:', qrCode.id, qrCode.title);
 
         db.from('qr_scans').insert({
           qr_id: qrCode.id,
           ip_address: clientIP || null,
-          ...locationData,
+          country: geo?.country || null,
+          city: geo?.city || null,
           device_type: device,
           browser: browser,
           os: os,
@@ -3438,7 +3438,11 @@ export default async function handler(
           user_agent: userAgent,
           ab_variant_id: abVariantId || null,
         }).then(({ error }) => {
-          if (error) console.error('Error recording scan:', error);
+          if (error) {
+            console.error('[SCAN ERROR] Error recording landing page scan:', error);
+          } else {
+            console.log('[SCAN SUCCESS] Landing page scan recorded for QR:', qrCode.id);
+          }
         });
       }
 
@@ -3518,17 +3522,15 @@ export default async function handler(
     if (SMART_REDIRECT_TYPES.includes(contentType)) {
       console.log('[SMART] Serving smart redirect for content type:', contentType);
 
-      // Record scan before redirect
+      // Record scan before redirect - always record all analytics
       if (!isInternalRequest) {
-        const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
-        const locationData = locationTrackingConfig?.enabled
-          ? { country: geo?.country || null, city: geo?.city || null }
-          : { country: null, city: null };
+        console.log('[SCAN] Recording smart redirect scan for QR:', qrCode.id, qrCode.title);
 
         db.from('qr_scans').insert({
           qr_id: qrCode.id,
           ip_address: clientIP || null,
-          ...locationData,
+          country: geo?.country || null,
+          city: geo?.city || null,
           device_type: device,
           browser: browser,
           os: os,
@@ -3537,7 +3539,11 @@ export default async function handler(
           user_agent: userAgent,
           ab_variant_id: abVariantId || null,
         }).then(({ error }) => {
-          if (error) console.error('Error recording scan:', error);
+          if (error) {
+            console.error('[SCAN ERROR] Error recording smart redirect scan:', error);
+          } else {
+            console.log('[SCAN SUCCESS] Smart redirect scan recorded for QR:', qrCode.id);
+          }
         });
       }
 
@@ -3637,19 +3643,19 @@ export default async function handler(
       : '';
 
     // Record the scan asynchronously (don't block redirect)
-    // Skip recording for internal requests (from dashboard, same origin, etc.)
+    // Skip recording for internal requests (from dashboard preview only)
+    console.log('[SCAN] isInternalRequest:', isInternalRequest, 'referer:', referer);
     if (!isInternalRequest) {
-      // Only include city/country if location tracking is enabled
-      const locationData = locationTrackingConfig?.enabled
-        ? { country: geo?.country || null, city: geo?.city || null }
-        : { country: null, city: null };
+      // Always record all analytics data - location, device, browser, etc.
+      console.log('[SCAN] Recording scan for QR:', qrCode.id, qrCode.title);
 
       db
         .from('qr_scans')
         .insert({
           qr_id: qrCode.id,
           ip_address: clientIP || null,
-          ...locationData,
+          country: geo?.country || null,
+          city: geo?.city || null,
           device_type: device,
           browser: browser,
           os: os,
@@ -3660,7 +3666,9 @@ export default async function handler(
         })
         .then(({ error }) => {
           if (error) {
-            console.error('Error recording scan:', error);
+            console.error('[SCAN ERROR] Error recording scan:', error);
+          } else {
+            console.log('[SCAN SUCCESS] Scan recorded for QR:', qrCode.id);
           }
         });
 
