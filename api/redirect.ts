@@ -1281,48 +1281,45 @@ function getVideoLandingPage(title: string, videoUrl: string): string {
     <head>
       <title>${safeTitle} - Video Player</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta name="theme-color" content="#667eea">
+      <meta name="theme-color" content="#f5f5f0">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>${commonStyles}
-        .video-container { position: relative; background: #000; border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .video-container { position: relative; background: #000; border-radius: 20px; overflow: hidden; margin-bottom: 24px; }
         .video-player { width: 100%; display: block; max-height: 400px; object-fit: contain; }
-        .video-badge { position: absolute; top: 16px; left: 16px; background: rgba(139, 92, 246, 0.9); color: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(10px); z-index: 10; }
-        .video-controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); opacity: 0; transition: opacity 0.3s; }
-        .video-container:hover .video-controls-overlay { opacity: 1; }
-        .pip-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 10; }
-        .pip-btn:hover { background: white; transform: scale(1.1); }
-        .video-info { display: flex; align-items: center; gap: 16px; padding: 16px; background: linear-gradient(135deg, #f8f9fa, #fff); border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        .video-icon { width: 56px; height: 56px; background: linear-gradient(135deg, #8b5cf6, #a78bfa); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
-        .video-icon svg { width: 28px; height: 28px; color: white; }
+        .video-badge { position: absolute; top: 16px; left: 16px; background: rgba(26, 26, 26, 0.85); color: white; padding: 8px 16px; border-radius: 50px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); z-index: 10; text-transform: uppercase; }
+        .pip-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.95); border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; z-index: 10; }
+        .pip-btn:hover { background: white; transform: scale(1.08); }
+        .video-info { display: flex; align-items: center; gap: 16px; padding: 20px; background: #f8f8f6; border-radius: 20px; margin-bottom: 20px; }
+        .video-icon { width: 60px; height: 60px; background: #1a1a1a; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .video-icon svg { width: 26px; height: 26px; color: white; }
         .video-details { flex: 1; }
-        .video-details h3 { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 4px; }
-        .video-details p { font-size: 13px; color: #888; display: flex; align-items: center; gap: 8px; }
+        .video-details h3 { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+        .video-details p { font-size: 13px; color: #666; display: flex; align-items: center; gap: 10px; }
         .video-details .dot { width: 4px; height: 4px; background: #ccc; border-radius: 50%; }
-        .quick-actions { display: flex; gap: 8px; margin-bottom: 16px; }
-        .quick-action { flex: 1; padding: 12px; background: #f8f9fa; border-radius: 12px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
-        .quick-action:hover { background: #f0f2f5; transform: translateY(-2px); }
-        .quick-action svg { width: 22px; height: 22px; color: #8b5cf6; }
-        .quick-action span { font-size: 11px; color: #666; font-weight: 500; }
-        .quality-badge { background: #10b981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+        .quality-badge { background: #1a1a1a; color: white; padding: 4px 10px; border-radius: 50px; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+        .quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .quick-action { flex: 1; padding: 16px 12px; background: #f8f8f6; border-radius: 16px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .quick-action:hover { background: #f0f0ec; transform: translateY(-2px); }
+        .quick-action svg { width: 22px; height: 22px; color: #1a1a1a; }
+        .quick-action span { font-size: 12px; color: #444; font-weight: 500; }
       </style>
     </head>
     <body>
       <div class="container animate-fade">
         <div class="card">
-          <div class="header" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
-            <div class="header-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            </div>
+          <div class="header">
+            <div class="header-badge">Video</div>
             <h1>${safeTitle}</h1>
-            <p>Video Content</p>
+            <p>Watch and enjoy your video content</p>
           </div>
           <div class="content">
             <div class="video-container">
               <div class="video-badge">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                VIDEO
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Now Playing
               </div>
               <button class="pip-btn" onclick="togglePiP()" title="Picture in Picture">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="11" y="10" width="10" height="7" rx="1"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="11" y="10" width="10" height="7" rx="1"/></svg>
               </button>
               <video id="videoPlayer" controls class="video-player" playsinline preload="metadata" src="${safeVideoUrl}">
                 Your browser does not support the video tag.
@@ -1358,7 +1355,7 @@ function getVideoLandingPage(title: string, videoUrl: string): string {
               </button>
             </div>
 
-            <button onclick="downloadVideo()" class="btn btn-primary" id="downloadBtn" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
+            <button onclick="downloadVideo()" class="btn btn-primary" id="downloadBtn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span id="downloadText">Download Video</span>
             </button>
@@ -1471,56 +1468,57 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
     <head>
       <title>${safeTitle} - Audio Player</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta name="theme-color" content="#667eea">
-      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <meta name="theme-color" content="#f5f5f0">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>${commonStyles}
-        .album-art { width: 200px; height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4); position: relative; overflow: hidden; }
-        .album-art::before { content: ''; position: absolute; inset: 0; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><circle cx="50" cy="50" r="20" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/><circle cx="50" cy="50" r="10" fill="rgba(255,255,255,0.2)"/></svg>') center/60% no-repeat; }
-        .album-art svg { width: 80px; height: 80px; color: rgba(255,255,255,0.9); position: relative; z-index: 1; }
+        .album-art { width: 200px; height: 200px; background: #1a1a1a; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 28px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); position: relative; overflow: hidden; }
+        .album-art::before { content: ''; position: absolute; inset: 0; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/><circle cx="50" cy="50" r="20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><circle cx="50" cy="50" r="10" fill="rgba(255,255,255,0.15)"/></svg>') center/60% no-repeat; }
+        .album-art svg { width: 70px; height: 70px; color: rgba(255,255,255,0.85); position: relative; z-index: 1; }
         .album-art.playing { animation: pulse 2s ease-in-out infinite; }
-        .audio-title { font-size: 24px; font-weight: 700; color: #333; margin-bottom: 4px; text-align: center; }
-        .audio-artist { font-size: 15px; color: #888; margin-bottom: 32px; text-align: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        .audio-title { font-family: 'Playfair Display', Georgia, serif; font-size: 26px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; text-align: center; }
+        .audio-artist { font-size: 15px; color: #666; margin-bottom: 32px; text-align: center; }
 
         /* Waveform Visualization */
-        .waveform { display: flex; align-items: center; justify-content: center; gap: 3px; height: 60px; margin-bottom: 16px; padding: 0 20px; }
-        .wave-bar { width: 4px; background: linear-gradient(to top, #667eea, #764ba2); border-radius: 4px; transition: height 0.1s ease; }
+        .waveform { display: flex; align-items: center; justify-content: center; gap: 3px; height: 50px; margin-bottom: 20px; padding: 0 20px; }
+        .wave-bar { width: 4px; background: #1a1a1a; border-radius: 4px; transition: height 0.1s ease; }
         .wave-bar.active { animation: wave 0.5s ease-in-out infinite alternate; }
         @keyframes wave { 0% { height: 20%; } 100% { height: 100%; } }
 
         /* Custom Player */
-        .player-container { background: #f8f9fa; border-radius: 20px; padding: 24px; margin-bottom: 20px; }
-        .progress-container { position: relative; margin-bottom: 20px; }
-        .progress-bar { width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; cursor: pointer; position: relative; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 3px; width: 0%; transition: width 0.1s linear; }
-        .progress-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.2); left: 0%; transition: left 0.1s linear; cursor: grab; }
-        .time-display { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #888; font-weight: 500; font-variant-numeric: tabular-nums; }
+        .player-container { background: #f8f8f6; border-radius: 24px; padding: 28px; margin-bottom: 24px; }
+        .progress-container { position: relative; margin-bottom: 24px; }
+        .progress-bar { width: 100%; height: 6px; background: #e8e8e6; border-radius: 3px; cursor: pointer; position: relative; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1a1a1a; border-radius: 3px; width: 0%; transition: width 0.1s linear; }
+        .progress-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); left: 0%; transition: left 0.1s linear; cursor: grab; }
+        .time-display { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; color: #666; font-weight: 500; font-variant-numeric: tabular-nums; }
 
         /* Controls */
-        .controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
-        .control-btn { width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .control-btn.secondary { background: #e8e8e8; }
-        .control-btn.secondary:hover { background: #ddd; transform: scale(1.1); }
-        .control-btn.secondary svg { width: 20px; height: 20px; color: #555; }
-        .play-btn { width: 72px; height: 72px; background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4); }
-        .play-btn:hover { transform: scale(1.08); box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5); }
+        .controls { display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .control-btn { width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+        .control-btn.secondary { background: #e8e8e6; }
+        .control-btn.secondary:hover { background: #ddd; transform: scale(1.08); }
+        .control-btn.secondary svg { width: 20px; height: 20px; color: #444; }
+        .play-btn { width: 76px; height: 76px; background: #1a1a1a; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); }
+        .play-btn:hover { transform: scale(1.06); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
         .play-btn svg { width: 32px; height: 32px; color: white; margin-left: 3px; }
         .play-btn.playing svg { margin-left: 0; }
 
         /* Volume Control */
-        .volume-container { display: flex; align-items: center; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-        .volume-icon { color: #888; cursor: pointer; }
-        .volume-slider { flex: 1; height: 4px; background: #e0e0e0; border-radius: 2px; -webkit-appearance: none; appearance: none; cursor: pointer; }
-        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #667eea; border-radius: 50%; cursor: pointer; }
+        .volume-container { display: flex; align-items: center; gap: 12px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e8e8e6; }
+        .volume-icon { color: #666; cursor: pointer; }
+        .volume-slider { flex: 1; height: 4px; background: #e8e8e6; border-radius: 2px; -webkit-appearance: none; appearance: none; cursor: pointer; }
+        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #1a1a1a; border-radius: 50%; cursor: pointer; }
 
         /* Quick Actions */
-        .quick-actions { display: flex; gap: 8px; margin-bottom: 16px; }
-        .quick-action { flex: 1; padding: 14px 12px; background: #f8f9fa; border-radius: 12px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
-        .quick-action:hover { background: #f0f2f5; transform: translateY(-2px); }
-        .quick-action svg { width: 22px; height: 22px; color: #667eea; }
-        .quick-action span { font-size: 11px; color: #666; font-weight: 500; }
+        .quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .quick-action { flex: 1; padding: 16px 12px; background: #f8f8f6; border-radius: 16px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .quick-action:hover { background: #f0f0ec; transform: translateY(-2px); }
+        .quick-action svg { width: 22px; height: 22px; color: #1a1a1a; }
+        .quick-action span { font-size: 12px; color: #444; font-weight: 500; }
 
         /* Speed Control */
-        .speed-badge { font-size: 10px; background: rgba(102, 126, 234, 0.1); color: #667eea; padding: 4px 8px; border-radius: 6px; font-weight: 600; }
+        .speed-badge { font-size: 11px; background: #1a1a1a; color: white; padding: 5px 10px; border-radius: 50px; font-weight: 600; cursor: pointer; }
 
         audio { display: none; }
       </style>
@@ -1529,11 +1527,9 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
       <div class="container animate-fade">
         <div class="card">
           <div class="header">
-            <div class="header-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-            </div>
+            <div class="header-badge">Audio</div>
             <h1>Now Playing</h1>
-            <p>Audio Track</p>
+            <p>Listen to your audio content</p>
           </div>
           <div class="content">
             <div class="album-art" id="albumArt">
@@ -1603,7 +1599,9 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
               <span id="downloadText">Download Audio</span>
             </button>
           </div>
-          <div class="footer">Powered by <a href="https://nexusqr.com">Nexus QR</a></div>
+          <div class="footer">
+            <span>Shared via</span> <a href="https://nexusqr.app">Nexus QR</a>
+          </div>
         </div>
       </div>
 
@@ -1720,8 +1718,8 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
 
         function toggleLoop() {
           audio.loop = !audio.loop;
-          loopBtn.style.background = audio.loop ? 'rgba(102, 126, 234, 0.15)' : '';
-          loopBtn.querySelector('svg').style.color = audio.loop ? '#667eea' : '';
+          loopBtn.style.background = audio.loop ? 'rgba(26, 26, 26, 0.1)' : '';
+          loopBtn.querySelector('svg').style.color = audio.loop ? '#1a1a1a' : '';
           showToast(audio.loop ? 'Loop enabled' : 'Loop disabled');
         }
 
@@ -1796,7 +1794,7 @@ function getAudioLandingPage(title: string, audioUrl: string, artist?: string): 
 }
 
 
-// Images Gallery Landing Page - Clean & Simple Design
+// Images Gallery Landing Page - Modern Minimal Design
 function getImagesLandingPage(title: string, imageUrls: string[]): string {
   const safeTitle = escapeHtml(title || 'Photo Gallery');
   const safeUrls = imageUrls.map(url => escapeHtml(url));
@@ -1808,14 +1806,14 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
     <head>
       <title>${safeTitle}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-      <meta name="theme-color" content="#000000">
+      <meta name="theme-color" content="#f5f5f0">
       <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: #f5f5f5;
+          background: #f5f5f0;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -1824,8 +1822,7 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
         /* Header */
         .header {
           background: #fff;
-          border-bottom: 1px solid #e5e5e5;
-          padding: 16px 20px;
+          padding: 18px 20px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1833,34 +1830,34 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
         .header-left {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
         }
         .header-icon {
-          width: 36px;
-          height: 36px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 10px;
+          width: 44px;
+          height: 44px;
+          background: #1a1a1a;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
-        .header-icon svg { width: 18px; height: 18px; color: white; }
-        .header-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
-        .header-subtitle { font-size: 12px; color: #888; margin-top: 2px; }
+        .header-icon svg { width: 20px; height: 20px; color: white; }
+        .header-title { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 600; color: #1a1a1a; }
+        .header-subtitle { font-size: 13px; color: #666; margin-top: 2px; }
         .header-btn {
-          width: 36px;
-          height: 36px;
-          background: #f5f5f5;
+          width: 44px;
+          height: 44px;
+          background: #f8f8f6;
           border: none;
-          border-radius: 10px;
+          border-radius: 50%;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          transition: all 0.3s ease;
         }
-        .header-btn:hover { background: #eee; }
-        .header-btn svg { width: 18px; height: 18px; color: #555; }
+        .header-btn:hover { background: #f0f0ec; transform: scale(1.05); }
+        .header-btn svg { width: 18px; height: 18px; color: #1a1a1a; }
 
         /* Main Content - Image Viewer */
         .viewer {
@@ -1869,21 +1866,21 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           align-items: center;
           justify-content: center;
           padding: 20px;
-          background: #f5f5f5;
+          background: #f5f5f0;
         }
         .image-container {
           position: relative;
           max-width: 100%;
-          max-height: calc(100vh - 180px);
+          max-height: calc(100vh - 200px);
           background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          border-radius: 24px;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.08);
           overflow: hidden;
         }
         .main-image {
           display: block;
           max-width: 100%;
-          max-height: calc(100vh - 180px);
+          max-height: calc(100vh - 200px);
           object-fit: contain;
           cursor: pointer;
         }
@@ -1891,14 +1888,16 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
         /* Counter Badge */
         .counter {
           position: absolute;
-          top: 12px;
-          right: 12px;
-          background: rgba(0,0,0,0.6);
+          top: 16px;
+          right: 16px;
+          background: rgba(26,26,26,0.85);
           color: white;
-          padding: 6px 12px;
-          border-radius: 20px;
+          padding: 8px 16px;
+          border-radius: 50px;
           font-size: 12px;
-          font-weight: 500;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          backdrop-filter: blur(10px);
         }
 
         /* Navigation Arrows */
@@ -1906,8 +1905,8 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          width: 40px;
-          height: 40px;
+          width: 48px;
+          height: 48px;
           background: rgba(255,255,255,0.95);
           border: none;
           border-radius: 50%;
@@ -1915,76 +1914,74 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-          transition: all 0.2s;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+          transition: all 0.3s ease;
           z-index: 10;
         }
-        .nav-btn:hover { background: #fff; transform: translateY(-50%) scale(1.1); }
-        .nav-btn svg { width: 20px; height: 20px; color: #333; }
-        .nav-prev { left: -20px; }
-        .nav-next { right: -20px; }
+        .nav-btn:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+        .nav-btn svg { width: 22px; height: 22px; color: #1a1a1a; }
+        .nav-prev { left: -24px; }
+        .nav-next { right: -24px; }
         @media (max-width: 600px) {
-          .nav-prev { left: 8px; }
-          .nav-next { right: 8px; }
+          .nav-prev { left: 10px; }
+          .nav-next { right: 10px; }
         }
 
         /* Thumbnail Strip */
         .thumbs {
           display: ${imageCount > 1 ? 'flex' : 'none'};
-          gap: 8px;
-          padding: 16px 20px;
+          gap: 10px;
+          padding: 18px 20px;
           background: #fff;
-          border-top: 1px solid #e5e5e5;
           overflow-x: auto;
           justify-content: center;
         }
         .thumbs::-webkit-scrollbar { display: none; }
         .thumb {
-          width: 52px;
-          height: 52px;
-          border-radius: 8px;
+          width: 56px;
+          height: 56px;
+          border-radius: 12px;
           overflow: hidden;
           cursor: pointer;
           flex-shrink: 0;
-          border: 2px solid transparent;
-          transition: all 0.2s;
-          opacity: 0.6;
+          border: 3px solid transparent;
+          transition: all 0.3s ease;
+          opacity: 0.5;
         }
-        .thumb:hover { opacity: 0.9; }
-        .thumb.active { border-color: #667eea; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb.active { border-color: #1a1a1a; opacity: 1; }
         .thumb img { width: 100%; height: 100%; object-fit: cover; }
 
         /* Bottom Actions */
         .actions {
           display: flex;
           justify-content: center;
-          gap: 32px;
-          padding: 16px 20px;
+          gap: 40px;
+          padding: 18px 20px;
           background: #fff;
-          border-top: 1px solid #e5e5e5;
         }
         .action-btn {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
           background: none;
           border: none;
           cursor: pointer;
-          padding: 8px;
-          border-radius: 8px;
-          transition: all 0.2s;
+          padding: 10px;
+          border-radius: 12px;
+          transition: all 0.3s ease;
         }
-        .action-btn:hover { background: #f5f5f5; }
-        .action-btn svg { width: 22px; height: 22px; color: #555; }
-        .action-btn span { font-size: 11px; color: #666; font-weight: 500; }
+        .action-btn:hover { background: #f8f8f6; }
+        .action-btn svg { width: 24px; height: 24px; color: #1a1a1a; }
+        .action-btn span { font-size: 12px; color: #444; font-weight: 500; }
 
         /* Fullscreen Lightbox */
         .lightbox {
           display: none;
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.95);
+          background: rgba(0,0,0,0.96);
           z-index: 1000;
           align-items: center;
           justify-content: center;
@@ -1994,8 +1991,8 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           position: absolute;
           top: 20px;
           right: 20px;
-          width: 44px;
-          height: 44px;
+          width: 48px;
+          height: 48px;
           background: rgba(255,255,255,0.1);
           border: none;
           border-radius: 50%;
@@ -2004,6 +2001,7 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           align-items: center;
           justify-content: center;
           z-index: 10;
+          transition: all 0.3s ease;
         }
         .lightbox-close:hover { background: rgba(255,255,255,0.2); }
         .lightbox-close svg { width: 24px; height: 24px; color: white; }
@@ -2011,13 +2009,14 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           max-width: 95vw;
           max-height: 95vh;
           object-fit: contain;
+          border-radius: 8px;
         }
         .lightbox-nav {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          width: 50px;
-          height: 50px;
+          width: 56px;
+          height: 56px;
           background: rgba(255,255,255,0.1);
           border: none;
           border-radius: 50%;
@@ -2025,19 +2024,23 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: all 0.3s ease;
         }
         .lightbox-nav:hover { background: rgba(255,255,255,0.2); }
-        .lightbox-nav svg { width: 24px; height: 24px; color: white; }
-        .lightbox-prev { left: 20px; }
-        .lightbox-next { right: 20px; }
+        .lightbox-nav svg { width: 26px; height: 26px; color: white; }
+        .lightbox-prev { left: 24px; }
+        .lightbox-next { right: 24px; }
         .lightbox-counter {
           position: absolute;
-          bottom: 30px;
+          bottom: 32px;
           left: 50%;
           transform: translateX(-50%);
           color: white;
           font-size: 14px;
           font-weight: 500;
+          background: rgba(0,0,0,0.5);
+          padding: 8px 20px;
+          border-radius: 50px;
         }
 
         /* Toast */
@@ -2046,14 +2049,14 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
           bottom: 100px;
           left: 50%;
           transform: translateX(-50%) translateY(20px);
-          background: #333;
+          background: #1a1a1a;
           color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
+          padding: 14px 28px;
+          border-radius: 50px;
           font-size: 14px;
           font-weight: 500;
           opacity: 0;
-          transition: all 0.3s;
+          transition: all 0.3s ease;
           z-index: 2000;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -2237,26 +2240,26 @@ function getImagesLandingPage(title: string, imageUrls: string[]): string {
   `;
 }
 
-// Document Landing Page - Premium
+// Document Landing Page - Modern Minimal Design
 function getDocumentLandingPage(title: string, docUrl: string, fileType?: string): string {
   const safeTitle = escapeHtml(title || 'Document');
   const safeDocUrl = escapeHtml(docUrl);
   const safeFileType = fileType ? escapeHtml(fileType.toUpperCase()) : 'DOC';
 
-  const fileTypeConfig: Record<string, { color: string; gradient: string; icon: string; description: string }> = {
-    'PDF': { color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Portable Document' },
-    'DOC': { color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Word Document' },
-    'DOCX': { color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Word Document' },
-    'XLS': { color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Excel Spreadsheet' },
-    'XLSX': { color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Excel Spreadsheet' },
-    'PPT': { color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'PowerPoint Presentation' },
-    'PPTX': { color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'PowerPoint Presentation' },
-    'TXT': { color: '#6b7280', gradient: 'linear-gradient(135deg, #6b7280, #9ca3af)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Text File' },
-    'ZIP': { color: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Compressed Archive' },
-    'RAR': { color: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Compressed Archive' },
+  const fileTypeConfig: Record<string, { description: string }> = {
+    'PDF': { description: 'Portable Document' },
+    'DOC': { description: 'Word Document' },
+    'DOCX': { description: 'Word Document' },
+    'XLS': { description: 'Excel Spreadsheet' },
+    'XLSX': { description: 'Excel Spreadsheet' },
+    'PPT': { description: 'PowerPoint Presentation' },
+    'PPTX': { description: 'PowerPoint Presentation' },
+    'TXT': { description: 'Text File' },
+    'ZIP': { description: 'Compressed Archive' },
+    'RAR': { description: 'Compressed Archive' },
   };
 
-  const config = fileTypeConfig[safeFileType] || { color: '#667eea', gradient: 'linear-gradient(135deg, #667eea, #764ba2)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', description: 'Document File' };
+  const config = fileTypeConfig[safeFileType] || { description: 'Document File' };
 
   return `
     <!DOCTYPE html>
@@ -2264,48 +2267,44 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
     <head>
       <title>${safeTitle} - Download</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta name="theme-color" content="${config.color}">
-      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <meta name="theme-color" content="#f5f5f0">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>${commonStyles}
-        .doc-header { background: ${config.gradient}; }
-
         /* Document Preview Card */
-        .doc-preview { background: #f8f9fa; border-radius: 20px; padding: 24px; margin-bottom: 20px; text-align: center; }
-        .doc-icon-large { width: 100px; height: 100px; background: ${config.gradient}; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 15px 40px ${config.color}40; position: relative; }
-        .doc-icon-large svg { width: 50px; height: 50px; color: white; }
-        .doc-badge { position: absolute; bottom: -8px; background: white; color: ${config.color}; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .doc-title { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 4px; word-break: break-word; }
-        .doc-description { font-size: 14px; color: #888; margin-bottom: 16px; }
+        .doc-preview { background: #f8f8f6; border-radius: 24px; padding: 28px; margin-bottom: 24px; text-align: center; }
+        .doc-icon-large { width: 100px; height: 100px; background: #1a1a1a; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.12); position: relative; }
+        .doc-icon-large svg { width: 48px; height: 48px; color: white; }
+        .doc-badge { position: absolute; bottom: -10px; background: white; color: #1a1a1a; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); letter-spacing: 0.3px; }
+        .doc-title { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; word-break: break-word; }
+        .doc-description { font-size: 14px; color: #666; margin-bottom: 20px; }
 
         /* File Info */
-        .file-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-        .info-item { background: white; padding: 14px; border-radius: 12px; text-align: center; }
-        .info-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .info-value { font-size: 16px; font-weight: 600; color: #333; }
+        .file-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .info-item { background: white; padding: 16px; border-radius: 16px; text-align: center; }
+        .info-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .info-value { font-size: 16px; font-weight: 600; color: #1a1a1a; }
 
         /* Quick Actions */
-        .quick-actions { display: flex; gap: 8px; margin-bottom: 16px; }
-        .quick-action { flex: 1; padding: 14px 12px; background: #f8f9fa; border-radius: 12px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
-        .quick-action:hover { background: #f0f2f5; transform: translateY(-2px); }
-        .quick-action svg { width: 22px; height: 22px; color: ${config.color}; }
-        .quick-action span { font-size: 11px; color: #666; font-weight: 500; }
+        .quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .quick-action { flex: 1; padding: 16px 12px; background: #f8f8f6; border-radius: 16px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .quick-action:hover { background: #f0f0ec; transform: translateY(-2px); }
+        .quick-action svg { width: 22px; height: 22px; color: #1a1a1a; }
+        .quick-action span { font-size: 12px; color: #444; font-weight: 500; }
 
         /* Animated Icon */
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         .doc-icon-large { animation: float 3s ease-in-out infinite; }
 
         /* Secure badge */
-        .secure-badge { display: inline-flex; align-items: center; gap: 6px; background: #E8F5E9; color: #2E7D32; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-bottom: 16px; }
-        .secure-badge svg { width: 14px; height: 14px; }
+        .secure-badge { display: inline-flex; align-items: center; gap: 8px; background: #f0f9f4; color: #166534; padding: 10px 18px; border-radius: 50px; font-size: 13px; font-weight: 500; margin-bottom: 20px; }
+        .secure-badge svg { width: 16px; height: 16px; }
       </style>
     </head>
     <body>
       <div class="container animate-fade">
         <div class="card">
-          <div class="header doc-header">
-            <div class="header-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${config.icon}"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
+          <div class="header">
+            <div class="header-badge">${safeFileType}</div>
             <h1>Document Ready</h1>
             <p>${config.description}</p>
           </div>
@@ -2317,7 +2316,7 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
 
             <div class="doc-preview">
               <div class="doc-icon-large">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="${config.icon}"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 <span class="doc-badge">${safeFileType}</span>
               </div>
               <h2 class="doc-title">${safeTitle}</h2>
@@ -2330,7 +2329,7 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
                 </div>
                 <div class="info-item">
                   <div class="info-label">Status</div>
-                  <div class="info-value" style="color: #38A169;">Ready</div>
+                  <div class="info-value" style="color: #166534;">Ready</div>
                 </div>
               </div>
             </div>
@@ -2350,12 +2349,14 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
               </button>
             </div>
 
-            <button onclick="downloadDoc()" class="btn btn-primary" id="downloadBtn" style="background: ${config.gradient};">
+            <button onclick="downloadDoc()" class="btn btn-primary" id="downloadBtn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span id="downloadText">Download ${safeFileType}</span>
             </button>
           </div>
-          <div class="footer">Powered by <a href="https://nexusqr.com">Nexus QR</a></div>
+          <div class="footer">
+            <span>Shared via</span> <a href="https://nexusqr.app">Nexus QR</a>
+          </div>
         </div>
       </div>
 
@@ -2465,7 +2466,7 @@ function getDocumentLandingPage(title: string, docUrl: string, fileType?: string
   `;
 }
 
-// Coupon Landing Page - Premium
+// Coupon Landing Page - Modern Minimal Design
 function getCouponLandingPage(couponData: { code: string; discount: string; expiry?: string; terms?: string }, title?: string): string {
   const safeCode = escapeHtml(couponData.code || 'COUPON');
   const safeDiscount = escapeHtml(couponData.discount || '');
@@ -2479,93 +2480,71 @@ function getCouponLandingPage(couponData: { code: string; discount: string; expi
     <head>
       <title>${safeTitle} - Coupon</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta name="theme-color" content="#667eea">
-      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <meta name="theme-color" content="#f5f5f0">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>${commonStyles}
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
-
-        /* Floating particles */
-        .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-        .particle { position: absolute; width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; animation: float-particle 15s infinite; }
-        @keyframes float-particle { 0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; } }
-
-        .container { position: relative; z-index: 1; }
-
-        /* Premium Coupon Header */
-        .coupon-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 24px 50px; text-align: center; position: relative; }
-        .coupon-header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 20px; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path fill="white" d="M0 20 Q 25 0 50 20 Q 75 40 100 20 L 100 20 L 0 20 Z"/></svg>') repeat-x; background-size: 100px 20px; }
-
-        .offer-badge { display: inline-block; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 8px 20px; border-radius: 30px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; animation: pulse 2s ease-in-out infinite; }
-        .coupon-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
 
         /* Discount Display */
-        .discount-container { position: relative; margin: 20px 0; }
-        .discount-value { font-size: 72px; font-weight: 800; line-height: 1; background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: none; filter: drop-shadow(0 4px 20px rgba(0,0,0,0.2)); }
-        .discount-label { font-size: 14px; opacity: 0.9; margin-top: 8px; }
+        .discount-container { text-align: center; margin-bottom: 28px; }
+        .discount-value { font-family: 'Playfair Display', Georgia, serif; font-size: 64px; font-weight: 700; line-height: 1; color: #1a1a1a; margin-bottom: 8px; }
+        .discount-label { font-size: 15px; color: #666; }
 
         /* Coupon Code Box */
-        .coupon-code-container { background: #f8f9fa; border-radius: 20px; padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
-        .coupon-code-container::before { content: ''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; background: white; border-radius: 50%; }
-        .coupon-code-container::after { content: ''; position: absolute; right: -10px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; background: white; border-radius: 50%; }
+        .coupon-code-container { background: #f8f8f6; border-radius: 24px; padding: 28px; margin-bottom: 24px; position: relative; overflow: hidden; }
+        .coupon-code-container::before { content: ''; position: absolute; left: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border-radius: 50%; }
+        .coupon-code-container::after { content: ''; position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: white; border-radius: 50%; }
 
-        .code-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-        .coupon-code-box { background: white; border: 2px dashed #667eea; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        .coupon-code { font-size: 24px; font-weight: 700; color: #333; letter-spacing: 4px; font-family: 'Courier New', monospace; }
-        .copy-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.3s; white-space: nowrap; }
-        .copy-btn:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
-        .copy-btn.copied { background: linear-gradient(135deg, #38A169, #68D391); }
+        .code-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; text-align: center; }
+        .coupon-code-box { background: white; border: 2px dashed #1a1a1a; border-radius: 16px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .coupon-code { font-size: 22px; font-weight: 700; color: #1a1a1a; letter-spacing: 3px; font-family: 'Courier New', monospace; }
+        .copy-btn { background: #1a1a1a; color: white; border: none; padding: 14px 22px; border-radius: 50px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; white-space: nowrap; }
+        .copy-btn:hover { transform: scale(1.03); }
+        .copy-btn.copied { background: #166534; }
         .copy-btn svg { width: 18px; height: 18px; }
 
         /* Expiry Timer */
-        .expiry-container { background: linear-gradient(135deg, #FFF5F5, #FED7D7); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
-        .expiry-icon { width: 44px; height: 44px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(229, 62, 62, 0.2); }
-        .expiry-icon svg { width: 24px; height: 24px; color: #E53E3E; }
+        .expiry-container { background: #fef2f2; border-radius: 20px; padding: 18px 22px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+        .expiry-icon { width: 48px; height: 48px; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.1); }
+        .expiry-icon svg { width: 24px; height: 24px; color: #b91c1c; }
         .expiry-text { flex: 1; }
-        .expiry-label { font-size: 11px; color: #C53030; text-transform: uppercase; letter-spacing: 0.5px; }
-        .expiry-value { font-size: 16px; font-weight: 600; color: #C53030; margin-top: 2px; }
+        .expiry-label { font-size: 11px; color: #b91c1c; text-transform: uppercase; letter-spacing: 0.5px; }
+        .expiry-value { font-size: 16px; font-weight: 600; color: #b91c1c; margin-top: 4px; }
 
         /* Quick Actions */
-        .quick-actions { display: flex; gap: 8px; margin-bottom: 20px; }
-        .quick-action { flex: 1; padding: 14px 12px; background: #f8f9fa; border-radius: 12px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
-        .quick-action:hover { background: #f0f2f5; transform: translateY(-2px); }
-        .quick-action svg { width: 22px; height: 22px; color: #667eea; }
-        .quick-action span { font-size: 11px; color: #666; font-weight: 500; }
+        .quick-actions { display: flex; gap: 10px; margin-bottom: 24px; }
+        .quick-action { flex: 1; padding: 16px 12px; background: #f8f8f6; border-radius: 16px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .quick-action:hover { background: #f0f0ec; transform: translateY(-2px); }
+        .quick-action svg { width: 22px; height: 22px; color: #1a1a1a; }
+        .quick-action span { font-size: 12px; color: #444; font-weight: 500; }
 
         /* Terms */
-        .terms-container { background: #f8f9fa; border-radius: 12px; padding: 16px; }
-        .terms-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px; cursor: pointer; }
-        .terms-header svg { width: 16px; height: 16px; color: #888; transition: transform 0.2s; }
+        .terms-container { background: #f8f8f6; border-radius: 16px; padding: 18px; }
+        .terms-header { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #1a1a1a; cursor: pointer; }
+        .terms-header svg { width: 18px; height: 18px; color: #666; transition: transform 0.3s ease; }
         .terms-header.expanded svg { transform: rotate(180deg); }
-        .terms-content { font-size: 12px; color: #666; line-height: 1.6; display: none; }
+        .terms-content { font-size: 13px; color: #666; line-height: 1.7; display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e8e8e6; }
         .terms-content.show { display: block; }
 
-        /* Confetti animation */
-        @keyframes confetti { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100px) rotate(720deg); opacity: 0; } }
-        .confetti { position: absolute; width: 8px; height: 8px; animation: confetti 1s ease-out forwards; }
-
         /* Success animation */
-        @keyframes success-pulse { 0% { box-shadow: 0 0 0 0 rgba(56, 161, 105, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(56, 161, 105, 0); } 100% { box-shadow: 0 0 0 0 rgba(56, 161, 105, 0); } }
+        @keyframes success-pulse { 0% { box-shadow: 0 0 0 0 rgba(22, 101, 52, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(22, 101, 52, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 101, 52, 0); } }
         .copy-btn.copied { animation: success-pulse 0.5s; }
       </style>
     </head>
     <body>
-      <!-- Floating Particles -->
-      <div class="particles">
-        ${Array(15).fill(0).map((_, i) => `<div class="particle" style="left: ${Math.random() * 100}%; animation-delay: ${Math.random() * 15}s; animation-duration: ${10 + Math.random() * 10}s;"></div>`).join('')}
-      </div>
-
       <div class="container animate-fade">
         <div class="card">
-          <div class="coupon-header">
-            <div class="offer-badge">Limited Time Offer</div>
-            <h1 class="coupon-title">${safeTitle}</h1>
-            <div class="discount-container">
-              <div class="discount-value">${safeDiscount}</div>
-              <p class="discount-label">Use code below at checkout</p>
-            </div>
+          <div class="header">
+            <div class="header-badge">Limited Offer</div>
+            <h1>${safeTitle}</h1>
+            <p>Use code below at checkout</p>
           </div>
 
           <div class="content">
+            <div class="discount-container">
+              <div class="discount-value">${safeDiscount}</div>
+              <p class="discount-label">Your exclusive discount</p>
+            </div>
+
             ${safeExpiry ? `
             <div class="expiry-container">
               <div class="expiry-icon">
@@ -2616,7 +2595,9 @@ function getCouponLandingPage(couponData: { code: string; discount: string; expi
             </div>
             ` : ''}
           </div>
-          <div class="footer">Powered by <a href="https://nexusqr.com">Nexus QR</a></div>
+          <div class="footer">
+            <span>Shared via</span> <a href="https://nexusqr.app">Nexus QR</a>
+          </div>
         </div>
       </div>
 
@@ -2634,9 +2615,6 @@ function getCouponLandingPage(couponData: { code: string; discount: string; expi
             icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
             text.textContent = 'Copied!';
 
-            // Trigger confetti
-            createConfetti();
-
             showToast('Code copied to clipboard!');
 
             setTimeout(() => {
@@ -2645,22 +2623,6 @@ function getCouponLandingPage(couponData: { code: string; discount: string; expi
               text.textContent = 'Copy';
             }, 2000);
           });
-        }
-
-        function createConfetti() {
-          const colors = ['#667eea', '#764ba2', '#f093fb', '#38A169', '#E53E3E', '#F6AD55'];
-          const container = document.querySelector('.coupon-code-container');
-
-          for (let i = 0; i < 30; i++) {
-            const confetti = document.createElement('div');
-            confetti.className = 'confetti';
-            confetti.style.left = Math.random() * 100 + '%';
-            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.animationDelay = Math.random() * 0.5 + 's';
-            container.appendChild(confetti);
-
-            setTimeout(() => confetti.remove(), 1500);
-          }
         }
 
         function shareCoupon() {
@@ -2696,7 +2658,7 @@ function getCouponLandingPage(couponData: { code: string; discount: string; expi
   `;
 }
 
-// Menu Landing Page
+// Menu Landing Page - Modern Minimal Design
 function getMenuLandingPage(title: string, menuUrl: string): string {
   const safeTitle = escapeHtml(title || 'Menu');
   const safeMenuUrl = escapeHtml(menuUrl);
@@ -2707,37 +2669,68 @@ function getMenuLandingPage(title: string, menuUrl: string): string {
     <head>
       <title>${safeTitle}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="theme-color" content="#f5f5f0">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>${commonStyles}
-        .menu-header { background: linear-gradient(135deg, #F6AD55 0%, #ED8936 100%); color: white; padding: 32px 24px; text-align: center; }
-        .menu-header .icon { font-size: 48px; margin-bottom: 12px; }
-        .menu-frame { width: 100%; height: 500px; border: none; border-radius: 0; }
+        .menu-frame { width: 100%; height: 450px; border: none; border-radius: 20px; background: #f8f8f6; margin-bottom: 20px; }
+        .quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .quick-action { flex: 1; padding: 16px 12px; background: #f8f8f6; border-radius: 16px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s ease; text-decoration: none; }
+        .quick-action:hover { background: #f0f0ec; transform: translateY(-2px); }
+        .quick-action svg { width: 22px; height: 22px; color: #1a1a1a; }
+        .quick-action span { font-size: 12px; color: #444; font-weight: 500; }
       </style>
     </head>
     <body>
-      <div class="container">
+      <div class="container animate-fade">
         <div class="card">
-          <div class="menu-header">
-            <div class="icon">🍽️</div>
+          <div class="header">
+            <div class="header-badge">Menu</div>
             <h1>${safeTitle}</h1>
+            <p>View our delicious offerings</p>
           </div>
-          <iframe src="${safeMenuUrl}" class="menu-frame" title="Menu"></iframe>
           <div class="content">
+            <iframe src="${safeMenuUrl}" class="menu-frame" title="Menu"></iframe>
+
+            <div class="quick-actions">
+              <a href="${safeMenuUrl}" target="_blank" class="quick-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <span>Full Screen</span>
+              </a>
+              <button class="quick-action" onclick="shareMenu()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                <span>Share</span>
+              </button>
+            </div>
+
             <a href="${safeMenuUrl}" target="_blank" class="btn btn-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               Open Full Menu
             </a>
-            <div class="share-btns">
-              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => this.textContent = 'Link Copied!')">Share Menu</button>
-            </div>
           </div>
-          <div class="footer">Powered by Nexus QR</div>
+          <div class="footer">
+            <span>Shared via</span> <a href="https://nexusqr.app">Nexus QR</a>
+          </div>
         </div>
       </div>
+      <div class="toast" id="toast">Link copied!</div>
+      <script>
+        function shareMenu() {
+          if (navigator.share) {
+            navigator.share({ title: '${safeTitle}', url: window.location.href });
+          } else {
+            navigator.clipboard.writeText(window.location.href);
+            const t = document.getElementById('toast');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+          }
+        }
+      </script>
     </body>
     </html>
   `;
 }
 
-// Text Landing Page
+// Text Landing Page - Modern Minimal Design
 function getTextLandingPage(title: string, text: string): string {
   const safeTitle = escapeHtml(title || 'Message');
   const safeText = escapeHtml(text || '');
@@ -2748,31 +2741,71 @@ function getTextLandingPage(title: string, text: string): string {
     <head>
       <title>${safeTitle}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="theme-color" content="#f5f5f0">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
       <style>${commonStyles}
-        .text-content { background: #f5f5f5; border-radius: 12px; padding: 20px; white-space: pre-wrap; word-break: break-word; line-height: 1.6; font-size: 15px; color: #333; max-height: 400px; overflow-y: auto; }
+        .text-content { background: #f8f8f6; border-radius: 20px; padding: 24px; white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 15px; color: #333; max-height: 400px; overflow-y: auto; margin-bottom: 24px; }
+        .quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .quick-action { flex: 1; padding: 16px 12px; background: #f8f8f6; border-radius: 16px; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .quick-action:hover { background: #f0f0ec; transform: translateY(-2px); }
+        .quick-action svg { width: 22px; height: 22px; color: #1a1a1a; }
+        .quick-action span { font-size: 12px; color: #444; font-weight: 500; }
       </style>
     </head>
     <body>
-      <div class="container">
+      <div class="container animate-fade">
         <div class="card">
           <div class="header">
+            <div class="header-badge">Message</div>
             <h1>${safeTitle}</h1>
-            <p>Text Message</p>
+            <p>Shared text content</p>
           </div>
           <div class="content">
             <div class="text-content">${safeText}</div>
-            <div style="margin-top: 20px;">
-              <button class="btn btn-primary" onclick="navigator.clipboard.writeText(\`${safeText.replace(/`/g, '\\`')}\`).then(() => { this.innerHTML = '✓ Copied!'; setTimeout(() => this.innerHTML = 'Copy Text', 2000); })">
-                Copy Text
+
+            <div class="quick-actions">
+              <button class="quick-action" onclick="copyText()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Copy</span>
+              </button>
+              <button class="quick-action" onclick="shareText()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                <span>Share</span>
               </button>
             </div>
-            <div class="share-btns">
-              <button class="btn btn-secondary" onclick="navigator.share ? navigator.share({title: '${safeTitle}', text: \`${safeText.replace(/`/g, '\\`')}\`}) : null">Share</button>
-            </div>
+
+            <button class="btn btn-primary" onclick="copyText()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copyBtnText">Copy Text</span>
+            </button>
           </div>
-          <div class="footer">Powered by Nexus QR</div>
+          <div class="footer">
+            <span>Shared via</span> <a href="https://nexusqr.app">Nexus QR</a>
+          </div>
         </div>
       </div>
+      <div class="toast" id="toast">Text copied!</div>
+      <script>
+        function copyText() {
+          navigator.clipboard.writeText(\`${safeText.replace(/`/g, '\\`')}\`).then(() => {
+            const t = document.getElementById('toast');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+
+            const btn = document.getElementById('copyBtnText');
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy Text', 2000);
+          });
+        }
+
+        function shareText() {
+          if (navigator.share) {
+            navigator.share({ title: '${safeTitle}', text: \`${safeText.replace(/`/g, '\\`')}\` });
+          } else {
+            copyText();
+          }
+        }
+      </script>
     </body>
     </html>
   `;
