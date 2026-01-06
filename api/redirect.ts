@@ -3421,11 +3421,11 @@ export default async function handler(
     if (LANDING_PAGE_TYPES.includes(contentType)) {
       console.log('[LANDING] Serving landing page for content type:', contentType);
 
-      // Record scan before serving landing page
+      // Record scan before serving landing page - MUST await to ensure it completes before function terminates
       if (!isInternalRequest) {
         console.log('[SCAN] Recording landing page scan for QR:', qrCode.id, qrCode.title);
 
-        db.from('qr_scans').insert({
+        const { error: scanError } = await db.from('qr_scans').insert({
           qr_id: qrCode.id,
           ip_address: clientIP || null,
           country: geo?.country || null,
@@ -3437,13 +3437,13 @@ export default async function handler(
           language: language,
           user_agent: userAgent,
           ab_variant_id: abVariantId || null,
-        }).then(({ error }) => {
-          if (error) {
-            console.error('[SCAN ERROR] Error recording landing page scan:', error);
-          } else {
-            console.log('[SCAN SUCCESS] Landing page scan recorded for QR:', qrCode.id);
-          }
         });
+
+        if (scanError) {
+          console.error('[SCAN ERROR] Error recording landing page scan:', scanError);
+        } else {
+          console.log('[SCAN SUCCESS] Landing page scan recorded for QR:', qrCode.id);
+        }
       }
 
       // Serve appropriate landing page based on content type
@@ -3522,11 +3522,11 @@ export default async function handler(
     if (SMART_REDIRECT_TYPES.includes(contentType)) {
       console.log('[SMART] Serving smart redirect for content type:', contentType);
 
-      // Record scan before redirect - always record all analytics
+      // Record scan before redirect - MUST await to ensure it completes before function terminates
       if (!isInternalRequest) {
         console.log('[SCAN] Recording smart redirect scan for QR:', qrCode.id, qrCode.title);
 
-        db.from('qr_scans').insert({
+        const { error: scanError } = await db.from('qr_scans').insert({
           qr_id: qrCode.id,
           ip_address: clientIP || null,
           country: geo?.country || null,
@@ -3538,13 +3538,13 @@ export default async function handler(
           language: language,
           user_agent: userAgent,
           ab_variant_id: abVariantId || null,
-        }).then(({ error }) => {
-          if (error) {
-            console.error('[SCAN ERROR] Error recording smart redirect scan:', error);
-          } else {
-            console.log('[SCAN SUCCESS] Smart redirect scan recorded for QR:', qrCode.id);
-          }
         });
+
+        if (scanError) {
+          console.error('[SCAN ERROR] Error recording smart redirect scan:', scanError);
+        } else {
+          console.log('[SCAN SUCCESS] Smart redirect scan recorded for QR:', qrCode.id);
+        }
       }
 
       if (contentType === 'appstore') {
@@ -3642,14 +3642,14 @@ export default async function handler(
       ? generateRetargetingScripts(retargetingConfig, retargetingConfig.custom_events?.scan || 'qr_scan')
       : '';
 
-    // Record the scan asynchronously (don't block redirect)
+    // Record the scan - MUST await to ensure it completes before function terminates
     // Skip recording for internal requests (from dashboard preview only)
     console.log('[SCAN] isInternalRequest:', isInternalRequest, 'referer:', referer);
     if (!isInternalRequest) {
       // Always record all analytics data - location, device, browser, etc.
       console.log('[SCAN] Recording scan for QR:', qrCode.id, qrCode.title);
 
-      db
+      const { error: scanError } = await db
         .from('qr_scans')
         .insert({
           qr_id: qrCode.id,
@@ -3663,14 +3663,13 @@ export default async function handler(
           language: language,
           user_agent: userAgent,
           ab_variant_id: abVariantId || null,
-        })
-        .then(({ error }) => {
-          if (error) {
-            console.error('[SCAN ERROR] Error recording scan:', error);
-          } else {
-            console.log('[SCAN SUCCESS] Scan recorded for QR:', qrCode.id);
-          }
         });
+
+      if (scanError) {
+        console.error('[SCAN ERROR] Error recording scan:', scanError);
+      } else {
+        console.log('[SCAN SUCCESS] Scan recorded for QR:', qrCode.id);
+      }
 
       // Send email notification if enabled
       const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
