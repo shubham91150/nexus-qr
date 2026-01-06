@@ -698,49 +698,12 @@ const QRGenerator: React.FC<{
                       maxLength={255}
                     />
 
-                    {/* Analytics Options */}
-                    <div className="bg-indigo-50/50 rounded-xl p-4">
-                      <p className="text-xs font-semibold text-indigo-900 mb-3">
-                        Track Analytics For:
+                    {/* Analytics info - all tracking enabled by default */}
+                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl">
+                      <span className="text-sm">📊</span>
+                      <p className="text-xs text-green-700">
+                        Full analytics enabled: Location, Device, Browser, Time & Referrer tracking
                       </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { key: 'trackLocation', label: 'Location', icon: '📍' },
-                          { key: 'trackDevice', label: 'Device', icon: '📱' },
-                          { key: 'trackBrowser', label: 'Browser', icon: '🌐' },
-                          { key: 'trackTime', label: 'Scan Time', icon: '🕐' },
-                          { key: 'trackReferrer', label: 'Referrer', icon: '🔗' },
-                        ].map((option) => (
-                          <label
-                            key={option.key}
-                            className={`flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-all ${
-                              analyticsOptions[option.key as keyof AnalyticsOptions]
-                                ? 'bg-white border-2 border-indigo-500 shadow-sm'
-                                : 'bg-white/50 border-2 border-transparent hover:bg-white'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={analyticsOptions[option.key as keyof AnalyticsOptions]}
-                              onChange={(e) =>
-                                setAnalyticsOptions({
-                                  ...analyticsOptions,
-                                  [option.key]: e.target.checked,
-                                })
-                              }
-                              className="sr-only"
-                            />
-                            <span className="text-sm">{option.icon}</span>
-                            <span className={`text-xs font-medium ${
-                              analyticsOptions[option.key as keyof AnalyticsOptions]
-                                ? 'text-indigo-700'
-                                : 'text-gray-500'
-                            }`}>
-                              {option.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 )}
