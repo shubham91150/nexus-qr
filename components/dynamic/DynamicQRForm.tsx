@@ -139,11 +139,23 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
           setContentData(savedStyle.contentData as QRContentData);
         } else {
           // Fallback for old QR codes without saved contentData
-          setContentData({
-            type: 'url',
-            url: editingQR.destination_url,
-            value: editingQR.destination_url,
-          });
+          // Try to detect content type from destination_url pattern
+          const destUrl = editingQR.destination_url || '';
+          let contentObj: Partial<QRContentData> = { type: 'url', url: destUrl, value: destUrl };
+
+          // Check if it looks like a file path (contains user ID pattern or file extensions)
+          if (destUrl.includes('/temp/') || destUrl.includes('/qr_') ||
+              destUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)$/i)) {
+            contentObj = { type: 'document', document: { url: destUrl, title: editingQR.title } };
+          } else if (destUrl.match(/\.(mp3|wav|ogg|m4a|aac)$/i)) {
+            contentObj = { type: 'audio', audio: { url: destUrl, title: editingQR.title } };
+          } else if (destUrl.match(/\.(mp4|webm|mov|avi)$/i)) {
+            contentObj = { type: 'video', video: { url: destUrl, title: editingQR.title } };
+          } else if (destUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+            contentObj = { type: 'images', images: { urls: [destUrl], filePaths: [destUrl], title: editingQR.title } };
+          }
+
+          setContentData(contentObj as QRContentData);
         }
         if (savedStyle?.styleConfig) {
           setStyleConfig(savedStyle.styleConfig as QRStyleConfig);
@@ -162,8 +174,39 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
     }
   }, [editingQR, isOpen]);
 
-  // Get destination URL (simple - just return the URL)
+  // Get destination URL - handles all content types
   const getPayload = () => {
+    // For file-based content types, get URL from nested object
+    const type = contentData.type;
+
+    // Check nested content type objects first
+    if (type === 'document' && contentData.document?.url) {
+      return contentData.document.url;
+    }
+    if (type === 'pdf' && contentData.pdf?.url) {
+      return contentData.pdf.url;
+    }
+    if (type === 'video' && contentData.video?.url) {
+      return contentData.video.url;
+    }
+    if (type === 'audio' && contentData.audio?.url) {
+      return contentData.audio.url;
+    }
+    if (type === 'images' && contentData.images) {
+      const paths = contentData.images.filePaths || contentData.images.urls;
+      return paths?.[0] || '';
+    }
+    if (type === 'menu' && contentData.menu?.url) {
+      return contentData.menu.url;
+    }
+    if (type === 'coupon' && contentData.coupon?.code) {
+      return contentData.coupon.code;
+    }
+    if (type === 'text') {
+      return contentData.value || 'text-content';
+    }
+
+    // Fallback for URL types and legacy content
     return contentData.url || contentData.value || '';
   };
 
