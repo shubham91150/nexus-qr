@@ -132,14 +132,19 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
     if (isOpen) {
       if (editingQR) {
         setTitle(editingQR.title);
-        // Load saved URL from destination_url
-        setContentData({
-          type: 'url',
-          url: editingQR.destination_url,
-          value: editingQR.destination_url,
-        });
-        // Load saved style
+        // Load saved style and contentData from qr_style
         const savedStyle = editingQR.qr_style as Record<string, unknown>;
+        // Restore contentData from qr_style if available (important for PDF/doc types)
+        if (savedStyle?.contentData) {
+          setContentData(savedStyle.contentData as QRContentData);
+        } else {
+          // Fallback for old QR codes without saved contentData
+          setContentData({
+            type: 'url',
+            url: editingQR.destination_url,
+            value: editingQR.destination_url,
+          });
+        }
         if (savedStyle?.styleConfig) {
           setStyleConfig(savedStyle.styleConfig as QRStyleConfig);
         }
