@@ -428,9 +428,6 @@ async function sendScanNotification(
       ? `${scanData.city}, ${scanData.country}`
       : scanData.country || 'Unknown location';
 
-    // Use CDN-hosted icons for email compatibility (Lucide icons)
-    const iconBaseUrl = 'https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons';
-
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -447,39 +444,55 @@ async function sendScanNotification(
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
           </head>
-          <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0a0a0a;">
+          <body style="margin: 0; padding: 0; background-color: #f5f5f0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f5f5f0;">
               <tr>
                 <td align="center" style="padding: 32px 16px;">
 
                   <!-- Main Card -->
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 420px; background-color: #18181b; border-radius: 24px; overflow: hidden; border: 1px solid #27272a;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 420px; background-color: #ffffff; border-radius: 28px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
 
                     <!-- Header Section -->
                     <tr>
-                      <td style="padding: 32px 24px 24px 24px; text-align: center; border-bottom: 1px solid #27272a;">
-                        <!-- Bell Icon Badge -->
-                        <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto 16px auto;">
+                      <td style="padding: 32px 24px 28px 24px; text-align: center; border-bottom: 1px solid #f0f0eb;">
+                        <!-- Bell Icon -->
+                        <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto 20px auto;">
                           <tr>
-                            <td style="background-color: #7c3aed; border-radius: 50%; width: 56px; height: 56px; text-align: center; vertical-align: middle;">
-                              <img src="${iconBaseUrl}/bell.svg" width="28" height="28" alt="" style="display: block; margin: 0 auto; filter: brightness(0) invert(1);">
+                            <td style="width: 64px; height: 64px; background-color: #f5f5f0; border-radius: 20px; border: 1px solid #e8e8e3; text-align: center; vertical-align: middle;">
+                              <img src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/bell-ring.svg" width="28" height="28" alt="" style="display: inline-block; filter: brightness(0);">
                             </td>
                           </tr>
                         </table>
-                        <h1 style="margin: 0 0 8px 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">New QR Scan</h1>
-                        <p style="margin: 0; color: #a1a1aa; font-size: 14px; font-weight: 400;">Someone scanned your QR code</p>
+                        <h1 style="margin: 0 0 8px 0; font-family: 'Playfair Display', Georgia, serif; color: #1a1a1a; font-size: 26px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.3;">New QR Scan</h1>
+                        <p style="margin: 0; color: #666; font-size: 14px; font-weight: 400;">Someone just scanned your QR code</p>
                       </td>
                     </tr>
 
-                    <!-- QR Code Name Badge -->
+                    <!-- QR Code Info Box -->
                     <tr>
-                      <td style="padding: 20px 24px 0 24px;">
+                      <td style="padding: 24px 24px 0 24px;">
                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                           <tr>
-                            <td style="background-color: #27272a; border-radius: 12px; padding: 16px; text-align: center;">
-                              <p style="margin: 0 0 4px 0; color: #7c3aed; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">QR CODE</p>
-                              <p style="margin: 0; color: #ffffff; font-size: 17px; font-weight: 600;">${scanData.qrTitle}</p>
+                            <td style="background-color: #f8f8f6; border-radius: 20px; padding: 20px;">
+                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td width="60" valign="middle">
+                                    <div style="width: 60px; height: 60px; background-color: #1a1a1a; border-radius: 16px; text-align: center; line-height: 60px;">
+                                      <img src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/qr-code.svg" width="26" height="26" alt="" style="vertical-align: middle; filter: brightness(0) invert(1);">
+                                    </div>
+                                  </td>
+                                  <td style="padding-left: 16px;" valign="middle">
+                                    <p style="margin: 0 0 6px 0; font-family: 'Playfair Display', Georgia, serif; color: #1a1a1a; font-size: 18px; font-weight: 600;">${scanData.qrTitle}</p>
+                                    <p style="margin: 0; color: #666; font-size: 13px;">
+                                      <span>${scanData.scanCount + 1} scans</span>
+                                      <span style="display: inline-block; width: 4px; height: 4px; background: #ccc; border-radius: 50%; margin: 0 10px; vertical-align: middle;"></span>
+                                      <span style="display: inline-block; background: #1a1a1a; color: white; padding: 4px 10px; border-radius: 50px; font-size: 10px; font-weight: 600; letter-spacing: 0.3px;">ACTIVE</span>
+                                    </p>
+                                  </td>
+                                </tr>
+                              </table>
                             </td>
                           </tr>
                         </table>
@@ -493,17 +506,17 @@ async function sendScanNotification(
 
                           <!-- Location -->
                           <tr>
-                            <td style="padding: 12px 0; border-bottom: 1px solid #27272a;">
+                            <td style="padding: 14px 0; border-bottom: 1px solid #f0f0eb;">
                               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                                 <tr>
-                                  <td width="44" valign="middle">
-                                    <div style="width: 40px; height: 40px; background-color: #27272a; border-radius: 10px; text-align: center; line-height: 40px;">
-                                      <img src="${iconBaseUrl}/map-pin.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: invert(47%) sepia(84%) saturate(2932%) hue-rotate(238deg) brightness(95%) contrast(91%);">
+                                  <td width="48" valign="middle">
+                                    <div style="width: 44px; height: 44px; background-color: #f5f5f0; border-radius: 14px; border: 1px solid #e8e8e3; text-align: center; line-height: 44px;">
+                                      <img src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/map-pin.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: brightness(0);">
                                     </div>
                                   </td>
-                                  <td style="padding-left: 12px;" valign="middle">
-                                    <p style="margin: 0; color: #71717a; font-size: 12px; font-weight: 500;">Location</p>
-                                    <p style="margin: 2px 0 0 0; color: #ffffff; font-size: 15px; font-weight: 600;">${locationText}</p>
+                                  <td style="padding-left: 14px;" valign="middle">
+                                    <p style="margin: 0; color: #666; font-size: 12px; font-weight: 500;">Location</p>
+                                    <p style="margin: 3px 0 0 0; color: #1a1a1a; font-size: 15px; font-weight: 600;">${locationText}</p>
                                   </td>
                                 </tr>
                               </table>
@@ -512,17 +525,17 @@ async function sendScanNotification(
 
                           <!-- Device -->
                           <tr>
-                            <td style="padding: 12px 0; border-bottom: 1px solid #27272a;">
+                            <td style="padding: 14px 0; border-bottom: 1px solid #f0f0eb;">
                               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                                 <tr>
-                                  <td width="44" valign="middle">
-                                    <div style="width: 40px; height: 40px; background-color: #27272a; border-radius: 10px; text-align: center; line-height: 40px;">
-                                      <img src="${iconBaseUrl}/smartphone.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: invert(47%) sepia(84%) saturate(2932%) hue-rotate(238deg) brightness(95%) contrast(91%);">
+                                  <td width="48" valign="middle">
+                                    <div style="width: 44px; height: 44px; background-color: #f5f5f0; border-radius: 14px; border: 1px solid #e8e8e3; text-align: center; line-height: 44px;">
+                                      <img src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/smartphone.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: brightness(0);">
                                     </div>
                                   </td>
-                                  <td style="padding-left: 12px;" valign="middle">
-                                    <p style="margin: 0; color: #71717a; font-size: 12px; font-weight: 500;">Device</p>
-                                    <p style="margin: 2px 0 0 0; color: #ffffff; font-size: 15px; font-weight: 600;">${scanData.device}</p>
+                                  <td style="padding-left: 14px;" valign="middle">
+                                    <p style="margin: 0; color: #666; font-size: 12px; font-weight: 500;">Device</p>
+                                    <p style="margin: 3px 0 0 0; color: #1a1a1a; font-size: 15px; font-weight: 600;">${scanData.device}</p>
                                   </td>
                                 </tr>
                               </table>
@@ -531,36 +544,17 @@ async function sendScanNotification(
 
                           <!-- Browser -->
                           <tr>
-                            <td style="padding: 12px 0; border-bottom: 1px solid #27272a;">
+                            <td style="padding: 14px 0; border-bottom: 1px solid #f0f0eb;">
                               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                                 <tr>
-                                  <td width="44" valign="middle">
-                                    <div style="width: 40px; height: 40px; background-color: #27272a; border-radius: 10px; text-align: center; line-height: 40px;">
-                                      <img src="${iconBaseUrl}/globe.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: invert(47%) sepia(84%) saturate(2932%) hue-rotate(238deg) brightness(95%) contrast(91%);">
+                                  <td width="48" valign="middle">
+                                    <div style="width: 44px; height: 44px; background-color: #f5f5f0; border-radius: 14px; border: 1px solid #e8e8e3; text-align: center; line-height: 44px;">
+                                      <img src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/globe.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: brightness(0);">
                                     </div>
                                   </td>
-                                  <td style="padding-left: 12px;" valign="middle">
-                                    <p style="margin: 0; color: #71717a; font-size: 12px; font-weight: 500;">Browser</p>
-                                    <p style="margin: 2px 0 0 0; color: #ffffff; font-size: 15px; font-weight: 600;">${scanData.browser} on ${scanData.os}</p>
-                                  </td>
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-
-                          <!-- Total Scans -->
-                          <tr>
-                            <td style="padding: 12px 0; border-bottom: 1px solid #27272a;">
-                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                                <tr>
-                                  <td width="44" valign="middle">
-                                    <div style="width: 40px; height: 40px; background-color: #27272a; border-radius: 10px; text-align: center; line-height: 40px;">
-                                      <img src="${iconBaseUrl}/bar-chart-3.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: invert(47%) sepia(84%) saturate(2932%) hue-rotate(238deg) brightness(95%) contrast(91%);">
-                                    </div>
-                                  </td>
-                                  <td style="padding-left: 12px;" valign="middle">
-                                    <p style="margin: 0; color: #71717a; font-size: 12px; font-weight: 500;">Total Scans</p>
-                                    <p style="margin: 2px 0 0 0; color: #ffffff; font-size: 15px; font-weight: 600;">${scanData.scanCount + 1}</p>
+                                  <td style="padding-left: 14px;" valign="middle">
+                                    <p style="margin: 0; color: #666; font-size: 12px; font-weight: 500;">Browser</p>
+                                    <p style="margin: 3px 0 0 0; color: #1a1a1a; font-size: 15px; font-weight: 600;">${scanData.browser} on ${scanData.os}</p>
                                   </td>
                                 </tr>
                               </table>
@@ -569,17 +563,17 @@ async function sendScanNotification(
 
                           <!-- Time -->
                           <tr>
-                            <td style="padding: 12px 0;">
+                            <td style="padding: 14px 0;">
                               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                                 <tr>
-                                  <td width="44" valign="middle">
-                                    <div style="width: 40px; height: 40px; background-color: #27272a; border-radius: 10px; text-align: center; line-height: 40px;">
-                                      <img src="${iconBaseUrl}/clock.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: invert(47%) sepia(84%) saturate(2932%) hue-rotate(238deg) brightness(95%) contrast(91%);">
+                                  <td width="48" valign="middle">
+                                    <div style="width: 44px; height: 44px; background-color: #f5f5f0; border-radius: 14px; border: 1px solid #e8e8e3; text-align: center; line-height: 44px;">
+                                      <img src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/clock.svg" width="20" height="20" alt="" style="vertical-align: middle; filter: brightness(0);">
                                     </div>
                                   </td>
-                                  <td style="padding-left: 12px;" valign="middle">
-                                    <p style="margin: 0; color: #71717a; font-size: 12px; font-weight: 500;">Scan Time</p>
-                                    <p style="margin: 2px 0 0 0; color: #ffffff; font-size: 15px; font-weight: 600;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</p>
+                                  <td style="padding-left: 14px;" valign="middle">
+                                    <p style="margin: 0; color: #666; font-size: 12px; font-weight: 500;">Time</p>
+                                    <p style="margin: 3px 0 0 0; color: #1a1a1a; font-size: 15px; font-weight: 600;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</p>
                                   </td>
                                 </tr>
                               </table>
@@ -592,11 +586,11 @@ async function sendScanNotification(
 
                     <!-- CTA Button -->
                     <tr>
-                      <td style="padding: 8px 24px 28px 24px;">
+                      <td style="padding: 8px 24px 32px 24px;">
                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                           <tr>
                             <td align="center">
-                              <a href="https://nexus-qr.vercel.app/dashboard" style="display: block; background-color: #ffffff; color: #18181b; text-decoration: none; font-size: 15px; font-weight: 600; padding: 14px 24px; border-radius: 12px; text-align: center;">
+                              <a href="https://nexus-qr.vercel.app/dashboard" style="display: block; background-color: #1a1a1a; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; padding: 16px 28px; border-radius: 50px; text-align: center; letter-spacing: -0.2px;">
                                 View Dashboard
                               </a>
                             </td>
@@ -605,17 +599,15 @@ async function sendScanNotification(
                       </td>
                     </tr>
 
-                  </table>
-
-                  <!-- Footer -->
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 420px;">
+                    <!-- Footer -->
                     <tr>
-                      <td style="padding: 24px 24px 8px 24px; text-align: center;">
-                        <p style="margin: 0; color: #52525b; font-size: 13px; font-weight: 500;">
-                          Shared via <span style="color: #a1a1aa; font-weight: 600;">Nexus QR</span>
+                      <td style="padding: 20px 24px; background-color: #f8f8f6; border-top: 1px solid #f0f0eb; text-align: center;">
+                        <p style="margin: 0; color: #666; font-size: 13px;">
+                          Shared via <a href="https://nexus-qr.vercel.app" style="color: #1a1a1a; text-decoration: none; font-weight: 600;">Nexus QR</a>
                         </p>
                       </td>
                     </tr>
+
                   </table>
 
                 </td>
