@@ -349,9 +349,10 @@ async function getGeoLocation(ip: string): Promise<{ country: string; city: stri
   try {
     console.log('[GEO] Fetching geolocation for IP:', ip);
 
-    // Use HTTPS for secure communication
-    const response = await fetch(`https://ipapi.co/${ip}/json/`, {
-      signal: AbortSignal.timeout(3000), // Increased timeout to 3 seconds
+    // Using ip-api.com (free tier: 45 requests/minute, no API key needed)
+    // Note: Free tier requires HTTP (not HTTPS)
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,city,lat,lon`, {
+      signal: AbortSignal.timeout(3000),
     });
 
     console.log('[GEO] Response status:', response.status);
@@ -364,17 +365,17 @@ async function getGeoLocation(ip: string): Promise<{ country: string; city: stri
     const data = await response.json();
     console.log('[GEO] API response:', JSON.stringify(data));
 
-    // ipapi.co returns error field on failure (usually rate limit)
-    if (data.error) {
-      console.error('[GEO] API returned error:', data.reason || data.error);
+    // ip-api.com returns status field to indicate success/fail
+    if (data.status !== 'success') {
+      console.error('[GEO] API returned error:', data.message || 'Unknown error');
       return null;
     }
 
     const result = {
-      country: data.country_name || data.country || null,
+      country: data.country || null,
       city: data.city || null,
-      lat: data.latitude,
-      lon: data.longitude,
+      lat: data.lat,
+      lon: data.lon,
     };
 
     console.log('[GEO] Parsed result:', JSON.stringify(result));
@@ -398,10 +399,20 @@ async function sendScanNotification(
     scanCount: number;
   }
 ): Promise<void> {
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
   if (!resendApiKey) {
     console.error('[EMAIL] RESEND_API_KEY not configured in environment variables');
     return;
+  }
+
+  // Log key info for debugging (without revealing the full key)
+  const keyPrefix = resendApiKey.substring(0, 3);
+  const keyLength = resendApiKey.length;
+  console.log(`[EMAIL] API key check: prefix="${keyPrefix}", length=${keyLength}, starts_with_re_=${resendApiKey.startsWith('re_')}`);
+
+  // Validate API key format (Resend keys start with 're_')
+  if (!resendApiKey.startsWith('re_')) {
+    console.error('[EMAIL] Invalid API key format - Resend API keys should start with "re_"');
   }
 
   // Get custom from domain or use Resend's default
