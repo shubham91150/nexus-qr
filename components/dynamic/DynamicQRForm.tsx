@@ -274,7 +274,12 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
     try {
       // Validate content
       const payload = getPayload();
-      if (!payload || payload.length < 1) {
+
+      // When editing, use existing destination_url if no new payload provided
+      const finalDestinationUrl = payload || (editingQR?.destination_url || '');
+
+      // Only require destination URL for new QR codes, not for edits
+      if (!finalDestinationUrl || finalDestinationUrl.length < 1) {
         setError('Please enter valid content for the QR code');
         setLoading(false);
         return;
@@ -295,13 +300,20 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
 
       if (editingQR) {
         // Update existing QR
+        // Only update destination_url if user provided new content
+        const updateData: Record<string, unknown> = {
+          title: title.trim(),
+          qr_style: qrStyleData,
+        };
+
+        // Only update destination_url if new payload is provided
+        if (payload && payload.length > 0) {
+          updateData.destination_url = payload;
+        }
+
         const { error: updateError } = await supabase
           .from('dynamic_qr_codes')
-          .update({
-            title: title.trim(),
-            destination_url: payload, // Store payload as destination
-            qr_style: qrStyleData,
-          })
+          .update(updateData)
           .eq('id', editingQR.id);
 
         if (updateError) throw updateError;
