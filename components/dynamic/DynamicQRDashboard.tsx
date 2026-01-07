@@ -264,8 +264,15 @@ export function DynamicQRDashboard({ onBackToGenerator }: DynamicQRDashboardProp
       if (error) throw error;
       setQRCodes(data || []);
 
+      // Update selectedQR with fresh data if it exists in the list
+      if (data && selectedQR) {
+        const updatedSelectedQR = data.find(qr => qr.id === selectedQR.id);
+        if (updatedSelectedQR) {
+          setSelectedQR(updatedSelectedQR);
+        }
+      }
       // Auto-select first QR if none selected
-      if (data && data.length > 0 && !selectedQR) {
+      else if (data && data.length > 0 && !selectedQR) {
         setSelectedQR(data[0]);
       }
     } catch (err) {
