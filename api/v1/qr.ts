@@ -572,10 +572,10 @@ async function generateQRCodeImage(
   };
 
   if (options.format === 'svg') {
-    return await QRCode.toString(content, { ...qrOptions, type: 'svg' }) as string;
+    return await QRCode.toString(content, { ...qrOptions, type: 'svg' }) as unknown as string;
   }
 
-  return await QRCode.toDataURL(content, qrOptions) as string;
+  return await QRCode.toDataURL(content, qrOptions) as unknown as string;
 }
 
 // =====================================================
