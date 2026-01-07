@@ -172,6 +172,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                 <div className="grid grid-cols-4 gap-2">
                     {qualityPresets.map((preset) => (
                         <button
+                            type="button"
                             key={preset.label}
                             onClick={() => update('size', preset.size)}
                             className={`
@@ -217,6 +218,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                  <div className="grid grid-cols-4 gap-2">
                      {['L', 'M', 'Q', 'H'].map(level => (
                          <button
+                            type="button"
                             key={level}
                             onClick={() => update('errorCorrectionLevel', level)}
                             title={level === 'L' ? 'Low (7%)' : level === 'M' ? 'Medium (15%)' : level === 'Q' ? 'Quartile (25%)' : 'High (30%)'}
@@ -245,13 +247,15 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
         {/* Mode Toggle */}
         <div className="bg-gray-100 p-1 rounded-full flex mb-6 w-max">
-          <button 
+          <button
+            type="button"
             onClick={() => update('isGradient', false)}
             className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${!config.isGradient ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}
           >
             Solid
           </button>
-          <button 
+          <button
+            type="button"
             onClick={() => update('isGradient', true)}
             className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${config.isGradient ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}
           >
@@ -288,6 +292,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
           <div className="flex items-center gap-3">
               <ColorInput label="Background" value={config.bgColor} onChange={(v: string) => update('bgColor', v)} />
               <button
+                  type="button"
                   onClick={() => update('bgTransparent', !config.bgTransparent)}
                   className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all h-[50px] ${config.bgTransparent ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
               >
@@ -306,7 +311,8 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
           {/* Custom Corner Colors Toggle */}
           <div className="pt-4 border-t border-dashed border-gray-200">
-             <button 
+             <button
+               type="button"
                onClick={() => update('customCornerColor', !config.customCornerColor)}
                className={`w-full py-2 rounded-lg text-xs font-medium border border-dashed mb-3 ${config.customCornerColor ? 'border-gray-800 text-gray-800 bg-gray-50' : 'border-gray-300 text-gray-400'}`}
              >
@@ -349,7 +355,8 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                         {id: 'sharp-diamond', label: 'Diamond'},
                         {id: 'mixed', label: 'Mixed'}
                     ].map((item) => (
-                        <button 
+                        <button
+                           type="button"
                            key={item.id}
                            onClick={() => update('dotsType', item.id)}
                            className={`px-2 py-3 rounded-lg text-xs font-medium border transition-all ${config.dotsType === item.id ? 'bg-gray-800 text-white border-gray-800 shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
@@ -371,7 +378,8 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                        {id: 'three-sided', label: '3-Sided'},
                        {id: 'two-sided', label: '2-Sided'}
                     ].map((item) => (
-                        <button 
+                        <button
+                           type="button"
                            key={item.id}
                            onClick={() => update('cornerSquareType', item.id)}
                            className={`px-2 py-3 rounded-lg text-xs font-medium border transition-all ${config.cornerSquareType === item.id ? 'bg-gray-800 text-white border-gray-800 shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
@@ -400,6 +408,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
             <div className="flex gap-1 mb-3">
                {categories.map((cat) => (
                   <button
+                     type="button"
                      key={cat.id}
                      onClick={() => setIconCategory(cat.id)}
                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${iconCategory === cat.id ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
@@ -411,6 +420,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
             <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-1">
                {filteredIcons.map((icon) => (
                   <button
+                     type="button"
                      key={icon.id}
                      onClick={() => applyIcon(icon)}
                      className="w-10 h-10 rounded-lg bg-white border border-gray-200 hover:border-gray-400 hover:shadow-sm transition-all flex items-center justify-center p-1.5"
@@ -461,7 +471,8 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
              {config.logoImage && (
                  <div className="relative w-20 h-20 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
                      <img src={config.logoImage} className="w-full h-full object-contain" alt="Logo" />
-                     <button 
+                     <button
+                         type="button"
                          onClick={() => update('logoImage', null)}
                          className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md"
                      >
@@ -484,6 +495,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                              { id: 'rounded', label: 'Rounded' }
                          ].map((shape) => (
                              <button
+                                 type="button"
                                  key={shape.id}
                                  onClick={() => update('logoShape', shape.id)}
                                  className={`py-2 rounded-lg text-xs font-medium border transition-all ${config.logoShape === shape.id ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
