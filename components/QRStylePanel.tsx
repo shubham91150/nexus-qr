@@ -322,8 +322,8 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
              {config.customCornerColor && (
                <div className="flex gap-3 animate-fadeIn">
                   <ColorInput label="Corner" value={config.cornerSquareColor} onChange={(v: string) => {
-                      update('cornerSquareColor', v);
-                      update('cornerDotColor', v); // Sync for simplicity
+                      // Update both values in single onChange to avoid race condition
+                      onChange({ ...config, cornerSquareColor: v, cornerDotColor: v });
                   }} />
                </div>
              )}
