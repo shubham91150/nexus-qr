@@ -115,7 +115,7 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
@@ -148,8 +148,8 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
           </div>
         ) : (
           // Form
-          <form onSubmit={handleSubmit}>
-            <div className="p-4 space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden flex-1">
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
               {/* Preview */}
               <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
                 <div
@@ -236,28 +236,30 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
               </div>
 
               {/* Public Toggle */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  {isPublic ? (
-                    <Globe className="text-indigo-600" size={20} />
-                  ) : (
-                    <Lock className="text-gray-500" size={20} />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex-shrink-0">
+                    {isPublic ? (
+                      <Globe className="text-indigo-600" size={20} />
+                    ) : (
+                      <Lock className="text-gray-500" size={20} />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-700 truncate">
                       {isPublic ? 'Public Template' : 'Private Template'}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 line-clamp-2">
                       {isPublic
-                        ? 'Others can discover and use this template'
-                        : 'Only you can see and use this template'}
+                        ? 'Others can discover and use'
+                        : 'Only you can see and use'}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsPublic(!isPublic)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                  className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
                     isPublic ? 'bg-indigo-600' : 'bg-gray-300'
                   }`}
                 >
@@ -278,28 +280,29 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-100 flex gap-3">
+            <div className="p-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors flex flex-col items-center justify-center gap-1"
               >
-                Cancel
+                <X size={20} />
+                <span>Cancel</span>
               </button>
               <button
                 type="submit"
                 disabled={loading || !name.trim()}
-                className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1"
               >
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin" size={20} />
-                    Saving...
+                    <span>Saving...</span>
                   </>
                 ) : (
                   <>
                     <Save size={20} />
-                    Save Template
+                    <span>Save Template</span>
                   </>
                 )}
               </button>
