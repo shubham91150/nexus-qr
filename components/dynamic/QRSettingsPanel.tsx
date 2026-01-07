@@ -341,19 +341,19 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         {activeTab === 'schedule' && (
           <div className="space-y-4">
             {/* Enable Campaign */}
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+            <div className="flex items-center justify-between gap-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
                   <CalendarClock size={20} className="text-white" />
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Scheduled Campaign</h4>
-                  <p className="text-xs text-gray-500">Auto-activate/deactivate QR at specific times</p>
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-gray-900 truncate">Scheduled Campaign</h4>
+                  <p className="text-xs text-gray-500 truncate">Auto-activate/deactivate QR at specific times</p>
                 </div>
               </div>
               <button
                 onClick={() => setCampaignConfig(c => ({ ...c, enabled: !c.enabled }))}
-                className={`w-12 h-6 rounded-full transition-colors ${campaignConfig.enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 ${campaignConfig.enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${campaignConfig.enabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
               </button>
@@ -463,24 +463,46 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
 
                 {/* Auto Actions */}
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                    <input
-                      type="checkbox"
-                      checked={campaignConfig.auto_activate ?? true}
-                      onChange={(e) => setCampaignConfig(c => ({ ...c, auto_activate: e.target.checked }))}
-                      className="w-4 h-4 text-indigo-600 rounded border-gray-300"
-                    />
-                    <span className="text-sm text-gray-700">Auto-activate at start</span>
-                  </label>
-                  <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                    <input
-                      type="checkbox"
-                      checked={campaignConfig.auto_deactivate ?? true}
-                      onChange={(e) => setCampaignConfig(c => ({ ...c, auto_deactivate: e.target.checked }))}
-                      className="w-4 h-4 text-indigo-600 rounded border-gray-300"
-                    />
-                    <span className="text-sm text-gray-700">Auto-deactivate at end</span>
-                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setCampaignConfig(c => ({ ...c, auto_activate: !(c.auto_activate ?? true) }))}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${
+                      (campaignConfig.auto_activate ?? true)
+                        ? 'bg-indigo-50 border-2 border-indigo-500'
+                        : 'bg-gray-50 border-2 border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                      (campaignConfig.auto_activate ?? true)
+                        ? 'bg-indigo-600'
+                        : 'bg-white border-2 border-gray-300'
+                    }`}>
+                      {(campaignConfig.auto_activate ?? true) && <CheckCircle size={20} className="text-white" />}
+                    </div>
+                    <span className={`text-sm font-medium ${(campaignConfig.auto_activate ?? true) ? 'text-indigo-700' : 'text-gray-600'}`}>
+                      Auto-activate at start
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCampaignConfig(c => ({ ...c, auto_deactivate: !(c.auto_deactivate ?? true) }))}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${
+                      (campaignConfig.auto_deactivate ?? true)
+                        ? 'bg-indigo-50 border-2 border-indigo-500'
+                        : 'bg-gray-50 border-2 border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                      (campaignConfig.auto_deactivate ?? true)
+                        ? 'bg-indigo-600'
+                        : 'bg-white border-2 border-gray-300'
+                    }`}>
+                      {(campaignConfig.auto_deactivate ?? true) && <CheckCircle size={20} className="text-white" />}
+                    </div>
+                    <span className={`text-sm font-medium ${(campaignConfig.auto_deactivate ?? true) ? 'text-indigo-700' : 'text-gray-600'}`}>
+                      Auto-deactivate at end
+                    </span>
+                  </button>
                 </div>
 
                 {/* Repeat Schedule */}
@@ -542,24 +564,46 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                 <div className="border-t border-gray-100 pt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">Email Notifications</h4>
                   <div className="grid grid-cols-2 gap-3">
-                    <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <input
-                        type="checkbox"
-                        checked={campaignConfig.notify_on_start ?? false}
-                        onChange={(e) => setCampaignConfig(c => ({ ...c, notify_on_start: e.target.checked }))}
-                        className="w-4 h-4 text-indigo-600 rounded border-gray-300"
-                      />
-                      <span className="text-sm text-gray-700">Notify when starts</span>
-                    </label>
-                    <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <input
-                        type="checkbox"
-                        checked={campaignConfig.notify_on_end ?? false}
-                        onChange={(e) => setCampaignConfig(c => ({ ...c, notify_on_end: e.target.checked }))}
-                        className="w-4 h-4 text-indigo-600 rounded border-gray-300"
-                      />
-                      <span className="text-sm text-gray-700">Notify when ends</span>
-                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setCampaignConfig(c => ({ ...c, notify_on_start: !(c.notify_on_start ?? false) }))}
+                      className={`flex items-center justify-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${
+                        (campaignConfig.notify_on_start ?? false)
+                          ? 'bg-indigo-50 border-2 border-indigo-500'
+                          : 'bg-gray-50 border-2 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                        (campaignConfig.notify_on_start ?? false)
+                          ? 'bg-indigo-600'
+                          : 'bg-white border-2 border-gray-300'
+                      }`}>
+                        {(campaignConfig.notify_on_start ?? false) && <CheckCircle size={20} className="text-white" />}
+                      </div>
+                      <span className={`text-sm font-medium ${(campaignConfig.notify_on_start ?? false) ? 'text-indigo-700' : 'text-gray-600'}`}>
+                        Notify when starts
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCampaignConfig(c => ({ ...c, notify_on_end: !(c.notify_on_end ?? false) }))}
+                      className={`flex items-center justify-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${
+                        (campaignConfig.notify_on_end ?? false)
+                          ? 'bg-indigo-50 border-2 border-indigo-500'
+                          : 'bg-gray-50 border-2 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                        (campaignConfig.notify_on_end ?? false)
+                          ? 'bg-indigo-600'
+                          : 'bg-white border-2 border-gray-300'
+                      }`}>
+                        {(campaignConfig.notify_on_end ?? false) && <CheckCircle size={20} className="text-white" />}
+                      </div>
+                      <span className={`text-sm font-medium ${(campaignConfig.notify_on_end ?? false) ? 'text-indigo-700' : 'text-gray-600'}`}>
+                        Notify when ends
+                      </span>
+                    </button>
                   </div>
                 </div>
 
@@ -1708,17 +1752,19 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
         {activeTab === 'webhook' && (
           <div className="space-y-4">
             {/* Enable Webhook */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Webhook size={18} className="text-gray-600" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Webhook Notifications</h4>
-                  <p className="text-xs text-gray-500">Get notified via HTTP POST on events</p>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Webhook size={18} className="text-gray-600" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-gray-900 truncate">Webhook Notifications</h4>
+                  <p className="text-xs text-gray-500 truncate">Get notified via HTTP POST on events</p>
                 </div>
               </div>
               <button
                 onClick={() => setWebhookConfig(c => ({ ...c, enabled: !c.enabled }))}
-                className={`w-12 h-6 rounded-full transition-colors ${webhookConfig.enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 ${webhookConfig.enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${webhookConfig.enabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
               </button>
@@ -1770,27 +1816,40 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                       { id: 'scan', label: 'QR Code Scanned', desc: 'When someone scans this QR code' },
                       { id: 'url_changed', label: 'URL Changed', desc: 'When destination URL is updated' },
                       { id: 'expired', label: 'QR Code Expired', desc: 'When the QR code expires' },
-                    ].map((event) => (
-                      <label key={event.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={webhookConfig.events?.includes(event.id as 'scan' | 'url_changed' | 'expired') || false}
-                          onChange={(e) => {
+                    ].map((event) => {
+                      const isChecked = webhookConfig.events?.includes(event.id as 'scan' | 'url_changed' | 'expired') || false;
+                      return (
+                        <button
+                          key={event.id}
+                          type="button"
+                          onClick={() => {
                             const eventType = event.id as 'scan' | 'url_changed' | 'expired';
-                            if (e.target.checked) {
-                              setWebhookConfig(c => ({ ...c, events: [...(c.events || []), eventType] }));
-                            } else {
+                            if (isChecked) {
                               setWebhookConfig(c => ({ ...c, events: (c.events || []).filter(ev => ev !== eventType) }));
+                            } else {
+                              setWebhookConfig(c => ({ ...c, events: [...(c.events || []), eventType] }));
                             }
                           }}
-                          className="mt-0.5 w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
-                        />
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">{event.label}</span>
-                          <p className="text-xs text-gray-500">{event.desc}</p>
-                        </div>
-                      </label>
-                    ))}
+                          className={`w-full flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all text-left ${
+                            isChecked
+                              ? 'bg-indigo-50 border-2 border-indigo-500'
+                              : 'bg-gray-50 border-2 border-transparent hover:border-gray-200'
+                          }`}
+                        >
+                          <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                            isChecked
+                              ? 'bg-indigo-600'
+                              : 'bg-white border-2 border-gray-300'
+                          }`}>
+                            {isChecked && <CheckCircle size={20} className="text-white" />}
+                          </div>
+                          <div>
+                            <span className={`text-sm font-medium ${isChecked ? 'text-indigo-900' : 'text-gray-900'}`}>{event.label}</span>
+                            <p className={`text-xs ${isChecked ? 'text-indigo-600' : 'text-gray-500'}`}>{event.desc}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
