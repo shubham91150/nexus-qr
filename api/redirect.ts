@@ -428,6 +428,17 @@ async function sendScanNotification(
       ? `${scanData.city}, ${scanData.country}`
       : scanData.country || 'Unknown location';
 
+    // Inline SVG icons (Heroicons style)
+    const icons = {
+      bell: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`,
+      location: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+      device: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>`,
+      browser: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
+      chart: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>`,
+      clock: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+      arrow: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
+    };
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -437,44 +448,182 @@ async function sendScanNotification(
       body: JSON.stringify({
         from: fromEmail,
         to: config.email,
-        subject: `🔔 New QR Scan: ${scanData.qrTitle}`,
+        subject: `New QR Scan: ${scanData.qrTitle}`,
         html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="margin: 0; font-size: 24px;">🔔 New QR Scan!</h1>
-            </div>
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 12px 12px;">
-              <h2 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">${scanData.qrTitle}</h2>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; color: #666; font-size: 14px;">📍 Location</td>
-                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${locationText}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #666; font-size: 14px;">📱 Device</td>
-                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${scanData.device}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #666; font-size: 14px;">🌐 Browser</td>
-                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${scanData.browser} on ${scanData.os}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #666; font-size: 14px;">📊 Total Scans</td>
-                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${scanData.scanCount + 1}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #666; font-size: 14px;">🕐 Time</td>
-                  <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 500;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
-                </tr>
-              </table>
-              <div style="margin-top: 20px; text-align: center;">
-                <a href="https://nexus-qr.vercel.app/dashboard" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">View Dashboard</a>
-              </div>
-            </div>
-            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 15px;">
-              Sent by Nexus QR • <a href="#" style="color: #999;">Unsubscribe</a>
-            </p>
-          </div>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6;">
+              <tr>
+                <td align="center" style="padding: 40px 20px;">
+                  <!-- Main Container -->
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+
+                    <!-- Header with Gradient -->
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #4f46e5 100%); padding: 32px 24px; text-align: center;">
+                        <div style="display: inline-block; background: rgba(255,255,255,0.2); border-radius: 50%; padding: 12px; margin-bottom: 16px;">
+                          <span style="color: white;">${icons.bell}</span>
+                        </div>
+                        <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">New QR Scan Detected</h1>
+                        <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;">Someone just scanned your QR code</p>
+                      </td>
+                    </tr>
+
+                    <!-- QR Code Title -->
+                    <tr>
+                      <td style="padding: 24px 24px 0 24px;">
+                        <div style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #e9d5ff; border-radius: 12px; padding: 16px; text-align: center;">
+                          <p style="margin: 0 0 4px 0; color: #7c3aed; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">QR Code</p>
+                          <h2 style="margin: 0; color: #1f2937; font-size: 18px; font-weight: 700;">${scanData.qrTitle}</h2>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- Scan Details -->
+                    <tr>
+                      <td style="padding: 24px;">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+
+                          <!-- Location Row -->
+                          <tr>
+                            <td style="padding: 14px 0; border-bottom: 1px solid #f3f4f6;">
+                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td width="40" valign="middle">
+                                    <div style="width: 36px; height: 36px; background: #f5f3ff; border-radius: 10px; text-align: center; line-height: 36px;">
+                                      ${icons.location}
+                                    </div>
+                                  </td>
+                                  <td style="padding-left: 12px;" valign="middle">
+                                    <p style="margin: 0; color: #6b7280; font-size: 12px; font-weight: 500;">Location</p>
+                                    <p style="margin: 2px 0 0 0; color: #111827; font-size: 15px; font-weight: 600;">${locationText}</p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Device Row -->
+                          <tr>
+                            <td style="padding: 14px 0; border-bottom: 1px solid #f3f4f6;">
+                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td width="40" valign="middle">
+                                    <div style="width: 36px; height: 36px; background: #f5f3ff; border-radius: 10px; text-align: center; line-height: 36px;">
+                                      ${icons.device}
+                                    </div>
+                                  </td>
+                                  <td style="padding-left: 12px;" valign="middle">
+                                    <p style="margin: 0; color: #6b7280; font-size: 12px; font-weight: 500;">Device</p>
+                                    <p style="margin: 2px 0 0 0; color: #111827; font-size: 15px; font-weight: 600;">${scanData.device}</p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Browser Row -->
+                          <tr>
+                            <td style="padding: 14px 0; border-bottom: 1px solid #f3f4f6;">
+                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td width="40" valign="middle">
+                                    <div style="width: 36px; height: 36px; background: #f5f3ff; border-radius: 10px; text-align: center; line-height: 36px;">
+                                      ${icons.browser}
+                                    </div>
+                                  </td>
+                                  <td style="padding-left: 12px;" valign="middle">
+                                    <p style="margin: 0; color: #6b7280; font-size: 12px; font-weight: 500;">Browser</p>
+                                    <p style="margin: 2px 0 0 0; color: #111827; font-size: 15px; font-weight: 600;">${scanData.browser} on ${scanData.os}</p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Total Scans Row -->
+                          <tr>
+                            <td style="padding: 14px 0; border-bottom: 1px solid #f3f4f6;">
+                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td width="40" valign="middle">
+                                    <div style="width: 36px; height: 36px; background: #f5f3ff; border-radius: 10px; text-align: center; line-height: 36px;">
+                                      ${icons.chart}
+                                    </div>
+                                  </td>
+                                  <td style="padding-left: 12px;" valign="middle">
+                                    <p style="margin: 0; color: #6b7280; font-size: 12px; font-weight: 500;">Total Scans</p>
+                                    <p style="margin: 2px 0 0 0; color: #111827; font-size: 15px; font-weight: 600;">${scanData.scanCount + 1}</p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Time Row -->
+                          <tr>
+                            <td style="padding: 14px 0;">
+                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td width="40" valign="middle">
+                                    <div style="width: 36px; height: 36px; background: #f5f3ff; border-radius: 10px; text-align: center; line-height: 36px;">
+                                      ${icons.clock}
+                                    </div>
+                                  </td>
+                                  <td style="padding-left: 12px;" valign="middle">
+                                    <p style="margin: 0; color: #6b7280; font-size: 12px; font-weight: 500;">Scan Time</p>
+                                    <p style="margin: 2px 0 0 0; color: #111827; font-size: 15px; font-weight: 600;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                        </table>
+                      </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                      <td style="padding: 0 24px 32px 24px;">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td align="center">
+                              <a href="https://nexus-qr.vercel.app/dashboard" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; padding: 14px 32px; border-radius: 10px; box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.4);">
+                                View Dashboard ${icons.arrow}
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                  </table>
+
+                  <!-- Footer -->
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px;">
+                    <tr>
+                      <td style="padding: 24px; text-align: center;">
+                        <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 13px; font-weight: 500;">Sent by Nexus QR</p>
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                          <a href="https://nexus-qr.vercel.app" style="color: #8b5cf6; text-decoration: none;">Visit Website</a>
+                          <span style="margin: 0 8px;">•</span>
+                          <a href="#" style="color: #9ca3af; text-decoration: none;">Unsubscribe</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
         `,
       }),
     });
