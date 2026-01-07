@@ -241,19 +241,23 @@ export class CustomSVGRenderer {
 
     const style = this.settings.cornerSquareType;
     let fill = fillOverride;
+    let dotFill = fillOverride;
 
     if (!fill) {
         fill = this.settings.fgColor;
         if (this.settings.customCornerColor) {
-            fill = this.settings.cornerSquareColor || this.settings.fgColor;
+            // Use cornerSquareColor, or cornerDotColor as fallback, or fgColor as last resort
+            const cornerColor = this.settings.cornerSquareColor || this.settings.cornerDotColor || this.settings.fgColor;
+            fill = cornerColor;
+            dotFill = cornerColor;
         }
     }
 
-    let dotFill = fillOverride;
     if (!dotFill) {
         dotFill = this.settings.fgColor;
         if (this.settings.customCornerColor) {
-            dotFill = this.settings.cornerDotColor || this.settings.cornerSquareColor || this.settings.fgColor;
+            const cornerColor = this.settings.cornerSquareColor || this.settings.cornerDotColor || this.settings.fgColor;
+            dotFill = cornerColor;
         }
     }
 
