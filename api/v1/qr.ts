@@ -17,7 +17,7 @@ const SafeURLSchema = z.string()
 
 const QRCreateRequestSchema = z.object({
   type: z.enum(['url', 'text', 'vcard', 'wifi', 'email', 'sms', 'phone', 'geo', 'event']),
-  content: z.union([z.string().min(1).max(10000), z.record(z.any())]),
+  content: z.union([z.string().min(1).max(10000), z.record(z.string(), z.any())]),
   title: z.string().max(255).optional(),
   is_dynamic: z.boolean().optional().default(false),
   options: z.object({
@@ -28,7 +28,7 @@ const QRCreateRequestSchema = z.object({
     format: z.enum(['png', 'svg', 'base64']).optional(),
     error_correction: z.enum(['L', 'M', 'Q', 'H']).optional(),
   }).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 const BulkQRCreateSchema = z.object({
@@ -61,6 +61,7 @@ const ERROR_CODES = {
   INVALID_URL: { code: 3006, message: 'Invalid URL format', status: 400 },
   INVALID_EMAIL: { code: 3007, message: 'Invalid email format', status: 400 },
   INVALID_PHONE: { code: 3008, message: 'Invalid phone number format', status: 400 },
+  DESTINATION_URL_LOCKED: { code: 3009, message: 'Destination URL is locked for landing page QR codes', status: 400 },
 
   // Resource Errors (4xxx)
   QR_NOT_FOUND: { code: 4001, message: 'QR code not found', status: 404 },
@@ -204,7 +205,7 @@ function validateQRCreateRequest(body: any): { valid: boolean; errors: string[];
   const result = QRCreateRequestSchema.safeParse(body);
 
   if (!result.success) {
-    const errors = result.error.errors.map(e => {
+    const errors = result.error.issues.map(e => {
       const path = e.path.join('.');
       return path ? `${path}: ${e.message}` : e.message;
     });
@@ -571,10 +572,10 @@ async function generateQRCodeImage(
   };
 
   if (options.format === 'svg') {
-    return await QRCode.toString(content, { ...qrOptions, type: 'svg' });
+    return await QRCode.toString(content, { ...qrOptions, type: 'svg' }) as string;
   }
 
-  return await QRCode.toDataURL(content, qrOptions);
+  return await QRCode.toDataURL(content, qrOptions) as string;
 }
 
 // =====================================================
