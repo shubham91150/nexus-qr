@@ -342,28 +342,45 @@ function getLanguage(req: VercelRequest): string {
 async function getGeoLocation(ip: string): Promise<{ country: string; city: string; lat?: number; lon?: number } | null> {
   // Skip for localhost/private IPs
   if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+    console.log('[GEO] Skipping geolocation for private/local IP:', ip);
     return null;
   }
 
   try {
+    console.log('[GEO] Fetching geolocation for IP:', ip);
+
     // Use HTTPS for secure communication
     const response = await fetch(`https://ipapi.co/${ip}/json/`, {
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(3000), // Increased timeout to 3 seconds
     });
 
-    if (!response.ok) return null;
+    console.log('[GEO] Response status:', response.status);
+
+    if (!response.ok) {
+      console.error('[GEO] API returned non-OK status:', response.status);
+      return null;
+    }
 
     const data = await response.json();
-    // ipapi.co returns error field on failure
-    if (data.error) return null;
+    console.log('[GEO] API response:', JSON.stringify(data));
 
-    return {
+    // ipapi.co returns error field on failure (usually rate limit)
+    if (data.error) {
+      console.error('[GEO] API returned error:', data.reason || data.error);
+      return null;
+    }
+
+    const result = {
       country: data.country_name || data.country || null,
       city: data.city || null,
       lat: data.latitude,
       lon: data.longitude,
     };
-  } catch {
+
+    console.log('[GEO] Parsed result:', JSON.stringify(result));
+    return result;
+  } catch (error) {
+    console.error('[GEO] Exception during geolocation fetch:', error);
     return null;
   }
 }
@@ -3513,6 +3530,28 @@ export default async function handler(
         } catch (insertError) {
           console.error('[SCAN EXCEPTION] Exception during insert:', insertError);
         }
+
+        // Send email notification for landing page scans
+        const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
+        if (emailConfig?.enabled && emailConfig.email) {
+          const currentScanCount = qrCode.scan_count || 0;
+          const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
+
+          console.log('[EMAIL] Landing page - checking email notification:', emailConfig.frequency);
+
+          // Always send for every_scan frequency
+          if (emailConfig.frequency === 'every_scan') {
+            await sendScanNotification(emailConfig, {
+              qrTitle: qrCode.title || 'Untitled QR',
+              city: locationTrackingConfig?.enabled ? geo?.city || null : null,
+              country: locationTrackingConfig?.enabled ? geo?.country || null : null,
+              device,
+              browser,
+              os,
+              scanCount: currentScanCount + 1,
+            });
+          }
+        }
       } else {
         console.log('[SCAN SKIP] Skipping scan recording - internal request');
       }
@@ -3782,14 +3821,14 @@ export default async function handler(
         console.log('[DEBUG] Should send email:', shouldSendEmail, 'Frequency:', emailConfig.frequency);
 
         if (shouldSendEmail) {
-          sendScanNotification(emailConfig, {
+          await sendScanNotification(emailConfig, {
             qrTitle: qrCode.title || 'Untitled QR',
             city: locationTrackingConfig?.enabled ? geo?.city || null : null,
             country: locationTrackingConfig?.enabled ? geo?.country || null : null,
             device,
             browser,
             os,
-            scanCount: currentScanCount,
+            scanCount: currentScanCount + 1,
           });
         }
       }
