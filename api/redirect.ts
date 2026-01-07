@@ -3230,7 +3230,57 @@ export default async function handler(
   res: VercelResponse
 ): Promise<void> {
   // Get short code from query
-  const { code } = req.query;
+  const { code, debug } = req.query;
+
+  // DEBUG MODE: Test scan insert directly
+  if (debug === 'test-scan' && code) {
+    const db = getSupabaseClient();
+    if (!db) {
+      res.status(500).json({ error: 'Supabase not configured', env_check: { service_key_set: !!process.env.SUPABASE_SERVICE_KEY } });
+      return;
+    }
+
+    // First get the QR code
+    const { data: qrCode, error: qrError } = await db
+      .from('dynamic_qr_codes')
+      .select('id, title, short_code')
+      .eq('short_code', code)
+      .single();
+
+    if (qrError || !qrCode) {
+      res.status(404).json({ error: 'QR not found', qrError });
+      return;
+    }
+
+    // Try to insert a test scan
+    const testScanData = {
+      qr_id: qrCode.id,
+      ip_address: 'test-debug',
+      country: 'TEST',
+      city: 'Debug City',
+      device_type: 'desktop',
+      browser: 'Debug Browser',
+      os: 'Debug OS',
+      referrer: null,
+      language: 'en',
+      user_agent: 'Debug Test',
+    };
+
+    const { data: insertResult, error: insertError } = await db
+      .from('qr_scans')
+      .insert(testScanData)
+      .select();
+
+    res.status(200).json({
+      success: !insertError,
+      qr_code: qrCode,
+      test_scan_data: testScanData,
+      insert_result: insertResult,
+      insert_error: insertError,
+      message: insertError ? 'Scan insert FAILED' : 'Scan insert SUCCESS - check qr_scans table'
+    });
+    return;
+  }
 
   // Handle POST for password verification
   if (req.method === 'POST') {
