@@ -274,7 +274,12 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
     try {
       // Validate content
       const payload = getPayload();
-      if (!payload || payload.length < 1) {
+
+      // When editing, use existing destination_url if no new payload provided
+      const finalDestinationUrl = payload || (editingQR?.destination_url || '');
+
+      // Only require destination URL for new QR codes, not for edits
+      if (!finalDestinationUrl || finalDestinationUrl.length < 1) {
         setError('Please enter valid content for the QR code');
         setLoading(false);
         return;
@@ -295,13 +300,20 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
 
       if (editingQR) {
         // Update existing QR
+        // Only update destination_url if user provided new content
+        const updateData: Record<string, unknown> = {
+          title: title.trim(),
+          qr_style: qrStyleData,
+        };
+
+        // Only update destination_url if new payload is provided
+        if (payload && payload.length > 0) {
+          updateData.destination_url = payload;
+        }
+
         const { error: updateError } = await supabase
           .from('dynamic_qr_codes')
-          .update({
-            title: title.trim(),
-            destination_url: payload, // Store payload as destination
-            qr_style: qrStyleData,
-          })
+          .update(updateData)
           .eq('id', editingQR.id);
 
         if (updateError) throw updateError;
@@ -581,18 +593,21 @@ export function DynamicQRForm({ isOpen, onClose, onSuccess, editingQR }: Dynamic
                       // EDITABLE - Regular URL QR codes or new QR creation
                       <div className="bg-gray-50 rounded-xl p-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Destination URL *
+                          Destination URL {!editingQR && <span className="text-red-500">*</span>}
                         </label>
                         <input
                           type="url"
                           value={contentData.url || ''}
                           onChange={(e) => setContentData({ ...contentData, type: 'url', url: e.target.value, value: e.target.value })}
                           className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
-                          placeholder="https://example.com/my-page"
-                          required
+                          placeholder={editingQR ? "Leave empty to keep current URL" : "https://example.com/my-page"}
+                          required={!editingQR}
                         />
                         <p className="text-xs text-gray-400 mt-2">
-                          This URL can be changed anytime from the dashboard after QR is created.
+                          {editingQR
+                            ? "Leave empty to keep the current URL, or enter a new URL to update it."
+                            : "This URL can be changed anytime from the dashboard after QR is created."
+                          }
                         </p>
                       </div>
                     )}
