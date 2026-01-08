@@ -208,52 +208,52 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
 
       {/* Rate Limits */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Rate Limits</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Rate Limits</h2>
 
-        <div className="overflow-x-auto">
-          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden min-w-[400px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">Plan</th>
-                <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">Requests/Month</th>
-                <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">Bulk Operations</th>
-                <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">Webhooks</th>
+                <th className="text-left px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Plan</th>
+                <th className="text-left px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Requests</th>
+                <th className="text-left px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Bulk</th>
+                <th className="text-left px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Webhooks</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-900">Free</td>
-                <td className="px-6 py-4 text-sm text-gray-600">100</td>
-                <td className="px-6 py-4 text-sm text-red-500">No</td>
-                <td className="px-6 py-4 text-sm text-red-500">No</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">Free</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">100</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-red-500">No</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-red-500">No</td>
               </tr>
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-900">Starter</td>
-                <td className="px-6 py-4 text-sm text-gray-600">5,000</td>
-                <td className="px-6 py-4 text-sm text-red-500">No</td>
-                <td className="px-6 py-4 text-sm text-red-500">No</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">Starter</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">5,000</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-red-500">No</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-red-500">No</td>
               </tr>
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-900">Pro</td>
-                <td className="px-6 py-4 text-sm text-gray-600">50,000</td>
-                <td className="px-6 py-4 text-sm text-green-500">Yes</td>
-                <td className="px-6 py-4 text-sm text-green-500">Yes</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">Pro</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">50,000</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-green-500">Yes</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-green-500">Yes</td>
               </tr>
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-900">Enterprise</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Unlimited</td>
-                <td className="px-6 py-4 text-sm text-green-500">Yes</td>
-                <td className="px-6 py-4 text-sm text-green-500">Yes</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">Enterprise</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">Unlimited</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-green-500">Yes</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-green-500">Yes</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <p className="text-sm text-gray-500 mt-4">
+        <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">
           Rate limit headers are included in every response:
-          <code className="bg-gray-100 px-2 py-1 rounded ml-2">X-RateLimit-Limit</code>,
-          <code className="bg-gray-100 px-2 py-1 rounded ml-1">X-RateLimit-Remaining</code>,
-          <code className="bg-gray-100 px-2 py-1 rounded ml-1">X-RateLimit-Used</code>
+          <code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs ml-1 sm:ml-2">X-RateLimit-Limit</code>,
+          <code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs ml-1">X-RateLimit-Remaining</code>,
+          <code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs ml-1">X-RateLimit-Used</code>
         </p>
       </section>
 
@@ -496,217 +496,217 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
 }`}
         />
 
-        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Authentication Errors (1xxx)</h3>
-        <div className="overflow-x-auto mb-6">
-          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">Authentication Errors (1xxx)</h3>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden min-w-[500px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Solution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-sm">
+            <tbody className="divide-y divide-gray-200 text-xs sm:text-sm">
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1001</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
-                <td className="px-4 py-3 text-gray-900">Invalid API Key</td>
-                <td className="px-4 py-3 text-gray-600">API key doesn't exist. Check for typos or generate a new key.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">1001</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">401</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Invalid API Key</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Check for typos or generate a new key.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1002</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
-                <td className="px-4 py-3 text-gray-900">Expired API Key</td>
-                <td className="px-4 py-3 text-gray-600">Key has expired. Generate a new API key from dashboard.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">1002</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">401</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Expired API Key</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Generate a new API key from dashboard.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1003</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
-                <td className="px-4 py-3 text-gray-900">Inactive API Key</td>
-                <td className="px-4 py-3 text-gray-600">Key is disabled. Re-activate from API Dashboard.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">1003</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">401</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Inactive API Key</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Re-activate from API Dashboard.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">1004</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">401</code></td>
-                <td className="px-4 py-3 text-gray-900">Missing API Key</td>
-                <td className="px-4 py-3 text-gray-600">No API key provided. Add X-API-Key header to request.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">1004</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">401</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Missing API Key</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Add X-API-Key header to request.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Authorization Errors (2xxx)</h3>
-        <div className="overflow-x-auto mb-6">
-          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">Authorization Errors (2xxx)</h3>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden min-w-[500px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Solution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-sm">
+            <tbody className="divide-y divide-gray-200 text-xs sm:text-sm">
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">2001</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">403</code></td>
-                <td className="px-4 py-3 text-gray-900">Permission Denied</td>
-                <td className="px-4 py-3 text-gray-600">Your tier doesn't allow this operation. Upgrade your plan.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">2001</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">403</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Permission Denied</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Upgrade your plan.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">2002</code></td>
-                <td className="px-4 py-3"><code className="bg-orange-100 text-orange-700 px-2 py-1 rounded">429</code></td>
-                <td className="px-4 py-3 text-gray-900">Rate Limit Exceeded</td>
-                <td className="px-4 py-3 text-gray-600">Monthly quota exhausted. Wait for reset or upgrade plan.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">2002</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-orange-100 text-orange-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">429</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Rate Limit Exceeded</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Wait for reset or upgrade.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">2003</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">403</code></td>
-                <td className="px-4 py-3 text-gray-900">IP Not Whitelisted</td>
-                <td className="px-4 py-3 text-gray-600">Request IP not in allowed list. Add IP in API settings.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">2003</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">403</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">IP Not Whitelisted</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Add IP in API settings.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Validation Errors (3xxx)</h3>
-        <div className="overflow-x-auto mb-6">
-          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">Validation Errors (3xxx)</h3>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden min-w-[500px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Solution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-sm">
+            <tbody className="divide-y divide-gray-200 text-xs sm:text-sm">
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3001</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-4 py-3 text-gray-900">Invalid Request Body</td>
-                <td className="px-4 py-3 text-gray-600">JSON is malformed. Validate JSON syntax.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">3001</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">400</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Invalid Request Body</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Validate JSON syntax.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3002</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-4 py-3 text-gray-900">Missing Required Field</td>
-                <td className="px-4 py-3 text-gray-600">Required field missing. Check 'type' and 'content' are present.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">3002</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">400</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Missing Field</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Add required field.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3003</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-4 py-3 text-gray-900">Invalid QR Type</td>
-                <td className="px-4 py-3 text-gray-600">Unknown type. Use: url, text, vcard, wifi, email, sms, phone.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">3003</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">400</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Invalid QR Type</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Use valid type.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3004</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-4 py-3 text-gray-900">Invalid URL Format</td>
-                <td className="px-4 py-3 text-gray-600">URL is malformed. Include protocol (https://).</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">3004</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">400</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Invalid URL</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Include https://</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3005</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-4 py-3 text-gray-900">Invalid Email Format</td>
-                <td className="px-4 py-3 text-gray-600">Email format invalid. Use valid email address.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">3005</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">400</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Invalid Email</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Use valid email.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3006</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-4 py-3 text-gray-900">Invalid Phone Format</td>
-                <td className="px-4 py-3 text-gray-600">Phone format invalid. Use international format (+1...).</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">3006</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">400</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Invalid Phone</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Use +1 format.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">3007</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">400</code></td>
-                <td className="px-4 py-3 text-gray-900">Content Too Long</td>
-                <td className="px-4 py-3 text-gray-600">Content exceeds max length. Reduce content size.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">3007</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">400</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Content Too Long</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Reduce content.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Resource Errors (4xxx)</h3>
-        <div className="overflow-x-auto mb-6">
-          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">Resource Errors (4xxx)</h3>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden min-w-[500px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Solution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-sm">
+            <tbody className="divide-y divide-gray-200 text-xs sm:text-sm">
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">4001</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">404</code></td>
-                <td className="px-4 py-3 text-gray-900">QR Code Not Found</td>
-                <td className="px-4 py-3 text-gray-600">QR code doesn't exist. Verify the ID is correct.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">4001</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">404</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">QR Not Found</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Verify QR ID.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">4002</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">404</code></td>
-                <td className="px-4 py-3 text-gray-900">Resource Not Found</td>
-                <td className="px-4 py-3 text-gray-600">Requested resource doesn't exist.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">4002</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">404</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Resource Not Found</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Check resource ID.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Server Errors (5xxx)</h3>
-        <div className="overflow-x-auto mb-6">
-          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">Server Errors (5xxx)</h3>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-6">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden min-w-[500px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Solution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-sm">
+            <tbody className="divide-y divide-gray-200 text-xs sm:text-sm">
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">5001</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">500</code></td>
-                <td className="px-4 py-3 text-gray-900">Internal Server Error</td>
-                <td className="px-4 py-3 text-gray-600">Server error. Retry later or contact support with request_id.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">5001</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">500</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Server Error</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Retry later.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">5002</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">500</code></td>
-                <td className="px-4 py-3 text-gray-900">Database Error</td>
-                <td className="px-4 py-3 text-gray-600">Database unavailable. Retry after a few seconds.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">5002</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">500</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Database Error</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Retry in seconds.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">5003</code></td>
-                <td className="px-4 py-3"><code className="bg-red-100 text-red-700 px-2 py-1 rounded">500</code></td>
-                <td className="px-4 py-3 text-gray-900">QR Generation Failed</td>
-                <td className="px-4 py-3 text-gray-600">Failed to generate QR. Check content and retry.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">5003</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">500</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">QR Generation Failed</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Check content, retry.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Idempotency Errors (6xxx)</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">Idempotency Errors (6xxx)</h3>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden min-w-[500px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Code</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">HTTP</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Error</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Cause & Solution</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Code</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">HTTP</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Error</th>
+                <th className="text-left px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900">Solution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-sm">
+            <tbody className="divide-y divide-gray-200 text-xs sm:text-sm">
               <tr>
-                <td className="px-4 py-3"><code className="bg-gray-100 px-2 py-1 rounded">6001</code></td>
-                <td className="px-4 py-3"><code className="bg-orange-100 text-orange-700 px-2 py-1 rounded">409</code></td>
-                <td className="px-4 py-3 text-gray-900">Idempotency Key Reused</td>
-                <td className="px-4 py-3 text-gray-600">Same key used for different request. Use unique idempotency key.</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">6001</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3"><code className="bg-orange-100 text-orange-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">409</code></td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-900">Key Reused</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">Use unique key.</td>
               </tr>
             </tbody>
           </table>

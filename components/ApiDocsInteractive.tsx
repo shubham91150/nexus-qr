@@ -20,6 +20,7 @@ const customStyles = `
 
   .swagger-ui .info {
     margin: 30px 0;
+    padding: 0 10px;
   }
 
   .swagger-ui .info .title {
@@ -279,6 +280,297 @@ const customStyles = `
   .dark .swagger-ui .scheme-container {
     background: #1f2937 !important;
   }
+
+  /* ========== MOBILE RESPONSIVE STYLES ========== */
+  @media (max-width: 768px) {
+    /* Info section mobile */
+    .swagger-ui .info {
+      margin: 15px 0 !important;
+      padding: 0 5px !important;
+    }
+
+    .swagger-ui .info .title {
+      font-size: 1.5rem !important;
+    }
+
+    .swagger-ui .info .description {
+      font-size: 0.875rem !important;
+    }
+
+    /* Operation blocks mobile */
+    .swagger-ui .opblock {
+      margin: 8px 10px !important;
+      border-radius: 8px !important;
+    }
+
+    .swagger-ui .opblock .opblock-summary {
+      padding: 10px !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+    }
+
+    .swagger-ui .opblock .opblock-summary-method {
+      min-width: 55px !important;
+      padding: 4px 8px !important;
+      font-size: 0.7rem !important;
+    }
+
+    .swagger-ui .opblock .opblock-summary-path {
+      font-size: 0.75rem !important;
+      word-break: break-all !important;
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+    }
+
+    .swagger-ui .opblock .opblock-summary-description {
+      font-size: 0.75rem !important;
+      display: none !important;
+    }
+
+    .swagger-ui .opblock-tag {
+      padding: 12px 10px !important;
+      font-size: 0.95rem !important;
+    }
+
+    /* Lock icon mobile */
+    .swagger-ui .opblock .opblock-summary .view-line-link,
+    .swagger-ui .opblock .opblock-summary .authorization__btn {
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    .swagger-ui .authorization__btn svg {
+      width: 14px !important;
+      height: 14px !important;
+    }
+
+    /* Parameters table mobile */
+    .swagger-ui .opblock-body {
+      padding: 10px !important;
+    }
+
+    .swagger-ui .opblock-section-header {
+      padding: 8px 10px !important;
+    }
+
+    .swagger-ui .opblock-section-header h4 {
+      font-size: 0.8rem !important;
+    }
+
+    .swagger-ui table.parameters {
+      display: block !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    .swagger-ui .parameters-col_name,
+    .swagger-ui .parameters-col_description {
+      min-width: 100px !important;
+      font-size: 0.75rem !important;
+      padding: 8px !important;
+      word-break: break-word !important;
+    }
+
+    .swagger-ui .parameter__name {
+      font-size: 0.75rem !important;
+    }
+
+    .swagger-ui .parameter__type {
+      font-size: 0.7rem !important;
+    }
+
+    .swagger-ui .parameter__in {
+      font-size: 0.65rem !important;
+    }
+
+    /* Response section mobile */
+    .swagger-ui .responses-wrapper {
+      padding: 10px !important;
+    }
+
+    .swagger-ui .responses-inner {
+      overflow-x: auto !important;
+    }
+
+    .swagger-ui table.responses-table {
+      display: block !important;
+      overflow-x: auto !important;
+    }
+
+    .swagger-ui .response-col_status {
+      font-size: 0.8rem !important;
+      min-width: 60px !important;
+    }
+
+    .swagger-ui .response-col_description {
+      font-size: 0.75rem !important;
+      min-width: 150px !important;
+    }
+
+    /* Tab buttons mobile */
+    .swagger-ui .tab {
+      font-size: 0.75rem !important;
+      padding: 6px 10px !important;
+    }
+
+    .swagger-ui .opblock-body .tab-header {
+      flex-wrap: wrap !important;
+    }
+
+    /* Code blocks mobile */
+    .swagger-ui .opblock-body pre.microlight {
+      padding: 10px !important;
+      font-size: 0.7rem !important;
+    }
+
+    .swagger-ui .highlight-code pre {
+      font-size: 0.7rem !important;
+      padding: 10px !important;
+    }
+
+    .swagger-ui .example pre {
+      font-size: 0.7rem !important;
+    }
+
+    /* Model section mobile */
+    .swagger-ui section.models {
+      margin: 10px !important;
+    }
+
+    .swagger-ui section.models h4 {
+      padding: 10px !important;
+      font-size: 0.95rem !important;
+    }
+
+    .swagger-ui .model-container {
+      padding: 10px !important;
+    }
+
+    .swagger-ui .model {
+      font-size: 0.75rem !important;
+    }
+
+    /* Buttons mobile */
+    .swagger-ui .btn {
+      padding: 6px 12px !important;
+      font-size: 0.75rem !important;
+    }
+
+    .swagger-ui .btn.execute,
+    .swagger-ui .btn.cancel {
+      padding: 8px 16px !important;
+    }
+
+    /* Scheme container mobile */
+    .swagger-ui .scheme-container {
+      margin: 0 10px !important;
+      padding: 10px !important;
+      flex-wrap: wrap !important;
+    }
+
+    .swagger-ui .schemes-title {
+      font-size: 0.8rem !important;
+    }
+
+    /* Form inputs mobile */
+    .swagger-ui input[type=text],
+    .swagger-ui textarea {
+      font-size: 0.875rem !important;
+      padding: 8px 10px !important;
+    }
+
+    .swagger-ui select {
+      font-size: 0.875rem !important;
+      padding: 6px 10px !important;
+    }
+
+    /* Copy button mobile */
+    .swagger-ui .copy-to-clipboard {
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    .swagger-ui .copy-to-clipboard button {
+      padding: 4px !important;
+    }
+
+    /* Try it out button mobile */
+    .swagger-ui .try-out__btn {
+      padding: 6px 12px !important;
+      font-size: 0.75rem !important;
+    }
+
+    /* Response body mobile */
+    .swagger-ui .responses-table .response-col_description__inner {
+      max-width: 100% !important;
+    }
+
+    .swagger-ui .response-col_links {
+      display: none !important;
+    }
+
+    /* Example value/schema tabs mobile */
+    .swagger-ui .model-example {
+      overflow-x: auto !important;
+    }
+
+    /* Servers dropdown mobile */
+    .swagger-ui .servers > label {
+      display: block !important;
+      margin-bottom: 8px !important;
+    }
+
+    .swagger-ui .servers > label > select {
+      width: 100% !important;
+    }
+
+    /* Filter input mobile */
+    .swagger-ui .filter-container {
+      padding: 10px !important;
+    }
+
+    .swagger-ui .filter-container input {
+      font-size: 0.875rem !important;
+    }
+
+    /* Authorization modal mobile */
+    .swagger-ui .dialog-ux .modal-ux {
+      max-width: 95vw !important;
+      margin: 10px !important;
+    }
+
+    .swagger-ui .dialog-ux .modal-ux-content {
+      padding: 15px !important;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 480px) {
+    .swagger-ui .info .title {
+      font-size: 1.25rem !important;
+    }
+
+    .swagger-ui .opblock .opblock-summary-path {
+      font-size: 0.7rem !important;
+    }
+
+    .swagger-ui .opblock .opblock-summary-method {
+      min-width: 45px !important;
+      font-size: 0.65rem !important;
+      padding: 3px 6px !important;
+    }
+
+    .swagger-ui .parameters-col_name,
+    .swagger-ui .parameters-col_description {
+      font-size: 0.7rem !important;
+      padding: 6px !important;
+    }
+
+    .swagger-ui .opblock-body pre.microlight,
+    .swagger-ui .highlight-code pre {
+      font-size: 0.65rem !important;
+    }
+  }
 `;
 
 const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
@@ -367,44 +659,45 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
 
       {/* Fixed Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-xl transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <Book className="w-5 h-5 text-indigo-600" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <Book className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-gray-900">API Reference</h1>
-                  <p className="text-xs text-gray-500">OpenAPI 3.1 Specification</p>
+                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">API Reference</h1>
+                  <p className="text-xs text-gray-500 hidden sm:block">OpenAPI 3.1 Specification</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 ml-10 sm:ml-0">
               {/* Quick Start Button */}
               <button
                 onClick={() => setShowApiKeyModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg sm:rounded-xl hover:bg-indigo-700 transition-colors text-xs sm:text-sm font-medium"
               >
-                <Zap className="w-4 h-4" />
-                Quick Start
+                <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Quick Start</span>
+                <span className="xs:hidden">Start</span>
               </button>
 
               {/* OpenAPI Spec Download */}
               <a
                 href="/openapi.yaml"
                 download="nexusqr-openapi.yaml"
-                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors text-xs sm:text-sm font-medium text-gray-700"
               >
-                <Code className="w-4 h-4" />
-                Download Spec
+                <Code className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Download Spec</span>
               </a>
 
               {/* External Links */}
@@ -412,10 +705,10 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
                 href="https://github.com/nexusqr/api-examples"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-xl transition-colors"
                 title="View examples on GitHub"
               >
-                <ExternalLink className="w-5 h-5 text-gray-600" />
+                <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
               </a>
             </div>
           </div>
