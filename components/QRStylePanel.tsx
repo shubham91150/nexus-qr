@@ -118,29 +118,27 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
     };
 
     return (
-      <div className="flex-1 min-w-[140px] bg-gray-50 p-2 rounded-xl border border-gray-200">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-gray-600 uppercase">{label}</span>
-          <div className="flex items-center gap-2">
+      <div className="flex-1 min-w-[100px] bg-gray-50 p-2 rounded-xl border border-gray-200">
+        <span className="text-[10px] font-medium text-gray-500 uppercase block mb-1.5">{label}</span>
+        <div className="flex items-center gap-1.5">
+          <input
+            ref={inputRef}
+            type="text"
+            value={localValue}
+            onChange={handleHexChange}
+            onFocus={() => setIsEditing(true)}
+            onBlur={handleHexBlur}
+            onKeyDown={handleHexKeyDown}
+            className="flex-1 min-w-0 text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-1 text-center uppercase focus:outline-none focus:border-gray-400"
+            maxLength={7}
+          />
+          <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
             <input
-              ref={inputRef}
-              type="text"
-              value={localValue}
-              onChange={handleHexChange}
-              onFocus={() => setIsEditing(true)}
-              onBlur={handleHexBlur}
-              onKeyDown={handleHexKeyDown}
-              className="w-[70px] text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-1 text-center uppercase focus:outline-none focus:border-gray-400"
-              maxLength={7}
+              type="color"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
             />
-            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-              <input
-                type="color"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
-              />
-            </div>
           </div>
         </div>
       </div>
