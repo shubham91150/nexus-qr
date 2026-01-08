@@ -511,7 +511,7 @@ export const QRSettingsPanel: React.FC<QRSettingsPanelProps> = ({ qrCode, onUpda
                     <Repeat size={14} className="inline mr-1" />
                     Repeat Schedule
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       { value: null, label: 'No Repeat' },
                       { value: 'daily', label: 'Daily' },
