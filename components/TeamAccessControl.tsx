@@ -606,76 +606,67 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
         {/* Invitations Tab */}
         {activeTab === 'invitations' && (
           <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Email</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Role</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Invited By</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Sent</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Expires</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Status</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-slate-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invitations.map(invite => (
-                  <tr key={invite.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-slate-400" />
-                        <span>{invite.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded border ${getRoleColor(invite.role)}`}>
-                        {invite.role.charAt(0).toUpperCase() + invite.role.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-400">{invite.invitedBy}</td>
-                    <td className="px-6 py-4 text-sm text-slate-400">{formatDate(invite.sentAt)}</td>
-                    <td className="px-6 py-4 text-sm text-slate-400">{formatDate(invite.expiresAt)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${
-                        invite.status === 'pending' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {invite.status.charAt(0).toUpperCase() + invite.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {invite.status === 'pending' && (
-                          <>
-                            <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors" title="Resend">
-                              <RefreshCw className="w-4 h-4 text-slate-400" />
-                            </button>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[400px]">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-400">Email</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-400">Role</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-400">Status</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-slate-400">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invitations.map(invite => (
+                    <tr key={invite.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                          <span className="text-sm truncate">{invite.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 text-[10px] font-medium rounded border whitespace-nowrap ${getRoleColor(invite.role)}`}>
+                          {invite.role.charAt(0).toUpperCase() + invite.role.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 text-[10px] font-medium rounded whitespace-nowrap ${
+                          invite.status === 'pending' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {invite.status.charAt(0).toUpperCase() + invite.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {invite.status === 'pending' && (
                             <button
                               onClick={() => copyToClipboard(`https://app.nexusqr.com/invite/${invite.id}`, invite.id)}
-                              className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                              className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                               title="Copy Link"
                             >
                               {copied === invite.id ? (
-                                <Check className="w-4 h-4 text-green-400" />
+                                <Check className="w-3.5 h-3.5 text-green-400" />
                               ) : (
-                                <Copy className="w-4 h-4 text-slate-400" />
+                                <Copy className="w-3.5 h-3.5 text-slate-400" />
                               )}
                             </button>
-                          </>
-                        )}
-                        <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-red-400" title="Revoke">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          )}
+                          <button className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors text-red-400" title="Revoke">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {invitations.length === 0 && (
-              <div className="p-8 text-center text-slate-400">
-                <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No pending invitations</p>
+              <div className="p-6 text-center text-slate-400">
+                <Mail className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No pending invitations</p>
               </div>
             )}
           </div>
@@ -683,20 +674,20 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
 
         {/* Activity Tab */}
         {activeTab === 'activity' && (
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-            <div className="space-y-4">
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-3 sm:p-4">
+            <div className="space-y-3">
               {activityLogs.map(log => (
-                <div key={log.id} className="flex items-start gap-4 p-4 bg-slate-700/30 rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center font-medium text-sm">
+                <div key={log.id} className="flex items-start gap-3 p-3 bg-slate-700/30 rounded-lg">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center font-medium text-xs flex-shrink-0">
                     {getInitials(log.userName)}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm">
                       <span className="font-medium">{log.userName}</span>
-                      <span className="text-slate-400">{log.action}</span>
-                      <span className="text-blue-400">{log.target}</span>
+                      <span className="text-slate-400 mx-1">{log.action}</span>
+                      <span className="text-blue-400 break-all">{log.target}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {formatRelativeTime(log.timestamp)}
@@ -711,8 +702,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
               ))}
             </div>
 
-            <div className="mt-4 flex justify-center">
-              <button className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+            <div className="mt-3 flex justify-center">
+              <button className="px-3 py-1.5 text-xs text-slate-400 hover:text-white transition-colors">
                 Load More Activity
               </button>
             </div>
