@@ -532,7 +532,7 @@ const QRGenerator: React.FC<{
   const isBulk = contentData.type === 'bulk';
 
   return (
-    <div className="max-w-[1000px] mx-auto pt-4 sm:pt-6 pb-20 overflow-x-hidden">
+    <main className="max-w-[1000px] mx-auto pt-4 sm:pt-6 pb-20 overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 sm:mb-8 px-2 sm:px-4">
          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -865,7 +865,7 @@ const QRGenerator: React.FC<{
         steps={generatorTourSteps}
         storageKey="nexus_qr_onboarding_completed"
       />
-    </div>
+    </main>
   );
 };
 
