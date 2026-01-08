@@ -338,88 +338,89 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-3 sm:p-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Back Button */}
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 sm:mb-6 transition-colors text-sm"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
           Back to API Dashboard
         </button>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Team Management</h1>
-              <p className="text-slate-400">Manage team members and access permissions</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">Team Management</h1>
+              <p className="text-slate-400 text-xs sm:text-sm truncate">Manage team members and access permissions</p>
             </div>
           </div>
 
           <button
             onClick={() => setShowInviteModal(true)}
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="px-3 py-2 sm:px-4 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors text-sm whitespace-nowrap flex-shrink-0"
           >
             <UserPlus className="w-4 h-4" />
-            Invite Member
+            <span className="hidden xs:inline">Invite Member</span>
+            <span className="xs:hidden">Invite</span>
           </button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-400" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6">
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{members.length}</div>
-                <div className="text-sm text-slate-400">Team Members</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                <UserCheck className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{members.filter(m => m.status === 'active').length}</div>
-                <div className="text-sm text-slate-400">Active</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold">{members.length}</div>
+                <div className="text-xs sm:text-sm text-slate-400 truncate">Team Members</div>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-amber-400" />
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{invitations.filter(i => i.status === 'pending').length}</div>
-                <div className="text-sm text-slate-400">Pending Invites</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold">{members.filter(m => m.status === 'active').length}</div>
+                <div className="text-xs sm:text-sm text-slate-400">Active</div>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <Key className="w-5 h-5 text-purple-400" />
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{members.reduce((a, b) => a + b.apiKeys, 0)}</div>
-                <div className="text-sm text-slate-400">API Keys</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold">{invitations.filter(i => i.status === 'pending').length}</div>
+                <div className="text-xs sm:text-sm text-slate-400 truncate">Pending Invites</div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Key className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold">{members.reduce((a, b) => a + b.apiKeys, 0)}</div>
+                <div className="text-xs sm:text-sm text-slate-400">API Keys</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-slate-700 mb-6">
+        <div className="flex gap-1 border-b border-slate-700 mb-6 overflow-x-auto no-scrollbar">
           {[
             { id: 'members', label: 'Members', icon: Users, count: members.length },
             { id: 'roles', label: 'Roles', icon: Shield, count: roles.length },
@@ -429,16 +430,16 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-3 flex items-center gap-2 text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'text-purple-400 border-b-2 border-purple-400'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {tab.label}
               {tab.count !== undefined && (
-                <span className={`px-1.5 py-0.5 text-xs rounded ${
+                <span className={`px-1.5 py-0.5 text-[10px] sm:text-xs rounded ${
                   activeTab === tab.id ? 'bg-purple-500/20' : 'bg-slate-700'
                 }`}>
                   {tab.count}
@@ -452,138 +453,104 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
         {activeTab === 'members' && (
           <div>
             {/* Filters */}
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 mb-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name or email..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="Search..."
+                  className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
                 />
               </div>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg"
-              >
-                <option value="all">All Roles</option>
-                <option value="owner">Owner</option>
-                <option value="admin">Admin</option>
-                <option value="developer">Developer</option>
-                <option value="viewer">Viewer</option>
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="suspended">Suspended</option>
-              </select>
+              <div className="flex gap-2">
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="owner">Owner</option>
+                  <option value="admin">Admin</option>
+                  <option value="developer">Developer</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="pending">Pending</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
             </div>
 
             {/* Members List */}
             <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Member</th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Role</th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Status</th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">API Keys</th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Last Active</th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Security</th>
-                    <th className="text-right px-6 py-4 text-sm font-medium text-slate-400">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMembers.map(member => (
-                    <tr key={member.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center font-medium">
-                            {getInitials(member.name)}
-                          </div>
-                          <div>
-                            <div className="font-medium flex items-center gap-2">
-                              {member.name}
-                              {member.role === 'owner' && (
-                                <Crown className="w-4 h-4 text-amber-400" />
-                              )}
-                            </div>
-                            <div className="text-sm text-slate-400">{member.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded border ${getRoleColor(member.role)}`}>
-                          {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(member.status)}`}>
-                          {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="flex items-center gap-1 text-sm">
-                          <Key className="w-4 h-4 text-slate-400" />
-                          {member.apiKeys}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-400">
-                        {formatRelativeTime(member.lastActive)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {member.mfaEnabled ? (
-                            <span className="flex items-center gap-1 text-xs text-emerald-400">
-                              <Shield className="w-3 h-3" />
-                              MFA
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-xs text-slate-500">
-                              <Shield className="w-3 h-3" />
-                              No MFA
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => setSelectedMember(member)}
-                            className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4 text-slate-400" />
-                          </button>
-                          {member.role !== 'owner' && (
-                            <>
-                              {member.status === 'active' ? (
-                                <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors" title="Suspend">
-                                  <UserX className="w-4 h-4 text-slate-400" />
-                                </button>
-                              ) : member.status === 'suspended' ? (
-                                <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors" title="Activate">
-                                  <UserCheck className="w-4 h-4 text-slate-400" />
-                                </button>
-                              ) : null}
-                              <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-red-400" title="Remove">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      <th className="text-left px-4 py-3 text-xs font-medium text-slate-400">Member</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-slate-400">Role</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-slate-400">Status</th>
+                      <th className="text-right px-4 py-3 text-xs font-medium text-slate-400">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredMembers.map(member => (
+                      <tr key={member.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center font-medium text-xs flex-shrink-0">
+                              {getInitials(member.name)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-medium text-sm flex items-center gap-1 truncate">
+                                {member.name}
+                                {member.role === 'owner' && (
+                                  <Crown className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-400 truncate">{member.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 text-[10px] font-medium rounded border ${getRoleColor(member.role)}`}>
+                            {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 text-[10px] font-medium rounded ${getStatusColor(member.status)}`}>
+                            {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => setSelectedMember(member)}
+                              className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-slate-400" />
+                            </button>
+                            {member.role !== 'owner' && (
+                              <button className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors text-red-400" title="Remove">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
