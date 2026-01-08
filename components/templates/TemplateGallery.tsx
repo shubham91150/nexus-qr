@@ -570,12 +570,12 @@ function TemplateCard({
   return (
     <div
       onClick={onClick}
-      className={`relative bg-white rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-md ${
+      className={`relative bg-white rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${
         isSelected ? 'border-indigo-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
       }`}
     >
       {/* Preview */}
-      <div className="aspect-square bg-gray-50 flex items-center justify-center p-4">
+      <div className="aspect-square bg-gray-50 flex items-center justify-center p-4 overflow-hidden rounded-t-xl">
         {previewImage ? (
           <img src={previewImage} alt={name} className="w-full h-full object-contain" />
         ) : (
@@ -604,9 +604,9 @@ function TemplateCard({
                 <MoreVertical size={16} className="text-gray-400" />
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Dropdown Menu - Opens upward to avoid overflow */}
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 w-32 z-10">
+                <div className="absolute right-0 bottom-full mb-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 w-32 z-50">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
