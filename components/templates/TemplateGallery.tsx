@@ -30,7 +30,9 @@ import {
   getPresetTemplates,
   deleteTemplate,
   duplicateTemplate,
+  updateTemplate,
   PresetCategory,
+  TemplateCategory,
 } from '../../services/templateService';
 import { useAuth } from '../../lib/AuthContext';
 import { CustomSVGRenderer } from '../../services/customSvgRenderer';
@@ -69,6 +71,13 @@ export function TemplateGallery({ isOpen, onClose, onApply, currentStyle }: Temp
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Edit modal states
+  const [editingTemplate, setEditingTemplate] = useState<QRTemplate | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState<TemplateCategory>('custom');
+  const [editIsPublic, setEditIsPublic] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Load templates
   useEffect(() => {
@@ -158,6 +167,44 @@ export function TemplateGallery({ isOpen, onClose, onApply, currentStyle }: Temp
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to duplicate template');
+    }
+  };
+
+  // Handle edit - open edit modal
+  const handleEditOpen = (template: QRTemplate) => {
+    setEditingTemplate(template);
+    setEditName(template.name);
+    setEditCategory(template.category as TemplateCategory);
+    setEditIsPublic(template.is_public);
+    setMenuOpenId(null);
+  };
+
+  // Handle save edit
+  const handleEditSave = async () => {
+    if (!user || !editingTemplate || !editName.trim()) return;
+
+    setSaving(true);
+    try {
+      const result = await updateTemplate({
+        templateId: editingTemplate.id,
+        userId: user.id,
+        name: editName.trim(),
+        category: editCategory,
+        isPublic: editIsPublic,
+      });
+
+      if (result.success && result.template) {
+        setUserTemplates((prev) =>
+          prev.map((t) => (t.id === editingTemplate.id ? result.template! : t))
+        );
+        setEditingTemplate(null);
+      } else {
+        setError(result.error || 'Failed to update template');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update template');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -322,6 +369,7 @@ export function TemplateGallery({ isOpen, onClose, onApply, currentStyle }: Temp
                       onMenuToggle={() =>
                         setMenuOpenId(menuOpenId === template.id ? null : template.id)
                       }
+                      onEdit={() => handleEditOpen(template)}
                       onDelete={() => setDeleteConfirmId(template.id)}
                       onDuplicate={() => handleDuplicate(template.id, template.name)}
                     />
@@ -359,6 +407,102 @@ export function TemplateGallery({ isOpen, onClose, onApply, currentStyle }: Temp
             </div>
           </div>
         )}
+
+        {/* Edit Template Modal */}
+        {editingTemplate && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+            <div className="bg-white rounded-xl p-6 max-w-sm mx-4 shadow-xl w-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Template</h3>
+
+              {/* Name Input */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Template Name *
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
+                  maxLength={100}
+                />
+              </div>
+
+              {/* Category */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {(['custom', 'business', 'social', 'marketing', 'event'] as TemplateCategory[]).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setEditCategory(cat)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        editCategory === cat
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Public Toggle */}
+              <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl mb-4">
+                <div className="flex items-center gap-2">
+                  {editIsPublic ? (
+                    <Globe className="text-indigo-600" size={18} />
+                  ) : (
+                    <Lock className="text-gray-500" size={18} />
+                  )}
+                  <span className="text-sm font-medium text-gray-700">
+                    {editIsPublic ? 'Public' : 'Private'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditIsPublic(!editIsPublic)}
+                  className={`relative w-10 h-5 rounded-full transition-colors ${
+                    editIsPublic ? 'bg-indigo-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                      editIsPublic ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingTemplate(null)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                >
+                  <X size={16} />
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditSave}
+                  disabled={saving || !editName.trim()}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {saving ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    <Check size={16} />
+                  )}
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -379,6 +523,7 @@ interface TemplateCardProps {
   showMenu?: boolean;
   menuOpen?: boolean;
   onMenuToggle?: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
 }
@@ -397,6 +542,7 @@ function TemplateCard({
   showMenu,
   menuOpen,
   onMenuToggle,
+  onEdit,
   onDelete,
   onDuplicate,
 }: TemplateCardProps) {
@@ -461,6 +607,16 @@ function TemplateCard({
               {/* Dropdown Menu */}
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 w-32 z-10">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit?.();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Edit3 size={14} />
+                    Edit
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
