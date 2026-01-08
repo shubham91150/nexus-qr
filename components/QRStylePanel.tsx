@@ -287,16 +287,49 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
              </div>
           )}
 
-          <div className="flex items-center gap-3">
-              <ColorInput label="Background" value={config.bgColor} onChange={(v: string) => update('bgColor', v)} />
-              <button
-                  type="button"
-                  onClick={() => update('bgTransparent', !config.bgTransparent)}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all h-[50px] ${config.bgTransparent ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-              >
-                  <span className="text-xs font-medium">Transparent</span>
-                  <div className={`w-4 h-4 rounded-full border ${config.bgTransparent ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}></div>
-              </button>
+          <div>
+              <span className="text-[10px] font-medium text-gray-500 uppercase block mb-1 text-center">Background</span>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-[100px]">
+                  <div className="flex items-center gap-1.5 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                    <input
+                      type="text"
+                      value={config.bgColor}
+                      onChange={(e) => {
+                        let val = e.target.value.toUpperCase();
+                        if (!val.startsWith('#')) val = '#' + val.replace('#', '');
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                          if (/^#[0-9A-Fa-f]{6}$/.test(val)) update('bgColor', val);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                          // Reset if invalid
+                        }
+                      }}
+                      className="flex-1 min-w-0 text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-1 text-center uppercase focus:outline-none focus:border-gray-400"
+                      maxLength={7}
+                    />
+                    <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                      <input
+                        type="color"
+                        value={config.bgColor}
+                        onChange={(e) => update('bgColor', e.target.value)}
+                        className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => update('bgTransparent', !config.bgTransparent)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${config.bgTransparent ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                >
+                    <span className="text-xs font-medium">Transparent</span>
+                    <div className={`w-4 h-4 rounded-full border ${config.bgTransparent ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}></div>
+                </button>
+              </div>
           </div>
 
           {/* Warning if colors are same */}
