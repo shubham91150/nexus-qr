@@ -289,9 +289,9 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
           <div>
               <span className="text-[10px] font-medium text-gray-500 uppercase block mb-1 text-center">Background</span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-stretch gap-3">
                 <div className="flex-1 min-w-[100px]">
-                  <div className="flex items-center gap-1.5 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-1.5 bg-gray-50 p-2 rounded-xl border border-gray-200 h-full">
                     <input
                       type="text"
                       value={config.bgColor}
@@ -324,7 +324,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                 <button
                     type="button"
                     onClick={() => update('bgTransparent', !config.bgTransparent)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${config.bgTransparent ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                    className={`flex items-center justify-center gap-2 px-4 rounded-xl border transition-all ${config.bgTransparent ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
                 >
                     <span className="text-xs font-medium">Transparent</span>
                     <div className={`w-4 h-4 rounded-full border ${config.bgTransparent ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}></div>
