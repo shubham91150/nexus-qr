@@ -119,7 +119,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
     return (
       <div className="flex-1 min-w-[100px]">
-        <span className="text-[10px] font-medium text-gray-500 uppercase block mb-1">{label}</span>
+        <span className="text-[10px] font-medium text-gray-600 uppercase block mb-1">{label}</span>
         <div className="flex items-center gap-1.5 bg-gray-50 p-2 rounded-xl border border-gray-200">
           <input
             ref={inputRef}
@@ -129,6 +129,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
             onFocus={() => setIsEditing(true)}
             onBlur={handleHexBlur}
             onKeyDown={handleHexKeyDown}
+            aria-label={`${label} hex color code`}
             className="flex-1 min-w-0 text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-1 text-center uppercase focus:outline-none focus:border-gray-400"
             maxLength={7}
           />
@@ -137,6 +138,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
               type="color"
               value={value}
               onChange={(e) => onChange(e.target.value)}
+              aria-label={`${label} color picker`}
               className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
             />
           </div>
@@ -166,7 +168,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
         <div className="space-y-6 px-1">
             {/* Resolution Presets */}
             <div>
-                <label className="text-xs font-medium text-gray-500 mb-2 block">Quality Presets</label>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Quality Presets</label>
                 <div className="grid grid-cols-4 gap-2">
                     {qualityPresets.map((preset) => (
                         <button
@@ -190,7 +192,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
             {/* Manual Slider */}
             <div>
-                <div className="flex justify-between text-xs text-gray-500 mb-2">
+                <div className="flex justify-between text-xs text-gray-600 mb-2">
                     <span className="font-medium">Manual Resolution</span>
                     <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{config.size}px</span>
                 </div>
@@ -201,6 +203,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                     step="50"
                     value={config.size}
                     onChange={e => updateDebounced('size', Number(e.target.value))}
+                    aria-label="QR code resolution"
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 mt-1 px-1">
@@ -212,7 +215,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
             
             {/* Error Correction */}
             <div>
-                 <label className="text-xs font-medium text-gray-500 mb-2 block">Error Correction Level</label>
+                 <label className="text-xs font-medium text-gray-600 mb-2 block">Error Correction Level</label>
                  <div className="grid grid-cols-4 gap-2">
                      {['L', 'M', 'Q', 'H'].map(level => (
                          <button
@@ -271,7 +274,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
           {config.isGradient && (
              <div className="pt-2 px-1">
-                <div className="flex justify-between text-xs text-gray-500 mb-2">
+                <div className="flex justify-between text-xs text-gray-600 mb-2">
                     <span>Gradient Angle</span>
                     <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{config.gradientRotation}°</span>
                 </div>
@@ -282,13 +285,14 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                     step="15"
                     value={config.gradientRotation}
                     onChange={e => updateDebounced('gradientRotation', Number(e.target.value))}
+                    aria-label="Gradient angle"
                     className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                 />
              </div>
           )}
 
           <div>
-              <span className="text-[10px] font-medium text-gray-500 uppercase block mb-1 text-center">Background</span>
+              <span className="text-[10px] font-medium text-gray-600 uppercase block mb-1">Background</span>
               <div className="flex items-stretch gap-3">
                 <div className="flex-1 min-w-[100px]">
                   <div className="flex items-center gap-1.5 bg-gray-50 p-2 rounded-xl border border-gray-200 h-full">
@@ -308,6 +312,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                           // Reset if invalid
                         }
                       }}
+                      aria-label="Background hex color code"
                       className="flex-1 min-w-0 text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-1 text-center uppercase focus:outline-none focus:border-gray-400"
                       maxLength={7}
                     />
@@ -316,6 +321,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                         type="color"
                         value={config.bgColor}
                         onChange={(e) => update('bgColor', e.target.value)}
+                        aria-label="Background color picker"
                         className="absolute inset-[-4px] w-[150%] h-[150%] cursor-pointer p-0 m-0"
                       />
                     </div>
@@ -324,10 +330,12 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                 <button
                     type="button"
                     onClick={() => update('bgTransparent', !config.bgTransparent)}
+                    aria-label="Toggle transparent background"
+                    aria-pressed={config.bgTransparent}
                     className={`flex items-center justify-center gap-2 px-4 rounded-xl border transition-all ${config.bgTransparent ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
                 >
                     <span className="text-xs font-medium">Transparent</span>
-                    <div className={`w-4 h-4 rounded-full border ${config.bgTransparent ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}></div>
+                    <div className={`w-4 h-4 rounded-full border ${config.bgTransparent ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`} aria-hidden="true"></div>
                 </button>
               </div>
           </div>
@@ -376,7 +384,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
          <div className="space-y-6">
             {/* Data Patterns */}
             <div>
-                <label className="text-xs font-medium text-gray-500 mb-2 block">Data Pattern</label>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Data Pattern</label>
                 <div className="grid grid-cols-3 gap-2">
                     {[
                         {id: 'square', label: 'Square'},
@@ -400,7 +408,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
             {/* Corner Styles */}
             <div>
-                <label className="text-xs font-medium text-gray-500 mb-2 block">Corner Style</label>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Corner Style</label>
                 <div className="grid grid-cols-3 gap-2">
                     {[
                        {id: 'square', label: 'Square'},
@@ -466,8 +474,8 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
          {/* Upload Custom Logo */}
          <div className="flex items-center gap-4">
              <label className="flex-1 cursor-pointer bg-gray-50 border border-dashed border-gray-300 rounded-xl h-20 flex flex-col items-center justify-center hover:bg-gray-100 transition-colors">
-                 <span className="text-xs font-medium text-gray-500">Upload Image</span>
-                 <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                 <span className="text-xs font-medium text-gray-600">Upload Image</span>
+                 <input type="file" className="hidden" accept="image/*" aria-label="Upload logo image" onChange={async (e) => {
                      const file = e.target.files?.[0];
                      if (file) {
                          const reader = new FileReader();
@@ -517,7 +525,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
              <div className="mt-4 space-y-4">
                  {/* Logo Shape Selection */}
                  <div>
-                     <label className="text-xs font-medium text-gray-500 mb-2 block">Padding Shape</label>
+                     <label className="text-xs font-medium text-gray-600 mb-2 block">Padding Shape</label>
                      <div className="grid grid-cols-4 gap-2">
                          {[
                              { id: 'auto', label: 'Auto' },
@@ -547,7 +555,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
 
                  {/* Logo Size Slider */}
                  <div>
-                     <div className="flex justify-between text-xs text-gray-500 mb-1">
+                     <div className="flex justify-between text-xs text-gray-600 mb-1">
                          <span>Size</span>
                          <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{(config.logoSize * 100).toFixed(0)}%</span>
                      </div>
@@ -555,6 +563,7 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
                          type="range" min="0.1" max="0.4" step="0.05"
                          value={config.logoSize}
                          onChange={e => updateDebounced('logoSize', Number(e.target.value))}
+                         aria-label="Logo size"
                          className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-800"
                      />
                  </div>
