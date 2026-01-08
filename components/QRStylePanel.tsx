@@ -118,9 +118,9 @@ export const QRStylePanel: React.FC<Props> = ({ config, onChange }) => {
     };
 
     return (
-      <div className="flex-1 min-w-[100px] bg-gray-50 p-2 rounded-xl border border-gray-200">
-        <span className="text-[10px] font-medium text-gray-500 uppercase block mb-1.5">{label}</span>
-        <div className="flex items-center gap-1.5">
+      <div className="flex-1 min-w-[100px]">
+        <span className="text-[10px] font-medium text-gray-500 uppercase block mb-1">{label}</span>
+        <div className="flex items-center gap-1.5 bg-gray-50 p-2 rounded-xl border border-gray-200">
           <input
             ref={inputRef}
             type="text"
