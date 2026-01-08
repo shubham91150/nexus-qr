@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LogOut, LogIn, Settings, Crown, ChevronUp, Mail } from 'lucide-react';
+import { LogOut, LogIn, Settings, Crown, ChevronDown, Mail, Bell, HelpCircle } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 
 interface ProfileMenuProps {
@@ -30,7 +30,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({ onLoginClick }) => {
 
   if (loading) {
     return (
-      <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+      <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
     );
   }
 
@@ -65,69 +65,87 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({ onLoginClick }) => {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Profile Button */}
+      {/* Profile Button - Clean minimal style */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-1 p-0.5 rounded-full hover:bg-gray-50 transition-colors"
         aria-label="Profile menu"
         aria-expanded={isOpen}
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+        <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
           {getInitials()}
         </div>
-        <ChevronUp
-          size={14}
-          className={`text-gray-400 transition-transform duration-200 ${isOpen ? '' : 'rotate-180'}`}
+        <ChevronDown
+          size={16}
+          className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu - Clean design like reference */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden z-50 animate-fadeIn">
-          {/* User Info Header */}
-          <div className="p-4 border-b border-gray-100">
+        <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50">
+
+          {/* User Info Header - Clean minimal style */}
+          <div className="px-4 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-base shadow-sm flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                 {getInitials()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm truncate">{getDisplayName()}</p>
-                <p className="text-xs text-gray-500 truncate flex items-center gap-1 mt-0.5">
-                  <Mail size={10} className="flex-shrink-0" />
+                <p className="font-semibold text-gray-900 text-[15px] truncate">{getDisplayName()}</p>
+                <p className="text-sm text-gray-500 truncate flex items-center gap-1.5 mt-0.5">
+                  <Mail size={12} className="flex-shrink-0 text-gray-400" />
                   <span className="truncate">{user.email}</span>
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Plan Status */}
-          <div className="px-4 py-3 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Plan</span>
-              <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
-                Free
-              </span>
-            </div>
+          {/* Plan Status Row */}
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <span className="text-xs text-gray-400 uppercase tracking-wide font-medium">Plan</span>
+            <span className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">
+              Free
+            </span>
           </div>
 
-          {/* Menu Items */}
-          <div className="py-2">
-            {/* Upgrade Button */}
+          {/* Menu Section */}
+          <div className="py-1">
+            {/* Upgrade to Pro */}
             <button
               onClick={() => {
                 setIsOpen(false);
                 alert('Subscription feature coming soon!');
               }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-indigo-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
             >
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Crown size={16} className="text-indigo-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="font-medium text-sm text-indigo-600 block">Upgrade to Pro</span>
-                <span className="text-xs text-gray-400">Get unlimited dynamic QRs</span>
+              <Crown size={20} className="text-indigo-600 flex-shrink-0" />
+              <div className="flex-1">
+                <span className="font-medium text-sm text-indigo-600">Upgrade to Pro</span>
+                <p className="text-xs text-gray-400 mt-0.5">Get unlimited dynamic QRs</p>
               </div>
             </button>
+
+            {/* Notifications - with badge like reference */}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+            >
+              <Bell size={20} className="text-gray-500 flex-shrink-0" />
+              <span className="font-medium text-sm text-gray-700 flex-1">Notifications</span>
+              <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                3
+              </span>
+            </button>
+          </div>
+
+          {/* Account Section with Label */}
+          <div className="border-t border-gray-100">
+            <div className="px-4 pt-3 pb-1">
+              <span className="text-[11px] text-gray-400 uppercase tracking-wider font-medium">Account</span>
+            </div>
 
             {/* Settings */}
             <button
@@ -135,24 +153,29 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({ onLoginClick }) => {
                 setIsOpen(false);
                 alert('Settings feature coming soon!');
               }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
             >
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Settings size={16} className="text-gray-600" />
-              </div>
+              <Settings size={20} className="text-gray-500 flex-shrink-0" />
               <span className="font-medium text-sm text-gray-700">Settings</span>
             </button>
-          </div>
 
-          {/* Sign Out */}
-          <div className="border-t border-gray-100 py-2">
+            {/* Help */}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+            >
+              <HelpCircle size={20} className="text-gray-500 flex-shrink-0" />
+              <span className="font-medium text-sm text-gray-700">Help & Support</span>
+            </button>
+
+            {/* Sign Out */}
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-red-50 transition-colors"
             >
-              <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <LogOut size={16} className="text-red-500" />
-              </div>
+              <LogOut size={20} className="text-red-500 flex-shrink-0" />
               <span className="font-medium text-sm text-red-500">Sign Out</span>
             </button>
           </div>
