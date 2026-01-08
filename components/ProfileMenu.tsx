@@ -54,11 +54,11 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({ onLoginClick }) => {
   const MenuItem = ({ icon: Icon, label, onClick, badge, badgeColor = 'bg-emerald-400' }: {
     icon: any; label: string; onClick: () => void; badge?: number; badgeColor?: string;
   }) => (
-    <button onClick={onClick} className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 transition-colors">
-      <Icon size={16} strokeWidth={1.5} className="text-gray-400" />
-      <span className="font-medium text-xs text-gray-700 flex-1">{label}</span>
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors">
+      <Icon size={18} strokeWidth={1.5} className="text-gray-400" />
+      <span className="font-medium text-sm text-gray-700 flex-1">{label}</span>
       {badge !== undefined && (
-        <span className={`min-w-[18px] h-[18px] ${badgeColor} text-gray-800 text-[10px] font-semibold rounded-full flex items-center justify-center`}>
+        <span className={`min-w-[20px] h-5 ${badgeColor} text-gray-800 text-[10px] font-semibold rounded-full flex items-center justify-center px-1`}>
           {badge}
         </span>
       )}
@@ -79,48 +79,51 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({ onLoginClick }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden z-50">
+        <div
+          className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden z-50 flex flex-col"
+          style={{ width: '280px', height: '600px' }}
+        >
           {/* User Header */}
-          <div className="px-3 py-3 border-b border-gray-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          <div className="px-4 py-5 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                 {getInitials()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-800 text-xs truncate">{getDisplayName()}</p>
-                <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
+                <p className="font-semibold text-gray-800 text-sm truncate">{getDisplayName()}</p>
+                <p className="text-xs text-gray-400 truncate mt-0.5">{user.email}</p>
               </div>
             </div>
           </div>
 
           {/* Plan Toggle */}
-          <div className="px-3 py-2.5">
-            <div className="flex bg-gray-100 rounded-full p-0.5">
-              <button className="flex-1 py-1.5 px-3 bg-indigo-600 text-white text-[10px] font-semibold rounded-full">
+          <div className="px-4 py-4">
+            <div className="flex bg-gray-100 rounded-full p-1">
+              <button className="flex-1 py-2 px-4 bg-indigo-600 text-white text-xs font-semibold rounded-full">
                 FREE
               </button>
               <button
                 onClick={() => { setIsOpen(false); alert('Upgrade coming soon!'); }}
-                className="flex-1 py-1.5 px-3 text-gray-500 text-[10px] font-medium rounded-full hover:text-gray-700"
+                className="flex-1 py-2 px-4 text-gray-500 text-xs font-medium rounded-full hover:text-gray-700"
               >
                 PRO
               </button>
             </div>
           </div>
 
-          {/* Menu Items */}
-          <div className="py-0.5">
+          {/* Menu Items - Takes remaining space */}
+          <div className="flex-1 py-2">
             <MenuItem icon={Crown} label="Upgrade to Pro" onClick={() => { setIsOpen(false); alert('Upgrade coming soon!'); }} />
             <MenuItem icon={Bell} label="Notifications" badge={3} badgeColor="bg-emerald-400" onClick={() => setIsOpen(false)} />
             <MenuItem icon={Mail} label="Messages" badge={2} badgeColor="bg-amber-400" onClick={() => setIsOpen(false)} />
           </div>
 
           {/* Divider */}
-          <div className="mx-3 border-t border-gray-100" />
+          <div className="mx-4 border-t border-gray-100" />
 
           {/* Account Section */}
-          <div className="pt-2 pb-1">
-            <p className="px-3 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Account</p>
+          <div className="py-3">
+            <p className="px-4 pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Account</p>
             <MenuItem icon={Settings} label="Settings" onClick={() => { setIsOpen(false); alert('Settings coming soon!'); }} />
             <MenuItem icon={HelpCircle} label="Help & Support" onClick={() => setIsOpen(false)} />
             <MenuItem icon={LogOut} label="Sign Out" onClick={handleSignOut} />
