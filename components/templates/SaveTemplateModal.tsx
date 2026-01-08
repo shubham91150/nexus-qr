@@ -27,7 +27,6 @@ const CATEGORIES: { id: TemplateCategory; label: string; icon: React.ReactNode }
 export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: SaveTemplateModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [category, setCategory] = useState<TemplateCategory>('custom');
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setSaving] = useState(false);
@@ -58,7 +57,6 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
   useEffect(() => {
     if (isOpen) {
       setName('');
-      setDescription('');
       setCategory('custom');
       setIsPublic(false);
       setError(null);
@@ -88,7 +86,6 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
       const result = await saveTemplate({
         userId: user.id,
         name: name.trim(),
-        description: description.trim() || undefined,
         category,
         styleConfig,
         isPublic,
@@ -196,21 +193,6 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
                 />
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description <span className="text-gray-400">(optional)</span>
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Add notes about this template..."
-                  className="w-full px-4 py-3 bg-gray-100 border border-transparent rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none resize-none"
-                  rows={2}
-                  maxLength={500}
-                />
-              </div>
-
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -280,29 +262,29 @@ export function SaveTemplateModal({ isOpen, onClose, styleConfig, onSaved }: Sav
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+            <div className="p-4 border-t border-gray-100 flex gap-2 flex-shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors flex flex-col items-center justify-center gap-1"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
               >
-                <X size={20} />
-                <span>Cancel</span>
+                <X size={16} />
+                Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || !name.trim()}
-                className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="animate-spin" size={20} />
-                    <span>Saving...</span>
+                    <Loader2 className="animate-spin" size={16} />
+                    Saving...
                   </>
                 ) : (
                   <>
-                    <Save size={20} />
-                    <span>Save Template</span>
+                    <Save size={16} />
+                    Save
                   </>
                 )}
               </button>
