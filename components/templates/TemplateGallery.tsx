@@ -233,44 +233,46 @@ export function TemplateGallery({ isOpen, onClose, onApply, currentStyle }: Temp
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 p-4 border-b border-gray-100">
-          <button
-            onClick={() => setActiveTab('presets')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'presets'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <Sparkles size={16} />
-            Preset Templates
-          </button>
-          <button
-            onClick={() => setActiveTab('my-templates')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'my-templates'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <User size={16} />
-            My Templates
-            {userTemplates.length > 0 && (
-              <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">
-                {userTemplates.length}
-              </span>
-            )}
-          </button>
+        <div className="flex flex-col gap-3 p-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('presets')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'presets'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <Sparkles size={16} />
+              Preset Templates
+            </button>
+            <button
+              onClick={() => setActiveTab('my-templates')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'my-templates'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <User size={16} />
+              My Templates
+              {userTemplates.length > 0 && (
+                <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">
+                  {userTemplates.length}
+                </span>
+              )}
+            </button>
+          </div>
 
-          {/* Search */}
-          <div className="ml-auto relative">
+          {/* Search - Full width on mobile */}
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input
               type="text"
               placeholder="Search templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
             />
           </div>
         </div>
@@ -370,7 +372,10 @@ export function TemplateGallery({ isOpen, onClose, onApply, currentStyle }: Temp
                         setMenuOpenId(menuOpenId === template.id ? null : template.id)
                       }
                       onEdit={() => handleEditOpen(template)}
-                      onDelete={() => setDeleteConfirmId(template.id)}
+                      onDelete={() => {
+                        setMenuOpenId(null); // Close dropdown first
+                        setDeleteConfirmId(template.id);
+                      }}
                       onDuplicate={() => handleDuplicate(template.id, template.name)}
                     />
                   ))}
