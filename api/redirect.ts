@@ -718,7 +718,7 @@ function appendUTMParameters(url: string, utm: UTMParameters): string {
   }
 }
 
-// Generate password protection page HTML
+// Generate password protection page HTML - Premium Design
 function getPasswordPage(code: string, hint?: string): string {
   // Escape hint and code to prevent XSS
   const safeHint = hint ? escapeHtml(hint) : '';
@@ -730,33 +730,249 @@ function getPasswordPage(code: string, hint?: string): string {
     <head>
       <title>Password Protected</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src https://fonts.gstatic.com; style-src-elem 'unsafe-inline' https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
       <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .card { background: white; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; margin: 20px; width: 100%; }
-        .icon { font-size: 48px; margin-bottom: 16px; }
-        h1 { color: #333; margin: 0 0 8px 0; font-size: 24px; font-weight: 600; }
-        .hint { color: #888; font-size: 14px; margin-bottom: 24px; }
-        form { display: flex; flex-direction: column; gap: 16px; }
-        input[type="password"] { padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; transition: border-color 0.2s; }
-        input[type="password"]:focus { outline: none; border-color: #667eea; }
-        button { padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
-        .error { color: #e53e3e; font-size: 14px; margin-top: -8px; display: none; }
-        .error.show { display: block; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f5f5f0;
+          padding: 16px;
+          color: #1a1a1a;
+        }
+        .container { max-width: 420px; width: 100%; }
+        .card {
+          background: #ffffff;
+          border-radius: 28px;
+          overflow: hidden;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .header {
+          padding: 40px 24px 32px;
+          background: #ffffff;
+          text-align: center;
+          position: relative;
+          border-bottom: 1px solid #f0f0eb;
+        }
+        .header-icon {
+          width: 80px;
+          height: 80px;
+          background: linear-gradient(135deg, #f5f5f0 0%, #e8e8e3 100%);
+          border-radius: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 24px;
+          border: 1px solid #e8e8e3;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .header-icon svg {
+          width: 36px;
+          height: 36px;
+          color: #1a1a1a;
+        }
+        .header h1 {
+          font-family: 'Playfair Display', Georgia, serif;
+          font-size: 28px;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 12px;
+          line-height: 1.3;
+          letter-spacing: -0.5px;
+        }
+        .header p {
+          font-size: 15px;
+          color: #666;
+          font-weight: 400;
+          line-height: 1.5;
+        }
+        .hint-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          background: #fef3c7;
+          color: #92400e;
+          border-radius: 50px;
+          font-size: 13px;
+          font-weight: 500;
+          margin-top: 16px;
+          border: 1px solid #fcd34d;
+        }
+        .hint-badge svg {
+          width: 14px;
+          height: 14px;
+        }
+        .content {
+          padding: 32px 24px;
+        }
+        form {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        .input-group {
+          position: relative;
+        }
+        .input-group svg {
+          position: absolute;
+          left: 18px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 20px;
+          height: 20px;
+          color: #999;
+          pointer-events: none;
+        }
+        input[type="password"] {
+          width: 100%;
+          padding: 18px 18px 18px 52px;
+          border: 2px solid #e8e8e3;
+          border-radius: 16px;
+          font-size: 16px;
+          font-family: inherit;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          background: #fafaf8;
+        }
+        input[type="password"]:focus {
+          outline: none;
+          border-color: #1a1a1a;
+          background: #ffffff;
+          box-shadow: 0 0 0 4px rgba(26,26,26,0.08);
+        }
+        input[type="password"]::placeholder {
+          color: #aaa;
+        }
+        .error {
+          display: none;
+          align-items: center;
+          gap: 8px;
+          padding: 14px 16px;
+          background: #fef2f2;
+          color: #dc2626;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 500;
+          border: 1px solid #fecaca;
+          margin-top: -8px;
+        }
+        .error svg {
+          width: 18px;
+          height: 18px;
+          flex-shrink: 0;
+        }
+        .error.show { display: flex; }
+        button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 18px 28px;
+          background: #1a1a1a;
+          color: #ffffff;
+          border: none;
+          border-radius: 50px;
+          font-size: 16px;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          letter-spacing: -0.2px;
+        }
+        button:hover {
+          background: #333;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        button:active {
+          transform: translateY(0);
+        }
+        button svg {
+          width: 20px;
+          height: 20px;
+        }
+        .footer {
+          padding: 20px 24px;
+          background: #fafaf8;
+          text-align: center;
+          font-size: 12px;
+          color: #999;
+          border-top: 1px solid #f0f0eb;
+        }
+        .footer svg {
+          width: 14px;
+          height: 14px;
+          vertical-align: middle;
+          margin-right: 4px;
+        }
+
+        /* Decorative Elements */
+        .decorative-pattern {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 6px;
+          background: linear-gradient(90deg, #1a1a1a 0%, #4a4a4a 50%, #1a1a1a 100%);
+        }
       </style>
     </head>
     <body>
-      <div class="card">
-        <div class="icon">🔒</div>
-        <h1>Password Protected</h1>
-        <p class="hint">${safeHint ? `Hint: ${safeHint}` : 'Enter the password to continue'}</p>
-        <form method="POST" action="/api/redirect?code=${safeCode}">
-          <input type="password" name="password" placeholder="Enter password" required autocomplete="off" />
-          <div class="error" id="error">Incorrect password. Please try again.</div>
-          <button type="submit">Unlock</button>
-        </form>
+      <div class="container">
+        <div class="card">
+          <div class="decorative-pattern"></div>
+          <div class="header">
+            <div class="header-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </div>
+            <h1>Password Protected</h1>
+            <p>This content is secured. Please enter the password to continue.</p>
+            ${safeHint ? `
+            <div class="hint-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+              </svg>
+              Hint: ${safeHint}
+            </div>
+            ` : ''}
+          </div>
+          <div class="content">
+            <form method="POST" action="/api/redirect?code=${safeCode}">
+              <div class="input-group">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                </svg>
+                <input type="password" name="password" placeholder="Enter password" required autocomplete="off" />
+              </div>
+              <div class="error" id="error">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <span>Incorrect password. Please try again.</span>
+              </div>
+              <button type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                Unlock Content
+              </button>
+            </form>
+          </div>
+          <div class="footer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+            Secured by NexusQR
+          </div>
+        </div>
       </div>
       <script>
         if (new URLSearchParams(window.location.search).get('error') === '1') {
