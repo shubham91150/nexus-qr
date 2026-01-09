@@ -7,7 +7,7 @@ import { QRStylePanel } from './components/QRStylePanel';
 import { QRPreview } from './components/QRPreview';
 import { SaveTemplateModal, TemplateGallery } from './components/templates';
 import { generatePayload, encryptPayload } from './services/qrUtils';
-import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code, Crown, Bookmark, Sparkles } from 'lucide-react';
+import { LayoutGrid, Lock, Zap, BarChart3, HelpCircle, Info, Code, Crown, Bookmark, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { SubscriptionProvider, useSubscription } from './lib/SubscriptionContext';
 import UpgradeModal from './components/UpgradeModal';
@@ -374,6 +374,7 @@ const QRGenerator: React.FC<{
 
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
+  const [showEncryptionPassword, setShowEncryptionPassword] = useState(false);
 
   // Onboarding states
   const [showWelcome, setShowWelcome] = useState(false);
@@ -620,13 +621,22 @@ const QRGenerator: React.FC<{
                </div>
 
                {isEncrypted && (
-                   <input
-                      type="password"
-                      placeholder="Enter Password"
-                      value={encryptionKey}
-                      onChange={e => setEncryptionKey(e.target.value)}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-gray-400 transition-colors"
-                   />
+                   <div className="relative">
+                      <input
+                         type={showEncryptionPassword ? "text" : "password"}
+                         placeholder="Enter Password"
+                         value={encryptionKey}
+                         onChange={e => setEncryptionKey(e.target.value)}
+                         className="w-full p-3 pr-12 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-gray-400 transition-colors"
+                      />
+                      <button
+                         type="button"
+                         onClick={() => setShowEncryptionPassword(!showEncryptionPassword)}
+                         className="absolute right-3 top-1/2 -translate-y-1/2 p-0 flex items-center justify-center text-gray-400 hover:text-gray-600 focus:text-gray-600 focus:outline-none transition-colors"
+                      >
+                         {showEncryptionPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                   </div>
                )}
             </div>
 

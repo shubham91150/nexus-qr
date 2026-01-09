@@ -820,7 +820,7 @@ function getPasswordPage(code: string, hint?: string): string {
         .input-group {
           position: relative;
         }
-        .input-group svg {
+        .input-group .key-icon {
           position: absolute;
           left: 18px;
           top: 50%;
@@ -830,9 +830,9 @@ function getPasswordPage(code: string, hint?: string): string {
           color: #999;
           pointer-events: none;
         }
-        input[type="password"] {
+        .input-group input {
           width: 100%;
-          padding: 18px 18px 18px 52px;
+          padding: 18px 52px 18px 52px;
           border: 2px solid #e8e8e3;
           border-radius: 16px;
           font-size: 16px;
@@ -840,14 +840,50 @@ function getPasswordPage(code: string, hint?: string): string {
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           background: #fafaf8;
         }
-        input[type="password"]:focus {
+        .input-group input:focus {
           outline: none;
           border-color: #1a1a1a;
           background: #ffffff;
           box-shadow: 0 0 0 4px rgba(26,26,26,0.08);
         }
-        input[type="password"]::placeholder {
+        .input-group input::placeholder {
           color: #aaa;
+        }
+        .toggle-password {
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0;
+          width: 24px;
+          height: 24px;
+          cursor: pointer;
+          color: #999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.2s;
+          border-radius: 4px !important;
+          box-shadow: none !important;
+          line-height: 1;
+        }
+        .toggle-password:hover,
+        .toggle-password:focus,
+        .toggle-password:active {
+          color: #666;
+          background: transparent !important;
+          transform: translateY(-50%) !important;
+          box-shadow: none !important;
+          outline: none;
+        }
+        .toggle-password svg {
+          width: 20px;
+          height: 20px;
+          display: block;
+          flex-shrink: 0;
         }
         .error {
           display: none;
@@ -947,10 +983,19 @@ function getPasswordPage(code: string, hint?: string): string {
           <div class="content">
             <form method="POST" action="/api/redirect?code=${safeCode}">
               <div class="input-group">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <svg class="key-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
                 </svg>
-                <input type="password" name="password" placeholder="Enter password" required autocomplete="off" />
+                <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="off" />
+                <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
+                  <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <svg id="eyeOffIcon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                </button>
               </div>
               <div class="error" id="error">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -978,6 +1023,25 @@ function getPasswordPage(code: string, hint?: string): string {
         if (new URLSearchParams(window.location.search).get('error') === '1') {
           document.getElementById('error').classList.add('show');
         }
+
+        // Password visibility toggle
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const eyeOffIcon = document.getElementById('eyeOffIcon');
+
+        toggleBtn.addEventListener('click', function() {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+
+          if (type === 'text') {
+            eyeIcon.style.display = 'none';
+            eyeOffIcon.style.display = 'block';
+          } else {
+            eyeIcon.style.display = 'block';
+            eyeOffIcon.style.display = 'none';
+          }
+        });
       </script>
     </body>
     </html>
