@@ -868,20 +868,22 @@ function getPasswordPage(code: string, hint?: string): string {
           transition: color 0.2s;
           border-radius: 4px !important;
           box-shadow: none !important;
+          line-height: 1;
         }
-        .toggle-password:hover {
+        .toggle-password:hover,
+        .toggle-password:focus,
+        .toggle-password:active {
           color: #666;
           background: transparent !important;
           transform: translateY(-50%) !important;
           box-shadow: none !important;
-        }
-        .toggle-password:active {
-          transform: translateY(-50%) !important;
+          outline: none;
         }
         .toggle-password svg {
           width: 20px;
           height: 20px;
           display: block;
+          flex-shrink: 0;
         }
         .error {
           display: none;
