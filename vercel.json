@@ -9,11 +9,7 @@
       "destination": "/api/redirect?code=:code"
     },
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    },
-    {
-      "source": "/((?!api/|r/|assets/).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],
