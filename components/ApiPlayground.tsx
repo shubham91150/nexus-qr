@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Copy, Check, ChevronDown, Code, Send, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { Play, Copy, Check, ChevronDown, Code, Send, RefreshCw, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 interface ApiEndpoint {
   id: string;
@@ -193,6 +193,7 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
   const [copied, setCopied] = useState(false);
   const [environment, setEnvironment] = useState<'sandbox' | 'production'>('sandbox');
   const [userApiKey, setUserApiKey] = useState(apiKey || '');
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const baseUrl = environment === 'sandbox'
     ? '' // Use same origin for sandbox (local API)
@@ -460,13 +461,22 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
             API Key
           </label>
           <div className="flex gap-4">
-            <input
-              type="password"
-              value={userApiKey}
-              onChange={(e) => setUserApiKey(e.target.value)}
-              placeholder={environment === 'sandbox' ? 'nxqr_test_xxxx...' : 'nxqr_live_xxxx...'}
-              className="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-            />
+            <div className="flex-1 relative">
+              <input
+                type={showApiKey ? "text" : "password"}
+                value={userApiKey}
+                onChange={(e) => setUserApiKey(e.target.value)}
+                placeholder={environment === 'sandbox' ? 'nxqr_test_xxxx...' : 'nxqr_live_xxxx...'}
+                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <div className={`px-4 py-2 rounded-lg text-sm font-medium ${
               environment === 'sandbox'
                 ? 'bg-amber-500/20 text-amber-400'
