@@ -472,7 +472,7 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
               <button
                 type="button"
                 onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0 flex items-center justify-center text-gray-400 hover:text-gray-200 transition-colors"
               >
                 {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>

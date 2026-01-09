@@ -632,7 +632,7 @@ const QRGenerator: React.FC<{
                       <button
                          type="button"
                          onClick={() => setShowEncryptionPassword(!showEncryptionPassword)}
-                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                         className="absolute right-3 top-1/2 -translate-y-1/2 p-0 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
                       >
                          {showEncryptionPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
