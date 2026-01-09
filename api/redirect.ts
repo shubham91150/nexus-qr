@@ -854,22 +854,34 @@ function getPasswordPage(code: string, hint?: string): string {
           right: 16px;
           top: 50%;
           transform: translateY(-50%);
-          background: none;
-          border: none;
-          padding: 4px;
+          background: none !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0;
+          width: 24px;
+          height: 24px;
           cursor: pointer;
           color: #999;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: color 0.2s;
+          border-radius: 4px !important;
+          box-shadow: none !important;
         }
         .toggle-password:hover {
           color: #666;
+          background: transparent !important;
+          transform: translateY(-50%) !important;
+          box-shadow: none !important;
+        }
+        .toggle-password:active {
+          transform: translateY(-50%) !important;
         }
         .toggle-password svg {
           width: 20px;
           height: 20px;
+          display: block;
         }
         .error {
           display: none;
