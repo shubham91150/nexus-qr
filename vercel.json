@@ -9,6 +9,14 @@
       "destination": "/api/redirect?code=:code"
     },
     {
+      "source": "/api/v1/qr/:id/image.png",
+      "destination": "/api/v1/qr/image?id=:id&format=png"
+    },
+    {
+      "source": "/api/v1/qr/:id/image.svg",
+      "destination": "/api/v1/qr/image?id=:id&format=svg"
+    },
+    {
       "source": "/api/v1/qr/:id/analytics",
       "destination": "/api/v1/qr?id=:id&action=analytics"
     },
@@ -22,6 +30,19 @@
     }
   ],
   "headers": [
+    {
+      "source": "/api/v1/qr/:id/image\\.(png|svg)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
     {
       "source": "/api/(.*)",
       "headers": [

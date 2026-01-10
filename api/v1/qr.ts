@@ -667,9 +667,6 @@ async function handleCreate(
 
     if (error) throw error;
 
-    const qrUrl = isDynamic ? `${baseUrl}/r/${shortCode}` : qrContent;
-    const qrImage = await generateQRCodeImage(qrUrl, body.options);
-
     // Trigger webhooks
     triggerWebhooks(db, userId, 'qr.created', {
       id: qrRecord.id,
@@ -677,6 +674,9 @@ async function handleCreate(
       type: body.type,
       is_dynamic: isDynamic
     });
+
+    // Build image URLs (Binary Streaming API - more efficient than Base64)
+    const imageBaseUrl = `${baseUrl}/api/v1/qr/${qrRecord.id}`;
 
     return {
       status: 201,
@@ -690,7 +690,9 @@ async function handleCreate(
           type: body.type,
           is_dynamic: isDynamic,
           redirect_url: isDynamic ? `${baseUrl}/r/${shortCode}` : null,
-          qr_image: qrImage,
+          // Image URLs instead of Base64 - use these to display QR images
+          qr_image_url: `${imageBaseUrl}/image.png`,
+          qr_svg_url: `${imageBaseUrl}/image.svg`,
           created_at: qrRecord.created_at
         }
       }
