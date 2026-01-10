@@ -719,7 +719,14 @@ async function handleRead(
       .single();
 
     if (error || !data) {
-      return { status: 404, data: createErrorResponse('QR_NOT_FOUND', null, requestId) };
+      return {
+        status: 404,
+        data: createErrorResponse('QR_NOT_FOUND', {
+          searched_id: qrId,
+          user_id: userId,
+          db_error: error?.message || null
+        }, requestId)
+      };
     }
 
     return {
@@ -1112,9 +1119,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pathParts = url.pathname.split('/').filter(Boolean);
 
     // Get resource ID from query param (from Vercel rewrite) or from path
-    const qrId = (req.query.id as string) || pathParts[3];
+    // Handle case where query param might be an array
+    const qrIdRaw = req.query.id;
+    const qrId = (Array.isArray(qrIdRaw) ? qrIdRaw[0] : qrIdRaw) || pathParts[3];
+
     // Get action from query param (from Vercel rewrite) or from path
-    const action = (req.query.action as string) || pathParts[4];
+    const actionRaw = req.query.action;
+    const action = (Array.isArray(actionRaw) ? actionRaw[0] : actionRaw) || pathParts[4];
 
     // Determine if this is a single resource request or list request
     const isSingleResourceRequest = qrId && qrId !== 'qr' && qrId !== 'bulk';
