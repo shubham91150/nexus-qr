@@ -642,6 +642,12 @@ async function handleCreate(
     const isDynamic = body.is_dynamic !== false;
     const shortCode = crypto.randomBytes(4).toString('hex');
 
+    // For URL type, use the URL as destination
+    // For non-URL types (sms, wifi, vcard, etc.), use the built QR content as destination
+    const destinationUrl = body.type === 'url'
+      ? (body.content as string)
+      : qrContent;
+
     const { data: qrRecord, error } = await db
       .from('dynamic_qr_codes')
       .insert({
@@ -650,7 +656,8 @@ async function handleCreate(
         short_code: shortCode,
         content_type: body.type,
         content_data: typeof body.content === 'object' ? body.content : { value: body.content },
-        redirect_url: body.type === 'url' ? (body.content as string) : null,
+        destination_url: destinationUrl,
+        redirect_url: isDynamic ? `${baseUrl}/r/${shortCode}` : null,
         is_dynamic: isDynamic,
         is_active: true,
         metadata: body.metadata || {}
