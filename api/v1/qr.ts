@@ -1121,7 +1121,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get resource ID from query param (from Vercel rewrite) or from path
     // Handle case where query param might be an array
     const qrIdRaw = req.query.id;
-    const qrId = (Array.isArray(qrIdRaw) ? qrIdRaw[0] : qrIdRaw) || pathParts[3];
+    const qrIdValue = (Array.isArray(qrIdRaw) ? qrIdRaw[0] : qrIdRaw) || pathParts[3];
+    // Remove any quotes that might have been added (from URL encoding or user input)
+    const qrId = qrIdValue?.replace(/^["']|["']$/g, '').trim();
 
     // Get action from query param (from Vercel rewrite) or from path
     const actionRaw = req.query.action;
