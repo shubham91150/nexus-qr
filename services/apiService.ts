@@ -76,8 +76,8 @@ export const TIER_CONFIG: Record<ApiTier, {
     priceLabel: 'Free',
     requests: 100,
     requestsLabel: '100/month',
-    features: ['Static QR codes', 'Basic analytics', 'Standard support'],
-    permissions: { create: true, read: true, update: false, delete: false, analytics: false, bulk: false, webhooks: false }
+    features: ['All QR types', 'Full API access', 'Analytics', 'Perfect for testing'],
+    permissions: { create: true, read: true, update: true, delete: true, analytics: true, bulk: true, webhooks: true }
   },
   starter: {
     name: 'Starter',
