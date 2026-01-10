@@ -1107,11 +1107,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Parse the path
+    // Parse the path and query params
     const url = new URL(req.url || '', `http://${req.headers.host}`);
     const pathParts = url.pathname.split('/').filter(Boolean);
-    const resource = pathParts[3];
-    const action = pathParts[4];
+
+    // Get resource ID from query param (from Vercel rewrite) or from path
+    const qrId = (req.query.id as string) || pathParts[3];
+    // Get action from query param (from Vercel rewrite) or from path
+    const action = (req.query.action as string) || pathParts[4];
+
+    // Determine if this is a single resource request or list request
+    const isSingleResourceRequest = qrId && qrId !== 'qr' && qrId !== 'bulk';
 
     const userId = keyValidation.user_id!;
     const permissions = keyValidation.permissions!;
@@ -1124,14 +1130,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'GET':
         if (!permissions.read) {
           result = { status: 403, data: createErrorResponse('PERMISSION_DENIED', { action: 'read' }, requestId) };
-        } else if (resource && action === 'analytics') {
+        } else if (isSingleResourceRequest && action === 'analytics') {
           if (!permissions.analytics) {
             result = { status: 403, data: createErrorResponse('TIER_UPGRADE_REQUIRED', { feature: 'analytics' }, requestId) };
           } else {
-            result = await handleAnalytics(db, userId, resource, req.query, requestId);
+            result = await handleAnalytics(db, userId, qrId, req.query, requestId);
           }
-        } else if (resource && resource !== 'qr') {
-          result = await handleRead(db, userId, resource, requestId);
+        } else if (isSingleResourceRequest) {
+          result = await handleRead(db, userId, qrId, requestId);
         } else {
           result = await handleList(db, userId, req.query, requestId);
         }
@@ -1140,7 +1146,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'POST':
         if (!permissions.create) {
           result = { status: 403, data: createErrorResponse('PERMISSION_DENIED', { action: 'create' }, requestId) };
-        } else if (action === 'bulk') {
+        } else if (action === 'bulk' || qrId === 'bulk') {
           if (!permissions.bulk) {
             result = { status: 403, data: createErrorResponse('TIER_UPGRADE_REQUIRED', { feature: 'bulk' }, requestId) };
           } else {
@@ -1154,20 +1160,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'PATCH':
         if (!permissions.update) {
           result = { status: 403, data: createErrorResponse('PERMISSION_DENIED', { action: 'update' }, requestId) };
-        } else if (!resource || resource === 'qr') {
+        } else if (!isSingleResourceRequest) {
           result = { status: 400, data: createErrorResponse('MISSING_REQUIRED_FIELD', { field: 'qr_id' }, requestId) };
         } else {
-          result = await handleUpdate(db, userId, resource, req.body, requestId);
+          result = await handleUpdate(db, userId, qrId, req.body, requestId);
         }
         break;
 
       case 'DELETE':
         if (!permissions.delete) {
           result = { status: 403, data: createErrorResponse('PERMISSION_DENIED', { action: 'delete' }, requestId) };
-        } else if (!resource || resource === 'qr') {
+        } else if (!isSingleResourceRequest) {
           result = { status: 400, data: createErrorResponse('MISSING_REQUIRED_FIELD', { field: 'qr_id' }, requestId) };
         } else {
-          result = await handleDelete(db, userId, resource, requestId);
+          result = await handleDelete(db, userId, qrId, requestId);
         }
         break;
 
