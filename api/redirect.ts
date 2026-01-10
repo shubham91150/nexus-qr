@@ -143,6 +143,63 @@ function sanitizeRedirectUrl(url: string, fallback: string = '/'): string {
   return url;
 }
 
+// ==================== Duplicate Scan Prevention ====================
+
+/**
+ * Check if a duplicate scan exists from the same IP within a time window
+ * Rule: Same IP + Same QR + Within 60 seconds = Duplicate (skip logging)
+ * @param db - Supabase client
+ * @param qrId - QR code ID
+ * @param ipAddress - Client IP address
+ * @param windowSeconds - Time window in seconds (default 60)
+ * @returns true if duplicate exists, false if this is a new scan
+ */
+async function isDuplicateScan(
+  db: SupabaseClient,
+  qrId: string,
+  ipAddress: string | null,
+  windowSeconds: number = 60
+): Promise<boolean> {
+  // If no IP address, allow the scan (can't deduplicate without IP)
+  if (!ipAddress) {
+    console.log('[DEDUP] No IP address available, allowing scan');
+    return false;
+  }
+
+  try {
+    // Calculate the time threshold
+    const timeThreshold = new Date(Date.now() - windowSeconds * 1000).toISOString();
+
+    // Check for recent scan from same IP + same QR
+    const { data: recentScan, error } = await db
+      .from('qr_scans')
+      .select('id, scanned_at')
+      .eq('qr_id', qrId)
+      .eq('ip_address', ipAddress)
+      .gte('scanned_at', timeThreshold)
+      .order('scanned_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[DEDUP] Error checking duplicate scan:', error);
+      // On error, allow the scan (fail-open for user experience)
+      return false;
+    }
+
+    if (recentScan) {
+      console.log(`[DEDUP] Duplicate scan detected from IP ${ipAddress} for QR ${qrId}, last scan at ${recentScan.scanned_at}`);
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.error('[DEDUP] Exception checking duplicate scan:', err);
+    // On exception, allow the scan (fail-open)
+    return false;
+  }
+}
+
 // ==================== Types ====================
 
 // QR Content Types that need custom landing pages
@@ -3934,54 +3991,60 @@ export default async function handler(
 
       // Record scan before serving landing page - MUST await to ensure it completes before function terminates
       if (!isInternalRequest) {
-        const scanData = {
-          qr_id: qrCode.id,
-          ip_address: clientIP || null,
-          country: geo?.country || null,
-          city: geo?.city || null,
-          device_type: device,
-          browser: browser,
-          os: os,
-          referrer: referer,
-          language: language,
-          user_agent: userAgent,
-          ab_variant_id: abVariantId || null,
-        };
+        // Check for duplicate scan (same IP + same QR within 60 seconds)
+        const isDuplicate = await isDuplicateScan(db, qrCode.id, clientIP);
 
-        console.log('[SCAN] Recording landing page scan:', JSON.stringify(scanData));
+        if (!isDuplicate) {
+          const scanData = {
+            qr_id: qrCode.id,
+            ip_address: clientIP || null,
+            country: geo?.country || null,
+            city: geo?.city || null,
+            device_type: device,
+            browser: browser,
+            os: os,
+            referrer: referer,
+            language: language,
+            user_agent: userAgent,
+            ab_variant_id: abVariantId || null,
+          };
 
-        try {
-          const { error: scanError, data: scanResult } = await db.from('qr_scans').insert(scanData).select();
+          console.log('[SCAN] Recording landing page scan:', JSON.stringify(scanData));
 
-          if (scanError) {
-            console.error('[SCAN ERROR] Insert failed:', JSON.stringify(scanError));
-          } else {
-            console.log('[SCAN SUCCESS] Landing page scan recorded:', JSON.stringify(scanResult));
+          try {
+            const { error: scanError, data: scanResult } = await db.from('qr_scans').insert(scanData).select();
+
+            if (scanError) {
+              console.error('[SCAN ERROR] Insert failed:', JSON.stringify(scanError));
+            } else {
+              console.log('[SCAN SUCCESS] Landing page scan recorded:', JSON.stringify(scanResult));
+            }
+          } catch (insertError) {
+            console.error('[SCAN EXCEPTION] Exception during insert:', insertError);
           }
-        } catch (insertError) {
-          console.error('[SCAN EXCEPTION] Exception during insert:', insertError);
-        }
+          // Send email notification for landing page scans (only for new scans)
+          const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
+          if (emailConfig?.enabled && emailConfig.email) {
+            const currentScanCount = qrCode.scan_count || 0;
+            const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
 
-        // Send email notification for landing page scans
-        const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
-        if (emailConfig?.enabled && emailConfig.email) {
-          const currentScanCount = qrCode.scan_count || 0;
-          const locationTrackingConfig = qrCode.location_tracking_config as LocationTrackingConfig | null;
+            console.log('[EMAIL] Landing page - checking email notification:', emailConfig.frequency);
 
-          console.log('[EMAIL] Landing page - checking email notification:', emailConfig.frequency);
-
-          // Always send for every_scan frequency
-          if (emailConfig.frequency === 'every_scan') {
-            await sendScanNotification(emailConfig, {
-              qrTitle: qrCode.title || 'Untitled QR',
-              city: locationTrackingConfig?.enabled ? geo?.city || null : null,
-              country: locationTrackingConfig?.enabled ? geo?.country || null : null,
-              device,
-              browser,
-              os,
-              scanCount: currentScanCount + 1,
-            });
+            // Always send for every_scan frequency
+            if (emailConfig.frequency === 'every_scan') {
+              await sendScanNotification(emailConfig, {
+                qrTitle: qrCode.title || 'Untitled QR',
+                city: locationTrackingConfig?.enabled ? geo?.city || null : null,
+                country: locationTrackingConfig?.enabled ? geo?.country || null : null,
+                device,
+                browser,
+                os,
+                scanCount: currentScanCount + 1,
+              });
+            }
           }
+        } else {
+          console.log('[SCAN SKIP] Duplicate scan detected, skipping recording');
         }
       } else {
         console.log('[SCAN SKIP] Skipping scan recording - internal request');
@@ -4065,32 +4128,39 @@ export default async function handler(
 
       // Record scan before redirect - MUST await to ensure it completes before function terminates
       if (!isInternalRequest) {
-        const scanData = {
-          qr_id: qrCode.id,
-          ip_address: clientIP || null,
-          country: geo?.country || null,
-          city: geo?.city || null,
-          device_type: device,
-          browser: browser,
-          os: os,
-          referrer: referer,
-          language: language,
-          user_agent: userAgent,
-          ab_variant_id: abVariantId || null,
-        };
+        // Check for duplicate scan (same IP + same QR within 60 seconds)
+        const isDuplicate = await isDuplicateScan(db, qrCode.id, clientIP);
 
-        console.log('[SCAN] Recording smart redirect scan:', JSON.stringify(scanData));
+        if (!isDuplicate) {
+          const scanData = {
+            qr_id: qrCode.id,
+            ip_address: clientIP || null,
+            country: geo?.country || null,
+            city: geo?.city || null,
+            device_type: device,
+            browser: browser,
+            os: os,
+            referrer: referer,
+            language: language,
+            user_agent: userAgent,
+            ab_variant_id: abVariantId || null,
+          };
 
-        try {
-          const { error: scanError, data: scanResult } = await db.from('qr_scans').insert(scanData).select();
+          console.log('[SCAN] Recording smart redirect scan:', JSON.stringify(scanData));
 
-          if (scanError) {
-            console.error('[SCAN ERROR] Smart redirect insert failed:', JSON.stringify(scanError));
-          } else {
-            console.log('[SCAN SUCCESS] Smart redirect scan recorded:', JSON.stringify(scanResult));
+          try {
+            const { error: scanError, data: scanResult } = await db.from('qr_scans').insert(scanData).select();
+
+            if (scanError) {
+              console.error('[SCAN ERROR] Smart redirect insert failed:', JSON.stringify(scanError));
+            } else {
+              console.log('[SCAN SUCCESS] Smart redirect scan recorded:', JSON.stringify(scanResult));
+            }
+          } catch (insertError) {
+            console.error('[SCAN EXCEPTION] Smart redirect exception:', insertError);
           }
-        } catch (insertError) {
-          console.error('[SCAN EXCEPTION] Smart redirect exception:', insertError);
+        } else {
+          console.log('[SCAN SKIP] Duplicate smart redirect scan detected, skipping recording');
         }
       }
 
@@ -4192,76 +4262,83 @@ export default async function handler(
     // Record the scan - MUST await to ensure it completes before function terminates
     // Skip recording for internal requests (from dashboard preview only)
     if (!isInternalRequest) {
-      const scanData = {
-        qr_id: qrCode.id,
-        ip_address: clientIP || null,
-        country: geo?.country || null,
-        city: geo?.city || null,
-        device_type: device,
-        browser: browser,
-        os: os,
-        referrer: referer,
-        language: language,
-        user_agent: userAgent,
-        ab_variant_id: abVariantId || null,
-      };
+      // Check for duplicate scan (same IP + same QR within 60 seconds)
+      const isDuplicate = await isDuplicateScan(db, qrCode.id, clientIP);
 
-      console.log('[SCAN] Recording URL redirect scan:', JSON.stringify(scanData));
+      if (!isDuplicate) {
+        const scanData = {
+          qr_id: qrCode.id,
+          ip_address: clientIP || null,
+          country: geo?.country || null,
+          city: geo?.city || null,
+          device_type: device,
+          browser: browser,
+          os: os,
+          referrer: referer,
+          language: language,
+          user_agent: userAgent,
+          ab_variant_id: abVariantId || null,
+        };
 
-      try {
-        const { error: scanError, data: scanResult } = await db
-          .from('qr_scans')
-          .insert(scanData)
-          .select();
+        console.log('[SCAN] Recording URL redirect scan:', JSON.stringify(scanData));
 
-        if (scanError) {
-          console.error('[SCAN ERROR] URL redirect insert failed:', JSON.stringify(scanError));
-        } else {
-          console.log('[SCAN SUCCESS] URL redirect scan recorded:', JSON.stringify(scanResult));
-        }
-      } catch (insertError) {
-        console.error('[SCAN EXCEPTION] URL redirect exception:', insertError);
-      }
+        try {
+          const { error: scanError, data: scanResult } = await db
+            .from('qr_scans')
+            .insert(scanData)
+            .select();
 
-      // Send email notification if enabled
-      const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
-      console.log('[DEBUG] Email config from DB:', JSON.stringify(emailConfig));
-      console.log('[DEBUG] Location tracking config:', JSON.stringify(qrCode.location_tracking_config));
-
-      if (emailConfig?.enabled && emailConfig.email) {
-        const currentScanCount = qrCode.scan_count || 0;
-        let shouldSendEmail = false;
-
-        switch (emailConfig.frequency) {
-          case 'every_scan':
-            shouldSendEmail = true;
-            break;
-          case 'first_daily':
-            // For first_daily, we'll send on every scan for now
-            // A more sophisticated implementation would track last notification time
-            shouldSendEmail = true;
-            break;
-          case 'every_10_scans':
-            // Send when scan count reaches multiples of 10
-            shouldSendEmail = (currentScanCount + 1) % 10 === 0;
-            break;
-          default:
-            shouldSendEmail = true;
+          if (scanError) {
+            console.error('[SCAN ERROR] URL redirect insert failed:', JSON.stringify(scanError));
+          } else {
+            console.log('[SCAN SUCCESS] URL redirect scan recorded:', JSON.stringify(scanResult));
+          }
+        } catch (insertError) {
+          console.error('[SCAN EXCEPTION] URL redirect exception:', insertError);
         }
 
-        console.log('[DEBUG] Should send email:', shouldSendEmail, 'Frequency:', emailConfig.frequency);
+        // Send email notification if enabled (only for new scans)
+        const emailConfig = qrCode.email_notification_config as EmailNotificationConfig | null;
+        console.log('[DEBUG] Email config from DB:', JSON.stringify(emailConfig));
+        console.log('[DEBUG] Location tracking config:', JSON.stringify(qrCode.location_tracking_config));
 
-        if (shouldSendEmail) {
-          await sendScanNotification(emailConfig, {
-            qrTitle: qrCode.title || 'Untitled QR',
-            city: locationTrackingConfig?.enabled ? geo?.city || null : null,
-            country: locationTrackingConfig?.enabled ? geo?.country || null : null,
-            device,
-            browser,
-            os,
-            scanCount: currentScanCount + 1,
-          });
+        if (emailConfig?.enabled && emailConfig.email) {
+          const currentScanCount = qrCode.scan_count || 0;
+          let shouldSendEmail = false;
+
+          switch (emailConfig.frequency) {
+            case 'every_scan':
+              shouldSendEmail = true;
+              break;
+            case 'first_daily':
+              // For first_daily, we'll send on every scan for now
+              // A more sophisticated implementation would track last notification time
+              shouldSendEmail = true;
+              break;
+            case 'every_10_scans':
+              // Send when scan count reaches multiples of 10
+              shouldSendEmail = (currentScanCount + 1) % 10 === 0;
+              break;
+            default:
+              shouldSendEmail = true;
+          }
+
+          console.log('[DEBUG] Should send email:', shouldSendEmail, 'Frequency:', emailConfig.frequency);
+
+          if (shouldSendEmail) {
+            await sendScanNotification(emailConfig, {
+              qrTitle: qrCode.title || 'Untitled QR',
+              city: locationTrackingConfig?.enabled ? geo?.city || null : null,
+              country: locationTrackingConfig?.enabled ? geo?.country || null : null,
+              device,
+              browser,
+              os,
+              scanCount: currentScanCount + 1,
+            });
+          }
         }
+      } else {
+        console.log('[SCAN SKIP] Duplicate URL redirect scan detected, skipping recording');
       }
     } else {
       console.log('Skipping scan record for internal request');
