@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Copy, Check, ChevronDown, Code, Send, RefreshCw, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Play, Copy, Check, ChevronDown, Code, Send, RefreshCw, AlertCircle, CheckCircle, Eye, EyeOff, FlaskConical, Rocket, Lightbulb, Pencil } from 'lucide-react';
 
 interface ApiEndpoint {
   id: string;
@@ -411,46 +411,48 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={onBack}
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
             >
-              <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                <Play className="w-6 h-6 text-purple-400" />
+              <h1 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
+                <Play className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                 API Playground
               </h1>
-              <p className="text-gray-400 text-sm">Test API endpoints in real-time</p>
+              <p className="text-gray-400 text-xs sm:text-sm">Test API endpoints in real-time</p>
             </div>
           </div>
 
           {/* Environment Toggle */}
-          <div className="flex items-center gap-2 bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => setEnvironment('sandbox')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all whitespace-nowrap ${
                 environment === 'sandbox'
                   ? 'bg-amber-500/20 text-amber-400'
                   : 'text-gray-400 hover:text-gray-300'
               }`}
             >
-              🧪 Sandbox
+              <Pencil className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              Sandbox
             </button>
             <button
               onClick={() => setEnvironment('production')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all whitespace-nowrap ${
                 environment === 'production'
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : 'text-gray-400 hover:text-gray-300'
               }`}
             >
-              🚀 Production
+              <Rocket className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              Production
             </button>
           </div>
         </div>
@@ -486,8 +488,9 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
             </div>
           </div>
           {environment === 'sandbox' && (
-            <p className="text-amber-400/70 text-xs mt-2">
-              💡 Use test API keys (nxqr_test_xxx) in sandbox mode. No real data will be affected.
+            <p className="text-amber-400/70 text-xs mt-2 flex items-center gap-1.5">
+              <Lightbulb className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Use test API keys (nxqr_test_xxx) in sandbox mode. No real data will be affected.</span>
             </p>
           )}
         </div>
@@ -692,7 +695,10 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ onBack, apiKey }) => {
 
         {/* Quick Tips */}
         <div className="mt-8 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-6 border border-purple-500/20">
-          <h3 className="text-lg font-semibold text-white mb-4">💡 Quick Tips</h3>
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-yellow-400" />
+            Quick Tips
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-800/50 rounded-lg p-4">
               <h4 className="text-purple-400 font-medium mb-2">Sandbox Mode</h4>
