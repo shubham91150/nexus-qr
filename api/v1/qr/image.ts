@@ -138,9 +138,9 @@ class StyledQRRenderer {
     return false;
   }
 
-  private generateDotsPattern(matrix: boolean[][], cellSize: number, offset: number): string {
+  private generateDotsPattern(matrix: boolean[][], cellSize: number, offset: number, fillOverride?: string): string {
     let svg = '';
-    const fill = this.settings.isGradient ? 'url(#qrGradient)' : this.settings.fgColor;
+    const fill = fillOverride || this.settings.fgColor;
     const pattern = this.settings.dotsType;
 
     for (let row = 0; row < this.moduleCount; row++) {
@@ -171,47 +171,77 @@ class StyledQRRenderer {
     return svg;
   }
 
-  private generateCorners(cellSize: number, offset: number): string {
+  private generateCorners(cellSize: number, offset: number, fillOverride?: string, bgOverride?: string): string {
     let svg = '';
     const cornerSize = cellSize * 7;
     const count = this.moduleCount;
     const style = this.settings.cornerSquareType;
 
-    let fill = this.settings.isGradient ? 'url(#qrGradient)' : this.settings.fgColor;
-    let dotFill = fill;
+    // For mask mode: fillOverride = 'white', bgOverride = 'black'
+    // For normal mode: use settings colors
+    let fill = fillOverride || this.settings.fgColor;
+    let dotFill = fillOverride || this.settings.fgColor;
+    let bg = bgOverride || (this.settings.bgTransparent ? 'transparent' : this.settings.bgColor);
 
-    if (this.settings.customCornerColor) {
+    // Apply custom corner colors only in non-mask mode
+    if (!fillOverride && this.settings.customCornerColor) {
       fill = this.settings.cornerSquareColor || this.settings.fgColor;
       dotFill = this.settings.cornerDotColor || fill;
     }
 
-    const bg = this.settings.bgTransparent ? 'transparent' : this.settings.bgColor;
-
     const corners = [
-      { r: 0, c: 0 },
-      { r: 0, c: count - 7 },
-      { r: count - 7, c: 0 }
+      { r: 0, c: 0, type: 'top-left' },
+      { r: 0, c: count - 7, type: 'top-right' },
+      { r: count - 7, c: 0, type: 'bottom-left' }
     ];
 
     corners.forEach(corner => {
       const x = (corner.c * cellSize) + offset;
       const y = (corner.r * cellSize) + offset;
+      const maskId = `corner-mask-${corner.type}-${Date.now()}`;
 
       if (style === 'circle') {
         const cx = x + cornerSize/2;
         const cy = y + cornerSize/2;
-        svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2}" fill="${fill}" />`;
-        svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize}" fill="${bg}" />`;
+
+        // For transparent bg (and not in mask mode), use SVG mask to cut out the ring
+        if (this.settings.bgTransparent && !fillOverride) {
+          svg += `<defs><mask id="${maskId}">`;
+          svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2}" fill="white" />`;
+          svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize}" fill="black" />`;
+          svg += `</mask></defs>`;
+          svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2}" fill="${fill}" mask="url(#${maskId})" />`;
+        } else {
+          svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2}" fill="${fill}" />`;
+          svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize}" fill="${bg}" />`;
+        }
         svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize*2}" fill="${dotFill}" />`;
       } else if (style === 'rounded') {
         const radius = cornerSize * 0.15;
-        svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" rx="${radius}" fill="${fill}" />`;
-        svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" rx="${radius*0.7}" fill="${bg}" />`;
+
+        if (this.settings.bgTransparent && !fillOverride) {
+          svg += `<defs><mask id="${maskId}">`;
+          svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" rx="${radius}" fill="white" />`;
+          svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" rx="${radius*0.7}" fill="black" />`;
+          svg += `</mask></defs>`;
+          svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" rx="${radius}" fill="${fill}" mask="url(#${maskId})" />`;
+        } else {
+          svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" rx="${radius}" fill="${fill}" />`;
+          svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" rx="${radius*0.7}" fill="${bg}" />`;
+        }
         svg += `<rect x="${x + cellSize*2}" y="${y + cellSize*2}" width="${cornerSize - cellSize*4}" height="${cornerSize - cellSize*4}" rx="${radius*0.4}" fill="${dotFill}" />`;
       } else {
         // Default: square
-        svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" fill="${fill}" />`;
-        svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" fill="${bg}" />`;
+        if (this.settings.bgTransparent && !fillOverride) {
+          svg += `<defs><mask id="${maskId}">`;
+          svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" fill="white" />`;
+          svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" fill="black" />`;
+          svg += `</mask></defs>`;
+          svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" fill="${fill}" mask="url(#${maskId})" />`;
+        } else {
+          svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" fill="${fill}" />`;
+          svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" fill="${bg}" />`;
+        }
         svg += `<rect x="${x + cellSize*2}" y="${y + cellSize*2}" width="${cornerSize - cellSize*4}" height="${cornerSize - cellSize*4}" fill="${dotFill}" />`;
       }
     });
@@ -268,11 +298,35 @@ class StyledQRRenderer {
       svg += `<rect width="100%" height="100%" fill="${this.settings.bgColor}" />`;
     }
 
-    // Dots/modules
-    svg += this.generateDotsPattern(matrix, cellSize, padding);
+    if (this.settings.isGradient) {
+      // === MASK TECHNIQUE for gradient ===
+      // This applies the gradient across the WHOLE QR, not per-cell
+      const maskId = `qr-mask-${Date.now()}`;
+      svg += `<defs><mask id="${maskId}">`;
+      // Black background (masked out)
+      svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="black" />`;
+      // Draw dots in WHITE (visible through mask)
+      svg += this.generateDotsPattern(matrix, cellSize, padding, 'white');
+      // Draw corners in WHITE if not using custom corner colors
+      if (!this.settings.customCornerColor) {
+        svg += this.generateCorners(cellSize, padding, 'white', 'black');
+      }
+      svg += `</mask></defs>`;
 
-    // Corners
-    svg += this.generateCorners(cellSize, padding);
+      // Apply gradient rectangle with mask - gradient spans entire QR
+      svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="url(#qrGradient)" mask="url(#${maskId})" />`;
+
+      // If custom corner colors, draw corners separately (with their own colors)
+      if (this.settings.customCornerColor) {
+        svg += this.generateCorners(cellSize, padding);
+      }
+    } else {
+      // === NORMAL MODE (no gradient) ===
+      // Draw dots with solid color
+      svg += this.generateDotsPattern(matrix, cellSize, padding);
+      // Draw corners with solid colors
+      svg += this.generateCorners(cellSize, padding);
+    }
 
     // Logo
     svg += this.generateLogo();
