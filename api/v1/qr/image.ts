@@ -10,13 +10,13 @@ import sharp from 'sharp';
 // =====================================================
 //
 // Endpoints:
-// GET /api/v1/qr/{id}/image.png - Returns raw PNG bytes
+// GET /api/v1/qr/{id}/image.png - Returns raw PNG bytes (high-density)
 // GET /api/v1/qr/{id}/image.svg - Returns raw SVG (with styling!)
 //
 // Supports:
-// - Dot patterns: square, circle, square-dots, uniform-pills
-// - Corner styles: square, circle, rounded
-// - Colors: solid colors, gradients
+// - Dot patterns: square, circle, square-dots, uniform-pills, mixed, sharp-diamond
+// - Corner styles: square, circle, rounded, two-sided, three-sided
+// - Colors: solid colors, gradients (linear/radial)
 // - Custom corner colors
 // - Transparent backgrounds
 // =====================================================
@@ -252,6 +252,19 @@ class StyledQRRenderer {
             const size = cellSize * 0.85;
             const off = (cellSize - size) / 2;
             svg += `<rect x="${x+off}" y="${y+off}" width="${size}" height="${size}" fill="${fill}" />`;
+          } else if (pattern === 'sharp-diamond') {
+            // Diamond shape using curved paths
+            const cx = x + cellSize / 2;
+            const cy = y + cellSize / 2;
+            const hs = cellSize / 2;
+            svg += `<path d="M${cx},${y} Q${cx + hs*0.1},${cy} ${x+cellSize},${cy} Q${cx+hs*0.1},${cy} ${cx},${y+cellSize} Q${cx-hs*0.1},${cy} ${x},${cy} Q${cx-hs*0.1},${cy} ${cx},${y} Z" fill="${fill}" />`;
+          } else if (pattern === 'mixed') {
+            // Mixed sizes - alternating larger and smaller circles
+            const cx = x + cellSize / 2;
+            const cy = y + cellSize / 2;
+            const isBig = (row + col) % 3 === 0;
+            const r = isBig ? (cellSize/2)*0.85 : (cellSize/2)*0.5;
+            svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" />`;
           } else {
             // Default: square
             svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${fill}" />`;
@@ -260,6 +273,22 @@ class StyledQRRenderer {
       }
     }
     return svg;
+  }
+
+  // Helper for generating rounded rect with individual corner radii
+  private generateRoundedRectPath(x: number, y: number, w: number, h: number, radii: number[], fill: string): string {
+    const [tl, tr, br, bl] = radii;
+    return `<path d="
+      M${x + tl},${y}
+      L${x + w - tr},${y}
+      Q${x + w},${y} ${x + w},${y + tr}
+      L${x + w},${y + h - br}
+      Q${x + w},${y + h} ${x + w - br},${y + h}
+      L${x + bl},${y + h}
+      Q${x},${y + h} ${x},${y + h - bl}
+      L${x},${y + tl}
+      Q${x},${y} ${x + tl},${y}
+      Z" fill="${fill}" />`;
   }
 
   private generateCorners(cellSize: number, offset: number, fillOverride?: string, bgOverride?: string): string {
@@ -289,7 +318,8 @@ class StyledQRRenderer {
     corners.forEach(corner => {
       const x = (corner.c * cellSize) + offset;
       const y = (corner.r * cellSize) + offset;
-      const maskId = `corner-mask-${corner.type}-${Date.now()}`;
+      const maskId = `corner-mask-${corner.type}-${Date.now()}-${Math.random().toString(36).substr(2,9)}`;
+      const radius = cornerSize * 0.15;
 
       if (style === 'circle') {
         const cx = x + cornerSize/2;
@@ -308,8 +338,6 @@ class StyledQRRenderer {
         }
         svg += `<circle cx="${cx}" cy="${cy}" r="${cornerSize/2 - cellSize*2}" fill="${dotFill}" />`;
       } else if (style === 'rounded') {
-        const radius = cornerSize * 0.15;
-
         if (this.settings.bgTransparent && !fillOverride) {
           svg += `<defs><mask id="${maskId}">`;
           svg += `<rect x="${x}" y="${y}" width="${cornerSize}" height="${cornerSize}" rx="${radius}" fill="white" />`;
@@ -321,6 +349,37 @@ class StyledQRRenderer {
           svg += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${cornerSize - cellSize*2}" height="${cornerSize - cellSize*2}" rx="${radius*0.7}" fill="${bg}" />`;
         }
         svg += `<rect x="${x + cellSize*2}" y="${y + cellSize*2}" width="${cornerSize - cellSize*4}" height="${cornerSize - cellSize*4}" rx="${radius*0.4}" fill="${dotFill}" />`;
+      } else if (style === 'two-sided' || style === 'three-sided') {
+        // Advanced corner styles with individual corner radii
+        let rOut = [radius, radius, radius, radius];
+
+        if (style === 'three-sided') {
+          // One sharp corner based on position (like a leaf shape)
+          if (corner.type === 'top-left') rOut = [0, radius, radius, radius];
+          else if (corner.type === 'top-right') rOut = [radius, 0, radius, radius];
+          else rOut = [radius, radius, radius, 0]; // bottom-left
+        } else if (style === 'two-sided') {
+          // Diagonal corners rounded (like a parallelogram)
+          if (corner.type === 'top-left' || corner.type === 'bottom-right') rOut = [0, radius, 0, radius];
+          else rOut = [radius, 0, radius, 0];
+        }
+
+        if (this.settings.bgTransparent && !fillOverride) {
+          svg += `<defs><mask id="${maskId}">`;
+          svg += this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, 'white');
+          const innerRadii = rOut.map(r => r > 0 ? r * 0.7 : 0);
+          svg += this.generateRoundedRectPath(x + cellSize, y + cellSize, cornerSize - cellSize*2, cornerSize - cellSize*2, innerRadii, 'black');
+          svg += `</mask></defs>`;
+          let outerPath = this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, fill);
+          outerPath = outerPath.replace('fill=', `mask="url(#${maskId})" fill=`);
+          svg += outerPath;
+        } else {
+          svg += this.generateRoundedRectPath(x, y, cornerSize, cornerSize, rOut, fill);
+          const innerRadii = rOut.map(r => r > 0 ? r * 0.7 : 0);
+          svg += this.generateRoundedRectPath(x + cellSize, y + cellSize, cornerSize - cellSize*2, cornerSize - cellSize*2, innerRadii, bg);
+        }
+        const centerRadii = rOut.map(r => r > 0 ? r * 0.4 : 0);
+        svg += this.generateRoundedRectPath(x + cellSize*2, y + cellSize*2, cornerSize - cellSize*4, cornerSize - cellSize*4, centerRadii, dotFill);
       } else {
         // Default: square
         if (this.settings.bgTransparent && !fillOverride) {
@@ -694,9 +753,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
         const svg = renderer.render(qrContent);
 
-        // Convert SVG to PNG using sharp
+        // Convert SVG to PNG using sharp with high density for quality
         const svgBuffer = Buffer.from(svg);
-        pngBuffer = await sharp(svgBuffer)
+        pngBuffer = await sharp(svgBuffer, { density: 300 })
           .png()
           .toBuffer();
       } else {
