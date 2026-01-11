@@ -39,8 +39,34 @@ const QRStyleSchema = z.object({
   frameText: z.string().max(50).optional(),
 }).optional();
 
+// Landing page content schema for file-based QR codes
+const LandingPageContentSchema = z.object({
+  title: z.string().max(255).optional(),
+  description: z.string().max(1000).optional(),
+  // File paths from upload API
+  filePath: z.string().optional(),
+  filePaths: z.array(z.string()).optional(),
+  bucket: z.string().optional(),
+  // External URL fallback
+  url: z.string().url().optional(),
+  urls: z.array(z.string().url()).optional(),
+  // Coupon specific
+  code: z.string().max(50).optional(),
+  discount: z.string().max(100).optional(),
+  expiryDate: z.string().optional(),
+  terms: z.string().max(500).optional(),
+  // Text specific
+  value: z.string().max(10000).optional(),
+});
+
 const QRCreateRequestSchema = z.object({
-  type: z.enum(['url', 'text', 'vcard', 'wifi', 'email', 'sms', 'phone', 'geo', 'event']),
+  // Basic QR types + Landing page types
+  type: z.enum([
+    // Basic types
+    'url', 'text', 'vcard', 'wifi', 'email', 'sms', 'phone', 'geo', 'event',
+    // Landing page types (file-based)
+    'pdf', 'video', 'audio', 'images', 'document', 'menu', 'coupon'
+  ]),
   content: z.union([z.string().min(1).max(10000), z.record(z.string(), z.any())]),
   title: z.string().max(255).optional(),
   is_dynamic: z.boolean().optional().default(false),
@@ -143,9 +169,11 @@ interface RateLimitCheck {
   reset_at: string;
 }
 
-// Valid QR types
+// Valid QR types (basic + landing page types)
 const VALID_QR_TYPES = ['url', 'text', 'vcard', 'wifi', 'email', 'sms', 'phone', 'geo', 'event'] as const;
-type QRType = typeof VALID_QR_TYPES[number];
+const LANDING_PAGE_TYPES = ['pdf', 'video', 'audio', 'images', 'document', 'menu', 'coupon'] as const;
+const ALL_QR_TYPES = [...VALID_QR_TYPES, ...LANDING_PAGE_TYPES] as const;
+type QRType = typeof ALL_QR_TYPES[number];
 
 interface QRStyleConfig {
   size?: number;
@@ -687,15 +715,43 @@ async function handleCreate(
       };
     }
 
-    const qrContent = buildQRContent(body.type, body.content);
-    const isDynamic = body.is_dynamic !== false;
     const shortCode = crypto.randomBytes(4).toString('hex');
+    const isDynamic = body.is_dynamic !== false;
 
-    // For URL type, use the URL as destination
-    // For non-URL types (sms, wifi, vcard, etc.), use the built QR content as destination
-    const destinationUrl = body.type === 'url'
-      ? (body.content as string)
-      : qrContent;
+    // Check if this is a landing page type
+    const isLandingPage = LANDING_PAGE_TYPES.includes(body.type as any);
+
+    // For landing pages, the destination is always the redirect URL (locked)
+    // For basic types, use the content as destination
+    let destinationUrl: string;
+    let qrContent: string;
+
+    if (isLandingPage) {
+      // Landing page QRs always point to redirect URL which renders the content
+      destinationUrl = `${baseUrl}/r/${shortCode}`;
+      qrContent = destinationUrl;
+    } else {
+      qrContent = buildQRContent(body.type, body.content);
+      destinationUrl = body.type === 'url'
+        ? (body.content as string)
+        : qrContent;
+    }
+
+    // Prepare content_data - for landing pages, include file info
+    let contentData: Record<string, any>;
+    if (typeof body.content === 'object') {
+      contentData = body.content;
+    } else {
+      contentData = { value: body.content };
+    }
+
+    // For landing pages, ensure we have the type-specific structure
+    if (isLandingPage && typeof body.content === 'object') {
+      contentData = {
+        type: body.type,
+        [body.type]: body.content,
+      };
+    }
 
     const { data: qrRecord, error } = await db
       .from('dynamic_qr_codes')
@@ -704,13 +760,15 @@ async function handleCreate(
         title: body.title || `QR Code - ${body.type}`,
         short_code: shortCode,
         content_type: body.type,
-        content_data: typeof body.content === 'object' ? body.content : { value: body.content },
+        content_data: contentData,
         destination_url: destinationUrl,
         redirect_url: isDynamic ? `${baseUrl}/r/${shortCode}` : null,
         is_dynamic: isDynamic,
         is_active: true,
         metadata: body.metadata || {},
-        qr_style: body.style ? { styleConfig: body.style } : null
+        qr_style: body.style ? { styleConfig: body.style } : null,
+        // Set qr_category for landing pages (URL is locked for these)
+        qr_category: isLandingPage ? 'landing_page' : 'url'
       })
       .select()
       .single();
@@ -722,7 +780,8 @@ async function handleCreate(
       id: qrRecord.id,
       short_code: shortCode,
       type: body.type,
-      is_dynamic: isDynamic
+      is_dynamic: isDynamic,
+      is_landing_page: isLandingPage
     });
 
     // Build image URLs (Binary Streaming API - more efficient than Base64)
@@ -739,7 +798,10 @@ async function handleCreate(
           title: qrRecord.title,
           type: body.type,
           is_dynamic: isDynamic,
+          is_landing_page: isLandingPage,
           redirect_url: isDynamic ? `${baseUrl}/r/${shortCode}` : null,
+          // Landing page URL (for landing pages, this is where users will see content)
+          landing_page_url: isLandingPage ? `${baseUrl}/r/${shortCode}` : null,
           // Image URLs instead of Base64 - use these to display QR images
           qr_image_url: `${imageBaseUrl}/image.png`,
           qr_svg_url: `${imageBaseUrl}/image.svg`,
