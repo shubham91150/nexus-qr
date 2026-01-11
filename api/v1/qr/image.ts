@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
-import { ServerSVGRenderer, QRStyleConfig } from '../../lib/serverSvgRenderer';
+import { ServerSVGRenderer, QRStyleConfig } from './serverSvgRenderer';
 
 // =====================================================
 // Binary QR Image Streaming API
