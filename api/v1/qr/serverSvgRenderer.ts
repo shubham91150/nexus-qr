@@ -616,3 +616,12 @@ export async function generateStyledQRPNG(text: string, config: Partial<QRStyleC
   const renderer = new ServerSVGRenderer(config);
   return renderer.renderToPNG(text);
 }
+
+// CommonJS exports for Vercel compatibility
+module.exports = {
+  ServerSVGRenderer,
+  QRStyleConfig: {} as QRStyleConfig,
+  defaultQRStyleConfig,
+  generateStyledQR,
+  generateStyledQRPNG
+};
