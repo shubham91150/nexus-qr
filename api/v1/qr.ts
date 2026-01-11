@@ -15,11 +15,36 @@ const SafeURLSchema = z.string()
   .max(2048)
   .refine(url => !url.includes('javascript:') && !url.includes('data:'), 'Unsafe URL protocol');
 
+// Style configuration schema for styled QR codes
+const QRStyleSchema = z.object({
+  size: z.number().min(100).max(2000).optional(),
+  padding: z.number().min(0).max(50).optional(),
+  errorCorrectionLevel: z.enum(['L', 'M', 'Q', 'H']).optional(),
+  fgColor: HexColorSchema,
+  bgColor: HexColorSchema,
+  isGradient: z.boolean().optional(),
+  gradientType: z.enum(['linear', 'radial']).optional(),
+  fgColor2: HexColorSchema,
+  gradientRotation: z.number().min(0).max(360).optional(),
+  bgTransparent: z.boolean().optional(),
+  customCornerColor: z.boolean().optional(),
+  cornerSquareColor: HexColorSchema,
+  cornerDotColor: HexColorSchema,
+  dotsType: z.enum(['square', 'circle', 'square-dots', 'uniform-pills']).optional(),
+  cornerSquareType: z.enum(['square', 'circle', 'rounded']).optional(),
+  logoImage: z.string().optional().nullable(),
+  logoSize: z.number().min(0.1).max(0.5).optional(),
+  logoShape: z.enum(['square', 'circle', 'rounded']).optional(),
+  frameType: z.string().optional(),
+  frameText: z.string().max(50).optional(),
+}).optional();
+
 const QRCreateRequestSchema = z.object({
   type: z.enum(['url', 'text', 'vcard', 'wifi', 'email', 'sms', 'phone', 'geo', 'event']),
   content: z.union([z.string().min(1).max(10000), z.record(z.string(), z.any())]),
   title: z.string().max(255).optional(),
   is_dynamic: z.boolean().optional().default(false),
+  style: QRStyleSchema,
   options: z.object({
     width: z.number().min(100).max(2000).optional(),
     margin: z.number().min(0).max(10).optional(),
@@ -122,11 +147,35 @@ interface RateLimitCheck {
 const VALID_QR_TYPES = ['url', 'text', 'vcard', 'wifi', 'email', 'sms', 'phone', 'geo', 'event'] as const;
 type QRType = typeof VALID_QR_TYPES[number];
 
+interface QRStyleConfig {
+  size?: number;
+  padding?: number;
+  errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H';
+  fgColor?: string;
+  bgColor?: string;
+  isGradient?: boolean;
+  gradientType?: 'linear' | 'radial';
+  fgColor2?: string;
+  gradientRotation?: number;
+  bgTransparent?: boolean;
+  customCornerColor?: boolean;
+  cornerSquareColor?: string;
+  cornerDotColor?: string;
+  dotsType?: string;
+  cornerSquareType?: string;
+  logoImage?: string | null;
+  logoSize?: number;
+  logoShape?: string;
+  frameType?: string;
+  frameText?: string;
+}
+
 interface QRCreateRequest {
   type: QRType;
   content: string | Record<string, any>;
   title?: string;
   is_dynamic?: boolean;
+  style?: QRStyleConfig;
   options?: {
     width?: number;
     margin?: number;
@@ -660,7 +709,8 @@ async function handleCreate(
         redirect_url: isDynamic ? `${baseUrl}/r/${shortCode}` : null,
         is_dynamic: isDynamic,
         is_active: true,
-        metadata: body.metadata || {}
+        metadata: body.metadata || {},
+        qr_style: body.style ? { styleConfig: body.style } : null
       })
       .select()
       .single();
