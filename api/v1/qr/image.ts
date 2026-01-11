@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
 import qrGenerator from 'qrcode-generator';
+import sharp from 'sharp';
 
 // =====================================================
 // Binary QR Image Streaming API with Styled Rendering
@@ -138,11 +139,106 @@ class StyledQRRenderer {
     return false;
   }
 
+  // ==================== Uniform Pills Pattern (like frontend) ====================
+
+  private getPillLength(row: number, col: number): number {
+    const pattern = (row * 3 + col * 2) % 11;
+    if (pattern === 0 || pattern === 10) return 8;
+    if (pattern === 1 || pattern === 9) return 7;
+    if (pattern === 2 || pattern === 8) return 6;
+    if (pattern === 3 || pattern === 7) return 5;
+    if (pattern === 4 || pattern === 6) return 4;
+    if (pattern === 5) return 3;
+    return 2;
+  }
+
+  private findPillGroups(matrix: boolean[][]): Array<{row: number; startCol: number; length: number; type: string}> {
+    const pills: Array<{row: number; startCol: number; length: number; type: string}> = [];
+    const processed = new Set<string>();
+    const count = this.moduleCount;
+
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count; col++) {
+        const key = `${row}-${col}`;
+        if (matrix[row][col] && !processed.has(key) && !this.isCornerSquare(row, col)) {
+          let length = 1;
+          const maxLength = this.getPillLength(row, col);
+
+          while (
+            col + length < count &&
+            matrix[row][col + length] &&
+            !this.isCornerSquare(row, col + length) &&
+            !processed.has(`${row}-${col + length}`) &&
+            length < maxLength
+          ) {
+            length++;
+          }
+
+          if (length >= 2) {
+            pills.push({ row, startCol: col, length, type: 'pill' });
+            for (let k = 0; k < length; k++) processed.add(`${row}-${col + k}`);
+          } else {
+            pills.push({ row, startCol: col, length: 1, type: 'single' });
+            processed.add(key);
+          }
+        }
+      }
+    }
+    return pills;
+  }
+
+  private generatePillsSVG(pills: Array<{row: number; startCol: number; length: number; type: string}>, cellSize: number, offset: number, fill: string): string {
+    let svg = '';
+    const uniformGap = cellSize * 0.1;
+    const pillHeight = cellSize * 0.75;
+
+    pills.forEach(pill => {
+      if (pill.type === 'pill') {
+        const x = (pill.startCol * cellSize) + offset + (uniformGap / 2);
+        const y = (pill.row * cellSize) + offset + (cellSize - pillHeight) / 2;
+        const totalWidth = (pill.length * cellSize) - uniformGap;
+        const rx = pillHeight / 2;
+
+        const segmentWidth = totalWidth / pill.length;
+        const gapWidth = 0.2;
+        const actualSegWidth = segmentWidth - gapWidth;
+
+        for (let j = 0; j < pill.length; j++) {
+          let segX = x + (j * segmentWidth);
+
+          if (j === 0) {
+            // First segment - rounded left, flat right
+            svg += `<path d="M${segX + rx},${y} L${segX + actualSegWidth},${y} L${segX + actualSegWidth},${y + pillHeight} L${segX + rx},${y + pillHeight} Q${segX},${y + pillHeight} ${segX},${y + pillHeight - rx} L${segX},${y + rx} Q${segX},${y} ${segX + rx},${y} Z" fill="${fill}" />`;
+          } else if (j === pill.length - 1) {
+            // Last segment - flat left, rounded right
+            segX += gapWidth;
+            const endX = segX + actualSegWidth;
+            svg += `<path d="M${segX},${y} L${endX - rx},${y} Q${endX},${y} ${endX},${y + rx} L${endX},${y + pillHeight - rx} Q${endX},${y + pillHeight} ${endX - rx},${y + pillHeight} L${segX},${y + pillHeight} Z" fill="${fill}" />`;
+          } else {
+            // Middle segments - flat both sides
+            segX += gapWidth;
+            svg += `<rect x="${segX}" y="${y}" width="${actualSegWidth}" height="${pillHeight}" fill="${fill}" />`;
+          }
+        }
+      } else {
+        // Single cell - draw as small circle
+        const cx = (pill.startCol * cellSize) + offset + (cellSize / 2);
+        const cy = (pill.row * cellSize) + offset + (cellSize / 2);
+        const r = pillHeight / 3;
+        svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" />`;
+      }
+    });
+    return svg;
+  }
+
+  // ==================== Standard Patterns ====================
+
   private generateDotsPattern(matrix: boolean[][], cellSize: number, offset: number, fillOverride?: string): string {
     let svg = '';
     const fill = fillOverride || this.settings.fgColor;
     const pattern = this.settings.dotsType;
 
+    // Note: uniform-pills is handled separately by findPillGroups + generatePillsSVG
     for (let row = 0; row < this.moduleCount; row++) {
       for (let col = 0; col < this.moduleCount; col++) {
         if (matrix[row][col] && !this.isCornerSquare(row, col)) {
@@ -156,11 +252,6 @@ class StyledQRRenderer {
             const size = cellSize * 0.85;
             const off = (cellSize - size) / 2;
             svg += `<rect x="${x+off}" y="${y+off}" width="${size}" height="${size}" fill="${fill}" />`;
-          } else if (pattern === 'uniform-pills') {
-            const size = cellSize * 0.75;
-            const off = (cellSize - size) / 2;
-            const rx = size / 2;
-            svg += `<rect x="${x+off}" y="${y+off}" width="${size}" height="${size}" rx="${rx}" fill="${fill}" />`;
           } else {
             // Default: square
             svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${fill}" />`;
@@ -287,6 +378,7 @@ class StyledQRRenderer {
     const padding = this.settings.padding;
     const effectiveSize = size - (padding * 2);
     const cellSize = effectiveSize / this.moduleCount;
+    const isUniformPills = this.settings.dotsType === 'uniform-pills';
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
 
@@ -305,8 +397,15 @@ class StyledQRRenderer {
       svg += `<defs><mask id="${maskId}">`;
       // Black background (masked out)
       svg += `<rect x="0" y="0" width="${size}" height="${size}" fill="black" />`;
+
       // Draw dots in WHITE (visible through mask)
-      svg += this.generateDotsPattern(matrix, cellSize, padding, 'white');
+      if (isUniformPills) {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, padding, 'white');
+      } else {
+        svg += this.generateDotsPattern(matrix, cellSize, padding, 'white');
+      }
+
       // Draw corners in WHITE if not using custom corner colors
       if (!this.settings.customCornerColor) {
         svg += this.generateCorners(cellSize, padding, 'white', 'black');
@@ -323,7 +422,12 @@ class StyledQRRenderer {
     } else {
       // === NORMAL MODE (no gradient) ===
       // Draw dots with solid color
-      svg += this.generateDotsPattern(matrix, cellSize, padding);
+      if (isUniformPills) {
+        const pills = this.findPillGroups(matrix);
+        svg += this.generatePillsSVG(pills, cellSize, padding, this.settings.fgColor);
+      } else {
+        svg += this.generateDotsPattern(matrix, cellSize, padding);
+      }
       // Draw corners with solid colors
       svg += this.generateCorners(cellSize, padding);
     }
@@ -561,14 +665,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).send(svg);
 
     } else {
-      // PNG - use basic qrcode library (styled PNG requires sharp which has issues on Vercel)
-      const pngBuffer = await generateBasicPNG(qrContent, {
-        width: styleConfig.size || 400,
-        margin: styleConfig.padding ? Math.floor(styleConfig.padding / 5) : 2,
-        color: styleConfig.fgColor || '#000000',
-        background: styleConfig.bgTransparent ? '#00000000' : (styleConfig.bgColor || '#ffffff'),
-        error_correction: styleConfig.errorCorrectionLevel || 'M'
-      });
+      // PNG - generate styled SVG and convert to PNG using sharp
+      let pngBuffer: Buffer;
+
+      if (useStyledRenderer) {
+        // Generate styled SVG first
+        const renderer = new StyledQRRenderer({
+          size: styleConfig.size || 400,
+          padding: styleConfig.padding || 10,
+          errorCorrectionLevel: styleConfig.errorCorrectionLevel || 'M',
+          fgColor: styleConfig.fgColor || '#000000',
+          bgColor: styleConfig.bgColor || '#ffffff',
+          bgTransparent: styleConfig.bgTransparent || false,
+          isGradient: styleConfig.isGradient || false,
+          gradientType: styleConfig.gradientType || 'linear',
+          fgColor2: styleConfig.fgColor2 || '#000000',
+          gradientRotation: styleConfig.gradientRotation || 0,
+          dotsType: styleConfig.dotsType || 'square',
+          cornerSquareType: styleConfig.cornerSquareType || 'square',
+          customCornerColor: styleConfig.customCornerColor || false,
+          cornerSquareColor: styleConfig.cornerSquareColor || '#000000',
+          cornerDotColor: styleConfig.cornerDotColor || '#000000',
+          logoImage: styleConfig.logoImage || null,
+          logoSize: styleConfig.logoSize || 0.2,
+          logoShape: styleConfig.logoShape || 'rounded',
+          frameType: styleConfig.frameType || 'none',
+          frameText: styleConfig.frameText || 'SCAN ME',
+        });
+        const svg = renderer.render(qrContent);
+
+        // Convert SVG to PNG using sharp
+        const svgBuffer = Buffer.from(svg);
+        pngBuffer = await sharp(svgBuffer)
+          .png()
+          .toBuffer();
+      } else {
+        // Basic PNG using qrcode library
+        pngBuffer = await generateBasicPNG(qrContent, {
+          width: styleConfig.size || 400,
+          margin: styleConfig.padding ? Math.floor(styleConfig.padding / 5) : 2,
+          color: styleConfig.fgColor || '#000000',
+          background: styleConfig.bgTransparent ? '#00000000' : (styleConfig.bgColor || '#ffffff'),
+          error_correction: styleConfig.errorCorrectionLevel || 'M'
+        });
+      }
 
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Content-Disposition', `inline; filename="${qrData.short_code}.png"`);
