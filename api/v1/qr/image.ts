@@ -2,7 +2,39 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
-import { ServerSVGRenderer, QRStyleConfig } from './serverSvgRenderer';
+
+// Use require for local module to ensure Vercel bundles it correctly
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { ServerSVGRenderer } = require('./serverSvgRenderer');
+
+// Type definition for style config
+interface QRStyleConfig {
+  size?: number;
+  padding?: number;
+  errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H';
+  fgColor?: string;
+  bgColor?: string;
+  isGradient?: boolean;
+  gradientType?: 'linear' | 'radial';
+  fgColor2?: string;
+  gradientRotation?: number;
+  bgTransparent?: boolean;
+  customCornerColor?: boolean;
+  cornerSquareColor?: string;
+  cornerDotColor?: string;
+  dotsType?: string;
+  cornerSquareType?: string;
+  cornerDotType?: string;
+  frameType?: string;
+  frameText?: string;
+  logoImage?: string | null;
+  logoSize?: number;
+  logoPadding?: number;
+  logoUseCustomColors?: boolean;
+  logoForegroundColor?: string;
+  logoBackgroundColor?: string;
+  logoShape?: string;
+}
 
 // =====================================================
 // Binary QR Image Streaming API
