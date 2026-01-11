@@ -3,39 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
 
-// Use require for local module to ensure Vercel bundles it correctly
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { ServerSVGRenderer } = require('./serverSvgRenderer');
-
-// Type definition for style config
-interface QRStyleConfig {
-  size?: number;
-  padding?: number;
-  errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H';
-  fgColor?: string;
-  bgColor?: string;
-  isGradient?: boolean;
-  gradientType?: 'linear' | 'radial';
-  fgColor2?: string;
-  gradientRotation?: number;
-  bgTransparent?: boolean;
-  customCornerColor?: boolean;
-  cornerSquareColor?: string;
-  cornerDotColor?: string;
-  dotsType?: string;
-  cornerSquareType?: string;
-  cornerDotType?: string;
-  frameType?: string;
-  frameText?: string;
-  logoImage?: string | null;
-  logoSize?: number;
-  logoPadding?: number;
-  logoUseCustomColors?: boolean;
-  logoForegroundColor?: string;
-  logoBackgroundColor?: string;
-  logoShape?: string;
-}
-
 // =====================================================
 // Binary QR Image Streaming API
 // =====================================================
@@ -49,8 +16,6 @@ interface QRStyleConfig {
 // - Native browser/mobile decoding
 // - Proper caching with Cache-Control headers
 // - No memory issues on mobile devices
-//
-// NEW: Supports full QR styling (patterns, colors, gradients, corners, logos)
 // =====================================================
 
 function getSupabaseAdmin() {
@@ -112,8 +77,8 @@ END:VEVENT`;
   }
 }
 
-// Generate QR code as PNG buffer (basic - no styling)
-async function generateBasicQRPNG(content: string, options: any = {}): Promise<Buffer> {
+// Generate QR code as PNG buffer
+async function generateQRPNG(content: string, options: any = {}): Promise<Buffer> {
   const qrOptions = {
     type: 'png' as const,
     width: Math.min(Math.max(options.width || 400, 100), 2000),
@@ -128,8 +93,8 @@ async function generateBasicQRPNG(content: string, options: any = {}): Promise<B
   return await QRCode.toBuffer(content, qrOptions);
 }
 
-// Generate QR code as SVG string (basic - no styling)
-async function generateBasicQRSVG(content: string, options: any = {}): Promise<string> {
+// Generate QR code as SVG string
+async function generateQRSVG(content: string, options: any = {}): Promise<string> {
   const qrOptions = {
     type: 'svg' as const,
     width: Math.min(Math.max(options.width || 400, 100), 2000),
@@ -142,43 +107,6 @@ async function generateBasicQRSVG(content: string, options: any = {}): Promise<s
   };
 
   return await QRCode.toString(content, qrOptions);
-}
-
-// Generate styled QR code as SVG string
-function generateStyledQRSVG(content: string, styleConfig: Partial<QRStyleConfig>): string {
-  const renderer = new ServerSVGRenderer(styleConfig);
-  return renderer.render(content);
-}
-
-// Generate styled QR code as PNG buffer
-async function generateStyledQRPNG(content: string, styleConfig: Partial<QRStyleConfig>): Promise<Buffer> {
-  const renderer = new ServerSVGRenderer(styleConfig);
-  const png = await renderer.renderToPNG(content);
-  if (png) return png;
-
-  // Fallback to basic PNG if styled rendering fails (e.g., sharp not available)
-  return await generateBasicQRPNG(content, {
-    width: styleConfig.size || 400,
-    color: styleConfig.fgColor || '#000000',
-    background: styleConfig.bgTransparent ? '#00000000' : (styleConfig.bgColor || '#ffffff'),
-    error_correction: styleConfig.errorCorrectionLevel || 'M'
-  });
-}
-
-// Check if style config has advanced styling
-function hasAdvancedStyling(styleConfig: any): boolean {
-  if (!styleConfig) return false;
-
-  // Check for any advanced styling features
-  return (
-    styleConfig.isGradient ||
-    styleConfig.dotsType !== 'square' ||
-    styleConfig.cornerSquareType !== 'square' ||
-    styleConfig.customCornerColor ||
-    styleConfig.logoImage ||
-    (styleConfig.frameType && styleConfig.frameType !== 'none') ||
-    styleConfig.bgTransparent
-  );
 }
 
 // Validate API key (simplified version)
@@ -284,7 +212,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Get style options from qr_style if available
     const styleConfig = qrData.qr_style?.styleConfig || {};
-    const useAdvancedStyling = hasAdvancedStyling(styleConfig);
+    const options = {
+      width: styleConfig.size || 400,
+      margin: styleConfig.padding !== undefined ? Math.floor(styleConfig.padding / 5) : 2,
+      color: styleConfig.fgColor || '#000000',
+      background: styleConfig.bgTransparent ? '#00000000' : (styleConfig.bgColor || '#ffffff'),
+      error_correction: styleConfig.errorCorrectionLevel || 'M'
+    };
 
     // Set caching headers (cache for 1 day, revalidate after)
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800');
@@ -292,95 +226,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (format === 'svg') {
       // Return SVG
-      let svg: string;
-
-      if (useAdvancedStyling) {
-        // Use styled renderer for advanced features
-        svg = generateStyledQRSVG(qrContent, {
-          size: styleConfig.size || 400,
-          padding: styleConfig.padding || 10,
-          errorCorrectionLevel: styleConfig.errorCorrectionLevel || 'M',
-          fgColor: styleConfig.fgColor || '#000000',
-          bgColor: styleConfig.bgColor || '#ffffff',
-          bgTransparent: styleConfig.bgTransparent || false,
-          isGradient: styleConfig.isGradient || false,
-          gradientType: styleConfig.gradientType || 'linear',
-          fgColor2: styleConfig.fgColor2 || '#000000',
-          gradientRotation: styleConfig.gradientRotation || 0,
-          dotsType: styleConfig.dotsType || 'square',
-          cornerSquareType: styleConfig.cornerSquareType || 'square',
-          cornerDotType: styleConfig.cornerDotType || 'square',
-          customCornerColor: styleConfig.customCornerColor || false,
-          cornerSquareColor: styleConfig.cornerSquareColor || '#000000',
-          cornerDotColor: styleConfig.cornerDotColor || '#000000',
-          logoImage: styleConfig.logoImage || null,
-          logoSize: styleConfig.logoSize || 0.2,
-          logoPadding: styleConfig.logoPadding || 10,
-          logoShape: styleConfig.logoShape || 'auto',
-          logoUseCustomColors: styleConfig.logoUseCustomColors || false,
-          logoForegroundColor: styleConfig.logoForegroundColor || '#000000',
-          logoBackgroundColor: styleConfig.logoBackgroundColor || '#ffffff',
-          frameType: styleConfig.frameType || 'none',
-          frameText: styleConfig.frameText || 'SCAN ME',
-        });
-      } else {
-        // Use basic renderer for simple QRs
-        svg = await generateBasicQRSVG(qrContent, {
-          width: styleConfig.size || 400,
-          margin: styleConfig.padding !== undefined ? Math.floor(styleConfig.padding / 5) : 2,
-          color: styleConfig.fgColor || '#000000',
-          background: styleConfig.bgTransparent ? '#00000000' : (styleConfig.bgColor || '#ffffff'),
-          error_correction: styleConfig.errorCorrectionLevel || 'M'
-        });
-      }
-
+      const svg = await generateQRSVG(qrContent, options);
       res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Content-Disposition', `inline; filename="${qrData.short_code}.svg"`);
       return res.status(200).send(svg);
     } else {
       // Return PNG (default)
-      let pngBuffer: Buffer;
-
-      if (useAdvancedStyling) {
-        // Use styled renderer for advanced features
-        pngBuffer = await generateStyledQRPNG(qrContent, {
-          size: styleConfig.size || 400,
-          padding: styleConfig.padding || 10,
-          errorCorrectionLevel: styleConfig.errorCorrectionLevel || 'M',
-          fgColor: styleConfig.fgColor || '#000000',
-          bgColor: styleConfig.bgColor || '#ffffff',
-          bgTransparent: styleConfig.bgTransparent || false,
-          isGradient: styleConfig.isGradient || false,
-          gradientType: styleConfig.gradientType || 'linear',
-          fgColor2: styleConfig.fgColor2 || '#000000',
-          gradientRotation: styleConfig.gradientRotation || 0,
-          dotsType: styleConfig.dotsType || 'square',
-          cornerSquareType: styleConfig.cornerSquareType || 'square',
-          cornerDotType: styleConfig.cornerDotType || 'square',
-          customCornerColor: styleConfig.customCornerColor || false,
-          cornerSquareColor: styleConfig.cornerSquareColor || '#000000',
-          cornerDotColor: styleConfig.cornerDotColor || '#000000',
-          logoImage: styleConfig.logoImage || null,
-          logoSize: styleConfig.logoSize || 0.2,
-          logoPadding: styleConfig.logoPadding || 10,
-          logoShape: styleConfig.logoShape || 'auto',
-          logoUseCustomColors: styleConfig.logoUseCustomColors || false,
-          logoForegroundColor: styleConfig.logoForegroundColor || '#000000',
-          logoBackgroundColor: styleConfig.logoBackgroundColor || '#ffffff',
-          frameType: styleConfig.frameType || 'none',
-          frameText: styleConfig.frameText || 'SCAN ME',
-        });
-      } else {
-        // Use basic renderer for simple QRs
-        pngBuffer = await generateBasicQRPNG(qrContent, {
-          width: styleConfig.size || 400,
-          margin: styleConfig.padding !== undefined ? Math.floor(styleConfig.padding / 5) : 2,
-          color: styleConfig.fgColor || '#000000',
-          background: styleConfig.bgTransparent ? '#00000000' : (styleConfig.bgColor || '#ffffff'),
-          error_correction: styleConfig.errorCorrectionLevel || 'M'
-        });
-      }
-
+      const pngBuffer = await generateQRPNG(qrContent, options);
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Content-Disposition', `inline; filename="${qrData.short_code}.png"`);
       res.setHeader('Content-Length', pngBuffer.length);
