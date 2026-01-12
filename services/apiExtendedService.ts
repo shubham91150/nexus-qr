@@ -1482,7 +1482,7 @@ export async function generateDemoUsageData(userId: string): Promise<boolean> {
 
 /**
  * Get geographic distribution of API calls
- * Aggregates data from api_usage table by country
+ * Tries api_request_logs first, then api_usage table
  */
 export async function getGeographicDistribution(userId: string, days: number = 30): Promise<{
   country: string;
@@ -1493,19 +1493,45 @@ export async function getGeographicDistribution(userId: string, days: number = 3
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data, error } = await supabase
-      .from('api_usage')
+    // Try api_request_logs first (has country column)
+    let data: any[] | null = null;
+    let error: any = null;
+
+    const logsResult = await supabase
+      .from('api_request_logs')
       .select('country')
       .eq('user_id', userId)
       .gte('created_at', startDate.toISOString())
       .not('country', 'is', null);
 
-    if (error) throw error;
+    if (!logsResult.error && logsResult.data && logsResult.data.length > 0) {
+      data = logsResult.data;
+    } else {
+      // Fallback to api_usage table
+      const usageResult = await supabase
+        .from('api_usage')
+        .select('country')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString())
+        .not('country', 'is', null);
+
+      data = usageResult.data;
+      error = usageResult.error;
+    }
+
+    if (error) {
+      console.warn('Geographic data not available:', error.message);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
 
     // Aggregate by country
     const countryMap = new Map<string, number>();
 
-    (data || []).forEach((log: any) => {
+    data.forEach((log: any) => {
       if (log.country) {
         const count = countryMap.get(log.country) || 0;
         countryMap.set(log.country, count + 1);
@@ -1544,9 +1570,9 @@ export async function getGeographicDistribution(userId: string, days: number = 3
         count,
       }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10); // Top 10 countries
+      .slice(0, 10);
 
-    // If we have data, add "Others" for remaining
+    // If we have more than 5 countries, group the rest as "Others"
     if (result.length > 5) {
       const top5 = result.slice(0, 5);
       const othersCount = result.slice(5).reduce((sum, c) => sum + c.count, 0);
@@ -1565,7 +1591,7 @@ export async function getGeographicDistribution(userId: string, days: number = 3
 
 /**
  * Get device type distribution of API calls
- * Aggregates data from api_usage table by device_type
+ * Tries api_request_logs first, then api_usage table
  */
 export async function getDeviceDistribution(userId: string, days: number = 30): Promise<{
   device: string;
@@ -1576,13 +1602,33 @@ export async function getDeviceDistribution(userId: string, days: number = 30): 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data, error } = await supabase
-      .from('api_usage')
+    // Try api_request_logs first (has device_type column)
+    let data: any[] | null = null;
+    let error: any = null;
+
+    const logsResult = await supabase
+      .from('api_request_logs')
       .select('device_type')
       .eq('user_id', userId)
       .gte('created_at', startDate.toISOString());
 
-    if (error) throw error;
+    if (!logsResult.error && logsResult.data && logsResult.data.length > 0) {
+      data = logsResult.data;
+    } else {
+      // Fallback to api_usage table
+      const usageResult = await supabase
+        .from('api_usage')
+        .select('device_type')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString());
+
+      data = usageResult.data;
+      error = usageResult.error;
+    }
+
+    if (error) {
+      console.warn('Device data not available:', error.message);
+    }
 
     // Aggregate by device type
     const deviceMap = new Map<string, number>();
