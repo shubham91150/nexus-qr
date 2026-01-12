@@ -439,17 +439,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const failedUploads = uploadResults.filter(r => !r.success);
 
     if (successfulUploads.length === 0) {
-      // Log failed request
+      // Log failed request - MUST await
       if (db && keyId && userId) {
-        logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 500, Date.now() - startTime,
+        await logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 500, Date.now() - startTime,
           getClientIP(req), req.headers['user-agent'] as string || null, requestId);
       }
       return sendError(res, 'UPLOAD_FAILED', { uploads: failedUploads }, requestId);
     }
 
-    // Log successful request
+    // Log successful request - MUST await
     if (db && keyId && userId) {
-      logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 200, Date.now() - startTime,
+      await logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 200, Date.now() - startTime,
         getClientIP(req), req.headers['user-agent'] as string || null, requestId);
     }
 
@@ -468,9 +468,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error('Upload API Error:', error);
-    // Log error request
+    // Log error request - MUST await
     if (db && keyId && userId) {
-      logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 500, Date.now() - startTime,
+      await logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 500, Date.now() - startTime,
         getClientIP(req), req.headers['user-agent'] as string || null, requestId);
     }
     return sendError(res, 'INTERNAL_ERROR', error.message, requestId);
