@@ -11,7 +11,9 @@ import {
   getEndpointAnalytics,
   getStatusCodeDistribution,
   getHourlyDistribution,
-  getApiLogsStats
+  getApiLogsStats,
+  getGeographicDistribution,
+  getDeviceDistribution
 } from '../services/apiExtendedService';
 
 interface AnalyticsData {
@@ -55,12 +57,14 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
       const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
 
       // Load all data in parallel for better performance
-      const [dailyUsage, endpointData, statusData, hourlyData, logsStats] = await Promise.all([
+      const [dailyUsage, endpointData, statusData, hourlyData, logsStats, geoData, deviceData] = await Promise.all([
         getDailyUsage(user.id, days),
         getEndpointAnalytics(user.id, days),
         getStatusCodeDistribution(user.id, days),
         getHourlyDistribution(user.id, days),
-        getApiLogsStats(user.id)
+        getApiLogsStats(user.id),
+        getGeographicDistribution(user.id, days),
+        getDeviceDistribution(user.id, days)
       ]);
 
       // Convert daily usage to analytics format
@@ -119,16 +123,16 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         topEndpoints: topEndpoints.length > 0 ? topEndpoints : [
           { endpoint: 'POST /api/v1/qr', count: totalRequests, avgTime: avgResponseTime }
         ],
-        // Geographic data - showing 0 as we don't have real geo tracking yet
-        requestsByCountry: [
+        // Geographic data from real API usage
+        requestsByCountry: geoData.length > 0 ? geoData : [
           { country: 'India', code: 'IN', count: 0 },
           { country: 'United States', code: 'US', count: 0 },
           { country: 'United Kingdom', code: 'GB', count: 0 },
           { country: 'Germany', code: 'DE', count: 0 },
           { country: 'Others', code: 'XX', count: 0 }
         ],
-        // Device data - showing 0 as we don't have real device tracking yet
-        requestsByDevice: [
+        // Device data from real API usage
+        requestsByDevice: deviceData.length > 0 ? deviceData : [
           { device: 'Desktop', count: 0, percentage: 0 },
           { device: 'Mobile', count: 0, percentage: 0 },
           { device: 'Tablet', count: 0, percentage: 0 }
