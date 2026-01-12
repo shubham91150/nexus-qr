@@ -185,30 +185,32 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
-        {/* Header - Matching Home Page Style */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
+        {/* Header - Mobile Responsive */}
+        <div className="mb-6">
+          {/* Top Row - Title and Back */}
+          <div className="flex items-center gap-3 mb-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
+            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300 flex-shrink-0">
               <BarChart3 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-bold text-gray-800">API Analytics</h1>
               <p className="text-xs text-gray-500 font-medium">Monitor usage and performance</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Controls Row - Wraps on mobile */}
+          <div className="flex flex-wrap items-center gap-2">
             {/* API Key Filter */}
             <select
               value={selectedApiKey}
               onChange={(e) => setSelectedApiKey(e.target.value)}
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-400"
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-400 max-w-[140px]"
             >
               <option value="all">All Keys</option>
               {apiKeys.map(key => (
@@ -233,83 +235,85 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
               ))}
             </div>
 
-            <button
-              onClick={loadData}
-              className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
-              title="Refresh"
-            >
-              <RefreshCw className="w-5 h-5 text-gray-600" />
-            </button>
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={loadData}
+                className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw className="w-5 h-5 text-gray-600" />
+              </button>
 
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
+              <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Stats Cards - Matching Home Page Style */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-indigo-600" />
+        {/* Stats Cards - Mobile Responsive Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-100 rounded-lg md:rounded-xl flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
               </div>
-              <span className="flex items-center text-green-600 text-xs font-medium bg-green-50 px-2 py-1 rounded-full">
+              <span className="hidden sm:flex items-center text-green-600 text-xs font-medium bg-green-50 px-2 py-1 rounded-full">
                 <TrendingUp className="w-3 h-3 mr-1" />
                 +12.5%
               </span>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
               {formatNumber(analytics?.totalRequests || 0)}
             </div>
-            <div className="text-sm text-gray-500">Total Requests</div>
+            <div className="text-xs md:text-sm text-gray-500">Total Requests</div>
           </div>
 
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
+          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-100 rounded-lg md:rounded-xl flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
               </div>
-              <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full font-medium">
+              <span className="text-xs bg-emerald-50 text-emerald-600 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">
                 {getSuccessRate()}%
               </span>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
               {formatNumber(analytics?.successfulRequests || 0)}
             </div>
-            <div className="text-sm text-gray-500">Successful</div>
+            <div className="text-xs md:text-sm text-gray-500">Successful</div>
           </div>
 
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-red-600" />
+          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-red-100 rounded-lg md:rounded-xl flex items-center justify-center">
+                <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
               </div>
-              <span className="flex items-center text-xs bg-red-50 text-red-600 px-2 py-1 rounded-full font-medium">
+              <span className="hidden sm:flex items-center text-xs bg-red-50 text-red-600 px-2 py-1 rounded-full font-medium">
                 <TrendingDown className="w-3 h-3 mr-1" />
                 -2.3%
               </span>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
               {formatNumber(analytics?.failedRequests || 0)}
             </div>
-            <div className="text-sm text-gray-500">Failed</div>
+            <div className="text-xs md:text-sm text-gray-500">Failed</div>
           </div>
 
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Clock className="w-5 h-5 text-purple-600" />
+          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-100 rounded-lg md:rounded-xl flex items-center justify-center">
+                <Clock className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
               </div>
-              <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full font-medium">
+              <span className="text-xs bg-purple-50 text-purple-600 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">
                 Avg
               </span>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
               {analytics?.avgResponseTime}ms
             </div>
-            <div className="text-sm text-gray-500">Response Time</div>
+            <div className="text-xs md:text-sm text-gray-500">Response Time</div>
           </div>
         </div>
 
@@ -388,9 +392,9 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                   <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600">
                     {i + 1}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded flex-shrink-0 ${
                         endpoint.endpoint.startsWith('GET') ? 'bg-emerald-100 text-emerald-700' :
                         endpoint.endpoint.startsWith('POST') ? 'bg-blue-100 text-blue-700' :
                         endpoint.endpoint.startsWith('PATCH') ? 'bg-orange-100 text-orange-700' :
@@ -398,10 +402,10 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                       }`}>
                         {endpoint.endpoint.split(' ')[0]}
                       </span>
-                      <code className="text-sm text-gray-700">{endpoint.endpoint.split(' ')[1]}</code>
+                      <code className="text-xs md:text-sm text-gray-700 truncate max-w-[150px] md:max-w-none">{endpoint.endpoint.split(' ')[1]}</code>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>{formatNumber(endpoint.count)} requests</span>
+                    <div className="flex items-center gap-3 md:gap-4 text-xs text-gray-500">
+                      <span>{formatNumber(endpoint.count)} req</span>
                       <span>Avg: {endpoint.avgTime}ms</span>
                     </div>
                   </div>
@@ -417,10 +421,13 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
           {/* Geographic Distribution */}
           <div className="bg-white rounded-[24px] shadow-card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-indigo-600" />
-              Geographic Distribution
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-indigo-600" />
+                Geographic Distribution
+              </h3>
+              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">Estimated</span>
+            </div>
             <div className="space-y-3">
               {analytics?.requestsByCountry.map((country, i) => {
                 const maxCount = analytics.requestsByCountry[0].count;
@@ -454,10 +461,13 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Device Distribution */}
           <div className="bg-white rounded-[24px] shadow-card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-indigo-600" />
-              Device Types
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-indigo-600" />
+                Device Types
+              </h3>
+              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">Estimated</span>
+            </div>
             <div className="space-y-4">
               {analytics?.requestsByDevice.map((device, i) => (
                 <div key={i}>
@@ -564,33 +574,37 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
             <div className="space-y-6">
               <div>
-                <div className="text-gray-500 text-sm mb-1">Uptime</div>
-                <div className="text-3xl font-bold text-gray-900">99.98%</div>
-                <div className="text-gray-400 text-xs">Last 30 days</div>
+                <div className="text-gray-500 text-sm mb-1">Success Rate</div>
+                <div className="text-3xl font-bold text-gray-900">
+                  {analytics?.totalRequests ? ((analytics.successfulRequests / analytics.totalRequests) * 100).toFixed(1) : '0'}%
+                </div>
+                <div className="text-gray-400 text-xs">Last {dateRange === '7d' ? '7' : dateRange === '30d' ? '30' : '90'} days</div>
               </div>
 
               <div>
-                <div className="text-gray-500 text-sm mb-1">P95 Response Time</div>
-                <div className="text-3xl font-bold text-gray-900">285ms</div>
-                <div className="text-gray-400 text-xs">95th percentile</div>
+                <div className="text-gray-500 text-sm mb-1">Avg Response Time</div>
+                <div className="text-3xl font-bold text-gray-900">{analytics?.avgResponseTime || 0}ms</div>
+                <div className="text-gray-400 text-xs">Across all endpoints</div>
               </div>
 
               <div>
                 <div className="text-gray-500 text-sm mb-1">Error Rate</div>
-                <div className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                <div className="text-3xl font-bold text-gray-900 flex flex-wrap items-center gap-2">
                   {((analytics?.failedRequests || 0) / (analytics?.totalRequests || 1) * 100).toFixed(2)}%
-                  <span className="text-xs font-medium bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">Low</span>
+                  {((analytics?.failedRequests || 0) / (analytics?.totalRequests || 1) * 100) < 5 && (
+                    <span className="text-xs font-medium bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">Low</span>
+                  )}
                 </div>
               </div>
 
               <div className="pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Rate Limit Hits</span>
-                  <span className="font-semibold text-gray-900">45</span>
+                  <span className="text-gray-500">Total Requests</span>
+                  <span className="font-semibold text-gray-900">{formatNumber(analytics?.totalRequests || 0)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm mt-2">
-                  <span className="text-gray-500">Unique IPs</span>
-                  <span className="font-semibold text-gray-900">1,234</span>
+                  <span className="text-gray-500">Failed Requests</span>
+                  <span className="font-semibold text-gray-900">{formatNumber(analytics?.failedRequests || 0)}</span>
                 </div>
               </div>
             </div>
