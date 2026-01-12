@@ -362,21 +362,74 @@ export async function updateAlertSettings(
 
 /**
  * Get daily usage for last N days
+ * Fetches from api_usage table and aggregates by date
  */
 export async function getDailyUsage(userId: string, days: number = 7): Promise<DailyUsage[]> {
   try {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data, error } = await supabase
+    // First try the api_usage_daily table
+    const { data: dailyData, error: dailyError } = await supabase
       .from('api_usage_daily')
       .select('*')
       .eq('user_id', userId)
       .gte('date', startDate.toISOString().split('T')[0])
       .order('date', { ascending: true });
 
-    if (error) throw error;
-    return data || [];
+    if (!dailyError && dailyData && dailyData.length > 0) {
+      return dailyData;
+    }
+
+    // Fallback: Aggregate from api_usage table directly
+    const { data: usageData, error: usageError } = await supabase
+      .from('api_usage')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: true });
+
+    if (usageError) throw usageError;
+
+    if (!usageData || usageData.length === 0) {
+      return [];
+    }
+
+    // Aggregate by date
+    const dailyMap = new Map<string, DailyUsage>();
+
+    usageData.forEach((usage: any) => {
+      const date = new Date(usage.created_at).toISOString().split('T')[0];
+      const existing = dailyMap.get(date);
+
+      if (existing) {
+        existing.api_calls++;
+        if (usage.status_code >= 200 && usage.status_code < 400) {
+          existing.successful_requests++;
+        } else {
+          existing.failed_requests++;
+        }
+        existing.avg_response_time_ms = Math.round(
+          (existing.avg_response_time_ms + (usage.response_time_ms || 0)) / 2
+        );
+      } else {
+        dailyMap.set(date, {
+          id: `daily_${date}`,
+          user_id: userId,
+          date,
+          api_calls: 1,
+          qr_codes_created: 0,
+          bandwidth_bytes: 0,
+          successful_requests: usage.status_code >= 200 && usage.status_code < 400 ? 1 : 0,
+          failed_requests: usage.status_code >= 400 ? 1 : 0,
+          avg_response_time_ms: usage.response_time_ms || 0,
+        });
+      }
+    });
+
+    return Array.from(dailyMap.values()).sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
   } catch (error) {
     console.error('Error fetching daily usage:', error);
     return [];
@@ -385,6 +438,7 @@ export async function getDailyUsage(userId: string, days: number = 7): Promise<D
 
 /**
  * Get usage metrics summary
+ * Fetches real data from api_usage and dynamic_qr_codes tables
  */
 export async function getUsageMetrics(userId: string): Promise<{
   apiCalls: { current: number; limit: number; trend: number };
@@ -395,21 +449,41 @@ export async function getUsageMetrics(userId: string): Promise<{
   analytics: { current: number; limit: number; trend: number };
 }> {
   try {
-    const yearMonth = new Date().toISOString().slice(0, 7);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    // Get current month usage
-    const { data: monthlyData, error: monthlyError } = await supabase
-      .from('api_usage_monthly')
-      .select('request_count, successful_requests, failed_requests')
+    // Get current month API calls from api_usage
+    const { count: currentMonthCalls, error: currentError } = await supabase
+      .from('api_usage')
+      .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .eq('year_month', yearMonth);
+      .gte('created_at', startOfMonth.toISOString());
 
-    if (monthlyError) throw monthlyError;
+    // Get last month API calls for trend calculation
+    const { count: lastMonthCalls, error: lastError } = await supabase
+      .from('api_usage')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', startOfLastMonth.toISOString())
+      .lte('created_at', endOfLastMonth.toISOString());
 
-    const totalRequests = monthlyData?.reduce((sum, d) => sum + (d.request_count || 0), 0) || 0;
+    // Get QR codes count for current month
+    const { count: qrCodesCount, error: qrError } = await supabase
+      .from('dynamic_qr_codes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', startOfMonth.toISOString());
+
+    // Get total QR codes
+    const { count: totalQrCodes, error: totalQrError } = await supabase
+      .from('dynamic_qr_codes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
     // Get rate limit from API key
-    const { data: keyData, error: keyError } = await supabase
+    const { data: keyData } = await supabase
       .from('api_keys')
       .select('rate_limit, tier')
       .eq('user_id', userId)
@@ -417,29 +491,335 @@ export async function getUsageMetrics(userId: string): Promise<{
       .limit(1)
       .single();
 
-    const rateLimit = keyData?.rate_limit || 100;
+    const rateLimit = keyData?.rate_limit || 1000;
+    const currentApiCalls = currentMonthCalls || 0;
+    const previousApiCalls = lastMonthCalls || 0;
 
-    // Calculate trend (mock for now, would need previous month data)
-    const trend = 12.5;
+    // Calculate trend percentage
+    const apiTrend = previousApiCalls > 0
+      ? Math.round(((currentApiCalls - previousApiCalls) / previousApiCalls) * 100 * 10) / 10
+      : currentApiCalls > 0 ? 100 : 0;
+
+    // Get webhook delivery count
+    const { count: webhookCount } = await supabase
+      .from('webhook_deliveries')
+      .select('*', { count: 'exact', head: true })
+      .gte('delivered_at', startOfMonth.toISOString());
 
     return {
-      apiCalls: { current: totalRequests, limit: rateLimit, trend },
-      qrCodes: { current: 847, limit: 1000, trend: 8.2 },
-      bandwidth: { current: 4.2, limit: 10, trend: -3.1 },
-      storage: { current: 2.8, limit: 5, trend: 5.4 },
-      webhooks: { current: 12450, limit: 50000, trend: 22.1 },
-      analytics: { current: 3240, limit: 10000, trend: 15.8 },
+      apiCalls: {
+        current: currentApiCalls,
+        limit: rateLimit,
+        trend: apiTrend
+      },
+      qrCodes: {
+        current: qrCodesCount || 0,
+        limit: 10000,
+        trend: 0
+      },
+      bandwidth: {
+        current: Math.round((currentApiCalls * 0.005) * 10) / 10, // Estimate ~5KB per request
+        limit: 50,
+        trend: 0
+      },
+      storage: {
+        current: Math.round((totalQrCodes || 0) * 0.01 * 10) / 10, // Estimate ~10KB per QR
+        limit: 10,
+        trend: 0
+      },
+      webhooks: {
+        current: webhookCount || 0,
+        limit: 50000,
+        trend: 0
+      },
+      analytics: {
+        current: currentApiCalls, // Analytics queries = API calls in this context
+        limit: rateLimit * 10,
+        trend: 0
+      },
     };
   } catch (error) {
     console.error('Error fetching usage metrics:', error);
     return {
-      apiCalls: { current: 0, limit: 100, trend: 0 },
-      qrCodes: { current: 0, limit: 1000, trend: 0 },
-      bandwidth: { current: 0, limit: 10, trend: 0 },
-      storage: { current: 0, limit: 5, trend: 0 },
+      apiCalls: { current: 0, limit: 1000, trend: 0 },
+      qrCodes: { current: 0, limit: 10000, trend: 0 },
+      bandwidth: { current: 0, limit: 50, trend: 0 },
+      storage: { current: 0, limit: 10, trend: 0 },
       webhooks: { current: 0, limit: 50000, trend: 0 },
       analytics: { current: 0, limit: 10000, trend: 0 },
     };
+  }
+}
+
+// =====================================================
+// API Logs Functions
+// =====================================================
+
+export interface ApiRequestLog {
+  id: string;
+  request_id: string;
+  method: string;
+  endpoint: string;
+  status_code: number;
+  response_time_ms: number;
+  ip_address: string;
+  user_agent: string;
+  api_key_name: string;
+  api_key_prefix: string;
+  created_at: string;
+}
+
+/**
+ * Get API request logs from api_usage table
+ */
+export async function getApiLogs(
+  userId: string,
+  options: {
+    limit?: number;
+    offset?: number;
+    method?: string;
+    status?: string;
+    apiKeyId?: string;
+    search?: string;
+  } = {}
+): Promise<ApiRequestLog[]> {
+  try {
+    const limit = options.limit || 100;
+    const offset = options.offset || 0;
+
+    let query = supabase
+      .from('api_usage')
+      .select(`
+        id,
+        request_id,
+        method,
+        endpoint,
+        status_code,
+        response_time_ms,
+        ip_address,
+        user_agent,
+        api_key_id,
+        created_at,
+        api_keys!left(name, key_prefix)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (options.method && options.method !== 'all') {
+      query = query.eq('method', options.method);
+    }
+
+    if (options.status && options.status !== 'all') {
+      if (options.status === 'success') {
+        query = query.gte('status_code', 200).lt('status_code', 400);
+      } else if (options.status === 'error') {
+        query = query.gte('status_code', 400);
+      } else {
+        query = query.eq('status_code', parseInt(options.status));
+      }
+    }
+
+    if (options.apiKeyId && options.apiKeyId !== 'all') {
+      query = query.eq('api_key_id', options.apiKeyId);
+    }
+
+    if (options.search) {
+      query = query.or(`endpoint.ilike.%${options.search}%,ip_address.ilike.%${options.search}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data || []).map((log: any) => ({
+      id: log.id,
+      request_id: log.request_id || `req_${log.id.slice(0, 8)}`,
+      method: log.method || 'GET',
+      endpoint: log.endpoint || '/api/v1/qr',
+      status_code: log.status_code || 200,
+      response_time_ms: log.response_time_ms || 0,
+      ip_address: log.ip_address || '0.0.0.0',
+      user_agent: log.user_agent || 'Unknown',
+      api_key_name: log.api_keys?.name || 'Unknown',
+      api_key_prefix: log.api_keys?.key_prefix || 'nxqr_***',
+      created_at: log.created_at,
+    }));
+  } catch (error) {
+    console.error('Error fetching API logs:', error);
+    return [];
+  }
+}
+
+/**
+ * Get API logs stats
+ */
+export async function getApiLogsStats(userId: string): Promise<{
+  total: number;
+  successful: number;
+  errors: number;
+  avgResponseTime: number;
+}> {
+  try {
+    const { data, error } = await supabase
+      .from('api_usage')
+      .select('status_code, response_time_ms')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    const logs = data || [];
+    const total = logs.length;
+    const successful = logs.filter(l => l.status_code >= 200 && l.status_code < 400).length;
+    const errors = logs.filter(l => l.status_code >= 400).length;
+    const avgResponseTime = logs.length > 0
+      ? Math.round(logs.reduce((sum, l) => sum + (l.response_time_ms || 0), 0) / logs.length)
+      : 0;
+
+    return { total, successful, errors, avgResponseTime };
+  } catch (error) {
+    console.error('Error fetching API logs stats:', error);
+    return { total: 0, successful: 0, errors: 0, avgResponseTime: 0 };
+  }
+}
+
+/**
+ * Get endpoint analytics from api_usage
+ */
+export async function getEndpointAnalytics(userId: string, days: number = 30): Promise<{
+  endpoint: string;
+  method: string;
+  count: number;
+  avgTime: number;
+  errorRate: number;
+}[]> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('api_usage')
+      .select('endpoint, method, status_code, response_time_ms')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString());
+
+    if (error) throw error;
+
+    // Aggregate by endpoint
+    const endpointMap = new Map<string, {
+      count: number;
+      totalTime: number;
+      errors: number;
+    }>();
+
+    (data || []).forEach((log: any) => {
+      const key = `${log.method} ${log.endpoint}`;
+      const existing = endpointMap.get(key);
+
+      if (existing) {
+        existing.count++;
+        existing.totalTime += log.response_time_ms || 0;
+        if (log.status_code >= 400) existing.errors++;
+      } else {
+        endpointMap.set(key, {
+          count: 1,
+          totalTime: log.response_time_ms || 0,
+          errors: log.status_code >= 400 ? 1 : 0,
+        });
+      }
+    });
+
+    return Array.from(endpointMap.entries())
+      .map(([key, stats]) => {
+        const [method, endpoint] = key.split(' ');
+        return {
+          endpoint,
+          method,
+          count: stats.count,
+          avgTime: Math.round(stats.totalTime / stats.count),
+          errorRate: Math.round((stats.errors / stats.count) * 100 * 10) / 10,
+        };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  } catch (error) {
+    console.error('Error fetching endpoint analytics:', error);
+    return [];
+  }
+}
+
+/**
+ * Get status code distribution
+ */
+export async function getStatusCodeDistribution(userId: string, days: number = 30): Promise<{
+  status: number;
+  count: number;
+}[]> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('api_usage')
+      .select('status_code')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString());
+
+    if (error) throw error;
+
+    const statusMap = new Map<number, number>();
+
+    (data || []).forEach((log: any) => {
+      const count = statusMap.get(log.status_code) || 0;
+      statusMap.set(log.status_code, count + 1);
+    });
+
+    return Array.from(statusMap.entries())
+      .map(([status, count]) => ({ status, count }))
+      .sort((a, b) => b.count - a.count);
+  } catch (error) {
+    console.error('Error fetching status code distribution:', error);
+    return [];
+  }
+}
+
+/**
+ * Get hourly distribution
+ */
+export async function getHourlyDistribution(userId: string, days: number = 7): Promise<{
+  hour: number;
+  count: number;
+}[]> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('api_usage')
+      .select('created_at')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString());
+
+    if (error) throw error;
+
+    const hourMap = new Map<number, number>();
+
+    // Initialize all hours
+    for (let i = 0; i < 24; i++) {
+      hourMap.set(i, 0);
+    }
+
+    (data || []).forEach((log: any) => {
+      const hour = new Date(log.created_at).getHours();
+      hourMap.set(hour, (hourMap.get(hour) || 0) + 1);
+    });
+
+    return Array.from(hourMap.entries())
+      .map(([hour, count]) => ({ hour, count }))
+      .sort((a, b) => a.hour - b.hour);
+  } catch (error) {
+    console.error('Error fetching hourly distribution:', error);
+    return Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0 }));
   }
 }
 
