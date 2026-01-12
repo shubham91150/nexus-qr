@@ -1384,9 +1384,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       saveIdempotencyResponse(db, idempotencyKey, userId, result.data);
     }
 
-    // Log API usage
+    // Log API usage - MUST await to ensure logging completes before response
     const responseTime = Date.now() - startTime;
-    logApiUsage(
+    await logApiUsage(
       db,
       keyValidation.key_id!,
       userId,

@@ -271,10 +271,13 @@ export async function getApiKeyUsage(keyId: string): Promise<ApiUsageMonthly[]> 
 
 /**
  * Get current month usage for a key
+ * Uses multiple sources for reliability
  */
 export async function getCurrentMonthUsage(keyId: string): Promise<ApiUsageMonthly | null> {
   try {
     const yearMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+    // Try api_usage_monthly first
     const { data, error } = await supabase
       .from('api_usage_monthly')
       .select('*')
@@ -282,8 +285,38 @@ export async function getCurrentMonthUsage(keyId: string): Promise<ApiUsageMonth
       .eq('year_month', yearMonth)
       .single();
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
-    return data || { request_count: 0, successful_requests: 0, failed_requests: 0 } as ApiUsageMonthly;
+    if (!error && data && data.request_count > 0) {
+      return data;
+    }
+
+    // Fallback: count from api_usage table directly
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { count: totalCount, error: countError } = await supabase
+      .from('api_usage')
+      .select('*', { count: 'exact', head: true })
+      .eq('api_key_id', keyId)
+      .gte('created_at', startOfMonth.toISOString());
+
+    const { count: successCount } = await supabase
+      .from('api_usage')
+      .select('*', { count: 'exact', head: true })
+      .eq('api_key_id', keyId)
+      .gte('created_at', startOfMonth.toISOString())
+      .gte('status_code', 200)
+      .lt('status_code', 300);
+
+    if (!countError && totalCount !== null) {
+      return {
+        request_count: totalCount,
+        successful_requests: successCount || 0,
+        failed_requests: totalCount - (successCount || 0)
+      } as ApiUsageMonthly;
+    }
+
+    return { request_count: 0, successful_requests: 0, failed_requests: 0 } as ApiUsageMonthly;
   } catch (error) {
     console.error('Error fetching current usage:', error);
     return null;
@@ -292,6 +325,7 @@ export async function getCurrentMonthUsage(keyId: string): Promise<ApiUsageMonth
 
 /**
  * Get total usage for a user across all keys
+ * Uses multiple sources for reliability
  */
 export async function getUserTotalUsage(userId: string): Promise<{
   totalRequests: number;
@@ -309,16 +343,35 @@ export async function getUserTotalUsage(userId: string): Promise<{
 
     if (keysError) throw keysError;
 
-    // Get total usage this month
-    const { data: usage, error: usageError } = await supabase
+    let totalRequests = 0;
+
+    // Try api_usage_monthly first
+    const { data: monthlyUsage, error: monthlyError } = await supabase
       .from('api_usage_monthly')
       .select('request_count')
       .eq('user_id', userId)
       .eq('year_month', yearMonth);
 
-    if (usageError) throw usageError;
+    if (!monthlyError && monthlyUsage && monthlyUsage.length > 0) {
+      totalRequests = monthlyUsage.reduce((sum, u) => sum + (u.request_count || 0), 0);
+    }
 
-    const totalRequests = usage?.reduce((sum, u) => sum + (u.request_count || 0), 0) || 0;
+    // If monthly is 0, try counting from api_usage directly (fallback)
+    if (totalRequests === 0) {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count, error: countError } = await supabase
+        .from('api_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', startOfMonth.toISOString());
+
+      if (!countError && count !== null) {
+        totalRequests = count;
+      }
+    }
 
     return {
       totalRequests,
