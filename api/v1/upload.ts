@@ -114,7 +114,7 @@ function getSupabaseAdmin(): SupabaseClient {
 }
 
 // Validate API key
-async function validateApiKey(apiKey: string, db: SupabaseClient): Promise<{ valid: boolean; userId?: string; error?: string }> {
+async function validateApiKey(apiKey: string, db: SupabaseClient): Promise<{ valid: boolean; userId?: string; keyId?: string; error?: string }> {
   try {
     const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
@@ -130,9 +130,78 @@ async function validateApiKey(apiKey: string, db: SupabaseClient): Promise<{ val
       return { valid: false, error: 'API key has expired' };
     }
 
-    return { valid: true, userId: keyData.user_id };
+    return { valid: true, userId: keyData.user_id, keyId: keyData.id };
   } catch {
     return { valid: false, error: 'Validation failed' };
+  }
+}
+
+// Log API usage with fallback
+async function logApiUsage(
+  db: SupabaseClient,
+  keyId: string,
+  userId: string,
+  endpoint: string,
+  method: string,
+  statusCode: number,
+  responseTimeMs: number,
+  ipAddress: string,
+  userAgent: string | null,
+  requestId: string
+): Promise<void> {
+  try {
+    // Insert detailed log
+    await db.from('api_usage').insert({
+      api_key_id: keyId,
+      user_id: userId,
+      endpoint,
+      method,
+      status_code: statusCode,
+      response_time_ms: responseTimeMs,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      request_id: requestId
+    });
+
+    // Try RPC first
+    const { error: rpcError } = await db.rpc('increment_api_usage', {
+      p_api_key_id: keyId,
+      p_user_id: userId,
+      p_success: statusCode >= 200 && statusCode < 300
+    });
+
+    // Fallback to direct update if RPC fails
+    if (rpcError) {
+      const yearMonth = new Date().toISOString().slice(0, 7);
+      const isSuccess = statusCode >= 200 && statusCode < 300;
+
+      const { data: existing } = await db
+        .from('api_usage_monthly')
+        .select('id, request_count, successful_requests, failed_requests')
+        .eq('api_key_id', keyId)
+        .eq('year_month', yearMonth)
+        .single();
+
+      if (existing) {
+        await db.from('api_usage_monthly').update({
+          request_count: (existing.request_count || 0) + 1,
+          successful_requests: (existing.successful_requests || 0) + (isSuccess ? 1 : 0),
+          failed_requests: (existing.failed_requests || 0) + (isSuccess ? 0 : 1),
+          updated_at: new Date().toISOString()
+        }).eq('id', existing.id);
+      } else {
+        await db.from('api_usage_monthly').insert({
+          api_key_id: keyId,
+          user_id: userId,
+          year_month: yearMonth,
+          request_count: 1,
+          successful_requests: isSuccess ? 1 : 0,
+          failed_requests: isSuccess ? 0 : 1
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error logging API usage:', error);
   }
 }
 
@@ -189,9 +258,19 @@ async function generateSignedUrl(
   }
 }
 
+// Get client IP
+function getClientIP(req: VercelRequest): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.headers['x-real-ip'] as string || '0.0.0.0';
+}
+
 // Main Handler
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const requestId = generateRequestId();
+  const startTime = Date.now();
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -206,8 +285,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  let db: SupabaseClient | null = null;
+  let keyId: string | null = null;
+  let userId: string | null = null;
+
   try {
-    const db = getSupabaseAdmin();
+    db = getSupabaseAdmin();
 
     // Check API key
     const apiKey = req.headers['x-api-key'] as string ||
@@ -222,7 +305,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return sendError(res, 'INVALID_API_KEY', validation.error, requestId);
     }
 
-    const userId = validation.userId!;
+    userId = validation.userId!;
+    keyId = validation.keyId!;
 
     // Parse multipart form data
     let fields: Fields;
@@ -355,7 +439,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const failedUploads = uploadResults.filter(r => !r.success);
 
     if (successfulUploads.length === 0) {
+      // Log failed request
+      if (db && keyId && userId) {
+        logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 500, Date.now() - startTime,
+          getClientIP(req), req.headers['user-agent'] as string || null, requestId);
+      }
       return sendError(res, 'UPLOAD_FAILED', { uploads: failedUploads }, requestId);
+    }
+
+    // Log successful request
+    if (db && keyId && userId) {
+      logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 200, Date.now() - startTime,
+        getClientIP(req), req.headers['user-agent'] as string || null, requestId);
     }
 
     // Return response
@@ -373,6 +468,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error('Upload API Error:', error);
+    // Log error request
+    if (db && keyId && userId) {
+      logApiUsage(db, keyId, userId, '/api/v1/upload', 'POST', 500, Date.now() - startTime,
+        getClientIP(req), req.headers['user-agent'] as string || null, requestId);
+    }
     return sendError(res, 'INTERNAL_ERROR', error.message, requestId);
   }
 }
