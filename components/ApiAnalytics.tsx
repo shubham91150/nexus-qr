@@ -119,17 +119,19 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         topEndpoints: topEndpoints.length > 0 ? topEndpoints : [
           { endpoint: 'POST /api/v1/qr', count: totalRequests, avgTime: avgResponseTime }
         ],
+        // Geographic data - showing 0 as we don't have real geo tracking yet
         requestsByCountry: [
-          { country: 'India', code: 'IN', count: Math.round(totalRequests * 0.6) },
-          { country: 'United States', code: 'US', count: Math.round(totalRequests * 0.2) },
-          { country: 'United Kingdom', code: 'GB', count: Math.round(totalRequests * 0.1) },
-          { country: 'Germany', code: 'DE', count: Math.round(totalRequests * 0.05) },
-          { country: 'Others', code: 'XX', count: Math.round(totalRequests * 0.05) }
-        ].filter(c => c.count > 0),
+          { country: 'India', code: 'IN', count: 0 },
+          { country: 'United States', code: 'US', count: 0 },
+          { country: 'United Kingdom', code: 'GB', count: 0 },
+          { country: 'Germany', code: 'DE', count: 0 },
+          { country: 'Others', code: 'XX', count: 0 }
+        ],
+        // Device data - showing 0 as we don't have real device tracking yet
         requestsByDevice: [
-          { device: 'Desktop', count: Math.round(totalRequests * 0.6), percentage: 60 },
-          { device: 'Mobile', count: Math.round(totalRequests * 0.35), percentage: 35 },
-          { device: 'Tablet', count: Math.round(totalRequests * 0.05), percentage: 5 }
+          { device: 'Desktop', count: 0, percentage: 0 },
+          { device: 'Mobile', count: 0, percentage: 0 },
+          { device: 'Tablet', count: 0, percentage: 0 }
         ],
         requestsByStatus: requestsByStatus.length > 0 ? requestsByStatus : [
           { status: 200, count: successfulRequests },
@@ -204,7 +206,7 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Controls Row - Wraps on mobile */}
+          {/* Controls Row - All controls in one line */}
           <div className="flex flex-wrap items-center gap-2">
             {/* API Key Filter */}
             <select
@@ -218,8 +220,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
               ))}
             </select>
 
-            {/* Date Range Filter */}
-            <div className="flex bg-gray-100 rounded-xl p-1">
+            {/* Date Range Filter + Refresh + Download in same group */}
+            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
               {(['7d', '30d', '90d'] as const).map((range) => (
                 <button
                   key={range}
@@ -233,20 +235,22 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                   {range === '7d' ? '7D' : range === '30d' ? '30D' : '90D'}
                 </button>
               ))}
-            </div>
 
-            <div className="flex items-center gap-2 ml-auto">
+              {/* Refresh button */}
               <button
                 onClick={loadData}
-                className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors ml-1"
                 title="Refresh"
               >
-                <RefreshCw className="w-5 h-5 text-gray-600" />
+                <RefreshCw className="w-4 h-4 text-gray-600" />
               </button>
 
-              <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Export</span>
+              {/* Download button */}
+              <button
+                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+                title="Export"
+              >
+                <Download className="w-4 h-4 text-gray-600" />
               </button>
             </div>
           </div>
@@ -421,17 +425,16 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
           {/* Geographic Distribution */}
           <div className="bg-white rounded-[24px] shadow-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-indigo-600" />
-                Geographic Distribution
-              </h3>
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">Estimated</span>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+              <Globe className="w-5 h-5 text-indigo-600" />
+              Geographic Distribution
+            </h3>
             <div className="space-y-3">
               {analytics?.requestsByCountry.map((country, i) => {
-                const maxCount = analytics.requestsByCountry[0].count;
-                const percentage = (country.count / (analytics.totalRequests || 1)) * 100;
+                const maxCount = Math.max(...(analytics?.requestsByCountry.map(c => c.count) || [1])) || 1;
+                const percentage = analytics.totalRequests > 0
+                  ? (country.count / analytics.totalRequests) * 100
+                  : 0;
                 return (
                   <div key={i} className="flex items-center gap-3">
                     <span className="text-xl">{getCountryFlag(country.code)}</span>
@@ -442,8 +445,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
-                          style={{ width: `${(country.count / maxCount) * 100}%` }}
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all"
+                          style={{ width: maxCount > 0 ? `${(country.count / maxCount) * 100}%` : '0%' }}
                         />
                       </div>
                     </div>
@@ -454,6 +457,9 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                 );
               })}
             </div>
+            {analytics?.requestsByCountry.every(c => c.count === 0) && (
+              <p className="text-xs text-gray-400 mt-3 text-center">No geographic data available yet</p>
+            )}
           </div>
         </div>
 
@@ -461,13 +467,10 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Device Distribution */}
           <div className="bg-white rounded-[24px] shadow-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-indigo-600" />
-                Device Types
-              </h3>
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">Estimated</span>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+              <Smartphone className="w-5 h-5 text-indigo-600" />
+              Device Types
+            </h3>
             <div className="space-y-4">
               {analytics?.requestsByDevice.map((device, i) => (
                 <div key={i}>
@@ -482,7 +485,7 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                   </div>
                   <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${
+                      className={`h-full rounded-full transition-all ${
                         i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-500' : 'bg-pink-500'
                       }`}
                       style={{ width: `${device.percentage}%` }}
@@ -491,33 +494,42 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                 </div>
               ))}
             </div>
+            {analytics?.requestsByDevice.every(d => d.percentage === 0) && (
+              <p className="text-xs text-gray-400 mt-3 text-center">No device data available yet</p>
+            )}
 
             {/* Pie Chart Visual */}
             <div className="mt-6 flex justify-center">
               <div className="relative w-32 h-32">
                 <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                  {analytics?.requestsByDevice.reduce((acc, device, i) => {
-                    const startAngle = acc.angle;
-                    const sweepAngle = (device.percentage / 100) * 360;
-                    const endAngle = startAngle + sweepAngle;
+                  {analytics?.requestsByDevice.every(d => d.percentage === 0) ? (
+                    // Show empty gray circle when no data
+                    <circle cx="50" cy="50" r="45" fill="#E5E7EB" />
+                  ) : (
+                    analytics?.requestsByDevice.reduce((acc, device, i) => {
+                      if (device.percentage === 0) return acc;
+                      const startAngle = acc.angle;
+                      const sweepAngle = (device.percentage / 100) * 360;
+                      const endAngle = startAngle + sweepAngle;
 
-                    const x1 = 50 + 45 * Math.cos((startAngle * Math.PI) / 180);
-                    const y1 = 50 + 45 * Math.sin((startAngle * Math.PI) / 180);
-                    const x2 = 50 + 45 * Math.cos((endAngle * Math.PI) / 180);
-                    const y2 = 50 + 45 * Math.sin((endAngle * Math.PI) / 180);
+                      const x1 = 50 + 45 * Math.cos((startAngle * Math.PI) / 180);
+                      const y1 = 50 + 45 * Math.sin((startAngle * Math.PI) / 180);
+                      const x2 = 50 + 45 * Math.cos((endAngle * Math.PI) / 180);
+                      const y2 = 50 + 45 * Math.sin((endAngle * Math.PI) / 180);
 
-                    const largeArc = sweepAngle > 180 ? 1 : 0;
+                      const largeArc = sweepAngle > 180 ? 1 : 0;
 
-                    acc.paths.push(
-                      <path
-                        key={i}
-                        d={`M 50 50 L ${x1} ${y1} A 45 45 0 ${largeArc} 1 ${x2} ${y2} Z`}
-                        fill={i === 0 ? '#6366F1' : i === 1 ? '#A855F7' : '#EC4899'}
-                      />
-                    );
-                    acc.angle = endAngle;
-                    return acc;
-                  }, { angle: 0, paths: [] as JSX.Element[] }).paths}
+                      acc.paths.push(
+                        <path
+                          key={i}
+                          d={`M 50 50 L ${x1} ${y1} A 45 45 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                          fill={i === 0 ? '#6366F1' : i === 1 ? '#A855F7' : '#EC4899'}
+                        />
+                      );
+                      acc.angle = endAngle;
+                      return acc;
+                    }, { angle: 0, paths: [] as JSX.Element[] }).paths
+                  )}
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-16 h-16 bg-white rounded-full" />
