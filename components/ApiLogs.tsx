@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { getUserApiKeys } from '../services/apiService';
-import { getAuditEvents } from '../services/apiExtendedService';
+import { getApiLogs, getApiLogsStats, ApiRequestLog } from '../services/apiExtendedService';
 
 interface ApiLog {
   id: string;
@@ -24,42 +24,7 @@ interface ApiLog {
   errorMessage?: string;
 }
 
-// Generate mock API logs
-const generateMockLogs = (count: number = 50): ApiLog[] => {
-  const methods: ApiLog['method'][] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-  const endpoints = [
-    '/api/v1/qr',
-    '/api/v1/qr/{id}',
-    '/api/v1/qr/{id}/analytics',
-    '/api/v1/qr/bulk',
-    '/api/v1/webhooks',
-    '/api/v1/account'
-  ];
-  const statuses = [200, 200, 200, 200, 201, 201, 400, 401, 404, 429, 500];
-  const keyNames = ['Production App', 'Development', 'Mobile App', 'Partner Integration'];
-
-  return Array.from({ length: count }, (_, i) => {
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const method = methods[Math.floor(Math.random() * methods.length)];
-
-    return {
-      id: `log_${Date.now()}_${i}`,
-      timestamp: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
-      method,
-      endpoint: endpoints[Math.floor(Math.random() * endpoints.length)],
-      status,
-      responseTime: Math.floor(Math.random() * 500) + 20,
-      ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-      userAgent: ['Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0)', 'PostmanRuntime/7.28.4', 'axios/0.21.1'][Math.floor(Math.random() * 4)],
-      apiKeyName: keyNames[Math.floor(Math.random() * keyNames.length)],
-      apiKeyPrefix: 'nxqr_live_' + Math.random().toString(36).substring(2, 6),
-      requestBody: method !== 'GET' && method !== 'DELETE' ? JSON.stringify({ url: 'https://example.com', style: 'modern' }) : undefined,
-      responseBody: JSON.stringify(status < 400 ? { success: true, data: { id: 'qr_' + Math.random().toString(36).substring(2, 8) } } : { success: false, error: { code: `E${status}`, message: 'Error message' } }),
-      errorMessage: status >= 400 ? getErrorMessage(status) : undefined
-    };
-  }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-};
-
+// Error message helper
 function getErrorMessage(status: number): string {
   const errors: Record<number, string> = {
     400: 'Invalid request parameters',
@@ -69,6 +34,28 @@ function getErrorMessage(status: number): string {
     500: 'Internal server error'
   };
   return errors[status] || 'Unknown error';
+}
+
+// Convert ApiRequestLog to ApiLog format
+function convertToApiLog(log: ApiRequestLog): ApiLog {
+  return {
+    id: log.id,
+    timestamp: log.created_at,
+    method: log.method as ApiLog['method'],
+    endpoint: log.endpoint,
+    status: log.status_code,
+    responseTime: log.response_time_ms,
+    ip: log.ip_address,
+    userAgent: log.user_agent,
+    apiKeyName: log.api_key_name,
+    apiKeyPrefix: log.api_key_prefix,
+    requestBody: undefined,
+    responseBody: JSON.stringify({
+      success: log.status_code < 400,
+      request_id: log.request_id
+    }),
+    errorMessage: log.status_code >= 400 ? getErrorMessage(log.status_code) : undefined
+  };
 }
 
 interface ApiLogsProps {
@@ -88,7 +75,7 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Load data from database where available
+  // Load data from database - real API logs
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -98,58 +85,34 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
       const keys = await getUserApiKeys(user.id);
       setApiKeys(keys.map(k => ({ id: k.id, name: k.name })));
 
-      // Try to load real audit events and convert to log format
-      const auditEvents = await getAuditEvents(user.id, { limit: 100 });
+      // Load real API logs from api_usage table
+      const apiLogs = await getApiLogs(user.id, {
+        limit: 200,
+        method: selectedMethod !== 'all' ? selectedMethod : undefined,
+        status: selectedStatus !== 'all' ? selectedStatus : undefined,
+        apiKeyId: selectedApiKey !== 'all' ? selectedApiKey : undefined,
+        search: searchQuery || undefined
+      });
 
-      if (auditEvents && auditEvents.length > 0) {
-        // Convert audit events to log format
-        const realLogs: ApiLog[] = auditEvents
-          .filter(event => event.action.startsWith('api_') || event.resourceType === 'api_key')
-          .map(event => ({
-            id: event.id,
-            timestamp: event.timestamp,
-            method: getMethodFromAction(event.action),
-            endpoint: `/api/v1/${event.resourceType}${event.resourceId ? '/' + event.resourceId : ''}`,
-            status: event.status === 'success' ? 200 : event.status === 'failure' ? 400 : 500,
-            responseTime: Math.floor(Math.random() * 200) + 50,
-            ip: event.ipAddress || '0.0.0.0',
-            userAgent: event.userAgent || 'Unknown',
-            apiKeyName: event.resourceName || 'Unknown',
-            apiKeyPrefix: 'nxqr_***',
-            requestBody: event.metadata ? JSON.stringify(event.metadata) : undefined,
-            responseBody: JSON.stringify({ success: event.status === 'success' }),
-            errorMessage: event.status !== 'success' ? event.reason : undefined
-          }));
-
-        if (realLogs.length > 0) {
-          setLogs(realLogs);
-        } else {
-          // No API-related events, use mock
-          setLogs(generateMockLogs(100));
-        }
+      if (apiLogs && apiLogs.length > 0) {
+        // Convert to ApiLog format
+        const convertedLogs = apiLogs.map(convertToApiLog);
+        setLogs(convertedLogs);
       } else {
-        // No audit events, use mock logs for demo
-        setLogs(generateMockLogs(100));
+        // No logs found - show empty state
+        setLogs([]);
       }
     } catch (error) {
       console.error('Error loading logs:', error);
-      setLogs(generateMockLogs(100));
+      setLogs([]);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, selectedMethod, selectedStatus, selectedApiKey, searchQuery]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  // Helper to convert action to HTTP method
-  const getMethodFromAction = (action: string): ApiLog['method'] => {
-    if (action.includes('create') || action.includes('generate')) return 'POST';
-    if (action.includes('update') || action.includes('rotate')) return 'PATCH';
-    if (action.includes('delete') || action.includes('revoke')) return 'DELETE';
-    return 'GET';
-  };
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch = searchQuery === '' ||
@@ -537,7 +500,12 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
             <div className="p-12 text-center">
               <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-700 mb-2">No logs found</h3>
-              <p className="text-gray-500">Try adjusting your filters or search query</p>
+              <p className="text-gray-500">
+                {searchQuery || selectedMethod !== 'all' || selectedStatus !== 'all'
+                  ? 'Try adjusting your filters or search query'
+                  : 'API request logs will appear here when you start using the API'
+                }
+              </p>
             </div>
           )}
 

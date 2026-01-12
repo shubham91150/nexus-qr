@@ -80,114 +80,74 @@ interface DailyUsage {
   bandwidth: number;
 }
 
-// Mock data
-const usageMetrics: UsageMetric[] = [
+// Default empty data - will be populated from API
+const defaultMetrics: UsageMetric[] = [
   {
     id: 'api-calls',
     name: 'API Calls',
-    current: 78542,
-    limit: 100000,
+    current: 0,
+    limit: 1000,
     unit: 'calls',
     icon: Zap,
     color: 'from-blue-500 to-indigo-600',
-    trend: 12.5,
-    resetDate: '2024-02-01'
+    trend: 0,
+    resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
   },
   {
     id: 'qr-codes',
     name: 'QR Codes Created',
-    current: 847,
-    limit: 1000,
+    current: 0,
+    limit: 10000,
     unit: 'codes',
     icon: Package,
     color: 'from-emerald-500 to-teal-600',
-    trend: 8.2,
-    resetDate: '2024-02-01'
+    trend: 0,
+    resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
   },
   {
     id: 'bandwidth',
     name: 'Bandwidth',
-    current: 4.2,
-    limit: 10,
+    current: 0,
+    limit: 50,
     unit: 'GB',
     icon: Globe,
     color: 'from-purple-500 to-violet-600',
-    trend: -3.1,
-    resetDate: '2024-02-01'
+    trend: 0,
+    resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
   },
   {
     id: 'storage',
     name: 'Storage Used',
-    current: 2.8,
-    limit: 5,
+    current: 0,
+    limit: 10,
     unit: 'GB',
     icon: Database,
     color: 'from-amber-500 to-orange-600',
-    trend: 5.4,
+    trend: 0,
     resetDate: 'N/A'
   },
   {
     id: 'webhooks',
     name: 'Webhook Calls',
-    current: 12450,
+    current: 0,
     limit: 50000,
     unit: 'calls',
     icon: Bell,
     color: 'from-pink-500 to-rose-600',
-    trend: 22.1,
-    resetDate: '2024-02-01'
+    trend: 0,
+    resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
   },
   {
     id: 'analytics',
     name: 'Analytics Queries',
-    current: 3240,
+    current: 0,
     limit: 10000,
     unit: 'queries',
     icon: BarChart3,
     color: 'from-cyan-500 to-blue-600',
-    trend: 15.8,
-    resetDate: '2024-02-01'
+    trend: 0,
+    resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]
   }
-];
-
-const usageAlerts: UsageAlert[] = [
-  {
-    id: 'alert-1',
-    type: 'warning',
-    message: 'QR Codes usage is at 84.7% of monthly limit',
-    metric: 'QR Codes',
-    threshold: 80,
-    timestamp: '2024-01-28T10:30:00Z',
-    acknowledged: false
-  },
-  {
-    id: 'alert-2',
-    type: 'critical',
-    message: 'API Calls approaching limit (78.5%)',
-    metric: 'API Calls',
-    threshold: 75,
-    timestamp: '2024-01-28T09:15:00Z',
-    acknowledged: true
-  },
-  {
-    id: 'alert-3',
-    type: 'info',
-    message: 'Webhook usage increased by 22% this week',
-    metric: 'Webhooks',
-    threshold: 0,
-    timestamp: '2024-01-27T14:00:00Z',
-    acknowledged: true
-  }
-];
-
-const dailyUsage: DailyUsage[] = [
-  { date: '2024-01-22', apiCalls: 2845, qrCodes: 28, bandwidth: 0.14 },
-  { date: '2024-01-23', apiCalls: 3120, qrCodes: 35, bandwidth: 0.16 },
-  { date: '2024-01-24', apiCalls: 2956, qrCodes: 31, bandwidth: 0.15 },
-  { date: '2024-01-25', apiCalls: 3450, qrCodes: 42, bandwidth: 0.18 },
-  { date: '2024-01-26', apiCalls: 2890, qrCodes: 25, bandwidth: 0.13 },
-  { date: '2024-01-27', apiCalls: 3210, qrCodes: 38, bandwidth: 0.17 },
-  { date: '2024-01-28', apiCalls: 3542, qrCodes: 45, bandwidth: 0.19 }
 ];
 
 const planDetails = {
@@ -218,8 +178,8 @@ export default function ApiUsageQuota({ onBack, userId }: ApiUsageQuotaProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('month');
   const [alerts, setAlerts] = useState<UsageAlert[]>([]);
-  const [metrics, setMetrics] = useState<UsageMetric[]>(usageMetrics);
-  const [dailyData, setDailyData] = useState<DailyUsage[]>(dailyUsage);
+  const [metrics, setMetrics] = useState<UsageMetric[]>(defaultMetrics);
+  const [dailyData, setDailyData] = useState<DailyUsage[]>([]);
   const [showAlertSettings, setShowAlertSettings] = useState(false);
   const [alertThresholds, setAlertThresholds] = useState({
     warning: 75,
@@ -237,7 +197,7 @@ export default function ApiUsageQuota({ onBack, userId }: ApiUsageQuotaProps) {
     else setLoading(true);
 
     try {
-      const [alertsData, metricsData, dailyData, settingsData] = await Promise.all([
+      const [alertsData, metricsData, fetchedDailyData, settingsData] = await Promise.all([
         getUsageAlerts(userId),
         getUsageMetrics(userId),
         getDailyUsage(userId, 7),
@@ -327,13 +287,28 @@ export default function ApiUsageQuota({ onBack, userId }: ApiUsageQuotaProps) {
       setMetrics(transformedMetrics);
 
       // Transform daily usage
-      if (dailyData.length > 0) {
-        setDailyData(dailyData.map(d => ({
+      if (fetchedDailyData.length > 0) {
+        setDailyData(fetchedDailyData.map(d => ({
           date: d.date,
           apiCalls: d.api_calls,
-          qrCodes: d.qr_codes_created,
-          bandwidth: d.bandwidth_bytes / (1024 * 1024 * 1024) // Convert to GB
+          qrCodes: d.qr_codes_created || 0,
+          bandwidth: (d.bandwidth_bytes || 0) / (1024 * 1024 * 1024) // Convert to GB
         })));
+      } else {
+        // Generate last 7 days with zero values
+        const days: DailyUsage[] = [];
+        const today = new Date();
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          days.push({
+            date: date.toISOString().split('T')[0],
+            apiCalls: 0,
+            qrCodes: 0,
+            bandwidth: 0
+          });
+        }
+        setDailyData(days);
       }
 
       // Update alert settings
