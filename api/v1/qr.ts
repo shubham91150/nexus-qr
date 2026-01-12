@@ -672,7 +672,8 @@ async function logApiUsage(
   requestId: string
 ): Promise<void> {
   try {
-    await db.from('api_usage').insert({
+    // Insert detailed log into api_usage table
+    const { error: logError } = await db.from('api_usage').insert({
       api_key_id: keyId,
       user_id: userId,
       endpoint,
@@ -684,11 +685,81 @@ async function logApiUsage(
       request_id: requestId
     });
 
-    await db.rpc('increment_api_usage', {
+    if (logError) {
+      console.error('Error inserting api_usage log:', logError);
+    }
+
+    // Try RPC first, fallback to direct update if RPC doesn't exist
+    const { error: rpcError } = await db.rpc('increment_api_usage', {
       p_api_key_id: keyId,
       p_user_id: userId,
       p_success: statusCode >= 200 && statusCode < 300
     });
+
+    // If RPC failed (function doesn't exist), do direct upsert
+    if (rpcError) {
+      console.warn('RPC increment_api_usage failed, using direct update:', rpcError.message);
+
+      const yearMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const isSuccess = statusCode >= 200 && statusCode < 300;
+
+      // Try upsert on api_usage_monthly
+      const { error: upsertError } = await db
+        .from('api_usage_monthly')
+        .upsert({
+          api_key_id: keyId,
+          user_id: userId,
+          year_month: yearMonth,
+          request_count: 1,
+          successful_requests: isSuccess ? 1 : 0,
+          failed_requests: isSuccess ? 0 : 1,
+          total_response_time_ms: responseTimeMs,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'api_key_id,year_month',
+          ignoreDuplicates: false
+        });
+
+      if (upsertError) {
+        // If upsert fails, try increment with raw SQL via RPC
+        console.error('Direct upsert also failed:', upsertError.message);
+
+        // Last resort: try to select and update manually
+        const { data: existing } = await db
+          .from('api_usage_monthly')
+          .select('id, request_count, successful_requests, failed_requests, total_response_time_ms')
+          .eq('api_key_id', keyId)
+          .eq('year_month', yearMonth)
+          .single();
+
+        if (existing) {
+          // Update existing record
+          await db
+            .from('api_usage_monthly')
+            .update({
+              request_count: (existing.request_count || 0) + 1,
+              successful_requests: (existing.successful_requests || 0) + (isSuccess ? 1 : 0),
+              failed_requests: (existing.failed_requests || 0) + (isSuccess ? 0 : 1),
+              total_response_time_ms: (existing.total_response_time_ms || 0) + responseTimeMs,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+        } else {
+          // Insert new record
+          await db
+            .from('api_usage_monthly')
+            .insert({
+              api_key_id: keyId,
+              user_id: userId,
+              year_month: yearMonth,
+              request_count: 1,
+              successful_requests: isSuccess ? 1 : 0,
+              failed_requests: isSuccess ? 0 : 1,
+              total_response_time_ms: responseTimeMs
+            });
+        }
+      }
+    }
   } catch (error) {
     console.error('Error logging API usage:', error);
   }
