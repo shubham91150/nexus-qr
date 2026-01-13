@@ -21,8 +21,9 @@ interface ApiLog {
   apiKeyName: string;
   apiKeyPrefix: string;
   requestBody?: Record<string, unknown> | null;
+  responseBody?: Record<string, unknown> | null;
   errorCode?: number | null;
-  errorMessage?: string;
+  errorMessage?: string | null;
 }
 
 // Error message helper
@@ -52,8 +53,10 @@ function convertToApiLog(log: ApiRequestLog): ApiLog {
     apiKeyName: log.api_key_name,
     apiKeyPrefix: log.api_key_prefix,
     requestBody: log.request_body || null,
+    responseBody: log.response_body || null,
     errorCode: log.error_code || null,
-    errorMessage: log.status_code >= 400 ? getErrorMessage(log.status_code) : undefined
+    // Use actual error_message from DB if available, otherwise generate from status code
+    errorMessage: log.error_message || (log.status_code >= 400 ? getErrorMessage(log.status_code) : null)
   };
 }
 
@@ -495,7 +498,7 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
                                 {(log.errorMessage || log.errorCode) && (
                                   <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg mb-4">
                                     <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                                    <div>
+                                    <div className="flex-1">
                                       <div className="text-sm font-medium text-red-800">
                                         {log.errorCode ? `Error Code: ${log.errorCode}` : 'Error'}
                                       </div>
@@ -504,8 +507,33 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
                                   </div>
                                 )}
 
-                                {/* Success Response */}
-                                {log.status >= 200 && log.status < 300 && (
+                                {/* Response Body - for errors or success with response */}
+                                {log.responseBody && Object.keys(log.responseBody).length > 0 && (
+                                  <div className="mt-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-sm font-medium text-gray-700">Response Body</span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          copyToClipboard(JSON.stringify(log.responseBody, null, 2), `res-${log.id}`);
+                                        }}
+                                        className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                                      >
+                                        {copied === `res-${log.id}` ? 'Copied!' : <><Copy className="w-3 h-3" /> Copy</>}
+                                      </button>
+                                    </div>
+                                    <pre className={`rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-64 ${
+                                      log.status >= 400
+                                        ? 'bg-red-900 text-red-200'
+                                        : 'bg-gray-900 text-green-400'
+                                    }`}>
+                                      {JSON.stringify(log.responseBody, null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+
+                                {/* Success Response - only show if no response body */}
+                                {log.status >= 200 && log.status < 300 && !log.responseBody && (
                                   <div className="flex items-start gap-2 p-3 bg-emerald-50 rounded-lg">
                                     <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
                                     <div>
