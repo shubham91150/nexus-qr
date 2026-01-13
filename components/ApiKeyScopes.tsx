@@ -553,88 +553,75 @@ const ApiKeyScopes: React.FC<ApiKeyScopesProps> = ({ userId, onBack }) => {
               </div>
             </div>
 
-            {/* Summary and Actions */}
-            <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50 flex-shrink-0">
-              {/* Selected Scopes Preview - Moved to top for mobile */}
-              {editingScopes.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 max-h-20 overflow-y-auto">
-                  {editingScopes.map(scopeId => {
-                    const scope = AVAILABLE_SCOPES.find(s => s.id === scopeId);
-                    if (!scope) return null;
-                    return (
-                      <span
-                        key={scopeId}
-                        className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white border border-gray-200 rounded-lg text-[10px] sm:text-xs font-mono text-gray-600"
-                      >
-                        {scopeId}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleScope(scopeId);
-                          }}
-                          className="hover:text-red-600"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center justify-between sm:justify-start gap-2">
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="font-semibold text-gray-900">{editingScopes.length}</span> scopes selected
-                  </p>
+            {/* Summary - Selected Scopes Info */}
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-gray-600">
+                  <span className="font-semibold text-gray-900">{editingScopes.length}</span> scopes selected
                   {editingScopes.length === 0 && (
-                    <p className="text-xs sm:text-sm text-red-600 flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">At least one scope is required</span>
-                      <span className="sm:hidden">Required</span>
-                    </p>
+                    <span className="text-red-500 ml-2">• Required</span>
                   )}
+                </p>
+                {editingScopes.length > 0 && (
                   <button
                     onClick={() => setEditingScopes([])}
-                    className="text-xs sm:text-sm px-2 sm:px-3 py-1 text-gray-600 hover:text-gray-900 font-medium transition-colors sm:hidden"
-                  >
-                    Clear
-                  </button>
-                </div>
-
-                <div className="flex gap-2 sm:gap-3">
-                  <button
-                    onClick={() => setEditingScopes([])}
-                    className="hidden sm:block px-3 sm:px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                    className="text-xs text-gray-500 hover:text-red-600 font-medium transition-colors"
                   >
                     Clear All
                   </button>
-                  <button
-                    onClick={() => setShowScopeEditor(false)}
-                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gray-200 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-300 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveScopes}
-                    disabled={editingScopes.length === 0 || saving}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="hidden sm:inline">Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        <span>Save</span>
-                        <span className="hidden sm:inline">Changes</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                )}
               </div>
+
+              {/* Selected Scopes Tags */}
+              {editingScopes.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2 max-h-16 overflow-y-auto">
+                  {editingScopes.map(scopeId => (
+                    <span
+                      key={scopeId}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-200 rounded text-[10px] font-mono text-gray-600"
+                    >
+                      {scopeId}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleScope(scopeId);
+                        }}
+                        className="hover:text-red-600"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer - Same as SaveTemplateModal */}
+            <div className="p-4 border-t border-gray-100 flex gap-2 flex-shrink-0">
+              <button
+                onClick={() => setShowScopeEditor(false)}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveScopes}
+                disabled={editingScopes.length === 0 || saving}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
