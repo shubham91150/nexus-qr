@@ -1475,3 +1475,207 @@ export async function generateDemoUsageData(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+// =====================================================
+// Geographic & Device Analytics Functions
+// =====================================================
+
+/**
+ * Get geographic distribution of API calls
+ * Tries api_request_logs first, then api_usage table
+ */
+export async function getGeographicDistribution(userId: string, days: number = 30): Promise<{
+  country: string;
+  code: string;
+  count: number;
+}[]> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Try api_request_logs first (has country column)
+    let data: any[] | null = null;
+    let error: any = null;
+
+    const logsResult = await supabase
+      .from('api_request_logs')
+      .select('country')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString())
+      .not('country', 'is', null);
+
+    if (!logsResult.error && logsResult.data && logsResult.data.length > 0) {
+      data = logsResult.data;
+    } else {
+      // Fallback to api_usage table
+      const usageResult = await supabase
+        .from('api_usage')
+        .select('country')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString())
+        .not('country', 'is', null);
+
+      data = usageResult.data;
+      error = usageResult.error;
+    }
+
+    if (error) {
+      console.warn('Geographic data not available:', error.message);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Aggregate by country
+    const countryMap = new Map<string, number>();
+
+    data.forEach((log: any) => {
+      if (log.country) {
+        const count = countryMap.get(log.country) || 0;
+        countryMap.set(log.country, count + 1);
+      }
+    });
+
+    // Country code to name mapping
+    const countryNames: Record<string, string> = {
+      'IN': 'India',
+      'US': 'United States',
+      'GB': 'United Kingdom',
+      'DE': 'Germany',
+      'FR': 'France',
+      'CA': 'Canada',
+      'AU': 'Australia',
+      'JP': 'Japan',
+      'BR': 'Brazil',
+      'CN': 'China',
+      'RU': 'Russia',
+      'IT': 'Italy',
+      'ES': 'Spain',
+      'MX': 'Mexico',
+      'KR': 'South Korea',
+      'NL': 'Netherlands',
+      'SG': 'Singapore',
+      'AE': 'UAE',
+      'SA': 'Saudi Arabia',
+      'ZA': 'South Africa',
+    };
+
+    // Convert to array and sort by count
+    const result = Array.from(countryMap.entries())
+      .map(([code, count]) => ({
+        country: countryNames[code] || code,
+        code,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // If we have more than 5 countries, group the rest as "Others"
+    if (result.length > 5) {
+      const top5 = result.slice(0, 5);
+      const othersCount = result.slice(5).reduce((sum, c) => sum + c.count, 0);
+      if (othersCount > 0) {
+        top5.push({ country: 'Others', code: 'XX', count: othersCount });
+      }
+      return top5;
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching geographic distribution:', error);
+    return [];
+  }
+}
+
+/**
+ * Get device type distribution of API calls
+ * Tries api_request_logs first, then api_usage table
+ */
+export async function getDeviceDistribution(userId: string, days: number = 30): Promise<{
+  device: string;
+  count: number;
+  percentage: number;
+}[]> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Try api_request_logs first (has device_type column)
+    let data: any[] | null = null;
+    let error: any = null;
+
+    const logsResult = await supabase
+      .from('api_request_logs')
+      .select('device_type')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString());
+
+    if (!logsResult.error && logsResult.data && logsResult.data.length > 0) {
+      data = logsResult.data;
+    } else {
+      // Fallback to api_usage table
+      const usageResult = await supabase
+        .from('api_usage')
+        .select('device_type')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString());
+
+      data = usageResult.data;
+      error = usageResult.error;
+    }
+
+    if (error) {
+      console.warn('Device data not available:', error.message);
+    }
+
+    // Aggregate by device type
+    const deviceMap = new Map<string, number>();
+    let total = 0;
+
+    (data || []).forEach((log: any) => {
+      const device = log.device_type || 'Unknown';
+      const count = deviceMap.get(device) || 0;
+      deviceMap.set(device, count + 1);
+      total++;
+    });
+
+    // Normalize device names and calculate percentages
+    const deviceNames: Record<string, string> = {
+      'desktop': 'Desktop',
+      'mobile': 'Mobile',
+      'tablet': 'Tablet',
+      'unknown': 'Unknown',
+    };
+
+    const result = Array.from(deviceMap.entries())
+      .map(([device, count]) => ({
+        device: deviceNames[device.toLowerCase()] || device,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Ensure we always have Desktop, Mobile, Tablet entries
+    const ensuredDevices = ['Desktop', 'Mobile', 'Tablet'];
+    ensuredDevices.forEach(device => {
+      if (!result.find(d => d.device === device)) {
+        result.push({ device, count: 0, percentage: 0 });
+      }
+    });
+
+    return result.filter(d => ensuredDevices.includes(d.device) || d.count > 0)
+      .sort((a, b) => {
+        const order = { 'Desktop': 0, 'Mobile': 1, 'Tablet': 2 };
+        return (order[a.device as keyof typeof order] ?? 99) - (order[b.device as keyof typeof order] ?? 99);
+      });
+  } catch (error) {
+    console.error('Error fetching device distribution:', error);
+    return [
+      { device: 'Desktop', count: 0, percentage: 0 },
+      { device: 'Mobile', count: 0, percentage: 0 },
+      { device: 'Tablet', count: 0, percentage: 0 },
+    ];
+  }
+}
