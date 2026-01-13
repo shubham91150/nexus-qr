@@ -1179,6 +1179,11 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [user]);
 
+  // Scroll to top when view changes (fixes API Dashboard pages opening at bottom)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [view]);
+
   const handleDashboardClick = () => {
     if (user) {
       setDashboardLoading(true);
