@@ -567,10 +567,15 @@ export interface ApiRequestLog {
   api_key_name: string;
   api_key_prefix: string;
   created_at: string;
+  request_body?: Record<string, unknown> | null;
+  response_body?: Record<string, unknown> | null;
+  error_code?: number | null;
+  error_message?: string | null;
 }
 
 /**
- * Get API request logs from api_usage table
+ * Get API request logs - tries api_request_logs first (has detailed response data),
+ * then falls back to api_usage table
  */
 export async function getApiLogs(
   userId: string,
@@ -583,10 +588,82 @@ export async function getApiLogs(
     search?: string;
   } = {}
 ): Promise<ApiRequestLog[]> {
-  try {
-    const limit = options.limit || 100;
-    const offset = options.offset || 0;
+  const limit = options.limit || 100;
+  const offset = options.offset || 0;
 
+  // Try api_request_logs first (has response_body and error_message)
+  try {
+    let query = supabase
+      .from('api_request_logs')
+      .select(`
+        id,
+        request_id,
+        method,
+        endpoint,
+        status_code,
+        response_time_ms,
+        ip_address,
+        user_agent,
+        api_key_id,
+        api_key_name,
+        created_at,
+        request_body,
+        response_body,
+        error_message
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (options.method && options.method !== 'all') {
+      query = query.eq('method', options.method);
+    }
+
+    if (options.status && options.status !== 'all') {
+      if (options.status === 'success') {
+        query = query.gte('status_code', 200).lt('status_code', 400);
+      } else if (options.status === 'error') {
+        query = query.gte('status_code', 400);
+      } else {
+        query = query.eq('status_code', parseInt(options.status));
+      }
+    }
+
+    if (options.apiKeyId && options.apiKeyId !== 'all') {
+      query = query.eq('api_key_id', options.apiKeyId);
+    }
+
+    if (options.search) {
+      query = query.or(`endpoint.ilike.%${options.search}%,ip_address.ilike.%${options.search}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data && data.length > 0) {
+      return data.map((log: any) => ({
+        id: log.id,
+        request_id: log.request_id || `req_${log.id.slice(0, 8)}`,
+        method: log.method || 'GET',
+        endpoint: log.endpoint || '/api/v1/qr',
+        status_code: log.status_code || 200,
+        response_time_ms: log.response_time_ms || 0,
+        ip_address: log.ip_address || '0.0.0.0',
+        user_agent: log.user_agent || 'Unknown',
+        api_key_name: log.api_key_name || 'Unknown',
+        api_key_prefix: log.api_key_name ? `${log.api_key_name.slice(0, 8)}...` : 'nxqr_***',
+        created_at: log.created_at,
+        request_body: log.request_body || null,
+        response_body: log.response_body || null,
+        error_code: null,
+        error_message: log.error_message || null,
+      }));
+    }
+  } catch (err) {
+    console.log('api_request_logs not available, falling back to api_usage');
+  }
+
+  // Fallback to api_usage table
+  try {
     let query = supabase
       .from('api_usage')
       .select(`
@@ -600,6 +677,8 @@ export async function getApiLogs(
         user_agent,
         api_key_id,
         created_at,
+        request_body,
+        error_code,
         api_keys!left(name, key_prefix)
       `)
       .eq('user_id', userId)
@@ -644,6 +723,10 @@ export async function getApiLogs(
       api_key_name: log.api_keys?.name || 'Unknown',
       api_key_prefix: log.api_keys?.key_prefix || 'nxqr_***',
       created_at: log.created_at,
+      request_body: log.request_body || null,
+      response_body: null,
+      error_code: log.error_code || null,
+      error_message: null,
     }));
   } catch (error) {
     console.error('Error fetching API logs:', error);

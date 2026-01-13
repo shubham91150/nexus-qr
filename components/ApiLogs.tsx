@@ -10,6 +10,7 @@ import { getApiLogs, getApiLogsStats, ApiRequestLog } from '../services/apiExten
 
 interface ApiLog {
   id: string;
+  requestId: string;
   timestamp: string;
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   endpoint: string;
@@ -19,9 +20,10 @@ interface ApiLog {
   userAgent: string;
   apiKeyName: string;
   apiKeyPrefix: string;
-  requestBody?: string;
-  responseBody?: string;
-  errorMessage?: string;
+  requestBody?: Record<string, unknown> | null;
+  responseBody?: Record<string, unknown> | null;
+  errorCode?: number | null;
+  errorMessage?: string | null;
 }
 
 // Error message helper
@@ -40,6 +42,7 @@ function getErrorMessage(status: number): string {
 function convertToApiLog(log: ApiRequestLog): ApiLog {
   return {
     id: log.id,
+    requestId: log.request_id,
     timestamp: log.created_at,
     method: log.method as ApiLog['method'],
     endpoint: log.endpoint,
@@ -49,12 +52,11 @@ function convertToApiLog(log: ApiRequestLog): ApiLog {
     userAgent: log.user_agent,
     apiKeyName: log.api_key_name,
     apiKeyPrefix: log.api_key_prefix,
-    requestBody: undefined,
-    responseBody: JSON.stringify({
-      success: log.status_code < 400,
-      request_id: log.request_id
-    }),
-    errorMessage: log.status_code >= 400 ? getErrorMessage(log.status_code) : undefined
+    requestBody: log.request_body || null,
+    responseBody: log.response_body || null,
+    errorCode: log.error_code || null,
+    // Use actual error_message from DB if available, otherwise generate from status code
+    errorMessage: log.error_message || (log.status_code >= 400 ? getErrorMessage(log.status_code) : null)
   };
 }
 
@@ -416,36 +418,60 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
                               <div>
                                 <h4 className="text-sm font-semibold text-gray-700 mb-3">Request Details</h4>
                                 <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-gray-500">Request ID</span>
+                                    <div className="flex items-center gap-2">
+                                      <code className="font-mono text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{log.requestId}</code>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          copyToClipboard(log.requestId, `reqid-${log.id}`);
+                                        }}
+                                        className="text-gray-400 hover:text-indigo-600"
+                                      >
+                                        {copied === `reqid-${log.id}` ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                                      </button>
+                                    </div>
+                                  </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-500">IP Address</span>
                                     <span className="font-mono text-gray-700">{log.ip}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-gray-500">User Agent</span>
-                                    <span className="text-gray-700 truncate max-w-xs">{log.userAgent}</span>
-                                  </div>
-                                  <div className="flex justify-between">
                                     <span className="text-gray-500">Response Time</span>
-                                    <span className="text-gray-700">{log.responseTime}ms</span>
+                                    <span className={`font-medium ${
+                                      log.responseTime < 100 ? 'text-emerald-600' :
+                                      log.responseTime < 300 ? 'text-amber-600' :
+                                      'text-red-600'
+                                    }`}>{log.responseTime}ms</span>
                                   </div>
                                 </div>
 
-                                {log.requestBody && (
+                                {/* User Agent Section */}
+                                <div className="mt-4">
+                                  <span className="text-sm font-medium text-gray-700 block mb-2">User Agent</span>
+                                  <div className="bg-gray-100 rounded-lg p-3 text-xs text-gray-600 font-mono break-all">
+                                    {log.userAgent}
+                                  </div>
+                                </div>
+
+                                {/* Request Body */}
+                                {log.requestBody && Object.keys(log.requestBody).length > 0 && (
                                   <div className="mt-4">
                                     <div className="flex items-center justify-between mb-2">
                                       <span className="text-sm font-medium text-gray-700">Request Body</span>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          copyToClipboard(log.requestBody!, `req-${log.id}`);
+                                          copyToClipboard(JSON.stringify(log.requestBody, null, 2), `req-${log.id}`);
                                         }}
                                         className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                                       >
                                         {copied === `req-${log.id}` ? 'Copied!' : <><Copy className="w-3 h-3" /> Copy</>}
                                       </button>
                                     </div>
-                                    <pre className="bg-gray-900 rounded-lg p-3 text-xs text-green-400 font-mono overflow-x-auto">
-                                      {JSON.stringify(JSON.parse(log.requestBody), null, 2)}
+                                    <pre className="bg-gray-900 rounded-lg p-3 text-xs text-green-400 font-mono overflow-x-auto max-h-64">
+                                      {JSON.stringify(log.requestBody, null, 2)}
                                     </pre>
                                   </div>
                                 )}
@@ -455,33 +481,67 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
                               <div>
                                 <h4 className="text-sm font-semibold text-gray-700 mb-3">Response</h4>
 
-                                {log.errorMessage && (
+                                {/* Status Badge */}
+                                <div className="flex items-center gap-3 mb-4">
+                                  <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold ${getStatusColor(log.status)}`}>
+                                    {getStatusIcon(log.status)}
+                                    {log.status}
+                                  </span>
+                                  <span className="text-sm text-gray-500">
+                                    {log.status >= 200 && log.status < 300 ? 'Success' :
+                                     log.status >= 400 && log.status < 500 ? 'Client Error' :
+                                     log.status >= 500 ? 'Server Error' : 'Redirect'}
+                                  </span>
+                                </div>
+
+                                {/* Error Details */}
+                                {(log.errorMessage || log.errorCode) && (
                                   <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg mb-4">
-                                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
-                                    <div>
-                                      <div className="text-sm font-medium text-red-800">Error</div>
+                                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium text-red-800">
+                                        {log.errorCode ? `Error Code: ${log.errorCode}` : 'Error'}
+                                      </div>
                                       <div className="text-sm text-red-600">{log.errorMessage}</div>
                                     </div>
                                   </div>
                                 )}
 
-                                {log.responseBody && (
-                                  <div>
+                                {/* Response Body - for errors or success with response */}
+                                {log.responseBody && Object.keys(log.responseBody).length > 0 && (
+                                  <div className="mt-4">
                                     <div className="flex items-center justify-between mb-2">
                                       <span className="text-sm font-medium text-gray-700">Response Body</span>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          copyToClipboard(log.responseBody!, `res-${log.id}`);
+                                          copyToClipboard(JSON.stringify(log.responseBody, null, 2), `res-${log.id}`);
                                         }}
                                         className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                                       >
                                         {copied === `res-${log.id}` ? 'Copied!' : <><Copy className="w-3 h-3" /> Copy</>}
                                       </button>
                                     </div>
-                                    <pre className="bg-gray-900 rounded-lg p-3 text-xs text-green-400 font-mono overflow-x-auto">
-                                      {JSON.stringify(JSON.parse(log.responseBody), null, 2)}
+                                    <pre className={`rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-64 ${
+                                      log.status >= 400
+                                        ? 'bg-red-900 text-red-200'
+                                        : 'bg-gray-900 text-green-400'
+                                    }`}>
+                                      {JSON.stringify(log.responseBody, null, 2)}
                                     </pre>
+                                  </div>
+                                )}
+
+                                {/* Success Response - only show if no response body */}
+                                {log.status >= 200 && log.status < 300 && !log.responseBody && (
+                                  <div className="flex items-start gap-2 p-3 bg-emerald-50 rounded-lg">
+                                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                      <div className="text-sm font-medium text-emerald-800">Request Successful</div>
+                                      <div className="text-sm text-emerald-600">
+                                        QR code generated successfully in {log.responseTime}ms
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
                               </div>
