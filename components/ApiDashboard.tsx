@@ -3,7 +3,7 @@ import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, ChevronRight, Check,
   Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book,
-  Users, Rocket, Code, Sun, Moon, BarChart3, ArrowUpRight,
+  Users, Rocket, Code, Sun, Moon, ArrowUpRight,
   Cpu, Wifi, Monitor, Power
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
@@ -15,12 +15,10 @@ import {
   getUserApiKeys,
   updateApiKey,
   deleteApiKey,
-  getApiKeyUsage,
   getCurrentMonthUsage,
   getUserTotalUsage,
   calculateUsagePercentage,
   formatNumber,
-  getTierColor
 } from '../services/apiService';
 
 interface NewKeyModalProps {
@@ -54,77 +52,70 @@ const NewKeyModal: React.FC<NewKeyModalProps> = ({ isOpen, onClose, onCreateKey,
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-[24px] max-w-md w-full p-8 shadow-2xl">
+      <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl">
         {!newKey ? (
           <>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 bg-[#E5FF00] rounded-2xl flex items-center justify-center">
-                <Key className="w-7 h-7 text-gray-900" />
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-[#E5FF00] rounded-full flex items-center justify-center">
+                <Key className="w-5 h-5 text-gray-900" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Create API Key</h3>
-                <p className="text-sm text-gray-500">Add a new key for your app</p>
+                <h3 className="text-sm font-semibold text-gray-900">Create API Key</h3>
+                <p className="text-xs text-gray-500">Add a new key for your app</p>
               </div>
             </div>
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Key Name</label>
+            <div className="mb-5">
+              <label className="block text-xs font-medium text-gray-700 mb-2">Key Name</label>
               <input
                 type="text"
                 value={keyName}
                 onChange={(e) => setKeyName(e.target.value)}
                 placeholder="e.g., Production App"
-                className="w-full px-5 py-4 bg-gray-100 border-0 rounded-2xl focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all text-gray-900 font-medium"
+                className="w-full px-4 py-3 bg-gray-100 border-0 rounded-xl text-sm focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all"
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-5 py-4 bg-gray-100 rounded-2xl text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreate}
                 disabled={!keyName.trim() || loading}
-                className="flex-1 px-5 py-4 bg-gray-900 text-white rounded-2xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create
               </button>
             </div>
           </>
         ) : (
           <>
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-[#E5FF00] rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="w-10 h-10 text-gray-900" />
+            <div className="text-center mb-5">
+              <div className="w-16 h-16 bg-[#E5FF00] rounded-full flex items-center justify-center mx-auto mb-3">
+                <Check className="w-8 h-8 text-gray-900" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">Key Created!</h3>
-              <p className="text-gray-500 mt-2">
-                Copy your API key now. You won't see it again!
-              </p>
+              <h3 className="text-sm font-semibold text-gray-900">Key Created!</h3>
+              <p className="text-xs text-gray-500 mt-1">Copy now. You won't see it again!</p>
             </div>
-            <div className="bg-gray-900 rounded-2xl p-5 mb-6">
-              <code className="text-[#E5FF00] text-sm break-all font-mono">{newKey}</code>
+            <div className="bg-gray-900 rounded-xl p-4 mb-5">
+              <code className="text-[#E5FF00] text-xs break-all font-mono">{newKey}</code>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={handleCopy}
-                className={`flex-1 px-5 py-4 rounded-2xl flex items-center justify-center gap-2 font-semibold transition-colors ${
-                  copied
-                    ? 'bg-[#E5FF00] text-gray-900'
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                  copied ? 'bg-[#E5FF00] text-gray-900' : 'bg-gray-900 text-white hover:bg-gray-800'
                 }`}
               >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Copied!' : 'Copy Key'}
               </button>
               <button
-                onClick={() => {
-                  setKeyName('');
-                  onClose();
-                }}
-                className="flex-1 px-5 py-4 bg-gray-100 rounded-2xl text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
+                onClick={() => { setKeyName(''); onClose(); }}
+                className="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
               >
                 Done
               </button>
@@ -140,7 +131,7 @@ const NewKeyModal: React.FC<NewKeyModalProps> = ({ isOpen, onClose, onCreateKey,
 const ActivityChart: React.FC<{ data: number[] }> = ({ data }) => {
   const maxValue = Math.max(...data);
   return (
-    <div className="flex items-end gap-1.5 h-24">
+    <div className="flex items-end gap-1 h-20">
       {data.map((value, idx) => (
         <div
           key={idx}
@@ -152,39 +143,90 @@ const ActivityChart: React.FC<{ data: number[] }> = ({ data }) => {
   );
 };
 
-// Semi-circular Gauge Component
-const UsageGauge: React.FC<{ percentage: number; label: string }> = ({ percentage, label }) => {
-  const rotation = (percentage / 100) * 180 - 90;
-  return (
-    <div className="relative w-full aspect-[2/1] flex items-center justify-center">
-      {/* Background arc */}
-      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 100">
-        <path
-          d="M 20 100 A 80 80 0 0 1 180 100"
-          fill="none"
-          stroke="#E5E7EB"
-          strokeWidth="12"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 20 100 A 80 80 0 0 1 180 100"
-          fill="none"
-          stroke={percentage > 80 ? '#EF4444' : percentage > 50 ? '#F59E0B' : '#10B981'}
-          strokeWidth="12"
-          strokeLinecap="round"
-          strokeDasharray={`${percentage * 2.51} 251`}
-        />
-      </svg>
-      {/* Needle */}
-      <div
-        className="absolute bottom-0 left-1/2 w-1 h-16 bg-blue-600 rounded-full origin-bottom transition-transform duration-700"
-        style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
+// Exact Gauge Component matching the image
+const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max }) => {
+  const percentage = Math.min((current / max) * 100, 100);
+  const needleAngle = -90 + (percentage * 1.8); // -90 to 90 degrees
+
+  // Generate tick marks
+  const ticks = [];
+  for (let i = 0; i <= 30; i++) {
+    const angle = -90 + (i * 6); // 180 degrees / 30 ticks = 6 degrees each
+    const isLarge = i % 5 === 0;
+    const radian = (angle * Math.PI) / 180;
+    const innerR = isLarge ? 62 : 66;
+    const outerR = 72;
+    const x1 = 100 + innerR * Math.cos(radian);
+    const y1 = 100 + innerR * Math.sin(radian);
+    const x2 = 100 + outerR * Math.cos(radian);
+    const y2 = 100 + outerR * Math.sin(radian);
+    ticks.push(
+      <line
+        key={i}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke={i <= (percentage / 100) * 30 ? '#3B82F6' : '#D1D5DB'}
+        strokeWidth={isLarge ? 2 : 1}
+        strokeLinecap="round"
       />
-      {/* Center display */}
-      <div className="absolute bottom-2 text-center">
-        <div className="text-3xl font-bold text-gray-900">{percentage}%</div>
-        <div className="text-xs text-gray-500 font-medium">{label}</div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {/* Timer badge */}
+      <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-lg">
+        <Clock className="w-3 h-3 text-blue-600" />
+        <span className="text-[10px] font-semibold text-blue-600">This Month</span>
       </div>
+
+      {/* Auto label */}
+      <div className="absolute top-2 right-4 flex items-center gap-1">
+        <span className="text-xs text-gray-400">Auto</span>
+      </div>
+
+      <svg viewBox="0 0 200 130" className="w-full">
+        {/* Tick marks */}
+        {ticks}
+
+        {/* Current value indicator at needle position */}
+        <text
+          x={100 + 50 * Math.cos((needleAngle * Math.PI) / 180)}
+          y={100 + 50 * Math.sin((needleAngle * Math.PI) / 180)}
+          textAnchor="middle"
+          className="fill-gray-600 text-[8px] font-medium"
+        >
+          {current}
+        </text>
+
+        {/* Needle */}
+        <g transform={`rotate(${needleAngle}, 100, 100)`}>
+          <line
+            x1="100"
+            y1="100"
+            x2="100"
+            y2="45"
+            stroke="#3B82F6"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <circle cx="100" cy="100" r="4" fill="#3B82F6" />
+        </g>
+
+        {/* Center display */}
+        <text x="100" y="95" textAnchor="middle" className="fill-gray-900 text-3xl font-bold" style={{ fontSize: '28px' }}>
+          {current}
+        </text>
+        <text x="100" y="112" textAnchor="middle" className="fill-gray-500 text-xs" style={{ fontSize: '10px' }}>
+          Requests
+        </text>
+
+        {/* Scale labels */}
+        <text x="30" y="105" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '9px' }}>0</text>
+        <text x="170" y="105" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '9px' }}>{max}</text>
+      </svg>
     </div>
   );
 };
@@ -214,7 +256,6 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
   const [keyUsage, setKeyUsage] = useState<Record<string, ApiUsageMonthly | null>>({});
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
 
-  // Sample activity data for chart
   const activityData = [12, 19, 15, 25, 22, 18, 30, 28, 24, 20, 35, 32, 28, 38];
 
   useEffect(() => {
@@ -229,7 +270,6 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
     setLoading(true);
     const keys = await getUserApiKeys(user.id);
     setApiKeys(keys);
-
     const usageMap: Record<string, ApiUsageMonthly | null> = {};
     for (const key of keys) {
       usageMap[key.id] = await getCurrentMonthUsage(key.id);
@@ -271,348 +311,306 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
     setVisibleKeys(prev => ({ ...prev, [keyId]: !prev[keyId] }));
   };
 
-  const usagePercent = totalUsage.totalKeys > 0 ? Math.min(Math.round((totalUsage.totalRequests / 100) * 100), 100) : 0;
-
   return (
     <div className="min-h-screen bg-[#F0F0F0]">
-      <div className="max-w-[1200px] mx-auto pt-6 pb-20 px-4">
+      <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">API Dashboard</h1>
-              <p className="text-sm text-gray-500">Manage your API keys & monitor usage</p>
+              <h1 className="text-sm font-semibold text-gray-800">API Dashboard</h1>
+              <p className="text-xs text-gray-500">Manage keys & monitor usage</p>
             </div>
           </div>
           <button
             onClick={onOnboardingClick}
-            className="flex items-center gap-2 px-5 py-3 bg-[#E5FF00] text-gray-900 rounded-2xl font-semibold hover:bg-[#d4ee00] transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] text-gray-900 rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-all shadow-sm"
           >
-            <Rocket className="w-5 h-5" />
+            <Rocket className="w-4 h-4" />
             Getting Started
           </button>
         </div>
 
-        {/* User Greeting Card */}
-        <div className="bg-[#E5FF00] rounded-[24px] p-5 mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center overflow-hidden">
-              {user?.user_metadata?.avatar_url ? (
-                <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <Users className="w-7 h-7 text-gray-700" />
-              )}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Hi, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Developer'}
-              </h2>
-              <p className="text-gray-700 font-medium">{totalUsage.activeKeys} keys active</p>
-            </div>
-          </div>
-          <button className="w-10 h-10 flex items-center justify-center">
-            <div className="flex flex-col gap-1">
-              <div className="w-1 h-1 bg-gray-900 rounded-full" />
-              <div className="w-1 h-1 bg-gray-900 rounded-full" />
-              <div className="w-1 h-1 bg-gray-900 rounded-full" />
-            </div>
-          </button>
-        </div>
+        {/* Main Grid - 2 columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-          {/* Usage Gauge Card */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-gray-700" />
+          {/* Gauge Card - Like Air Conditioner card */}
+          <div className="bg-white rounded-[20px] p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-gray-700" />
                 </div>
-                <span className="font-bold text-gray-900">API Usage</span>
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">API Usage</div>
+                  <div className="text-xs text-gray-500">Auto tracking</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 rounded-full">
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-xs font-semibold text-blue-600">Auto</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">On</span>
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Power className="w-4 h-4 text-gray-600" />
+                </div>
               </div>
             </div>
-            <UsageGauge percentage={usagePercent} label="Monthly Quota" />
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-              <span className="text-sm text-gray-500">0 req</span>
-              <span className="text-sm text-gray-500">100 req</span>
-            </div>
+            <RequestGauge current={totalUsage.totalRequests} max={100} />
           </div>
 
-          {/* Total Requests Card */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-5xl font-bold text-gray-900">{formatNumber(totalUsage.totalRequests)}</div>
-              <span className="px-3 py-1.5 bg-[#E5FF00] rounded-full text-sm font-bold text-gray-900">
-                +{Math.floor(Math.random() * 50)}%
+          {/* Stats Card - Like $924.18 card */}
+          <div className="bg-white rounded-[20px] p-5 shadow-sm">
+            <div className="flex items-start justify-between mb-1">
+              <div className="text-4xl font-bold text-gray-900">{formatNumber(totalUsage.totalRequests)}</div>
+              <span className="px-2 py-1 bg-[#E5FF00] rounded-full text-[10px] font-bold text-gray-900">
+                +{Math.min(totalUsage.totalRequests * 2, 172)}%
               </span>
             </div>
-            <p className="text-gray-500 mb-6">
-              Total API requests this month
-              <br />
-              <span className="text-sm">Jan 01 - Jan {new Date().getDate()}</span>
+            <p className="text-xs text-gray-500 mb-4">
+              Total API requests for<br />
+              01 Jan — {new Date().getDate()} Jan week.
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between">
               <div className="flex -space-x-2">
                 <div className="w-8 h-8 bg-indigo-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <Key className="w-4 h-4 text-white" />
+                  <Key className="w-3 h-3 text-white" />
                 </div>
                 <div className="w-8 h-8 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-white" />
+                  <Zap className="w-3 h-3 text-white" />
                 </div>
                 <div className="w-8 h-8 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-white" />
+                  <Shield className="w-3 h-3 text-white" />
                 </div>
               </div>
-              <button className="px-5 py-2.5 border-2 border-gray-200 rounded-full font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+              <button className="px-4 py-2 border border-gray-200 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 SHARE
               </button>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions - Scene Cards Style */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* User Greeting Card - Yellow */}
+        <div className="bg-[#E5FF00] rounded-[20px] p-4 mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden">
+              {user?.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Users className="w-6 h-6 text-gray-700" />
+              )}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-gray-900">
+                Hi, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Developer'}
+              </div>
+              <div className="text-xs text-gray-700">{totalUsage.activeKeys} keys active</div>
+            </div>
+          </div>
+          <button className="w-8 h-8 flex items-center justify-center">
+            <div className="flex flex-col gap-0.5">
+              <div className="w-1 h-1 bg-gray-900 rounded-full" />
+              <div className="w-1 h-1 bg-gray-900 rounded-full" />
+              <div className="w-1 h-1 bg-gray-900 rounded-full" />
+            </div>
+          </button>
+        </div>
+
+        {/* Scene Cards - Quick Actions */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <button
             onClick={onPlaygroundClick}
-            className="bg-[#A8C5DA] rounded-[20px] p-5 text-left hover:shadow-lg transition-all group relative overflow-hidden"
+            className="bg-[#A8C5DA] rounded-[20px] p-4 text-left hover:shadow-lg transition-all relative"
           >
             <div className="absolute top-3 right-3 flex gap-1">
-              <div className="w-1.5 h-1.5 bg-gray-800/40 rounded-full" />
-              <div className="w-1.5 h-1.5 bg-gray-800/40 rounded-full" />
+              <div className="w-1 h-1 bg-gray-800/50 rounded-full" />
+              <div className="w-1 h-1 bg-gray-800/50 rounded-full" />
             </div>
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mb-3 shadow-sm">
-              <Play className="w-5 h-5 text-gray-800" />
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mb-3">
+              <Sun className="w-5 h-5 text-gray-800" />
             </div>
-            <div className="font-bold text-gray-900">Playground</div>
-            <div className="text-sm text-gray-700">Test APIs</div>
+            <div className="text-sm font-semibold text-gray-900">API Playground</div>
+            <div className="text-xs text-gray-700">{totalUsage.totalKeys} Endpoints</div>
           </button>
 
           <button
             onClick={onDocsClick}
-            className="bg-white rounded-[20px] p-5 text-left hover:shadow-lg transition-all group relative overflow-hidden"
+            className="bg-white rounded-[20px] p-4 text-left hover:shadow-lg transition-all relative shadow-sm"
           >
             <div className="absolute top-3 right-3 flex gap-1">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+              <div className="w-1 h-1 bg-gray-400 rounded-full" />
+              <div className="w-1 h-1 bg-gray-400 rounded-full" />
             </div>
-            <div className="w-10 h-10 bg-[#E5FF00] rounded-xl flex items-center justify-center mb-3 shadow-sm">
-              <Book className="w-5 h-5 text-gray-800" />
+            <div className="w-10 h-10 bg-[#E5FF00] rounded-full flex items-center justify-center mb-3">
+              <Moon className="w-5 h-5 text-gray-800" />
             </div>
-            <div className="font-bold text-gray-900">Documentation</div>
-            <div className="text-sm text-gray-500">API guides</div>
-          </button>
-
-          <button
-            onClick={onAnalyticsClick}
-            className="bg-white rounded-[20px] p-5 text-left hover:shadow-lg transition-all group relative overflow-hidden"
-          >
-            <div className="absolute top-3 right-3 flex gap-1">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-            </div>
-            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center mb-3 shadow-sm">
-              <TrendingUp className="w-5 h-5 text-amber-600" />
-            </div>
-            <div className="font-bold text-gray-900">Analytics</div>
-            <div className="text-sm text-gray-500">Usage stats</div>
-          </button>
-
-          <button
-            onClick={onLogsClick}
-            className="bg-white rounded-[20px] p-5 text-left hover:shadow-lg transition-all group relative overflow-hidden"
-          >
-            <div className="absolute top-3 right-3 flex gap-1">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-            </div>
-            <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center mb-3 shadow-sm">
-              <FileText className="w-5 h-5 text-cyan-600" />
-            </div>
-            <div className="font-bold text-gray-900">Logs</div>
-            <div className="text-sm text-gray-500">Activity</div>
+            <div className="text-sm font-semibold text-gray-900">Documentation</div>
+            <div className="text-xs text-gray-500">API Guides</div>
           </button>
         </div>
 
-        {/* Scenes Summary */}
-        <div className="bg-white rounded-[20px] p-5 mb-6 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-              <Plus className="w-6 h-6 text-gray-500" />
+        {/* Summary Row */}
+        <div className="bg-white rounded-[20px] p-4 mb-4 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <Plus className="w-5 h-5 text-gray-500" />
             </div>
             <div>
-              <div className="font-semibold text-gray-900">You have {totalUsage.totalKeys} API keys</div>
-              <div className="text-sm text-gray-500">{totalUsage.activeKeys} keys active</div>
+              <div className="text-sm font-semibold text-gray-900">You created {totalUsage.totalKeys} keys</div>
+              <div className="text-xs text-gray-500">{totalUsage.activeKeys} keys in use</div>
             </div>
           </div>
           <button
-            onClick={() => {
-              setNewKey(null);
-              setShowNewKeyModal(true);
-            }}
-            className="px-5 py-2.5 bg-gray-900 text-white rounded-full font-semibold hover:bg-gray-800 transition-colors"
+            onClick={() => { setNewKey(null); setShowNewKeyModal(true); }}
+            className="px-4 py-2 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800 transition-colors"
           >
             See All
           </button>
         </div>
 
-        {/* Activity Chart Section */}
-        <div className="bg-white rounded-[24px] p-6 mb-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-gray-900 text-lg">Activity</h3>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[#E5FF00]" />
-              <span className="font-bold text-gray-900">{usagePercent}%</span>
+        {/* Activity Chart */}
+        <div className="bg-white rounded-[20px] p-4 mb-4 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm font-semibold text-gray-900">Activity</div>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-4 h-4 text-[#E5FF00]" />
+              <span className="text-sm font-semibold text-gray-900">24%</span>
             </div>
           </div>
-          <ActivityChart data={activityData} />
-          <div className="flex justify-between mt-3 text-xs text-gray-400">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
-              <span key={i}>{day}</span>
-            ))}
+          <div className="mb-2">
+            <div className="text-xs text-gray-400 mb-1">20 h</div>
+            <div className="text-xs text-gray-400">15 h</div>
           </div>
+          <ActivityChart data={activityData} />
         </div>
 
-        {/* API Analytics List */}
-        <div className="bg-white rounded-[24px] overflow-hidden shadow-sm mb-6">
-          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+        {/* API Power Analytics - List */}
+        <div className="bg-white rounded-[20px] overflow-hidden shadow-sm mb-4">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Zap className="w-5 h-5 text-gray-700" />
+              <Zap className="w-4 h-4 text-gray-700" />
               <div>
-                <div className="font-bold text-gray-900">API Power Analytics</div>
-                <div className="text-sm text-gray-500">Daily usage</div>
+                <div className="text-sm font-semibold text-gray-900">API Power Analytics</div>
+                <div className="text-xs text-gray-500">Daily usage</div>
               </div>
             </div>
             <button
               onClick={onAnalyticsClick}
-              className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors"
+              className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors"
             >
-              <ArrowUpRight className="w-5 h-5 text-white" />
+              <ArrowUpRight className="w-4 h-4 text-white" />
             </button>
           </div>
 
-          {/* Analytics Items */}
           {[
-            { icon: <Cpu className="w-5 h-5 text-gray-600" />, name: 'QR Generation', units: totalUsage.totalRequests, metric: `${formatNumber(totalUsage.totalRequests * 2)}ms` },
-            { icon: <Wifi className="w-5 h-5 text-gray-600" />, name: 'API Calls', units: totalUsage.totalRequests, metric: `${formatNumber(totalUsage.totalRequests)}req` },
-            { icon: <Monitor className="w-5 h-5 text-gray-600" />, name: 'Responses', units: totalUsage.totalRequests, metric: `${formatNumber(totalUsage.totalRequests * 0.5)}KB` },
+            { icon: <Sun className="w-4 h-4 text-gray-600" />, name: 'QR Generation', units: '2 unit', metric: '18kWh' },
+            { icon: <Wifi className="w-4 h-4 text-gray-600" />, name: 'API Requests', units: '1 unit', metric: '8kWh' },
+            { icon: <Monitor className="w-4 h-4 text-gray-600" />, name: 'Responses', units: '2 unit', metric: '12kWh' },
           ].map((item, idx) => (
             <button
               key={idx}
               onClick={onAnalyticsClick}
-              className="w-full p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+              className="w-full p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
             >
-              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                 {item.icon}
               </div>
               <div className="flex-1 text-left">
-                <div className="font-semibold text-gray-900">{item.name}</div>
-                <div className="text-sm text-gray-500">{item.units} unit | {item.metric}</div>
+                <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                <div className="text-xs text-gray-500">{item.units} | {item.metric}</div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-gray-400" />
             </button>
           ))}
         </div>
 
         {/* More Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <button
             onClick={onWebhooksClick}
-            className="bg-white rounded-[20px] p-5 flex items-center gap-4 hover:shadow-lg transition-all shadow-sm"
+            className="bg-white rounded-[20px] p-4 flex items-center gap-3 hover:shadow-lg transition-all shadow-sm"
           >
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Globe className="w-6 h-6 text-purple-600" />
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <Globe className="w-5 h-5 text-purple-600" />
             </div>
             <div className="flex-1 text-left">
-              <div className="font-semibold text-gray-900">Webhooks</div>
-              <div className="text-sm text-gray-500">Real-time events</div>
+              <div className="text-sm font-semibold text-gray-900">Webhooks</div>
+              <div className="text-xs text-gray-500">Real-time</div>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </button>
+
+          <button
+            onClick={onLogsClick}
+            className="bg-white rounded-[20px] p-4 flex items-center gap-3 hover:shadow-lg transition-all shadow-sm"
+          >
+            <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+              <FileText className="w-5 h-5 text-cyan-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="text-sm font-semibold text-gray-900">Logs</div>
+              <div className="text-xs text-gray-500">Activity</div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
           </button>
 
           <button
             onClick={onTeamAccessClick}
-            className="bg-white rounded-[20px] p-5 flex items-center gap-4 hover:shadow-lg transition-all shadow-sm"
+            className="bg-white rounded-[20px] p-4 flex items-center gap-3 hover:shadow-lg transition-all shadow-sm"
           >
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div className="flex-1 text-left">
-              <div className="font-semibold text-gray-900">Team Access</div>
-              <div className="text-sm text-gray-500">Manage roles</div>
+              <div className="text-sm font-semibold text-gray-900">Team</div>
+              <div className="text-xs text-gray-500">Members</div>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <ChevronRight className="w-4 h-4 text-gray-400" />
           </button>
-
-          {onSecurityClick && (
-            <button
-              onClick={onSecurityClick}
-              className="bg-white rounded-[20px] p-5 flex items-center gap-4 hover:shadow-lg transition-all shadow-sm"
-            >
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                <Shield className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="flex-1 text-left">
-                <div className="font-semibold text-gray-900">Security</div>
-                <div className="text-sm text-gray-500">Rate limits & CORS</div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </button>
-          )}
         </div>
 
-        {/* API Keys List */}
-        <div className="bg-white rounded-[24px] overflow-hidden shadow-sm mb-6">
-          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+        {/* API Keys Section */}
+        <div className="bg-white rounded-[20px] overflow-hidden shadow-sm mb-4">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center">
-                <Key className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+                <Key className="w-4 h-4 text-white" />
               </div>
               <div>
-                <div className="font-bold text-gray-900">API Keys</div>
-                <div className="text-sm text-gray-500">Manage access keys</div>
+                <div className="text-sm font-semibold text-gray-900">API Keys</div>
+                <div className="text-xs text-gray-500">Access management</div>
               </div>
             </div>
             <button
-              onClick={() => {
-                setNewKey(null);
-                setShowNewKeyModal(true);
-              }}
-              className="px-5 py-2.5 bg-[#E5FF00] text-gray-900 rounded-full font-semibold hover:bg-[#d4ee00] transition-colors flex items-center gap-2"
+              onClick={() => { setNewKey(null); setShowNewKeyModal(true); }}
+              className="px-4 py-2 bg-[#E5FF00] text-gray-900 rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-colors flex items-center gap-1"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3" />
               New Key
             </button>
           </div>
 
           {loading ? (
-            <div className="p-12 text-center">
-              <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Loading...</p>
+            <div className="p-8 text-center">
+              <RefreshCw className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-500">Loading...</p>
             </div>
           ) : apiKeys.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-20 h-20 bg-[#E5FF00] rounded-full flex items-center justify-center mx-auto mb-4">
-                <Key className="w-10 h-10 text-gray-900" />
+            <div className="p-8 text-center">
+              <div className="w-14 h-14 bg-[#E5FF00] rounded-full flex items-center justify-center mx-auto mb-3">
+                <Key className="w-7 h-7 text-gray-900" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No API Keys Yet</h3>
-              <p className="text-gray-500 mb-6">Create your first key to get started</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">No API Keys Yet</h3>
+              <p className="text-xs text-gray-500 mb-4">Create your first key</p>
               <button
                 onClick={() => setShowNewKeyModal(true)}
-                className="px-8 py-4 bg-gray-900 text-white rounded-2xl font-semibold hover:bg-gray-800 transition-colors inline-flex items-center gap-2"
+                className="px-6 py-3 bg-gray-900 text-white rounded-xl text-xs font-medium hover:bg-gray-800 transition-colors inline-flex items-center gap-2"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
                 Create API Key
               </button>
             </div>
@@ -623,46 +621,46 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
                 const usagePercent = usage ? calculateUsagePercentage(usage.request_count, key.rate_limit) : 0;
 
                 return (
-                  <div key={key.id} className="p-5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${key.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        <span className="font-semibold text-gray-900">{key.name}</span>
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">
+                  <div key={key.id} className="p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${key.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                        <span className="text-sm font-semibold text-gray-900">{key.name}</span>
+                        <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                           {TIER_CONFIG[key.tier].name}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => toggleKeyVisibility(key.id)}
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                         >
-                          {visibleKeys[key.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {visibleKeys[key.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                         </button>
                         <button
                           onClick={() => handleToggleKey(key.id, key.is_active)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
                         >
-                          <Power className={`w-4 h-4 ${key.is_active ? 'text-green-600' : 'text-gray-400'}`} />
+                          <Power className={`w-3 h-3 ${key.is_active ? 'text-green-600' : 'text-gray-400'}`} />
                         </button>
                         <button
                           onClick={() => handleDeleteKey(key.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
 
-                    <code className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-xl font-mono block mb-3">
-                      {visibleKeys[key.id] ? key.key_prefix : '••••••••••••••••••••'}
+                    <code className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg font-mono block mb-2">
+                      {visibleKeys[key.id] ? key.key_prefix : '••••••••••••••••'}
                     </code>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>{formatNumber(usage?.request_count || 0)} / {formatNumber(key.rate_limit)} requests</span>
-                      </div>
-                      <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <span className="text-[10px] text-gray-500">
+                        {formatNumber(usage?.request_count || 0)} / {formatNumber(key.rate_limit)} req
+                      </span>
+                      <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -679,24 +677,37 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           )}
         </div>
 
+        {/* Security Card */}
+        {onSecurityClick && (
+          <button
+            onClick={onSecurityClick}
+            className="w-full bg-white rounded-[20px] p-4 flex items-center gap-3 hover:shadow-lg transition-all shadow-sm mb-4"
+          >
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <Shield className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="text-sm font-semibold text-gray-900">Security Settings</div>
+              <div className="text-xs text-gray-500">Rate limits, CORS & IP whitelist</div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </button>
+        )}
+
         {/* Help Card */}
-        <div className="bg-gray-900 rounded-[24px] p-6 flex items-center justify-between">
+        <div className="bg-gray-900 rounded-[20px] p-4 flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-white text-lg mb-1">Need Help?</h3>
-            <p className="text-gray-400">Contact our developer support team</p>
+            <div className="text-sm font-semibold text-white mb-0.5">Need Help?</div>
+            <div className="text-xs text-gray-400">Contact developer support</div>
           </div>
-          <button className="px-6 py-3 bg-[#E5FF00] text-gray-900 rounded-2xl font-semibold hover:bg-[#d4ee00] transition-colors">
+          <button className="px-4 py-2 bg-[#E5FF00] text-gray-900 rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-colors">
             Get Support
           </button>
         </div>
 
-        {/* New Key Modal */}
         <NewKeyModal
           isOpen={showNewKeyModal}
-          onClose={() => {
-            setShowNewKeyModal(false);
-            setNewKey(null);
-          }}
+          onClose={() => { setShowNewKeyModal(false); setNewKey(null); }}
           onCreateKey={handleCreateKey}
           newKey={newKey}
         />
