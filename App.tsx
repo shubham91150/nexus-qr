@@ -1275,7 +1275,7 @@ const AppContent: React.FC = () => {
         window.history.pushState({}, '', '/api/webhooks');
       }}
       onDocsClick={() => {
-        setView('api-docs-interactive');
+        setView('api-docs');
         window.history.pushState({}, '', '/api/docs');
       }}
       onPlaygroundClick={() => {
