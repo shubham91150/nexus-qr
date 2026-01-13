@@ -567,6 +567,8 @@ export interface ApiRequestLog {
   api_key_name: string;
   api_key_prefix: string;
   created_at: string;
+  request_body?: Record<string, unknown> | null;
+  error_code?: number | null;
 }
 
 /**
@@ -600,6 +602,8 @@ export async function getApiLogs(
         user_agent,
         api_key_id,
         created_at,
+        request_body,
+        error_code,
         api_keys!left(name, key_prefix)
       `)
       .eq('user_id', userId)
@@ -644,6 +648,8 @@ export async function getApiLogs(
       api_key_name: log.api_keys?.name || 'Unknown',
       api_key_prefix: log.api_keys?.key_prefix || 'nxqr_***',
       created_at: log.created_at,
+      request_body: log.request_body || null,
+      error_code: log.error_code || null,
     }));
   } catch (error) {
     console.error('Error fetching API logs:', error);
