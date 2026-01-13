@@ -669,7 +669,9 @@ async function logApiUsage(
   responseTimeMs: number,
   ipAddress: string,
   userAgent: string | null,
-  requestId: string
+  requestId: string,
+  requestBody?: Record<string, unknown> | null,
+  errorCode?: string | null
 ): Promise<void> {
   try {
     // Insert detailed log into api_usage table
@@ -682,7 +684,9 @@ async function logApiUsage(
       response_time_ms: responseTimeMs,
       ip_address: ipAddress,
       user_agent: userAgent,
-      request_id: requestId
+      request_id: requestId,
+      request_body: requestBody || null,
+      error_code: errorCode ? parseInt(errorCode.replace(/\D/g, '')) || null : null
     });
 
     if (logError) {
@@ -1386,6 +1390,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Log API usage - MUST await to ensure logging completes before response
     const responseTime = Date.now() - startTime;
+
+    // Extract error code from response if it's an error
+    const errorCode = result.status >= 400 && result.data?.error?.code
+      ? result.data.error.code
+      : null;
+
     await logApiUsage(
       db,
       keyValidation.key_id!,
@@ -1396,7 +1406,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       responseTime,
       clientIP,
       req.headers['user-agent'] as string || null,
-      requestId
+      requestId,
+      req.body || null,  // Log request body
+      errorCode           // Log error code if any
     );
 
     res.setHeader('X-Response-Time', `${responseTime}ms`);
