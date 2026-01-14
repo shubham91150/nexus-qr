@@ -223,46 +223,52 @@ const ApiKeyRotation: React.FC<ApiKeyRotationProps> = ({ userId, onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
-              >
-                <ChevronDown className="w-5 h-5 text-gray-600 rotate-90" />
-              </button>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <RefreshCw className="w-6 h-6 text-indigo-600" />
-                API Key Rotation
-              </h1>
-              <p className="text-gray-500 text-sm">Securely rotate your API keys with zero downtime</p>
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="w-10 h-10 bg-[#F0F0F0] rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                >
+                  <ChevronDown className="w-5 h-5 text-gray-600 rotate-90" />
+                </button>
+              )}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <RefreshCw className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-semibold text-gray-900">API Key Rotation</h1>
+                  <p className="text-xs text-gray-500">Securely rotate your API keys with zero downtime</p>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <button
-            onClick={() => setShowHistoryModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
-          >
-            <History className="w-4 h-4" />
-            Rotation History
-          </button>
+            <button
+              onClick={() => setShowHistoryModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] rounded-full hover:bg-[#d4ee00] transition-colors text-xs font-medium text-gray-900"
+            >
+              <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
+                <History className="w-3 h-3" />
+              </div>
+              Rotation History
+            </button>
+          </div>
         </div>
 
         {/* Info Banner */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-6 border border-indigo-100">
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-6">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
               <Shield className="w-5 h-5 text-indigo-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Zero-Downtime Key Rotation</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-semibold text-gray-900 mb-1 text-sm">Zero-Downtime Key Rotation</h3>
+              <p className="text-xs text-gray-600">
                 When you rotate a key, both the old and new keys work during the grace period.
                 This allows you to update your applications without any service interruption.
               </p>
@@ -273,25 +279,25 @@ const ApiKeyRotation: React.FC<ApiKeyRotationProps> = ({ userId, onBack }) => {
         {/* API Keys List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <div className="bg-white rounded-[20px] shadow-sm p-12 text-center">
               <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Loading API keys...</p>
+              <p className="text-gray-500 text-sm">Loading API keys...</p>
             </div>
           ) : apiKeys.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <div className="bg-white rounded-[20px] shadow-sm p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Key className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No API Keys Yet</h3>
-              <p className="text-gray-500">Create an API key from the API Dashboard to start using key rotation.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">No API Keys Yet</h3>
+              <p className="text-xs text-gray-500">Create an API key from the API Dashboard to start using key rotation.</p>
             </div>
           ) : apiKeys.map((key) => (
             <div
               key={key.id}
-              className={`bg-white rounded-2xl shadow-sm border transition-all ${
-                key.status === 'rotating' ? 'border-amber-200' :
-                key.status === 'deprecated' ? 'border-orange-200' :
-                'border-gray-100'
+              className={`bg-white rounded-[20px] shadow-sm transition-all ${
+                key.status === 'rotating' ? 'ring-2 ring-amber-200' :
+                key.status === 'deprecated' ? 'ring-2 ring-orange-200' :
+                ''
               }`}
             >
               {/* Key Header */}
