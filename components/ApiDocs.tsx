@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
-  Search, Book, Map, Layout, Users, ChevronDown, ChevronRight,
-  Copy, Check, Lightbulb, ArrowLeft, ArrowRight, ExternalLink,
-  Code, Terminal, Key, Shield, Zap, Globe, Clock, Server,
-  FileJson, Package, AlertTriangle, CheckCircle2, XCircle, Info
+  Search, Book, Key, Shield, ChevronDown, ChevronRight,
+  Copy, Check, Lightbulb, ArrowLeft, ArrowRight,
+  Code, Terminal, Zap, Globe, Clock, Server,
+  AlertTriangle, CheckCircle2, XCircle, Play, FileText
 } from 'lucide-react';
 
 // Sidebar Navigation Item
@@ -11,12 +11,11 @@ interface NavItemProps {
   icon?: React.ReactNode;
   label: string;
   active?: boolean;
-  badge?: string;
   onClick?: () => void;
   children?: React.ReactNode;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon, label, active, badge, onClick, children }) => {
+const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick, children }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = !!children;
 
@@ -29,14 +28,9 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, active, badge, onClick, 
         }`}
       >
         {icon && <span className={active ? 'text-white' : 'text-gray-400'}>{icon}</span>}
-        <span className="text-sm font-medium flex-1">{label}</span>
-        {badge && (
-          <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-medium rounded-full">
-            {badge}
-          </span>
-        )}
+        <span className="text-xs font-medium flex-1">{label}</span>
         {hasChildren && (
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? '' : '-rotate-90'}`} />
+          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${expanded ? '' : '-rotate-90'}`} />
         )}
       </button>
       {hasChildren && expanded && (
@@ -60,7 +54,7 @@ const SubNavItem: React.FC<{ label: string; active?: boolean; onClick?: () => vo
   </button>
 );
 
-// Code Block with syntax highlighting
+// Code Block
 interface CodeBlockProps {
   code: string;
   language?: string;
@@ -75,66 +69,44 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language = 'javascript' }) 
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Simple syntax highlighting
-  const highlightCode = (code: string) => {
-    return code
-      .replace(/(function|const|let|var|return|if|else|typeof|new|async|await|export|import|from)/g, '<span class="text-[#c586c0]">$1</span>')
-      .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-[#ce9178]">$1</span>')
-      .replace(/(\d+)/g, '<span class="text-[#b5cea8]">$1</span>')
-      .replace(/(\/\/.*$)/gm, '<span class="text-[#6a9955]">$1</span>')
-      .replace(/(\.\w+)\(/g, '<span class="text-[#dcdcaa]">$1</span>(')
-      .replace(/(Math|console|JSON|Promise)/g, '<span class="text-[#4ec9b0]">$1</span>');
-  };
-
   return (
     <div className="bg-[#1e1e2e] rounded-xl overflow-hidden relative group">
-      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={handleCopy}
           className="p-1.5 bg-gray-700/50 hover:bg-gray-600 rounded-lg transition-colors"
         >
-          {copied ? (
-            <Check className="w-4 h-4 text-green-400" />
-          ) : (
-            <Copy className="w-4 h-4 text-gray-400" />
-          )}
+          {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3 text-gray-400" />}
         </button>
       </div>
       <pre className="p-4 overflow-x-auto">
-        <code
-          className="text-xs font-mono leading-relaxed text-gray-300"
-          dangerouslySetInnerHTML={{ __html: highlightCode(code) }}
-        />
+        <code className="text-xs font-mono leading-relaxed text-gray-300">{code}</code>
       </pre>
     </div>
   );
 };
 
-// Tip/Callout Box
-interface TipBoxProps {
-  children: React.ReactNode;
-}
-
-const TipBox: React.FC<TipBoxProps> = ({ children }) => (
+// Tip Box
+const TipBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
     <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
       <Lightbulb className="w-4 h-4 text-amber-600" />
     </div>
     <div>
-      <div className="text-sm font-semibold text-amber-800 mb-1">Tip</div>
+      <div className="text-xs font-semibold text-amber-800 mb-1">Tip</div>
       <div className="text-xs text-amber-700">{children}</div>
     </div>
   </div>
 );
 
 // Warning Box
-const WarningBox: React.FC<TipBoxProps> = ({ children }) => (
+const WarningBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
     <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
       <AlertTriangle className="w-4 h-4 text-red-600" />
     </div>
     <div>
-      <div className="text-sm font-semibold text-red-800 mb-1">Warning</div>
+      <div className="text-xs font-semibold text-red-800 mb-1">Warning</div>
       <div className="text-xs text-red-700">{children}</div>
     </div>
   </div>
@@ -158,12 +130,12 @@ const EndpointCard: React.FC<EndpointCardProps> = ({ method, path, description, 
   };
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left"
       >
-        <span className={`${colors[method]} text-white text-[10px] font-bold px-2 py-1 rounded`}>
+        <span className={`${colors[method]} text-white text-[10px] font-bold px-2 py-0.5 rounded`}>
           {method}
         </span>
         <code className="text-xs font-mono text-gray-700 flex-1">{path}</code>
@@ -171,7 +143,7 @@ const EndpointCard: React.FC<EndpointCardProps> = ({ method, path, description, 
         <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </button>
       {expanded && (
-        <div className="border-t border-gray-100 p-4 bg-gray-50">
+        <div className="border-t border-gray-100 p-3 bg-gray-50">
           <p className="text-xs text-gray-600 mb-3 md:hidden">{description}</p>
           {children}
         </div>
@@ -186,16 +158,7 @@ interface ApiDocsProps {
 
 const ApiDocs: React.FC<ApiDocsProps> = ({ onBack }) => {
   const [activeSection, setActiveSection] = useState('quickstart');
-  const [activeTab, setActiveTab] = useState('code');
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-
-  const sections = [
-    { id: 'quickstart', label: 'Quickstart' },
-    { id: 'authentication', label: 'Authentication' },
-    { id: 'endpoints', label: 'Endpoints' },
-    { id: 'errors', label: 'Error Codes' },
-    { id: 'examples', label: 'Code Examples' },
-  ];
 
   const handleBack = () => {
     if (onBack) onBack();
@@ -203,59 +166,65 @@ const ApiDocs: React.FC<ApiDocsProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-screen p-4 hidden lg:block">
+        <aside className="w-56 bg-white border-r border-gray-200 min-h-screen p-4 hidden lg:block fixed">
           {/* Search */}
-          <div className="relative mb-6">
+          <div className="relative mb-5">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Fast search"
-              className="w-full pl-9 pr-4 py-2 bg-gray-100 border-0 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              placeholder="Search docs..."
+              className="w-full pl-9 pr-3 py-2 bg-gray-100 border-0 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
             />
           </div>
 
           {/* Main Nav */}
-          <div className="space-y-1 mb-6">
+          <div className="space-y-1 mb-5">
             <NavItem icon={<Book className="w-4 h-4" />} label="Documentation" active />
-            <NavItem icon={<Map className="w-4 h-4" />} label="Roadmap" />
-            <NavItem icon={<Layout className="w-4 h-4" />} label="Templates" />
-            <NavItem icon={<Users className="w-4 h-4" />} label="Community" />
+            <NavItem icon={<Play className="w-4 h-4" />} label="API Playground" />
+            <NavItem icon={<FileText className="w-4 h-4" />} label="Changelog" />
           </div>
 
-          {/* Intro Section */}
+          {/* Getting Started */}
           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
-            Intro
+            Getting Started
           </div>
-          <NavItem label="Getting started">
-            <SubNavItem label="Install" active={activeSection === 'quickstart'} onClick={() => setActiveSection('quickstart')} />
-            <SubNavItem label="Quickstart" onClick={() => setActiveSection('quickstart')} />
-            <SubNavItem label="Usage" onClick={() => setActiveSection('authentication')} />
-            <SubNavItem label="Layout" onClick={() => setActiveSection('endpoints')} />
-            <SubNavItem label="Themes" onClick={() => setActiveSection('examples')} />
-            <SubNavItem label="Private packages" />
+          <NavItem label="Introduction">
+            <SubNavItem label="Quick Start" active={activeSection === 'quickstart'} onClick={() => setActiveSection('quickstart')} />
+            <SubNavItem label="Authentication" active={activeSection === 'auth'} onClick={() => setActiveSection('auth')} />
+            <SubNavItem label="Rate Limits" active={activeSection === 'limits'} onClick={() => setActiveSection('limits')} />
           </NavItem>
 
-          {/* Advanced Section */}
+          {/* API Reference */}
           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4 px-3">
-            Advanced Usage
+            API Reference
           </div>
-          <NavItem label="Overview">
-            <SubNavItem label="Components" onClick={() => setActiveSection('endpoints')} />
-            <SubNavItem label="Error Handling" onClick={() => setActiveSection('errors')} />
+          <NavItem label="Endpoints">
+            <SubNavItem label="Create QR" active={activeSection === 'create'} onClick={() => setActiveSection('create')} />
+            <SubNavItem label="List QR Codes" active={activeSection === 'list'} onClick={() => setActiveSection('list')} />
+            <SubNavItem label="Get QR Code" active={activeSection === 'get'} onClick={() => setActiveSection('get')} />
+            <SubNavItem label="Update QR" active={activeSection === 'update'} onClick={() => setActiveSection('update')} />
+            <SubNavItem label="Delete QR" active={activeSection === 'delete'} onClick={() => setActiveSection('delete')} />
           </NavItem>
+
+          {/* Resources */}
+          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4 px-3">
+            Resources
+          </div>
+          <NavItem label="Error Codes" onClick={() => setActiveSection('errors')} />
+          <NavItem label="Code Examples" onClick={() => setActiveSection('examples')} />
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-screen">
+        <main className="flex-1 min-h-screen lg:ml-56">
           {/* Top Header */}
-          <header className="bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+          <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBack}
-                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors lg:hidden"
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 text-gray-600" />
               </button>
@@ -263,93 +232,52 @@ const ApiDocs: React.FC<ApiDocsProps> = ({ onBack }) => {
                 <div className="w-8 h-8 bg-[#1a1f2e] rounded-lg flex items-center justify-center">
                   <Code className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-sm font-semibold text-gray-900">NexusQR</span>
+                <span className="text-sm font-semibold text-gray-900">Nexus QR API</span>
                 <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">v1.0</span>
               </div>
-            </div>
-
-            <div className="hidden md:flex items-center gap-4">
-              <button className="text-xs text-gray-600 hover:text-gray-900">Community</button>
-              <button className="text-xs text-gray-600 hover:text-gray-900">Reference</button>
-              <button className="text-xs text-gray-600 hover:text-gray-900">Blog</button>
-              <button className="text-xs text-gray-600 hover:text-gray-900">Sign In</button>
-              <button className="px-3 py-1.5 bg-[#1a1f2e] text-white text-xs rounded-lg hover:bg-gray-800">
-                Sign Up
-              </button>
             </div>
           </header>
 
           {/* Content Area */}
-          <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
-            {/* Tabs */}
-            <div className="flex items-center gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-              {['Live example', 'Figma Design', 'Code'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab.toLowerCase())}
-                  className={`px-4 py-2 text-xs font-medium rounded-md transition-colors ${
-                    activeTab === tab.toLowerCase()
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {tab === 'Code' && <Check className="w-3 h-3 inline mr-1" />}
-                  {tab}
-                </button>
-              ))}
-            </div>
+          <div className="max-w-3xl mx-auto px-4 py-6">
 
-            {/* Quick Start Code */}
-            <div className="mb-6">
+            {/* Quick Start Section */}
+            <section className="mb-8">
+              <h1 className="text-sm font-semibold text-gray-900 mb-2">Quick Start</h1>
+              <p className="text-xs text-gray-600 mb-4">
+                Get started with the Nexus QR API in minutes. Create your first QR code with a simple API call.
+              </p>
+
               <CodeBlock
-                language="javascript"
-                code={`function createQRCode(data) {
-  if (typeof data !== 'string' || data.length === 0) {
-    return 'Invalid input';
-  }
-
-  const response = fetch('${baseUrl}/api/v1/qr', {
-    method: 'POST',
-    headers: {
-      'X-API-Key': 'nxqr_live_xxxx',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ type: 'url', content: data })
-  });
-
-  return response.json();
-}
-
-const qrCode = createQRCode('https://example.com');
-console.log('QR Code created:', qrCode);`}
+                code={`curl -X POST ${baseUrl}/api/v1/qr \\
+  -H "X-API-Key: nxqr_live_your_api_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "type": "url",
+    "content": "https://example.com",
+    "title": "My First QR Code"
+  }'`}
               />
-            </div>
+            </section>
 
-            {/* Description */}
-            <p className="text-xs text-gray-600 leading-relaxed mb-6">
-              This code defines a <code className="bg-gray-100 px-1 py-0.5 rounded text-[10px]">createQRCode</code> function that generates a QR code based on the given input. It then uses this function to create a QR code for a URL and prints the result to the console. The code includes comments and input error handling to ensure robust execution.
-            </p>
-
-            {/* Tip Box */}
+            {/* Tip */}
             <div className="mb-8">
               <TipBox>
-                You can use <a href="#" className="text-amber-700 underline font-medium">API Playground</a> to test endpoints interactively.
+                Get your API key from the <strong>API Dashboard</strong> to start making requests.
               </TipBox>
             </div>
 
-            {/* Authentication Section */}
+            {/* Authentication */}
             <section className="mb-8">
-              <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-gray-400" />
                 Authentication
               </h2>
               <p className="text-xs text-gray-600 mb-4">
-                All API requests require authentication using an API key. Include your key in the request headers.
+                Include your API key in the request header for authentication.
               </p>
               <CodeBlock
-                language="http"
-                code={`// Header Authentication
-X-API-Key: nxqr_live_xxxxxxxxxxxx
+                code={`X-API-Key: nxqr_live_xxxxxxxxxxxx
 
 // Or using Bearer token
 Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
@@ -359,18 +287,18 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
             {/* Warning */}
             <div className="mb-8">
               <WarningBox>
-                Never expose your API key in client-side code or public repositories. Use environment variables and server-side requests only.
+                Never expose your API key in client-side code. Use server-side requests only.
               </WarningBox>
             </div>
 
-            {/* Endpoints Section */}
+            {/* Endpoints */}
             <section className="mb-8">
               <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Server className="w-4 h-4 text-gray-400" />
                 API Endpoints
               </h2>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <EndpointCard method="POST" path="/api/v1/qr" description="Create a new QR code">
                   <CodeBlock
                     code={`{
@@ -383,25 +311,16 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
                 </EndpointCard>
 
                 <EndpointCard method="GET" path="/api/v1/qr" description="List all QR codes">
-                  <p className="text-xs text-gray-600 mb-2">Query params: page, limit, type, is_active</p>
+                  <p className="text-xs text-gray-600">Query: page, limit, type, is_active</p>
                 </EndpointCard>
 
-                <EndpointCard method="GET" path="/api/v1/qr/{id}" description="Get a specific QR code">
-                  <p className="text-xs text-gray-600">Returns full QR code details including analytics.</p>
-                </EndpointCard>
+                <EndpointCard method="GET" path="/api/v1/qr/{id}" description="Get a specific QR code" />
 
                 <EndpointCard method="PATCH" path="/api/v1/qr/{id}" description="Update a QR code">
-                  <CodeBlock
-                    code={`{
-  "content": "https://new-url.com",
-  "title": "Updated Title"
-}`}
-                  />
+                  <CodeBlock code={`{ "content": "https://new-url.com" }`} />
                 </EndpointCard>
 
-                <EndpointCard method="DELETE" path="/api/v1/qr/{id}" description="Delete a QR code">
-                  <p className="text-xs text-gray-600">Permanently deletes the QR code. This action cannot be undone.</p>
-                </EndpointCard>
+                <EndpointCard method="DELETE" path="/api/v1/qr/{id}" description="Delete a QR code" />
               </div>
             </section>
 
@@ -416,9 +335,9 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase">Plan</th>
-                      <th className="text-center px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase">Requests/Month</th>
-                      <th className="text-center px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase">Bulk API</th>
+                      <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-600 uppercase">Plan</th>
+                      <th className="text-center px-4 py-2 text-[10px] font-semibold text-gray-600 uppercase">Requests/Month</th>
+                      <th className="text-center px-4 py-2 text-[10px] font-semibold text-gray-600 uppercase">Bulk API</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -428,10 +347,10 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
                       { plan: 'Pro', requests: '50,000', bulk: true },
                       { plan: 'Enterprise', requests: 'Unlimited', bulk: true },
                     ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-xs font-medium text-gray-900">{row.plan}</td>
-                        <td className="px-4 py-3 text-xs text-gray-600 text-center">{row.requests}</td>
-                        <td className="px-4 py-3 text-center">
+                      <tr key={idx}>
+                        <td className="px-4 py-2 text-xs font-medium text-gray-900">{row.plan}</td>
+                        <td className="px-4 py-2 text-xs text-gray-600 text-center">{row.requests}</td>
+                        <td className="px-4 py-2 text-center">
                           {row.bulk ? (
                             <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" />
                           ) : (
@@ -456,24 +375,24 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase">Code</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase">Error</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-gray-600 uppercase">Solution</th>
+                      <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-600 uppercase">Code</th>
+                      <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-600 uppercase">Error</th>
+                      <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-600 uppercase">Solution</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {[
-                      { code: '1001', error: 'Invalid API Key', solution: 'Check for typos or generate a new key' },
-                      { code: '1002', error: 'Expired API Key', solution: 'Generate a new API key from dashboard' },
-                      { code: '2001', error: 'Rate Limit Exceeded', solution: 'Wait for reset or upgrade plan' },
-                      { code: '3001', error: 'Invalid Request Body', solution: 'Validate JSON syntax' },
+                      { code: '1001', error: 'Invalid API Key', solution: 'Check key or generate new' },
+                      { code: '1002', error: 'Expired API Key', solution: 'Generate new key' },
+                      { code: '2001', error: 'Rate Limit Exceeded', solution: 'Wait or upgrade plan' },
+                      { code: '3001', error: 'Invalid Request', solution: 'Check JSON syntax' },
                     ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-4 py-3">
+                      <tr key={idx}>
+                        <td className="px-4 py-2">
                           <code className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded">{row.code}</code>
                         </td>
-                        <td className="px-4 py-3 text-xs text-gray-900">{row.error}</td>
-                        <td className="px-4 py-3 text-xs text-gray-600">{row.solution}</td>
+                        <td className="px-4 py-2 text-xs text-gray-900">{row.error}</td>
+                        <td className="px-4 py-2 text-xs text-gray-600">{row.solution}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -481,14 +400,17 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
               </div>
             </section>
 
-            {/* Next Steps Navigation */}
-            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-              <button className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-900 transition-colors">
+            {/* Next Steps */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-900"
+              >
                 <ArrowLeft className="w-4 h-4" />
-                Intro
+                Back to Dashboard
               </button>
-              <button className="flex items-center gap-2 text-xs text-gray-900 font-medium hover:text-blue-600 transition-colors">
-                Quickstart
+              <button className="flex items-center gap-2 text-xs text-gray-900 font-medium">
+                API Playground
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
