@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Plus, Trash2, Edit2, RefreshCw, Check, X,
   Globe, Zap, Clock, AlertCircle, CheckCircle, Link2,
-  Bell, Code, Copy, Eye, EyeOff, FileText
+  Bell, Code, Copy, Eye, EyeOff, FileText, ChevronRight, Power
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -80,14 +80,22 @@ const WebhookModal: React.FC<WebhookModalProps> = ({ isOpen, onClose, onSave, ed
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
-          {editingWebhook ? 'Edit Webhook' : 'Create Webhook'}
-        </h3>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-[20px] max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+            <Bell className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">
+              {editingWebhook ? 'Edit Webhook' : 'Create Webhook'}
+            </h3>
+            <p className="text-xs text-gray-500">Configure your endpoint</p>
+          </div>
+        </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
+          <div className="mb-4 p-3 bg-red-50 rounded-[12px] text-red-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4" />
             {error}
           </div>
@@ -95,47 +103,47 @@ const WebhookModal: React.FC<WebhookModalProps> = ({ isOpen, onClose, onSave, ed
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Webhook Name</label>
+            <label className="block text-xs font-medium text-gray-700 mb-2">Webhook Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Slack Notifications"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-100 border-0 rounded-[12px] text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Endpoint URL</label>
+            <label className="block text-xs font-medium text-gray-700 mb-2">Endpoint URL</label>
             <input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://your-server.com/webhook"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-100 border-0 rounded-[12px] text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Events to Listen</label>
+            <label className="block text-xs font-medium text-gray-700 mb-2">Events to Listen</label>
             <div className="space-y-2">
               {WEBHOOK_EVENTS.map(event => (
                 <label
                   key={event.id}
-                  className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
+                  className={`flex items-center gap-3 p-3 rounded-[12px] cursor-pointer transition-all ${
                     selectedEvents.includes(event.id)
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'bg-purple-50'
+                      : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={selectedEvents.includes(event.id)}
                     onChange={() => toggleEvent(event.id)}
-                    className="w-4 h-4 text-indigo-600 rounded"
+                    className="w-4 h-4 text-purple-600 rounded"
                   />
                   <div>
-                    <div className="font-medium text-gray-900">{event.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{event.name}</div>
                     <div className="text-xs text-gray-500">{event.description}</div>
                   </div>
                 </label>
@@ -147,17 +155,17 @@ const WebhookModal: React.FC<WebhookModalProps> = ({ isOpen, onClose, onSave, ed
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-3 bg-gray-100 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-gray-900 text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            {editingWebhook ? 'Save Changes' : 'Create Webhook'}
+            {editingWebhook ? 'Save' : 'Create'}
           </button>
         </div>
       </div>
@@ -176,7 +184,6 @@ const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack, onDeliveryLogsClick }
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<ApiWebhook | null>(null);
-  const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
@@ -225,105 +232,116 @@ const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack, onDeliveryLogsClick }
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-900">Webhooks</h1>
-          <p className="text-gray-600">Receive real-time notifications when events happen</p>
+    <div className="min-h-screen bg-[#F0F0F0]">
+      <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <Bell className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-gray-800">Webhooks</h1>
+              <p className="text-xs text-gray-500">Real-time notifications</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onDeliveryLogsClick}
+              className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <FileText className="w-3 h-3 text-gray-600" />
+              </div>
+              Logs
+            </button>
+            <button
+              onClick={() => {
+                setEditingWebhook(null);
+                setShowModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800 transition-colors"
+            >
+              <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                <Plus className="w-3 h-3" />
+              </div>
+              Add
+            </button>
+          </div>
         </div>
-        <button
-          onClick={onDeliveryLogsClick}
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2"
-        >
-          <FileText className="w-4 h-4" />
-          Delivery Logs
-        </button>
-        <button
-          onClick={() => {
-            setEditingWebhook(null);
-            setShowModal(true);
-          }}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Webhook
-        </button>
-      </div>
 
-      {/* How Webhooks Work */}
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-purple-100">
-        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-purple-600" />
-          How Webhooks Work
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Webhooks send HTTP POST requests to your endpoint whenever subscribed events occur.
-          Each request includes a signature header for verification.
-        </p>
-        <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto">
-          <pre className="text-sm text-gray-300 font-mono">{`POST /your-endpoint HTTP/1.1
-Host: your-server.com
+        {/* How Webhooks Work Card */}
+        <div className="bg-white rounded-[20px] p-5 mb-4 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <Zap className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-gray-900">How Webhooks Work</div>
+              <div className="text-xs text-gray-500">HTTP POST requests to your endpoint</div>
+            </div>
+          </div>
+          <div className="bg-gray-900 rounded-[12px] p-4 overflow-x-auto">
+            <pre className="text-xs text-gray-300 font-mono">{`POST /your-endpoint HTTP/1.1
 Content-Type: application/json
-X-Nexus-Signature: sha256=xxxxxxxxxxxxx
-X-Nexus-Event: qr.scanned
+X-Nexus-Signature: sha256=xxxxx
 
 {
   "event": "qr.scanned",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "data": {
-    "qr_id": "uuid",
-    "short_code": "abc123",
-    "scanned_at": "2024-01-15T10:30:00Z",
-    "location": { "city": "New York", "country": "US" },
-    "device": { "type": "mobile", "os": "iOS" }
-  }
+  "data": { "qr_id": "uuid", "city": "NYC" }
 }`}</pre>
-        </div>
-      </div>
-
-      {/* Webhooks List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">Your Webhooks</h2>
-          <p className="text-gray-500 text-sm mt-1">Manage your webhook endpoints</p>
-        </div>
-
-        {loading ? (
-          <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Loading webhooks...</p>
           </div>
-        ) : webhooks.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Bell className="w-8 h-8 text-gray-400" />
+        </div>
+
+        {/* Webhooks List */}
+        <div className="bg-white rounded-[20px] overflow-hidden shadow-sm">
+          <div className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <Globe className="w-4 h-4 text-gray-600" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Your Webhooks</div>
+                <div className="text-xs text-gray-500">{webhooks.length} configured</div>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Webhooks Yet</h3>
-            <p className="text-gray-500 mb-4">Create your first webhook to receive real-time notifications</p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Create Webhook
-            </button>
           </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {webhooks.map(webhook => (
-              <div key={webhook.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">{webhook.name}</h3>
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+
+          {loading ? (
+            <div className="p-12 text-center">
+              <RefreshCw className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
+              <p className="text-xs text-gray-500">Loading webhooks...</p>
+            </div>
+          ) : webhooks.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bell className="w-7 h-7 text-purple-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">No Webhooks Yet</h3>
+              <p className="text-xs text-gray-500 mb-4">Create your first webhook</p>
+              <button
+                onClick={() => setShowModal(true)}
+                className="px-6 py-3 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800 transition-colors inline-flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Create Webhook
+              </button>
+            </div>
+          ) : (
+            <div>
+              {webhooks.map(webhook => (
+                <div key={webhook.id} className="p-4 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${webhook.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <span className="text-sm font-semibold text-gray-900">{webhook.name}</span>
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                         webhook.is_active
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-500'
@@ -331,118 +349,101 @@ X-Nexus-Event: qr.scanned
                         {webhook.is_active ? 'Active' : 'Inactive'}
                       </span>
                       {webhook.failure_count > 0 && (
-                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-700">
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">
                           {webhook.failure_count} failures
                         </span>
                       )}
                     </div>
-
-                    <div className="flex items-center gap-2 mb-3 text-sm">
-                      <Link2 className="w-4 h-4 text-gray-400" />
-                      <code className="text-gray-600 bg-gray-100 px-2 py-1 rounded break-all">
-                        {webhook.url}
-                      </code>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {webhook.events.map(event => (
-                        <span
-                          key={event}
-                          className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full"
-                        >
-                          {event}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        Created {new Date(webhook.created_at).toLocaleDateString()}
-                      </span>
-                      {webhook.last_triggered_at && (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          Last triggered {new Date(webhook.last_triggered_at).toLocaleDateString()}
-                        </span>
-                      )}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleToggleActive(webhook)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        title={webhook.is_active ? 'Disable' : 'Enable'}
+                      >
+                        <Power className={`w-4 h-4 ${webhook.is_active ? 'text-green-600' : 'text-gray-400'}`} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingWebhook(webhook);
+                          setShowModal(true);
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4 text-gray-500" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteWebhook(webhook.id)}
+                        className="p-2 hover:bg-red-50 rounded-full transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleToggleActive(webhook)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        webhook.is_active
-                          ? 'text-orange-600 hover:bg-orange-50'
-                          : 'text-green-600 hover:bg-green-50'
-                      }`}
-                      title={webhook.is_active ? 'Disable' : 'Enable'}
-                    >
-                      {webhook.is_active ? <X className="w-5 h-5" /> : <Check className="w-5 h-5" />}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingWebhook(webhook);
-                        setShowModal(true);
-                      }}
-                      className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteWebhook(webhook.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Link2 className="w-3 h-3 text-gray-500" />
+                    </div>
+                    <code className="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full break-all flex-1">
+                      {webhook.url}
+                    </code>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {webhook.events.map(event => (
+                      <span
+                        key={event}
+                        className="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium"
+                      >
+                        {event}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Created {new Date(webhook.created_at).toLocaleDateString()}
+                    </span>
+                    {webhook.last_triggered_at && (
+                      <span className="flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        Last triggered {new Date(webhook.last_triggered_at).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Signature Verification */}
-      <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Code className="w-5 h-5 text-indigo-600" />
-          Verifying Webhook Signatures
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Each webhook request includes an <code className="bg-gray-100 px-1 rounded">X-Nexus-Signature</code> header.
-          Verify this signature to ensure the request came from Nexus QR.
-        </p>
-        <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto">
-          <pre className="text-sm text-gray-300 font-mono">{`// Node.js verification example
+        {/* Signature Verification Card */}
+        <div className="mt-4 bg-white rounded-[20px] p-5 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+              <Code className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Verifying Signatures</div>
+              <div className="text-xs text-gray-500">Validate X-Nexus-Signature header</div>
+            </div>
+          </div>
+          <div className="bg-gray-900 rounded-[12px] p-4 overflow-x-auto">
+            <pre className="text-xs text-gray-300 font-mono">{`// Node.js verification
 const crypto = require('crypto');
 
-function verifyWebhook(payload, signature, secret) {
-  const expectedSignature = 'sha256=' +
+function verify(payload, signature, secret) {
+  const expected = 'sha256=' +
     crypto.createHmac('sha256', secret)
       .update(JSON.stringify(payload))
       .digest('hex');
-
   return crypto.timingSafeEqual(
     Buffer.from(signature),
-    Buffer.from(expectedSignature)
+    Buffer.from(expected)
   );
-}
-
-// In your webhook handler
-app.post('/webhook', (req, res) => {
-  const signature = req.headers['x-nexus-signature'];
-  if (!verifyWebhook(req.body, signature, WEBHOOK_SECRET)) {
-    return res.status(401).send('Invalid signature');
-  }
-
-  // Process the webhook
-  console.log('Event:', req.body.event);
-  res.status(200).send('OK');
-});`}</pre>
+}`}</pre>
+          </div>
         </div>
       </div>
 

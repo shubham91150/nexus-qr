@@ -29,8 +29,7 @@ import {
   Copy,
   Check,
   ArrowUpRight,
-  ArrowLeft,
-  Loader2
+  ArrowLeft
 } from 'lucide-react';
 import { getAuditEvents, getAuditStats, AuditEvent } from '../services/apiExtendedService';
 
@@ -39,7 +38,6 @@ interface ApiAuditTrailProps {
   userId?: string;
 }
 
-// Transform API data to display format
 interface DisplayEvent {
   id: string;
   timestamp: string;
@@ -77,7 +75,6 @@ const actionCategories = [
   { id: 'webhook', label: 'Webhooks' }
 ];
 
-// Action icons
 const getActionIcon = (action: string): React.ElementType => {
   if (action.includes('created') || action.includes('added')) return Plus;
   if (action.includes('deleted') || action.includes('removed')) return Trash2;
@@ -89,17 +86,15 @@ const getActionIcon = (action: string): React.ElementType => {
   return Activity;
 };
 
-// Action colors
 const getActionColor = (action: string, status: string): string => {
-  if (status === 'failure') return 'bg-red-500/20 text-red-400';
-  if (status === 'warning') return 'bg-amber-500/20 text-amber-400';
-  if (action.includes('created') || action.includes('added')) return 'bg-emerald-500/20 text-emerald-400';
-  if (action.includes('deleted') || action.includes('removed')) return 'bg-red-500/20 text-red-400';
-  if (action.includes('updated')) return 'bg-blue-500/20 text-blue-400';
-  return 'bg-slate-500/20 text-slate-400';
+  if (status === 'failure') return 'bg-red-100 text-red-600';
+  if (status === 'warning') return 'bg-amber-100 text-amber-600';
+  if (action.includes('created') || action.includes('added')) return 'bg-emerald-100 text-emerald-600';
+  if (action.includes('deleted') || action.includes('removed')) return 'bg-red-100 text-red-600';
+  if (action.includes('updated')) return 'bg-blue-100 text-blue-600';
+  return 'bg-gray-100 text-gray-600';
 };
 
-// Transform API event to display format
 const transformEvent = (event: AuditEvent): DisplayEvent => ({
   id: event.id,
   timestamp: event.created_at,
@@ -139,7 +134,6 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Fetch events
   const fetchEvents = useCallback(async (showRefresh = false) => {
     if (!userId) return;
 
@@ -168,19 +162,16 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
     }
   }, [userId, categoryFilter, statusFilter, dateRange, searchQuery]);
 
-  // Initial fetch and refetch on filter changes
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
-  // Copy to clipboard
   const copyToClipboard = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
   };
 
-  // Filter events (client-side for search)
   const filteredEvents = events.filter(event => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -192,7 +183,6 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
     );
   });
 
-  // Format action name
   const formatAction = (action: string): string => {
     return action.split('.').map(part =>
       part.split('_').map(word =>
@@ -201,7 +191,6 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
     ).join(' → ');
   };
 
-  // Format relative time
   const formatRelativeTime = (timestamp: string): string => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -214,7 +203,6 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
     return date.toLocaleDateString();
   };
 
-  // Get actor icon
   const getActorIcon = (type: string): React.ElementType => {
     switch (type) {
       case 'user': return User;
@@ -224,112 +212,125 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to API Dashboard
-        </button>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
+          <p className="text-xs text-gray-500">Loading audit events...</p>
+        </div>
+      </div>
+    );
+  }
 
+  return (
+    <div className="min-h-screen bg-[#F0F0F0]">
+      <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
+              <FileText className="w-5 h-5 text-violet-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Audit Trail</h1>
-              <p className="text-slate-400">Track all API and account activities</p>
+              <h1 className="text-sm font-semibold text-gray-800">Audit Trail</h1>
+              <p className="text-xs text-gray-500">Track all activities</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => fetchEvents(true)}
               disabled={refreshing}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <RefreshCw className={`w-3 h-3 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
+              </div>
               Refresh
             </button>
-            <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center gap-2 transition-colors">
-              <Download className="w-4 h-4" />
+            <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <Download className="w-3 h-3 text-gray-600" />
+              </div>
               Export
             </button>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <Activity className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Activity className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.total}</div>
-                <div className="text-sm text-slate-400">Total Events</div>
+                <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                <div className="text-xs text-gray-500">Total Events</div>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.success}</div>
-                <div className="text-sm text-slate-400">Successful</div>
+                <div className="text-2xl font-bold text-gray-900">{stats.success}</div>
+                <div className="text-xs text-gray-500">Successful</div>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-amber-400" />
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.warning}</div>
-                <div className="text-sm text-slate-400">Warnings</div>
+                <div className="text-2xl font-bold text-gray-900">{stats.warning}</div>
+                <div className="text-xs text-gray-500">Warnings</div>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-red-400" />
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.failure}</div>
-                <div className="text-sm text-slate-400">Failures</div>
+                <div className="text-2xl font-bold text-gray-900">{stats.failure}</div>
+                <div className="text-xs text-gray-500">Failures</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4 mb-6">
+        <div className="bg-white rounded-[20px] p-4 mb-4 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center absolute left-3 top-1/2 -translate-y-1/2">
+                <Search className="w-4 h-4 text-gray-500" />
+              </div>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by actor, action, or resource..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500"
+                className="w-full pl-14 pr-4 py-3 bg-gray-100 rounded-full text-sm focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
               />
             </div>
 
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg"
+              className="px-4 py-3 bg-gray-100 rounded-full text-xs focus:ring-2 focus:ring-violet-500"
             >
               {actionCategories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.label}</option>
@@ -339,7 +340,7 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg"
+              className="px-4 py-3 bg-gray-100 rounded-full text-xs focus:ring-2 focus:ring-violet-500"
             >
               <option value="all">All Status</option>
               <option value="success">Success</option>
@@ -347,15 +348,15 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
               <option value="failure">Failure</option>
             </select>
 
-            <div className="flex bg-slate-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 rounded-full p-1">
               {(['today', 'week', 'month'] as const).map(range => (
                 <button
                   key={range}
                   onClick={() => setDateRange(range)}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  className={`px-3 py-2 text-xs font-medium rounded-full transition-colors ${
                     dateRange === range
                       ? 'bg-violet-500 text-white'
-                      : 'text-slate-400 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -365,210 +366,197 @@ export default function ApiAuditTrail({ onBack, userId }: ApiAuditTrailProps) {
           </div>
         </div>
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-12 text-center">
-            <Loader2 className="w-12 h-12 mx-auto mb-4 text-violet-500 animate-spin" />
-            <p className="text-slate-400">Loading audit events...</p>
-          </div>
-        ) : (
-          <>
-            {/* Event List */}
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-              <div className="divide-y divide-slate-700">
-                {filteredEvents.map(event => {
-                  const ActionIcon = getActionIcon(event.action);
-                  const ActorIcon = getActorIcon(event.actor.type);
-                  const isExpanded = expandedEvent === event.id;
+        {/* Event List */}
+        <div className="bg-white rounded-[20px] overflow-hidden shadow-sm">
+          {filteredEvents.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-14 h-14 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-7 h-7 text-violet-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">No Events Found</h3>
+              <p className="text-xs text-gray-500">
+                {stats.total === 0
+                  ? 'No audit events recorded yet'
+                  : 'Try adjusting your filters'}
+              </p>
+            </div>
+          ) : (
+            <div>
+              {filteredEvents.map(event => {
+                const ActionIcon = getActionIcon(event.action);
+                const ActorIcon = getActorIcon(event.actor.type);
+                const isExpanded = expandedEvent === event.id;
 
-                  return (
-                    <div key={event.id} className="hover:bg-slate-700/30">
-                      {/* Event Row */}
-                      <div
-                        className="p-4 cursor-pointer"
-                        onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
-                      >
+                return (
+                  <div key={event.id} className="border-b border-gray-100 last:border-0">
+                    <button
+                      onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
+                      className="w-full p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getActionColor(event.action, event.status)}`}>
+                          <ActionIcon className="w-5 h-5" />
+                        </div>
+
+                        <div className="flex-1 text-left">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-900">{formatAction(event.action)}</span>
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                              event.status === 'success' ? 'bg-emerald-100 text-emerald-700' :
+                              event.status === 'warning' ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {event.status}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                            <span className="flex items-center gap-1">
+                              <ActorIcon className="w-3 h-3" />
+                              {event.actor.type === 'api_key'
+                                ? event.actor.apiKeyPrefix
+                                : event.actor.name}
+                            </span>
+                            <span>•</span>
+                            <span>{event.resource.type}: {event.resource.id}</span>
+                          </div>
+                        </div>
+
                         <div className="flex items-center gap-4">
-                          {/* Status Icon */}
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getActionColor(event.action, event.status)}`}>
-                            <ActionIcon className="w-5 h-5" />
+                          <div className="text-right">
+                            <div className="text-xs text-gray-500">{formatRelativeTime(event.timestamp)}</div>
+                            <div className="text-[10px] text-gray-400">{event.details.ip}</div>
                           </div>
-
-                          {/* Main Info */}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{formatAction(event.action)}</span>
-                              <span className={`px-2 py-0.5 text-xs rounded ${
-                                event.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' :
-                                event.status === 'warning' ? 'bg-amber-500/20 text-amber-400' :
-                                'bg-red-500/20 text-red-400'
-                              }`}>
-                                {event.status}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
-                              <span className="flex items-center gap-1">
-                                <ActorIcon className="w-3 h-3" />
-                                {event.actor.type === 'api_key'
-                                  ? event.actor.apiKeyPrefix
-                                  : event.actor.name}
-                              </span>
-                              <span>•</span>
-                              <span>{event.resource.type}: {event.resource.id}</span>
-                            </div>
-                          </div>
-
-                          {/* Time & Expand */}
-                          <div className="flex items-center gap-4">
-                            <div className="text-right">
-                              <div className="text-sm text-slate-400">{formatRelativeTime(event.timestamp)}</div>
-                              <div className="text-xs text-slate-500">{event.details.ip}</div>
-                            </div>
-                            {isExpanded ? (
-                              <ChevronDown className="w-5 h-5 text-slate-400" />
-                            ) : (
-                              <ChevronRight className="w-5 h-5 text-slate-400" />
-                            )}
+                          <div className={`w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                            <ChevronRight className="w-4 h-4 text-gray-500" />
                           </div>
                         </div>
                       </div>
+                    </button>
 
-                      {/* Expanded Details */}
-                      {isExpanded && (
-                        <div className="px-4 pb-4 pt-2 bg-slate-900/50 border-t border-slate-700">
-                          <div className="grid grid-cols-2 gap-6">
-                            {/* Actor Details */}
-                            <div>
-                              <h4 className="text-sm font-medium text-slate-400 mb-3">Actor Details</h4>
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <ActorIcon className="w-4 h-4 text-slate-500" />
-                                  <span className="text-sm">{event.actor.name}</span>
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-2 bg-gray-50">
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-700 mb-3">Actor Details</h4>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <ActorIcon className="w-3 h-3 text-gray-600" />
                                 </div>
-                                {event.actor.email && (
-                                  <div className="flex items-center gap-2">
-                                    <User className="w-4 h-4 text-slate-500" />
-                                    <span className="text-sm text-slate-400">{event.actor.email}</span>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-2">
-                                  <Globe className="w-4 h-4 text-slate-500" />
-                                  <span className="text-sm text-slate-400">{event.details.ip}</span>
-                                  {event.details.location && (
-                                    <>
-                                      <span className="text-slate-600">•</span>
-                                      <MapPin className="w-3 h-3 text-slate-500" />
-                                      <span className="text-sm text-slate-400">{event.details.location}</span>
-                                    </>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Monitor className="w-4 h-4 text-slate-500" />
-                                  <span className="text-xs text-slate-500 truncate max-w-xs">{event.details.userAgent}</span>
-                                </div>
+                                <span className="text-xs text-gray-700">{event.actor.name}</span>
                               </div>
-                            </div>
-
-                            {/* Event Details */}
-                            <div>
-                              <h4 className="text-sm font-medium text-slate-400 mb-3">Event Details</h4>
-                              <div className="space-y-2">
+                              {event.actor.email && (
                                 <div className="flex items-center gap-2">
-                                  <Clock className="w-4 h-4 text-slate-500" />
-                                  <span className="text-sm">{new Date(event.timestamp).toLocaleString()}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Link className="w-4 h-4 text-slate-500" />
-                                  <span className="text-sm">Resource: {event.resource.type}/{event.resource.id}</span>
-                                </div>
-                                {event.details.reason && (
-                                  <div className="flex items-center gap-2">
-                                    <Info className="w-4 h-4 text-slate-500" />
-                                    <span className="text-sm text-slate-400">{event.details.reason}</span>
+                                  <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <User className="w-3 h-3 text-gray-600" />
                                   </div>
+                                  <span className="text-xs text-gray-500">{event.actor.email}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <Globe className="w-3 h-3 text-gray-600" />
+                                </div>
+                                <span className="text-xs text-gray-500">{event.details.ip}</span>
+                                {event.details.location && (
+                                  <>
+                                    <span className="text-gray-400">•</span>
+                                    <span className="text-xs text-gray-500">{event.details.location}</span>
+                                  </>
                                 )}
                               </div>
                             </div>
-
-                            {/* Changes */}
-                            {event.details.changes && event.details.changes.length > 0 && (
-                              <div className="col-span-2">
-                                <h4 className="text-sm font-medium text-slate-400 mb-3">Changes</h4>
-                                <div className="bg-slate-800 rounded-lg p-3 space-y-2">
-                                  {event.details.changes.map((change, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm">
-                                      <span className="font-mono text-slate-400">{change.field}:</span>
-                                      <span className="text-red-400 line-through">{change.oldValue}</span>
-                                      <ArrowUpRight className="w-3 h-3 text-slate-500" />
-                                      <span className="text-emerald-400">{change.newValue}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Metadata */}
-                            {Object.keys(event.metadata).length > 0 && (
-                              <div className="col-span-2">
-                                <h4 className="text-sm font-medium text-slate-400 mb-3">Metadata</h4>
-                                <div className="flex items-center gap-2">
-                                  <pre className="flex-1 bg-slate-800 rounded-lg p-3 text-xs font-mono text-slate-300 overflow-x-auto">
-                                    {JSON.stringify(event.metadata, null, 2)}
-                                  </pre>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      copyToClipboard(JSON.stringify(event.metadata, null, 2), event.id);
-                                    }}
-                                    className="p-2 hover:bg-slate-700 rounded-lg shrink-0"
-                                  >
-                                    {copied === event.id ? (
-                                      <Check className="w-4 h-4 text-emerald-400" />
-                                    ) : (
-                                      <Copy className="w-4 h-4 text-slate-400" />
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
                           </div>
+
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-700 mb-3">Event Details</h4>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <Clock className="w-3 h-3 text-gray-600" />
+                                </div>
+                                <span className="text-xs text-gray-700">{new Date(event.timestamp).toLocaleString()}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <Link className="w-3 h-3 text-gray-600" />
+                                </div>
+                                <span className="text-xs text-gray-500">{event.resource.type}/{event.resource.id}</span>
+                              </div>
+                              {event.details.reason && (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <Info className="w-3 h-3 text-gray-600" />
+                                  </div>
+                                  <span className="text-xs text-gray-500">{event.details.reason}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {event.details.changes && event.details.changes.length > 0 && (
+                            <div className="col-span-2">
+                              <h4 className="text-xs font-semibold text-gray-700 mb-3">Changes</h4>
+                              <div className="bg-white rounded-[12px] p-3 space-y-2">
+                                {event.details.changes.map((change, i) => (
+                                  <div key={i} className="flex items-center gap-2 text-xs">
+                                    <span className="font-mono text-gray-500">{change.field}:</span>
+                                    <span className="text-red-500 line-through">{change.oldValue}</span>
+                                    <ArrowUpRight className="w-3 h-3 text-gray-400" />
+                                    <span className="text-emerald-600">{change.newValue}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {Object.keys(event.metadata).length > 0 && (
+                            <div className="col-span-2">
+                              <h4 className="text-xs font-semibold text-gray-700 mb-3">Metadata</h4>
+                              <div className="flex items-center gap-2">
+                                <pre className="flex-1 bg-gray-900 rounded-[12px] p-3 text-[10px] font-mono text-gray-300 overflow-x-auto">
+                                  {JSON.stringify(event.metadata, null, 2)}
+                                </pre>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(JSON.stringify(event.metadata, null, 2), event.id);
+                                  }}
+                                  className="p-2 hover:bg-gray-200 rounded-full shrink-0"
+                                >
+                                  {copied === event.id ? (
+                                    <Check className="w-4 h-4 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-4 h-4 text-gray-500" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Pagination */}
-              <div className="p-4 border-t border-slate-700 flex items-center justify-between">
-                <span className="text-sm text-slate-400">
-                  Showing {filteredEvents.length} of {stats.total} events
-                </span>
-                <div className="flex items-center gap-2">
-                  <button className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-colors">
-                    Previous
-                  </button>
-                  <button className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-colors">
-                    Next
-                  </button>
-                </div>
-              </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+          )}
 
-            {/* Empty State */}
-            {filteredEvents.length === 0 && (
-              <div className="text-center py-12">
-                <FileText className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-                <h3 className="text-xl font-semibold mb-2">No Events Found</h3>
-                <p className="text-slate-400">
-                  {stats.total === 0
-                    ? 'No audit events recorded yet. Events will appear here as you use the API.'
-                    : 'Try adjusting your filters to see more events.'}
-                </p>
-              </div>
-            )}
-          </>
-        )}
+          {/* Pagination */}
+          <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-xs text-gray-500">
+              Showing {filteredEvents.length} of {stats.total} events
+            </span>
+            <div className="flex items-center gap-2">
+              <button className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium transition-colors">
+                Previous
+              </button>
+              <button className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium transition-colors">
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
