@@ -3,7 +3,7 @@ import {
   History, Tag, Plus, Minus, RefreshCw, AlertTriangle,
   ChevronDown, ChevronUp, Search, Filter, Calendar,
   Zap, Bug, Shield, Sparkles, ArrowRight, ExternalLink,
-  CheckCircle, Clock, Book
+  CheckCircle, Clock, Book, ArrowLeft
 } from 'lucide-react';
 
 type ChangeType = 'added' | 'changed' | 'deprecated' | 'removed' | 'fixed' | 'security';
@@ -183,77 +183,78 @@ const ApiChangelog: React.FC<ApiChangelogProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-4 md:p-6">
+    <div className="min-h-screen bg-[#F0F0F0]">
+      <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {onBack && (
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+                className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
               >
-                <ChevronDown className="w-5 h-5 text-gray-600 rotate-90" />
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
             )}
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <History className="w-5 h-5 text-purple-600" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <History className="w-6 h-6 text-indigo-600" />
-                API Changelog
-              </h1>
-              <p className="text-gray-500 text-sm">Track all changes to the NexusQR API</p>
+              <h1 className="text-sm font-semibold text-gray-900">API Changelog</h1>
+              <p className="text-xs text-gray-500">Track all API changes</p>
             </div>
           </div>
 
-          <a
-            href="#"
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
-          >
-            <Book className="w-4 h-4" />
+          <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+              <Book className="w-3 h-3 text-gray-600" />
+            </div>
             Migration Guide
-          </a>
+          </button>
         </div>
 
         {/* Latest Version Banner */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 mb-6 text-white">
+        <div className="bg-[#E5FF00] rounded-[20px] p-5 mb-4 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-5 h-5" />
-                <span className="text-sm font-medium text-indigo-200">Latest Release</span>
+                <div className="w-8 h-8 bg-gray-900/10 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-gray-900" />
+                </div>
+                <span className="text-xs font-medium text-gray-700">Latest Release</span>
               </div>
-              <h2 className="text-2xl font-bold mb-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">
                 Version {CHANGELOG_DATA[0].version}
               </h2>
-              <p className="text-indigo-100">{CHANGELOG_DATA[0].title}</p>
-              <p className="text-sm text-indigo-200 mt-2">
+              <p className="text-sm text-gray-700">{CHANGELOG_DATA[0].title}</p>
+              <p className="text-xs text-gray-600 mt-2">
                 Released {formatDate(CHANGELOG_DATA[0].date)}
               </p>
             </div>
-            <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+            <span className="px-3 py-1.5 bg-gray-900 text-white rounded-full text-xs font-medium">
               {CHANGELOG_DATA[0].changes.length} changes
             </span>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-[20px] p-4 mb-4 shadow-sm">
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search changes..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full pl-11 pr-4 py-2.5 bg-gray-100 border-0 rounded-full text-xs focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all"
               />
             </div>
 
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as ChangeType | 'all')}
-              className="px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+              className="px-4 py-2.5 bg-gray-100 border-0 rounded-full text-xs focus:ring-2 focus:ring-[#E5FF00]"
             >
               <option value="all">All Changes</option>
               {Object.entries(CHANGE_TYPE_CONFIG).map(([type, config]) => (
@@ -261,89 +262,89 @@ const ApiChangelog: React.FC<ApiChangelogProps> = ({ onBack }) => {
               ))}
             </select>
 
-            <label className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 rounded-xl cursor-pointer">
+            <label className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 rounded-full cursor-pointer">
               <input
                 type="checkbox"
                 checked={showBreakingOnly}
                 onChange={(e) => setShowBreakingOnly(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                className="w-4 h-4 rounded-full border-gray-300 text-red-600 focus:ring-red-500"
               />
-              <span className="text-sm text-gray-700">Breaking changes only</span>
+              <span className="text-xs text-gray-700">Breaking only</span>
             </label>
           </div>
         </div>
 
         {/* Changelog Timeline */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filteredChangelog.map((entry) => {
             const isExpanded = expandedVersions.includes(entry.version);
 
             return (
               <div
                 key={entry.version}
-                className={`bg-white rounded-2xl shadow-sm border overflow-hidden transition-all ${
-                  entry.isLatest ? 'border-indigo-200' : 'border-gray-100'
-                }`}
+                className="bg-white rounded-[20px] shadow-sm overflow-hidden"
               >
                 {/* Version Header */}
                 <div
-                  className="p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => toggleVersion(entry.version)}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        entry.isMajor ? 'bg-indigo-100' : 'bg-gray-100'
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        entry.isMajor ? 'bg-[#E5FF00]' : 'bg-gray-100'
                       }`}>
-                        <Tag className={`w-6 h-6 ${entry.isMajor ? 'text-indigo-600' : 'text-gray-600'}`} />
+                        <Tag className={`w-5 h-5 ${entry.isMajor ? 'text-gray-900' : 'text-gray-600'}`} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-sm font-semibold text-gray-900">
                             v{entry.version}
                           </h3>
                           {entry.isLatest && (
-                            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
+                            <span className="px-2 py-0.5 bg-[#E5FF00] text-gray-900 text-[10px] font-medium rounded-full">
                               Latest
                             </span>
                           )}
                           {entry.isMajor && (
-                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-medium rounded-full">
                               Major
                             </span>
                           )}
                           {entry.changes.some(c => c.breaking) && (
-                            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-medium rounded-full">
                               Breaking
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">{entry.title}</p>
+                        <p className="text-xs text-gray-500">{entry.title}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
-                        <Calendar className="w-4 h-4" />
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Calendar className="w-3 h-3" />
                         {formatDate(entry.date)}
                       </div>
-                      {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
-                      )}
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-gray-600" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-gray-600" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Changes List */}
                 {isExpanded && (
-                  <div className="px-5 pb-5 border-t border-gray-100">
+                  <div className="px-4 pb-4 border-t border-gray-100">
                     {entry.description && (
-                      <p className="text-gray-600 py-4">{entry.description}</p>
+                      <p className="text-xs text-gray-600 py-3">{entry.description}</p>
                     )}
 
-                    <div className="space-y-3 pt-4">
+                    <div className="space-y-2 pt-2">
                       {entry.changes.map((change, idx) => {
                         const config = CHANGE_TYPE_CONFIG[change.type];
                         const ChangeIcon = config.icon;
@@ -351,25 +352,25 @@ const ApiChangelog: React.FC<ApiChangelogProps> = ({ onBack }) => {
                         return (
                           <div
                             key={idx}
-                            className={`flex items-start gap-3 p-3 rounded-xl ${
-                              change.breaking ? 'bg-red-50 border border-red-100' : 'bg-gray-50'
+                            className={`flex items-start gap-3 p-3 rounded-[16px] ${
+                              change.breaking ? 'bg-red-50' : 'bg-gray-50'
                             }`}
                           >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${config.bgColor}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${config.bgColor}`}>
                               <ChangeIcon className={`w-4 h-4 ${config.color}`} />
                             </div>
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-xs font-medium ${config.color}`}>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={`text-[10px] font-medium ${config.color}`}>
                                   {config.label}
                                 </span>
                                 {change.breaking && (
-                                  <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                                  <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-medium rounded-full">
                                     Breaking
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-700">{change.description}</p>
+                              <p className="text-xs text-gray-700">{change.description}</p>
                             </div>
                           </div>
                         );
@@ -383,25 +384,29 @@ const ApiChangelog: React.FC<ApiChangelogProps> = ({ onBack }) => {
         </div>
 
         {filteredChangelog.length === 0 && (
-          <div className="text-center py-12">
-            <History className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No changes found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
+          <div className="bg-white rounded-[20px] p-8 shadow-sm text-center">
+            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <History className="w-7 h-7 text-gray-400" />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">No changes found</h3>
+            <p className="text-xs text-gray-500">Try adjusting your search or filters</p>
           </div>
         )}
 
         {/* Subscribe CTA */}
-        <div className="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
+        <div className="mt-4 bg-gray-900 rounded-[20px] p-5 shadow-sm">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Stay Updated</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-sm font-semibold text-white mb-1">Stay Updated</h3>
+              <p className="text-xs text-gray-400">
                 Get notified about new releases and breaking changes
               </p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
-              Subscribe to Updates
-              <ArrowRight className="w-4 h-4" />
+            <button className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] text-gray-900 rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-colors">
+              <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
+                <ArrowRight className="w-3 h-3" />
+              </div>
+              Subscribe
             </button>
           </div>
         </div>

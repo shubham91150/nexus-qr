@@ -673,10 +673,10 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading API documentation...</p>
+      <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center">
+        <div className="bg-white rounded-[20px] p-8 shadow-sm text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-[#E5FF00] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm text-gray-600">Loading API documentation...</p>
         </div>
       </div>
     );
@@ -684,16 +684,16 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center">
+        <div className="bg-white rounded-[20px] p-8 shadow-sm text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Code className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Failed to load documentation</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-sm font-semibold text-gray-900 mb-2">Failed to load documentation</h2>
+          <p className="text-xs text-gray-600 mb-4">{error}</p>
           <button
             onClick={loadSpec}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="px-4 py-2 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800"
           >
             Retry
           </button>
@@ -703,27 +703,27 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F0F0F0]">
       {/* Inject custom styles */}
       <style>{customStyles}</style>
 
       {/* Fixed Header */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={onBack}
-                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                className="w-10 h-10 bg-[#F0F0F0] rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <Book className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Book className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">API Reference</h1>
+                  <h1 className="text-sm font-semibold text-gray-900">API Reference</h1>
                   <p className="text-xs text-gray-500 hidden sm:block">OpenAPI 3.1 Specification</p>
                 </div>
               </div>
@@ -733,21 +733,22 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
               {/* Quick Start Button */}
               <button
                 onClick={() => setShowApiKeyModal(true)}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg sm:rounded-xl hover:bg-indigo-700 transition-colors text-xs sm:text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] text-gray-900 rounded-full hover:bg-[#d4ee00] transition-colors text-xs font-medium"
               >
-                <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">Quick Start</span>
-                <span className="xs:hidden">Start</span>
+                <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
+                  <Zap className="w-3 h-3" />
+                </div>
+                Quick Start
               </button>
 
               {/* OpenAPI Spec Download */}
               <a
                 href="/openapi.yaml"
                 download="nexusqr-openapi.yaml"
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors text-xs sm:text-sm font-medium text-gray-700"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full hover:bg-gray-50 transition-colors text-xs font-medium text-gray-700 shadow-sm"
               >
-                <Code className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Download Spec</span>
+                <Code className="w-4 h-4" />
+                <span className="hidden sm:inline">Download</span>
               </a>
 
               {/* External Links */}
@@ -755,10 +756,10 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
                 href="https://github.com/nexusqr/api-examples"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                className="w-10 h-10 bg-[#F0F0F0] rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
                 title="View examples on GitHub"
               >
-                <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                <ExternalLink className="w-5 h-5 text-gray-600" />
               </a>
             </div>
           </div>
@@ -767,38 +768,45 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
 
       {/* Quick Start Modal */}
       {showApiKeyModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Quick Start Guide</h3>
-            <p className="text-gray-600 mb-6">Follow these steps to make your first API call:</p>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-[20px] max-w-lg w-full p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-[#E5FF00] rounded-full flex items-center justify-center">
+                <Zap className="w-5 h-5 text-gray-900" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Quick Start Guide</h3>
+                <p className="text-xs text-gray-500">Make your first API call</p>
+              </div>
+            </div>
 
             <div className="space-y-4">
               {/* Step 1 */}
-              <div className="flex gap-4">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-indigo-600 font-bold">1</span>
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-[#E5FF00] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-gray-900 text-xs font-bold">1</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Get your API key</h4>
-                  <p className="text-sm text-gray-600">Visit the API Dashboard to create your API key</p>
+                  <h4 className="text-sm font-semibold text-gray-900">Get your API key</h4>
+                  <p className="text-xs text-gray-600">Visit the API Dashboard to create your API key</p>
                 </div>
               </div>
 
               {/* Step 2 */}
-              <div className="flex gap-4">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-indigo-600 font-bold">2</span>
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-[#E5FF00] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-gray-900 text-xs font-bold">2</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Use the test key</h4>
-                  <p className="text-sm text-gray-600 mb-2">Try with this sandbox key:</p>
+                  <h4 className="text-sm font-semibold text-gray-900">Use the test key</h4>
+                  <p className="text-xs text-gray-600 mb-2">Try with this sandbox key:</p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-gray-900 text-green-400 px-3 py-2 rounded-lg text-sm font-mono">
+                    <code className="flex-1 bg-gray-900 text-[#E5FF00] px-3 py-2 rounded-xl text-xs font-mono">
                       nxqr_test_xxxxxxxxxxxx
                     </code>
                     <button
                       onClick={copyApiKey}
-                      className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
                     >
                       {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
                     </button>
@@ -807,14 +815,14 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
               </div>
 
               {/* Step 3 */}
-              <div className="flex gap-4">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-indigo-600 font-bold">3</span>
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-[#E5FF00] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-gray-900 text-xs font-bold">3</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Make your first request</h4>
-                  <p className="text-sm text-gray-600 mb-2">Try creating a QR code:</p>
-                  <pre className="bg-gray-900 text-gray-300 p-3 rounded-lg text-xs overflow-x-auto">
+                  <h4 className="text-sm font-semibold text-gray-900">Make your first request</h4>
+                  <p className="text-xs text-gray-600 mb-2">Try creating a QR code:</p>
+                  <pre className="bg-gray-900 text-gray-300 p-3 rounded-xl text-[10px] overflow-x-auto">
 {`curl -X POST https://sandbox.api.nexusqr.com/api/v1/qr \\
   -H "Authorization: Bearer nxqr_test_xxx" \\
   -H "Content-Type: application/json" \\
@@ -827,7 +835,7 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowApiKeyModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+                className="flex-1 px-4 py-3 bg-gray-100 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-200 transition-colors"
               >
                 Close
               </button>
@@ -840,7 +848,7 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
                     postEndpoint.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }
                 }}
-                className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
+                className="flex-1 px-4 py-3 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800 transition-colors"
               >
                 Try it out
               </button>
@@ -879,21 +887,21 @@ const ApiDocsInteractive: React.FC<ApiDocsInteractiveProps> = ({ onBack }) => {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 bg-gray-50 py-8">
+      <div className="bg-white py-8 mt-4 mx-4 rounded-[20px] shadow-sm mb-4">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-600 text-sm mb-4">
+          <p className="text-xs text-gray-600 mb-4">
             Need help? Check out our{' '}
-            <a href="#" className="text-indigo-600 hover:underline">Developer Guide</a>
+            <a href="#" className="text-blue-600 hover:underline">Developer Guide</a>
             {' '}or{' '}
-            <a href="#" className="text-indigo-600 hover:underline">contact support</a>.
+            <a href="#" className="text-blue-600 hover:underline">contact support</a>.
           </p>
-          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
             <a href="#" className="hover:text-gray-700">SDKs</a>
-            <span>|</span>
+            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
             <a href="#" className="hover:text-gray-700">Changelog</a>
-            <span>|</span>
+            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
             <a href="#" className="hover:text-gray-700">Status</a>
-            <span>|</span>
+            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
             <a href="#" className="hover:text-gray-700">GitHub</a>
           </div>
         </div>

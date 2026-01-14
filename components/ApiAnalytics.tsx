@@ -157,17 +157,17 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-500">Loading analytics...</p>
+      <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center">
+        <div className="bg-white rounded-[20px] p-8 shadow-sm text-center">
+          <RefreshCw className="w-8 h-8 animate-spin text-[#E5FF00] mx-auto mb-4" />
+          <p className="text-xs text-gray-500">Loading analytics...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
         {/* Header - Mobile Responsive */}
         <div className="mb-6">
@@ -175,16 +175,16 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0"
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300 flex-shrink-0">
-              <BarChart3 className="w-5 h-5" />
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-800">API Analytics</h1>
-              <p className="text-xs text-gray-500 font-medium">Monitor usage and performance</p>
+              <h1 className="text-sm font-semibold text-gray-900">API Analytics</h1>
+              <p className="text-xs text-gray-500">Monitor usage and performance</p>
             </div>
           </div>
 
@@ -194,7 +194,7 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
             <select
               value={selectedApiKey}
               onChange={(e) => setSelectedApiKey(e.target.value)}
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-400 max-w-[140px]"
+              className="px-3 py-2 bg-white border-0 rounded-full text-xs focus:ring-2 focus:ring-[#E5FF00] shadow-sm max-w-[140px]"
             >
               <option value="all">All Keys</option>
               {apiKeys.map(key => (
@@ -203,15 +203,15 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
             </select>
 
             {/* Date Range Filter + Refresh + Download in same group */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+            <div className="flex items-center gap-1 bg-white rounded-full p-1 shadow-sm">
               {(['7d', '30d', '90d'] as const).map((range) => (
                 <button
                   key={range}
                   onClick={() => setDateRange(range)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     dateRange === range
                       ? 'bg-gray-900 text-white'
-                      : 'text-gray-600 hover:bg-gray-200'
+                      : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
                   {range === '7d' ? '7D' : range === '30d' ? '30D' : '90D'}
@@ -221,7 +221,7 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
               {/* Refresh button */}
               <button
                 onClick={loadData}
-                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors ml-1"
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors ml-1"
                 title="Refresh"
               >
                 <RefreshCw className="w-4 h-4 text-gray-600" />
@@ -229,7 +229,7 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
               {/* Download button */}
               <button
-                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
                 title="Export"
               >
                 <Download className="w-4 h-4 text-gray-600" />
@@ -240,74 +240,74 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
         {/* Stats Cards - Mobile Responsive Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
-            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-100 rounded-lg md:rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
               </div>
-              <span className="hidden sm:flex items-center text-green-600 text-xs font-medium bg-green-50 px-2 py-1 rounded-full">
+              <span className="hidden sm:flex items-center text-green-600 text-[10px] font-medium bg-green-100 px-2 py-0.5 rounded-full">
                 <TrendingUp className="w-3 h-3 mr-1" />
                 +12.5%
               </span>
             </div>
-            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl font-bold text-gray-900 mb-0.5">
               {formatNumber(analytics?.totalRequests || 0)}
             </div>
-            <div className="text-xs md:text-sm text-gray-500">Total Requests</div>
+            <div className="text-xs text-gray-500">Total Requests</div>
           </div>
 
-          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
-            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-100 rounded-lg md:rounded-xl flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
               </div>
-              <span className="text-xs bg-emerald-50 text-emerald-600 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">
+              <span className="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium">
                 {getSuccessRate()}%
               </span>
             </div>
-            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl font-bold text-gray-900 mb-0.5">
               {formatNumber(analytics?.successfulRequests || 0)}
             </div>
-            <div className="text-xs md:text-sm text-gray-500">Successful</div>
+            <div className="text-xs text-gray-500">Successful</div>
           </div>
 
-          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
-            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-red-100 rounded-lg md:rounded-xl flex items-center justify-center">
-                <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle className="w-5 h-5 text-red-600" />
               </div>
-              <span className="hidden sm:flex items-center text-xs bg-red-50 text-red-600 px-2 py-1 rounded-full font-medium">
+              <span className="hidden sm:flex items-center text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
                 <TrendingDown className="w-3 h-3 mr-1" />
                 -2.3%
               </span>
             </div>
-            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl font-bold text-gray-900 mb-0.5">
               {formatNumber(analytics?.failedRequests || 0)}
             </div>
-            <div className="text-xs md:text-sm text-gray-500">Failed</div>
+            <div className="text-xs text-gray-500">Failed</div>
           </div>
 
-          <div className="bg-white rounded-[20px] md:rounded-[24px] shadow-card p-4 md:p-6">
-            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-100 rounded-lg md:rounded-xl flex items-center justify-center">
-                <Clock className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <Clock className="w-5 h-5 text-purple-600" />
               </div>
-              <span className="text-xs bg-purple-50 text-purple-600 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">
+              <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-medium">
                 Avg
               </span>
             </div>
-            <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-xl font-bold text-gray-900 mb-0.5">
               {analytics?.avgResponseTime}ms
             </div>
-            <div className="text-xs md:text-sm text-gray-500">Response Time</div>
+            <div className="text-xs text-gray-500">Response Time</div>
           </div>
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           {/* Requests Over Time Chart */}
-          <div className="lg:col-span-2 bg-white rounded-[24px] shadow-card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Requests Over Time</h3>
+          <div className="lg:col-span-2 bg-white rounded-[20px] shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Requests Over Time</h3>
             <div className="h-64 flex items-end gap-1">
               {analytics?.requestsByDay.map((day, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -344,8 +344,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
           </div>
 
           {/* Peak Hours */}
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Peak Hours (UTC)</h3>
+          <div className="bg-white rounded-[20px] shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Peak Hours (UTC)</h3>
             <div className="space-y-2">
               {analytics?.peakHours.slice(6, 22).map((hour) => (
                 <div key={hour.hour} className="flex items-center gap-3">
@@ -368,9 +368,9 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         </div>
 
         {/* Second Row - Top Endpoints */}
-        <div className="mb-8">
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Endpoints</h3>
+        <div className="mb-4">
+          <div className="bg-white rounded-[20px] shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Top Endpoints</h3>
             <div className="space-y-4">
               {analytics?.topEndpoints.map((endpoint, i) => (
                 <div key={i} className="flex items-center gap-4">
@@ -406,10 +406,10 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         </div>
 
         {/* Third Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Status Codes */}
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Status Codes</h3>
+          <div className="bg-white rounded-[20px] shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Response Status Codes</h3>
             <div className="space-y-3">
               {analytics?.requestsByStatus.map((status) => {
                 const percentage = (status.count / (analytics.totalRequests || 1)) * 100;
@@ -450,8 +450,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-[24px] shadow-card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Performance Summary</h3>
+          <div className="bg-white rounded-[20px] shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Performance Summary</h3>
 
             <div className="space-y-6">
               <div>

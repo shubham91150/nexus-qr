@@ -297,66 +297,68 @@ const ApiStatusPage: React.FC<ApiStatusPageProps> = ({ onBack }) => {
   const OverallIcon = overallConfig.icon;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-4 md:p-6">
+    <div className="min-h-screen bg-[#F0F0F0]">
+      <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
             {onBack && (
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+                className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
               >
                 <ChevronDown className="w-5 h-5 text-gray-600 rotate-90" />
               </button>
             )}
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <Activity className="w-5 h-5 text-green-600" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Activity className="w-6 h-6 text-indigo-600" />
-                NexusQR System Status
-              </h1>
-              <p className="text-gray-500 text-sm">
-                Last updated: {lastUpdated.toLocaleTimeString()}
+              <h1 className="text-sm font-semibold text-gray-900">System Status</h1>
+              <p className="text-xs text-gray-500">
+                Updated: {lastUpdated.toLocaleTimeString()}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 px-3 py-2 bg-white rounded-full text-xs text-gray-600 shadow-sm">
               <input
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600"
+                className="w-3 h-3 rounded-full border-gray-300 text-green-600"
               />
-              Auto-refresh
+              Auto
             </label>
             <button
               onClick={() => setLastUpdated(new Date())}
-              className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
             >
-              <RefreshCw className="w-5 h-5 text-gray-600" />
+              <RefreshCw className="w-4 h-4 text-gray-600" />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50">
-              <Bell className="w-4 h-4" />
+            <button className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-colors">
+              <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
+                <Bell className="w-3 h-3" />
+              </div>
               Subscribe
             </button>
           </div>
         </div>
 
         {/* Overall Status Banner */}
-        <div className={`rounded-2xl p-6 mb-8 border-2 ${overallConfig.bgColor} ${overallConfig.borderColor}`}>
+        <div className={`rounded-[20px] p-5 mb-4 shadow-sm ${overallStatus === 'operational' ? 'bg-[#E5FF00]' : overallConfig.bgColor}`}>
           <div className="flex items-center gap-4">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${overallConfig.bgColor}`}>
-              <OverallIcon className={`w-8 h-8 ${overallConfig.color}`} />
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center ${overallStatus === 'operational' ? 'bg-gray-900/10' : overallConfig.bgColor}`}>
+              <OverallIcon className={`w-7 h-7 ${overallStatus === 'operational' ? 'text-gray-900' : overallConfig.color}`} />
             </div>
             <div>
-              <h2 className={`text-2xl font-bold ${overallConfig.color}`}>
+              <h2 className={`text-lg font-bold ${overallStatus === 'operational' ? 'text-gray-900' : overallConfig.color}`}>
                 {overallStatus === 'operational'
                   ? 'All Systems Operational'
                   : overallConfig.label}
               </h2>
-              <p className="text-gray-600">
+              <p className={`text-xs ${overallStatus === 'operational' ? 'text-gray-700' : 'text-gray-600'}`}>
                 {overallStatus === 'operational'
                   ? 'All services are running normally'
                   : `${services.filter(s => s.status !== 'operational').length} service(s) affected`}
@@ -367,12 +369,17 @@ const ApiStatusPage: React.FC<ApiStatusPageProps> = ({ onBack }) => {
 
         {/* Active Incidents */}
         {incidents.filter(i => i.status !== 'resolved').length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-            <div className="p-5 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Active Incidents
-              </h3>
+          <div className="bg-white rounded-[20px] shadow-sm mb-4 overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Active Incidents</h3>
+                  <p className="text-xs text-gray-500">Current issues being addressed</p>
+                </div>
+              </div>
             </div>
 
             {incidents.filter(i => i.status !== 'resolved').map((incident) => {
@@ -437,11 +444,16 @@ const ApiStatusPage: React.FC<ApiStatusPageProps> = ({ onBack }) => {
 
         {/* Scheduled Maintenance */}
         {maintenance.filter(m => m.status !== 'completed').length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              Scheduled Maintenance
-            </h3>
+          <div className="bg-[#A8C5DA] rounded-[20px] p-5 mb-4 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-gray-800" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Scheduled Maintenance</h3>
+                <p className="text-xs text-gray-700">Upcoming service windows</p>
+              </div>
+            </div>
             {maintenance.filter(m => m.status !== 'completed').map((maint) => (
               <div key={maint.id} className="bg-white rounded-xl p-4">
                 <div className="flex items-start justify-between">
@@ -466,9 +478,9 @@ const ApiStatusPage: React.FC<ApiStatusPageProps> = ({ onBack }) => {
         )}
 
         {/* Services Grid */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-          <div className="p-5 border-b border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900">Services</h3>
+        <div className="bg-white rounded-[20px] shadow-sm overflow-hidden mb-4">
+          <div className="p-4 border-b border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-900">Services</h3>
           </div>
 
           <div className="divide-y divide-gray-100">
@@ -477,25 +489,25 @@ const ApiStatusPage: React.FC<ApiStatusPageProps> = ({ onBack }) => {
               const ServiceIcon = service.icon;
 
               return (
-                <div key={service.id} className="p-5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <div key={service.id} className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                       <ServiceIcon className="w-5 h-5 text-gray-600" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">{service.name}</h4>
-                      <p className="text-sm text-gray-500">{service.description}</p>
+                      <h4 className="text-sm font-semibold text-gray-900">{service.name}</h4>
+                      <p className="text-xs text-gray-500">{service.description}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-4">
                     <div className="text-right hidden md:block">
-                      <p className="text-sm text-gray-900">{service.uptime}% uptime</p>
-                      <p className="text-xs text-gray-500">{service.responseTime}ms avg</p>
+                      <p className="text-xs font-medium text-gray-900">{service.uptime}%</p>
+                      <p className="text-[10px] text-gray-500">{service.responseTime}ms</p>
                     </div>
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${statusConfig.bgColor}`}>
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${statusConfig.bgColor}`}>
                       <div className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-                      <span className={`text-sm font-medium ${statusConfig.color}`}>
+                      <span className={`text-xs font-medium ${statusConfig.color}`}>
                         {statusConfig.label}
                       </span>
                     </div>
@@ -507,13 +519,18 @@ const ApiStatusPage: React.FC<ApiStatusPageProps> = ({ onBack }) => {
         </div>
 
         {/* 90-Day Uptime */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-indigo-600" />
-              90-Day Uptime History
-            </h3>
-            <span className="text-sm text-gray-500">99.95% average</span>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">90-Day Uptime</h3>
+                <p className="text-xs text-gray-500">Historical performance</p>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">99.95%</span>
           </div>
 
           <div className="flex gap-0.5">
@@ -547,10 +564,10 @@ const ApiStatusPage: React.FC<ApiStatusPageProps> = ({ onBack }) => {
         </div>
 
         {/* Footer */}
-        <div className="text-center text-sm text-gray-500">
-          <p>
+        <div className="bg-gray-900 rounded-[20px] p-5 shadow-sm text-center">
+          <p className="text-xs text-gray-400">
             For real-time updates, subscribe to our status notifications or follow{' '}
-            <a href="#" className="text-indigo-600 hover:underline">@NexusQRStatus</a>
+            <a href="#" className="text-[#E5FF00] hover:underline">@NexusQRStatus</a>
           </p>
         </div>
       </div>
