@@ -173,71 +173,73 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-500">Loading logs...</p>
+      <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center">
+        <div className="bg-white rounded-[20px] p-8 shadow-sm text-center">
+          <RefreshCw className="w-8 h-8 animate-spin text-gray-600 mx-auto mb-4" />
+          <p className="text-xs text-gray-500">Loading logs...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
-        {/* Header - Matching Home Page Style */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
-              <FileText className="w-5 h-5" />
+            <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+              <FileText className="w-5 h-5 text-cyan-600" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">API Request Logs</h1>
-              <p className="text-xs text-gray-500 font-medium">View and debug your API requests</p>
+              <h1 className="text-sm font-semibold text-gray-900">API Request Logs</h1>
+              <p className="text-xs text-gray-500">View and debug requests</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={loadData}
-              className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
               title="Refresh"
             >
-              <RefreshCw className="w-5 h-5 text-gray-600" />
+              <RefreshCw className="w-4 h-4 text-gray-600" />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
-              <Download className="w-4 h-4" />
+            <button className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-colors">
+              <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
+                <Download className="w-3 h-3" />
+              </div>
               Export
             </button>
           </div>
         </div>
 
         {/* Search & Filters */}
-        <div className="bg-white rounded-[24px] shadow-card p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-[20px] shadow-sm p-4 mb-4">
+          <div className="flex flex-col md:flex-row gap-3">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by endpoint, IP, or API key..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-11 pr-4 py-2.5 bg-gray-100 border-0 rounded-full text-xs focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all"
               />
             </div>
 
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl font-medium transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium transition-colors ${
+                showFilters ? 'bg-[#E5FF00] text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               <Filter className="w-4 h-4" />
@@ -248,14 +250,14 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
 
           {/* Expanded Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-100">
               {/* Method Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Method</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">Method</label>
                 <select
                   value={selectedMethod}
                   onChange={(e) => setSelectedMethod(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 bg-gray-100 border-0 rounded-full text-xs focus:ring-2 focus:ring-[#E5FF00]"
                 >
                   <option value="all">All Methods</option>
                   <option value="GET">GET</option>
@@ -268,11 +270,11 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
 
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">Status</label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 bg-gray-100 border-0 rounded-full text-xs focus:ring-2 focus:ring-[#E5FF00]"
                 >
                   <option value="all">All Statuses</option>
                   <option value="success">Success (2xx)</option>
@@ -289,11 +291,11 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
 
               {/* API Key Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">API Key</label>
                 <select
                   value={selectedApiKey}
                   onChange={(e) => setSelectedApiKey(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 bg-gray-100 border-0 rounded-full text-xs focus:ring-2 focus:ring-[#E5FF00]"
                 >
                   <option value="all">All API Keys</option>
                   {apiKeys.map(key => (
@@ -306,33 +308,53 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-[20px] shadow-card p-4">
-            <div className="text-2xl font-bold text-gray-900">{filteredLogs.length}</div>
-            <div className="text-sm text-gray-500">Total Requests</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <FileText className="w-4 h-4 text-blue-600" />
+              </div>
+            </div>
+            <div className="text-xl font-bold text-gray-900">{filteredLogs.length}</div>
+            <div className="text-xs text-gray-500">Total Requests</div>
           </div>
-          <div className="bg-white rounded-[20px] shadow-card p-4">
-            <div className="text-2xl font-bold text-emerald-600">
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+              </div>
+            </div>
+            <div className="text-xl font-bold text-emerald-600">
               {filteredLogs.filter(l => l.status >= 200 && l.status < 300).length}
             </div>
-            <div className="text-sm text-gray-500">Successful</div>
+            <div className="text-xs text-gray-500">Successful</div>
           </div>
-          <div className="bg-white rounded-[20px] shadow-card p-4">
-            <div className="text-2xl font-bold text-red-600">
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-red-600" />
+              </div>
+            </div>
+            <div className="text-xl font-bold text-red-600">
               {filteredLogs.filter(l => l.status >= 400).length}
             </div>
-            <div className="text-sm text-gray-500">Errors</div>
+            <div className="text-xs text-gray-500">Errors</div>
           </div>
-          <div className="bg-white rounded-[20px] shadow-card p-4">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="bg-white rounded-[20px] shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <Clock className="w-4 h-4 text-purple-600" />
+              </div>
+            </div>
+            <div className="text-xl font-bold text-purple-600">
               {Math.round(filteredLogs.reduce((sum, l) => sum + l.responseTime, 0) / filteredLogs.length || 0)}ms
             </div>
-            <div className="text-sm text-gray-500">Avg Response Time</div>
+            <div className="text-xs text-gray-500">Avg Response Time</div>
           </div>
         </div>
 
         {/* Logs List */}
-        <div className="bg-white rounded-[24px] shadow-card overflow-hidden">
+        <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>

@@ -250,38 +250,42 @@ const ApiKeyScopes: React.FC<ApiKeyScopesProps> = ({ userId, onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
-              >
-                <ChevronDown className="w-5 h-5 text-gray-600 rotate-90" />
-              </button>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Shield className="w-6 h-6 text-indigo-600" />
-                API Key Scopes & Permissions
-              </h1>
-              <p className="text-gray-500 text-sm">Control what each API key can access</p>
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="w-10 h-10 bg-[#F0F0F0] rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                >
+                  <ChevronDown className="w-5 h-5 text-gray-600 rotate-90" />
+                </button>
+              )}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-semibold text-gray-900">API Key Scopes & Permissions</h1>
+                  <p className="text-xs text-gray-500">Control what each API key can access</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Scope Overview */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-5 mb-6 border border-indigo-100">
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Lock className="w-6 h-6 text-indigo-600" />
+            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Lock className="w-5 h-5 text-indigo-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Principle of Least Privilege</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-semibold text-gray-900 mb-1 text-sm">Principle of Least Privilege</h3>
+              <p className="text-xs text-gray-600">
                 Grant API keys only the permissions they need. This reduces security risks if a key is compromised.
                 You can modify scopes at any time without regenerating the key.
               </p>
@@ -290,9 +294,11 @@ const ApiKeyScopes: React.FC<ApiKeyScopesProps> = ({ userId, onBack }) => {
         </div>
 
         {/* Available Scopes Reference */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Info className="w-5 h-5 text-indigo-600" />
+        <div className="bg-white rounded-[20px] shadow-sm p-6 mb-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+              <Info className="w-4 h-4 text-indigo-600" />
+            </div>
             Available Scopes ({AVAILABLE_SCOPES.length})
           </h3>
 

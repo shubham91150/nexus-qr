@@ -391,92 +391,92 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-blue-600" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Welcome to NexusQR</h2>
-              <p className="text-slate-400">Let's set up your developer account in just a few steps.</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to NexusQR</h2>
+              <p className="text-sm text-gray-500">Let's set up your developer account in just a few steps.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Full Name *</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">Full Name *</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     value={accountForm.name}
                     onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
                     placeholder="John Doe"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-0 rounded-full text-sm focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Email Address *</label>
+                <label className="block text-xs font-medium text-gray-700 mb-2">Email Address *</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="email"
                     value={accountForm.email}
                     onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
                     placeholder="john@example.com"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-0 rounded-full text-sm focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all"
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Company / Organization</label>
+              <label className="block text-xs font-medium text-gray-700 mb-2">Company / Organization</label>
               <div className="relative">
-                <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={accountForm.company}
                   onChange={(e) => setAccountForm({ ...accountForm, company: e.target.value })}
                   placeholder="Acme Inc. (optional)"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-0 rounded-full text-sm focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-3">Primary Use Case</label>
+              <label className="block text-xs font-medium text-gray-700 mb-3">Primary Use Case</label>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {useCaseOptions.map(option => (
                   <button
                     key={option.id}
                     onClick={() => setAccountForm({ ...accountForm, useCase: option.id })}
-                    className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                    className={`p-3 rounded-[16px] transition-all flex flex-col items-center gap-2 ${
                       accountForm.useCase === option.id
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        ? 'bg-[#E5FF00] shadow-sm'
+                        : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
-                    <option.icon className="w-5 h-5" />
-                    <span className="text-xs text-center">{option.label}</span>
+                    <option.icon className={`w-5 h-5 ${accountForm.useCase === option.id ? 'text-gray-900' : 'text-gray-500'}`} />
+                    <span className={`text-xs text-center ${accountForm.useCase === option.id ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>{option.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <label className="flex items-start gap-3 p-4 bg-slate-700/50 rounded-lg cursor-pointer">
+            <label className="flex items-start gap-3 p-4 bg-gray-50 rounded-[16px] cursor-pointer">
               <input
                 type="checkbox"
                 checked={accountForm.agreeTerms}
                 onChange={(e) => setAccountForm({ ...accountForm, agreeTerms: e.target.checked })}
-                className="mt-1 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                className="mt-1 w-4 h-4 rounded border-gray-300 bg-white text-[#E5FF00] focus:ring-[#E5FF00]"
               />
               <div className="text-sm">
-                <span className="text-slate-300">
+                <span className="text-gray-700">
                   I agree to the{' '}
-                  <a href="#" className="text-blue-400 hover:underline">Terms of Service</a>
+                  <a href="#" className="text-blue-600 hover:underline">Terms of Service</a>
                   {' '}and{' '}
-                  <a href="#" className="text-blue-400 hover:underline">Privacy Policy</a>
+                  <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
                 </span>
-                <p className="text-slate-500 mt-1">
+                <p className="text-gray-500 text-xs mt-1">
                   You'll receive API updates and important security notifications.
                 </p>
               </div>
@@ -485,7 +485,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
             <button
               onClick={handleAccountSubmit}
               disabled={!accountForm.name || !accountForm.email || !accountForm.agreeTerms || isLoading}
-              className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3 bg-[#E5FF00] hover:bg-[#d4ee00] disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-semibold text-gray-900 flex items-center justify-center gap-2 transition-all text-sm"
             >
               {isLoading ? (
                 <>
@@ -506,57 +506,57 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Key className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Key className="w-8 h-8 text-amber-600" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Generate Your API Key</h2>
-              <p className="text-slate-400">Your API key is your secret credential for authentication.</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Generate Your API Key</h2>
+              <p className="text-sm text-gray-500">Your API key is your secret credential for authentication.</p>
             </div>
 
             {/* Environment Selection */}
             <div>
-              <label className="block text-sm font-medium mb-3">Select Environment</label>
+              <label className="block text-xs font-medium text-gray-700 mb-3">Select Environment</label>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setSelectedEnvironment('sandbox')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-4 rounded-[16px] transition-all ${
                     selectedEnvironment === 'sandbox'
-                      ? 'border-green-500 bg-green-500/20'
-                      : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                      ? 'bg-green-50 ring-2 ring-green-500'
+                      : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-green-400" />
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-green-600" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold">Sandbox</div>
-                      <div className="text-sm text-slate-400">For testing & development</div>
+                      <div className="font-semibold text-gray-900 text-sm">Sandbox</div>
+                      <div className="text-xs text-gray-500">For testing & development</div>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-500 text-left">
+                  <div className="text-xs text-gray-500 text-left">
                     • No real charges • Test data only • Unlimited requests
                   </div>
                 </button>
 
                 <button
                   onClick={() => setSelectedEnvironment('production')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-4 rounded-[16px] transition-all ${
                     selectedEnvironment === 'production'
-                      ? 'border-red-500 bg-red-500/20'
-                      : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                      ? 'bg-red-50 ring-2 ring-red-500'
+                      : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-                      <Rocket className="w-5 h-5 text-red-400" />
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                      <Rocket className="w-5 h-5 text-red-600" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold">Production</div>
-                      <div className="text-sm text-slate-400">For live applications</div>
+                      <div className="font-semibold text-gray-900 text-sm">Production</div>
+                      <div className="text-xs text-gray-500">For live applications</div>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-500 text-left">
+                  <div className="text-xs text-gray-500 text-left">
                     • Real QR codes • Analytics • Usage limits apply
                   </div>
                 </button>
@@ -565,26 +565,26 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
 
             {/* Key Name */}
             <div>
-              <label className="block text-sm font-medium mb-2">API Key Name</label>
+              <label className="block text-xs font-medium text-gray-700 mb-2">API Key Name</label>
               <input
                 type="text"
                 value={apiKeyName}
                 onChange={(e) => setApiKeyName(e.target.value)}
                 placeholder="My First API Key"
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 bg-gray-100 border-0 rounded-full text-sm focus:ring-2 focus:ring-[#E5FF00] focus:bg-white transition-all"
               />
-              <p className="text-xs text-slate-500 mt-1">A friendly name to identify this key later.</p>
+              <p className="text-xs text-gray-500 mt-1">A friendly name to identify this key later.</p>
             </div>
 
             {/* Generated Key Display */}
             {generatedApiKey ? (
-              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+              <div className="bg-gray-900 rounded-[16px] p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-green-400 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
                     API Key Generated Successfully
                   </span>
-                  <span className={`px-2 py-0.5 text-xs rounded ${
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${
                     selectedEnvironment === 'sandbox'
                       ? 'bg-green-500/20 text-green-400'
                       : 'bg-red-500/20 text-red-400'
@@ -598,31 +598,31 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                       type={showApiKey ? 'text' : 'password'}
                       value={generatedApiKey}
                       readOnly
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg font-mono text-sm pr-20"
+                      className="w-full px-4 py-3 bg-gray-800 border-0 rounded-full font-mono text-sm text-white pr-20"
                     />
                     <button
                       onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-12 top-1/2 -translate-y-1/2 p-1.5 hover:bg-slate-700 rounded"
+                      className="absolute right-12 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-700 rounded-full"
                     >
                       {showApiKey ? (
-                        <EyeOff className="w-4 h-4 text-slate-400" />
+                        <EyeOff className="w-4 h-4 text-gray-400" />
                       ) : (
-                        <Eye className="w-4 h-4 text-slate-400" />
+                        <Eye className="w-4 h-4 text-gray-400" />
                       )}
                     </button>
                     <button
                       onClick={() => copyToClipboard(generatedApiKey, 'apikey')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-slate-700 rounded"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-700 rounded-full"
                     >
                       {copied === 'apikey' ? (
                         <Check className="w-4 h-4 text-green-400" />
                       ) : (
-                        <Copy className="w-4 h-4 text-slate-400" />
+                        <Copy className="w-4 h-4 text-gray-400" />
                       )}
                     </button>
                   </div>
                 </div>
-                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2">
+                <div className="mt-3 p-3 bg-amber-500/10 rounded-[12px] flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
                   <p className="text-xs text-amber-200">
                     <strong>Important:</strong> Save this key now. You won't be able to see it again!
@@ -634,7 +634,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
               <button
                 onClick={generateApiKey}
                 disabled={isLoading}
-                className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 disabled:opacity-50 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
+                className="w-full py-3 bg-[#E5FF00] hover:bg-[#d4ee00] disabled:opacity-50 rounded-full font-semibold text-gray-900 flex items-center justify-center gap-2 transition-all text-sm"
               >
                 {isLoading ? (
                   <>
@@ -653,7 +653,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
             {generatedApiKey && (
               <button
                 onClick={() => setCurrentStep(3)}
-                className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
+                className="w-full py-3 bg-[#E5FF00] hover:bg-[#d4ee00] rounded-full font-semibold text-gray-900 flex items-center justify-center gap-2 transition-all text-sm"
               >
                 Continue to SDK Setup
                 <ChevronRight className="w-5 h-5" />
@@ -666,11 +666,11 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Code className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Code className="w-8 h-8 text-purple-600" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Choose Your SDK</h2>
-              <p className="text-slate-400">Select your preferred programming language or tool.</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Choose Your SDK</h2>
+              <p className="text-sm text-gray-500">Select your preferred programming language or tool.</p>
             </div>
 
             {/* SDK Selection */}
@@ -682,14 +682,14 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                     setSelectedSDK(sdk.id);
                     markStepCompleted(3);
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-4 rounded-[16px] transition-all ${
                     selectedSDK === sdk.id
-                      ? 'border-purple-500 bg-purple-500/20'
-                      : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                      ? 'bg-[#E5FF00] shadow-sm'
+                      : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
                   <div className="text-2xl mb-2">{sdk.icon}</div>
-                  <div className="font-semibold">{sdk.name}</div>
+                  <div className={`font-semibold text-sm ${selectedSDK === sdk.id ? 'text-gray-900' : 'text-gray-700'}`}>{sdk.name}</div>
                 </button>
               ))}
             </div>
@@ -697,20 +697,20 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
             {/* Installation Command */}
             {selectedSDK && (
               <div className="space-y-4">
-                <div className="bg-slate-900 rounded-lg overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
-                    <span className="text-sm font-medium">Installation</span>
+                <div className="bg-gray-900 rounded-[16px] overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2 bg-gray-800">
+                    <span className="text-sm font-medium text-white">Installation</span>
                     <button
                       onClick={() => copyToClipboard(
                         sdkOptions.find(s => s.id === selectedSDK)?.installCommand || '',
                         'install'
                       )}
-                      className="p-1.5 hover:bg-slate-700 rounded"
+                      className="p-1.5 hover:bg-gray-700 rounded-full"
                     >
                       {copied === 'install' ? (
                         <Check className="w-4 h-4 text-green-400" />
                       ) : (
-                        <Copy className="w-4 h-4 text-slate-400" />
+                        <Copy className="w-4 h-4 text-gray-400" />
                       )}
                     </button>
                   </div>
@@ -721,7 +721,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
 
                 <button
                   onClick={() => setCurrentStep(4)}
-                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
+                  className="w-full py-3 bg-[#E5FF00] hover:bg-[#d4ee00] rounded-full font-semibold text-gray-900 flex items-center justify-center gap-2 transition-all text-sm"
                 >
                   Continue to First Request
                   <ChevronRight className="w-5 h-5" />
@@ -735,23 +735,23 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-8 h-8 text-emerald-600" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Make Your First Request</h2>
-              <p className="text-slate-400">Let's create your first QR code with the API.</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Make Your First Request</h2>
+              <p className="text-sm text-gray-500">Let's create your first QR code with the API.</p>
             </div>
 
             {/* Code Example */}
-            <div className="bg-slate-900 rounded-lg overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="bg-gray-900 rounded-[16px] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 bg-gray-800">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{sdkOptions.find(s => s.id === selectedSDK)?.icon}</span>
-                  <span className="text-sm font-medium">{sdkOptions.find(s => s.id === selectedSDK)?.name}</span>
+                  <span className="text-sm font-medium text-white">{sdkOptions.find(s => s.id === selectedSDK)?.name}</span>
                 </div>
                 <button
                   onClick={() => copyToClipboard(getCodeExample(), 'code')}
-                  className="p-1.5 hover:bg-slate-700 rounded flex items-center gap-1"
+                  className="p-1.5 hover:bg-gray-700 rounded-full flex items-center gap-1"
                 >
                   {copied === 'code' ? (
                     <>
@@ -760,35 +760,37 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4 text-slate-400" />
-                      <span className="text-xs text-slate-400">Copy</span>
+                      <Copy className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs text-gray-400">Copy</span>
                     </>
                   )}
                 </button>
               </div>
-              <pre className="p-4 text-sm font-mono text-slate-300 overflow-x-auto max-h-80">
+              <pre className="p-4 text-sm font-mono text-gray-300 overflow-x-auto max-h-80">
                 <code>{getCodeExample()}</code>
               </pre>
             </div>
 
             {/* Test Request */}
-            <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Play className="w-5 h-5 text-emerald-400" />
+            <div className="bg-gray-50 rounded-[16px] p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
+                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <Play className="w-4 h-4 text-emerald-600" />
+                </div>
                 Test Your Integration
               </h3>
 
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-xs text-gray-500 mb-4">
                 Click the button below to simulate an API request and verify everything is working.
               </p>
 
               <button
                 onClick={runTestRequest}
                 disabled={testResult === 'loading'}
-                className={`w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
+                className={`w-full py-3 rounded-full font-semibold flex items-center justify-center gap-2 transition-all text-sm ${
                   testResult === 'success'
-                    ? 'bg-green-500 cursor-default'
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700'
+                    ? 'bg-green-500 text-white cursor-default'
+                    : 'bg-[#E5FF00] hover:bg-[#d4ee00] text-gray-900'
                 }`}
               >
                 {testResult === 'loading' && (
@@ -818,15 +820,15 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
               </button>
 
               {testResult === 'success' && (
-                <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="mt-4 p-4 bg-green-50 rounded-[12px]">
                   <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
                     <div>
-                      <div className="font-medium text-green-400">Connection Successful!</div>
-                      <div className="text-sm text-green-300/80 mt-1">
+                      <div className="font-medium text-green-700 text-sm">Connection Successful!</div>
+                      <div className="text-xs text-green-600 mt-1">
                         Your API key is valid and working. A test QR code was created successfully.
                       </div>
-                      <div className="mt-2 text-xs text-slate-400">
+                      <div className="mt-2 text-xs text-gray-500">
                         Response time: 142ms | Status: 201 Created
                       </div>
                     </div>
@@ -841,7 +843,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                   markStepCompleted(4);
                   setCurrentStep(5);
                 }}
-                className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
+                className="w-full py-3 bg-[#E5FF00] hover:bg-[#d4ee00] rounded-full font-semibold text-gray-900 flex items-center justify-center gap-2 transition-all text-sm"
               >
                 Continue to Launch
                 <ChevronRight className="w-5 h-5" />
@@ -854,33 +856,33 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-10 h-10 text-white" />
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-10 h-10 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">You're All Set!</h2>
-              <p className="text-slate-400">Congratulations! Your NexusQR integration is ready.</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">You're All Set!</h2>
+              <p className="text-sm text-gray-500">Congratulations! Your NexusQR integration is ready.</p>
             </div>
 
             {/* Completion Summary */}
-            <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-6">
+            <div className="bg-green-50 rounded-[16px] p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                   <Award className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <div className="font-bold text-lg">Onboarding Complete</div>
-                  <div className="text-sm text-slate-400">All {steps.length} steps completed successfully</div>
+                  <div className="font-bold text-gray-900">Onboarding Complete</div>
+                  <div className="text-xs text-gray-500">All {steps.length} steps completed successfully</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="bg-slate-800/50 rounded-lg p-3">
-                  <div className="text-xs text-slate-400">Environment</div>
-                  <div className="font-semibold capitalize">{selectedEnvironment}</div>
+                <div className="bg-white rounded-[12px] p-3 shadow-sm">
+                  <div className="text-xs text-gray-500">Environment</div>
+                  <div className="font-semibold text-gray-900 capitalize text-sm">{selectedEnvironment}</div>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3">
-                  <div className="text-xs text-slate-400">SDK</div>
-                  <div className="font-semibold">{sdkOptions.find(s => s.id === selectedSDK)?.name}</div>
+                <div className="bg-white rounded-[12px] p-3 shadow-sm">
+                  <div className="text-xs text-gray-500">SDK</div>
+                  <div className="font-semibold text-gray-900 text-sm">{sdkOptions.find(s => s.id === selectedSDK)?.name}</div>
                 </div>
               </div>
             </div>
@@ -889,61 +891,63 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
             <div className="grid grid-cols-2 gap-4">
               <a
                 href="#"
-                className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-3"
+                className="p-4 bg-gray-50 hover:bg-gray-100 rounded-[16px] transition-colors flex items-center gap-3"
               >
-                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <div className="font-medium">API Documentation</div>
-                  <div className="text-xs text-slate-400">Explore all endpoints</div>
+                  <div className="font-medium text-gray-900 text-sm">API Documentation</div>
+                  <div className="text-xs text-gray-500">Explore all endpoints</div>
                 </div>
               </a>
 
               <a
                 href="#"
-                className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-3"
+                className="p-4 bg-gray-50 hover:bg-gray-100 rounded-[16px] transition-colors flex items-center gap-3"
               >
-                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                  <Github className="w-5 h-5 text-purple-400" />
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Github className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <div className="font-medium">SDK Examples</div>
-                  <div className="text-xs text-slate-400">GitHub repositories</div>
+                  <div className="font-medium text-gray-900 text-sm">SDK Examples</div>
+                  <div className="text-xs text-gray-500">GitHub repositories</div>
                 </div>
               </a>
 
               <a
                 href="#"
-                className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-3"
+                className="p-4 bg-gray-50 hover:bg-gray-100 rounded-[16px] transition-colors flex items-center gap-3"
               >
-                <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-emerald-400" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <div className="font-medium">Developer Community</div>
-                  <div className="text-xs text-slate-400">Get help from others</div>
+                  <div className="font-medium text-gray-900 text-sm">Developer Community</div>
+                  <div className="text-xs text-gray-500">Get help from others</div>
                 </div>
               </a>
 
               <a
                 href="#"
-                className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-3"
+                className="p-4 bg-gray-50 hover:bg-gray-100 rounded-[16px] transition-colors flex items-center gap-3"
               >
-                <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                  <Download className="w-5 h-5 text-amber-400" />
+                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                  <Download className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <div className="font-medium">Postman Collection</div>
-                  <div className="text-xs text-slate-400">Download & test</div>
+                  <div className="font-medium text-gray-900 text-sm">Postman Collection</div>
+                  <div className="text-xs text-gray-500">Download & test</div>
                 </div>
               </a>
             </div>
 
             {/* Next Steps */}
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <ArrowRight className="w-5 h-5 text-emerald-400" />
+            <div className="bg-gray-50 rounded-[16px] p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
+                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <ArrowRight className="w-4 h-4 text-emerald-600" />
+                </div>
                 Recommended Next Steps
               </h3>
 
@@ -954,10 +958,12 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                   { icon: Database, text: 'Explore analytics API to track QR code performance' },
                   { icon: Lock, text: 'Review rate limits and upgrade plan if needed' }
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer">
-                    <item.icon className="w-5 h-5 text-slate-400" />
-                    <span className="text-sm">{item.text}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-500 ml-auto" />
+                  <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-[12px] hover:bg-gray-100 transition-colors cursor-pointer shadow-sm">
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <span className="text-xs text-gray-700">{item.text}</span>
+                    <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
                   </div>
                 ))}
               </div>
@@ -972,7 +978,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                   onBack();
                 }
               }}
-              className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3 bg-[#E5FF00] hover:bg-[#d4ee00] rounded-full font-semibold text-gray-900 flex items-center justify-center gap-2 transition-all text-sm"
             >
               <Rocket className="w-5 h-5" />
               Go to Dashboard
@@ -986,28 +992,48 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-screen bg-[#F0F0F0] text-gray-900">
       <div className="max-w-4xl mx-auto p-6">
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to API Dashboard
-        </button>
+        {/* Header */}
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBack}
+                className="w-10 h-10 bg-[#F0F0F0] rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Rocket className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-semibold text-gray-900">Getting Started</h1>
+                  <p className="text-xs text-gray-500">Complete the setup wizard</p>
+                </div>
+              </div>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] text-gray-900 rounded-full hover:bg-[#d4ee00] transition-colors text-xs font-medium">
+              <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
+                <HelpCircle className="w-3 h-3" />
+              </div>
+              Need Help?
+            </button>
+          </div>
+        </div>
 
         {/* Progress Header */}
-        <div className="mb-8">
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-6">
           {/* Progress Bar */}
           <div className="relative mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Onboarding Progress</span>
-              <span className="text-sm text-slate-400">{completedSteps} of {steps.length} steps</span>
+              <span className="text-sm font-semibold text-gray-900">Onboarding Progress</span>
+              <span className="text-xs text-gray-500">{completedSteps} of {steps.length} steps</span>
             </div>
-            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 transition-all duration-500"
+                className="h-full bg-[#E5FF00] transition-all duration-500"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
@@ -1029,18 +1055,18 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                       step.isCompleted
                         ? 'bg-green-500'
                         : step.id === currentStep
-                        ? 'bg-gradient-to-br from-blue-500 to-indigo-600 ring-4 ring-blue-500/30'
-                        : 'bg-slate-700'
+                        ? 'bg-[#E5FF00] ring-4 ring-[#E5FF00]/30'
+                        : 'bg-gray-100'
                     }`}
                   >
                     {step.isCompleted ? (
                       <Check className="w-5 h-5 text-white" />
                     ) : (
-                      <step.icon className="w-5 h-5 text-white" />
+                      <step.icon className={`w-5 h-5 ${step.id === currentStep ? 'text-gray-900' : 'text-gray-400'}`} />
                     )}
                   </div>
                   <div className="text-center">
-                    <div className={`text-xs font-medium ${step.id === currentStep ? 'text-white' : 'text-slate-400'}`}>
+                    <div className={`text-xs font-medium ${step.id === currentStep ? 'text-gray-900' : 'text-gray-400'}`}>
                       {step.title}
                     </div>
                   </div>
@@ -1048,7 +1074,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
 
                 {index < steps.length - 1 && (
                   <div className={`flex-1 h-0.5 mx-2 ${
-                    steps[index + 1].isCompleted || step.isCompleted ? 'bg-green-500' : 'bg-slate-700'
+                    steps[index + 1].isCompleted || step.isCompleted ? 'bg-green-500' : 'bg-gray-200'
                   }`} />
                 )}
               </React.Fragment>
@@ -1057,7 +1083,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
         </div>
 
         {/* Step Content */}
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-8">
+        <div className="bg-white rounded-[20px] shadow-sm p-8">
           {renderStepContent()}
         </div>
 
@@ -1066,7 +1092,7 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
           <div className="mt-4 flex justify-start">
             <button
               onClick={() => setCurrentStep(currentStep - 1)}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm"
             >
               <ChevronLeft className="w-4 h-4" />
               Back to {steps[currentStep - 2]?.title}
@@ -1074,14 +1100,27 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
           </div>
         )}
 
-        {/* Help Section */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-slate-500">
-            Need help?{' '}
-            <a href="#" className="text-blue-400 hover:underline">Contact support</a>
-            {' '}or{' '}
-            <a href="#" className="text-blue-400 hover:underline">read the docs</a>
-          </p>
+        {/* Footer */}
+        <div className="mt-6 bg-gray-900 rounded-[20px] p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-white font-medium">Need help with setup?</p>
+                <p className="text-xs text-gray-400">Our team is here to assist you</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <a href="#" className="px-3 py-1.5 bg-white/10 text-white rounded-full text-xs hover:bg-white/20 transition-colors">
+                Contact Support
+              </a>
+              <a href="#" className="px-3 py-1.5 bg-[#E5FF00] text-gray-900 rounded-full text-xs hover:bg-[#d4ee00] transition-colors font-medium">
+                Read the Docs
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

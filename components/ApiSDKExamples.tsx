@@ -1464,49 +1464,53 @@ const ApiSDKExamples: React.FC<ApiSDKExamplesProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Package className="w-6 h-6 text-indigo-600" />
-                SDK & Code Examples
-              </h1>
-              <p className="text-gray-500 text-sm">Ready-to-use code snippets for your integration</p>
+        <div className="bg-white rounded-[20px] shadow-sm p-5 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBack}
+                className="w-10 h-10 bg-[#F0F0F0] rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Package className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-semibold text-gray-900">SDK & Code Examples</h1>
+                  <p className="text-xs text-gray-500">Ready-to-use code snippets for your integration</p>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3">
             <a
               href="https://github.com/nexusqr"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] text-gray-900 rounded-full hover:bg-[#d4ee00] transition-colors text-xs font-medium"
             >
-              <ExternalLink className="w-4 h-4" />
+              <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
+                <ExternalLink className="w-3 h-3" />
+              </div>
               GitHub
             </a>
           </div>
         </div>
 
         {/* Language Tabs */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mb-6">
+        <div className="bg-white rounded-[20px] shadow-sm p-3 mb-6">
           <div className="flex flex-wrap gap-2">
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.id}
                 onClick={() => setSelectedLanguage(lang.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all text-sm ${
                   selectedLanguage === lang.id
-                    ? `${lang.bgColor} ${lang.color}`
+                    ? 'bg-[#E5FF00] text-gray-900'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -1520,8 +1524,8 @@ const ApiSDKExamples: React.FC<ApiSDKExamplesProps> = ({ onBack }) => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Operations Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sticky top-6">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            <div className="bg-white rounded-[20px] shadow-sm p-4 sticky top-6">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
                 Operations
               </h3>
               <div className="space-y-1">
@@ -1529,19 +1533,19 @@ const ApiSDKExamples: React.FC<ApiSDKExamplesProps> = ({ onBack }) => {
                   <button
                     key={op.id}
                     onClick={() => setSelectedOperation(op.id)}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
+                    className={`w-full text-left px-4 py-3 rounded-[12px] transition-all ${
                       selectedOperation === op.id
-                        ? 'bg-indigo-50 text-indigo-700 font-medium'
+                        ? 'bg-[#E5FF00] font-medium'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span>{op.name}</span>
+                      <span className={`text-sm ${selectedOperation === op.id ? 'text-gray-900' : 'text-gray-700'}`}>{op.name}</span>
                       {selectedOperation === op.id && (
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-4 h-4 text-gray-900" />
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{op.description}</p>
+                    <p className={`text-xs mt-0.5 ${selectedOperation === op.id ? 'text-gray-700' : 'text-gray-400'}`}>{op.description}</p>
                   </button>
                 ))}
               </div>
@@ -1550,26 +1554,26 @@ const ApiSDKExamples: React.FC<ApiSDKExamplesProps> = ({ onBack }) => {
 
           {/* Code Panel */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
               {/* Code Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
                 <div className="flex items-center gap-3">
-                  <span className={`text-xl`}>{currentLang.icon}</span>
+                  <span className="text-xl">{currentLang.icon}</span>
                   <div>
-                    <h3 className="font-semibold text-gray-900">
+                    <h3 className="font-semibold text-gray-900 text-sm">
                       {OPERATIONS.find(o => o.id === selectedOperation)?.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs text-gray-500">
                       {currentLang.name} • {currentLang.fileExt}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={copyCode}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-xs ${
                     copiedCode
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-[#E5FF00] text-gray-900 hover:bg-[#d4ee00]'
                   }`}
                 >
                   {copiedCode ? (
@@ -1587,7 +1591,7 @@ const ApiSDKExamples: React.FC<ApiSDKExamplesProps> = ({ onBack }) => {
               </div>
 
               {/* Code Block */}
-              <div className="bg-[#1a1a2e] p-6 overflow-x-auto">
+              <div className="bg-gray-900 p-6 overflow-x-auto">
                 <pre className="text-sm font-mono leading-relaxed">
                   <code
                     className="text-gray-300"
@@ -1600,12 +1604,14 @@ const ApiSDKExamples: React.FC<ApiSDKExamplesProps> = ({ onBack }) => {
 
               {/* Installation Note */}
               {selectedOperation === 'install' && currentLang.installCmd && (
-                <div className="px-6 py-4 border-t border-gray-100 bg-amber-50">
+                <div className="px-6 py-4 bg-[#E5FF00]/20">
                   <div className="flex items-start gap-3">
-                    <Zap className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div className="w-8 h-8 bg-[#E5FF00] rounded-full flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-gray-900" />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium text-amber-800">Quick Install</p>
-                      <code className="text-sm text-amber-700 font-mono">
+                      <p className="text-sm font-medium text-gray-900">Quick Install</p>
+                      <code className="text-xs text-gray-700 font-mono">
                         {currentLang.installCmd}
                       </code>
                     </div>
@@ -1616,29 +1622,29 @@ const ApiSDKExamples: React.FC<ApiSDKExamplesProps> = ({ onBack }) => {
 
             {/* Tips */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-100">
+              <div className="bg-white rounded-[20px] shadow-sm p-5">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <Terminal className="w-5 h-5 text-indigo-600" />
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Terminal className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Test in Sandbox</h4>
-                    <p className="text-sm text-gray-600">
-                      Use <code className="bg-indigo-100 px-1.5 py-0.5 rounded text-indigo-700 text-xs">nxqr_test_xxx</code> keys
+                    <h4 className="font-semibold text-gray-900 mb-1 text-sm">Test in Sandbox</h4>
+                    <p className="text-xs text-gray-600">
+                      Use <code className="bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-700 text-xs">nxqr_test_xxx</code> keys
                       with the sandbox URL for safe testing.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-100">
+              <div className="bg-white rounded-[20px] shadow-sm p-5">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
                     <Book className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Full Documentation</h4>
-                    <p className="text-sm text-gray-600">
+                    <h4 className="font-semibold text-gray-900 mb-1 text-sm">Full Documentation</h4>
+                    <p className="text-xs text-gray-600">
                       Check out the <a href="/api/reference" className="text-emerald-600 font-medium hover:underline">API Reference</a> for
                       complete endpoint documentation.
                     </p>

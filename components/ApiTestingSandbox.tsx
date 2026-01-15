@@ -443,67 +443,66 @@ echo $response;`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-screen bg-[#F0F0F0] text-gray-900">
       <div className="flex h-screen">
         {/* Sidebar */}
-        <div className="w-72 bg-slate-800/50 border-r border-slate-700 flex flex-col">
+        <div className="w-72 bg-white shadow-sm flex flex-col">
           {/* Back Button & Logo */}
-          <div className="p-4 border-b border-slate-700">
+          <div className="p-4 border-b border-gray-100">
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 mb-4 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm">Back to Dashboard</span>
+                <ArrowLeft className="w-4 h-4 text-gray-600" />
               </button>
             )}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <Terminal className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+                <Terminal className="w-5 h-5 text-cyan-600" />
               </div>
               <div>
-                <h1 className="font-bold">API Sandbox</h1>
-                <p className="text-xs text-slate-400">Interactive Testing</p>
+                <h1 className="font-semibold text-sm text-gray-900">API Sandbox</h1>
+                <p className="text-xs text-gray-500">Interactive Testing</p>
               </div>
             </div>
           </div>
 
           {/* Environment Selector */}
-          <div className="p-4 border-b border-slate-700">
-            <div className="text-xs font-medium text-slate-400 mb-2">Environment</div>
-            <div className="flex bg-slate-700 rounded-lg p-1">
+          <div className="p-4 border-b border-gray-100">
+            <div className="text-xs font-medium text-gray-500 mb-2">Environment</div>
+            <div className="flex bg-gray-100 rounded-full p-1">
               <button
                 onClick={() => setEnvironment('sandbox')}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-2 px-3 rounded-full text-xs font-medium transition-all ${
                   environment === 'sandbox'
-                    ? 'bg-emerald-500 text-white'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#E5FF00] text-gray-900'
+                    : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 Sandbox
               </button>
               <button
                 onClick={() => setEnvironment('production')}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-2 px-3 rounded-full text-xs font-medium transition-all ${
                   environment === 'production'
                     ? 'bg-red-500 text-white'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 Production
               </button>
             </div>
-            <div className="mt-2 text-xs text-slate-500">
+            <div className="mt-2 text-xs text-gray-400">
               {baseUrl}
             </div>
           </div>
 
           {/* Quick Endpoints */}
           <div className="flex-1 overflow-y-auto p-4">
-            <div className="text-xs font-medium text-slate-400 mb-2 flex items-center justify-between">
+            <div className="text-xs font-medium text-gray-500 mb-2 flex items-center justify-between">
               <span>Quick Endpoints</span>
-              <button className="text-slate-500 hover:text-white">
+              <button className="text-gray-400 hover:text-gray-900">
                 <RefreshCw className="w-3 h-3" />
               </button>
             </div>
@@ -512,12 +511,12 @@ echo $response;`;
                 <button
                   key={i}
                   onClick={() => loadPreset(preset)}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-left"
+                  className="w-full flex items-center gap-2 p-2 rounded-[12px] hover:bg-gray-50 transition-colors text-left"
                 >
-                  <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${methodColors[preset.method as HttpMethod]} text-white`}>
+                  <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${methodColors[preset.method as HttpMethod]} text-white`}>
                     {preset.method.slice(0, 3)}
                   </span>
-                  <span className="text-sm text-slate-300 truncate flex-1">{preset.name}</span>
+                  <span className="text-xs text-gray-700 truncate flex-1">{preset.name}</span>
                 </button>
               ))}
             </div>
@@ -526,12 +525,12 @@ echo $response;`;
             <div className="mt-6">
               <button
                 onClick={() => setShowSaved(!showSaved)}
-                className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-2 w-full"
+                className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2 w-full"
               >
                 {showSaved ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 <Bookmark className="w-3 h-3" />
                 <span>Saved Requests</span>
-                <span className="ml-auto text-slate-500">{savedRequests.length}</span>
+                <span className="ml-auto text-gray-400">{savedRequests.length}</span>
               </button>
               {showSaved && savedRequests.length > 0 && (
                 <div className="space-y-1">
@@ -539,13 +538,13 @@ echo $response;`;
                     <button
                       key={saved.id}
                       onClick={() => loadSavedRequest(saved)}
-                      className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-left"
+                      className="w-full flex items-center gap-2 p-2 rounded-[12px] hover:bg-gray-50 transition-colors text-left"
                     >
-                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${methodColors[saved.method as HttpMethod]} text-white`}>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${methodColors[saved.method as HttpMethod]} text-white`}>
                         {saved.method.slice(0, 3)}
                       </span>
-                      <span className="text-sm text-slate-300 truncate flex-1">{saved.name}</span>
-                      {saved.starred && <Star className="w-3 h-3 text-amber-400 fill-amber-400" />}
+                      <span className="text-xs text-gray-700 truncate flex-1">{saved.name}</span>
+                      {saved.starred && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
                     </button>
                   ))}
                 </div>
@@ -556,12 +555,12 @@ echo $response;`;
             <div className="mt-6">
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-2 w-full"
+                className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2 w-full"
               >
                 {showHistory ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 <History className="w-3 h-3" />
                 <span>History</span>
-                <span className="ml-auto text-slate-500">{history.length}</span>
+                <span className="ml-auto text-gray-400">{history.length}</span>
               </button>
               {showHistory && history.length > 0 && (
                 <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -572,14 +571,14 @@ echo $response;`;
                         setMethod(item.method as HttpMethod);
                         setEndpoint(item.endpoint);
                       }}
-                      className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-left"
+                      className="w-full flex items-center gap-2 p-2 rounded-[12px] hover:bg-gray-50 transition-colors text-left"
                     >
                       <span className={`w-2 h-2 rounded-full ${item.success ? 'bg-green-500' : 'bg-red-500'}`} />
-                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${methodColors[item.method as HttpMethod]} text-white`}>
+                      <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${methodColors[item.method as HttpMethod]} text-white`}>
                         {item.method.slice(0, 3)}
                       </span>
-                      <span className="text-xs text-slate-400 truncate flex-1">{item.endpoint}</span>
-                      <span className="text-xs text-slate-500">{item.status}</span>
+                      <span className="text-xs text-gray-500 truncate flex-1">{item.endpoint}</span>
+                      <span className="text-xs text-gray-400">{item.status}</span>
                     </button>
                   ))}
                 </div>
@@ -588,8 +587,8 @@ echo $response;`;
           </div>
 
           {/* API Key */}
-          <div className="p-4 border-t border-slate-700">
-            <div className="text-xs font-medium text-slate-400 mb-2 flex items-center gap-1">
+          <div className="p-4 border-t border-gray-100">
+            <div className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
               <Key className="w-3 h-3" />
               API Key
             </div>
@@ -598,26 +597,26 @@ echo $response;`;
                 type={showApiKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                className="w-full px-3 py-2 pr-16 bg-slate-700 border border-slate-600 rounded-lg text-xs font-mono"
+                className="w-full px-3 py-2 pr-16 bg-gray-100 border-0 rounded-full text-xs font-mono text-gray-700"
               />
               <button
                 onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-600 rounded"
+                className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full"
               >
                 {showApiKey ? (
-                  <EyeOff className="w-3 h-3 text-slate-400" />
+                  <EyeOff className="w-3 h-3 text-gray-400" />
                 ) : (
-                  <Eye className="w-3 h-3 text-slate-400" />
+                  <Eye className="w-3 h-3 text-gray-400" />
                 )}
               </button>
               <button
                 onClick={() => copyToClipboard(apiKey, 'apikey')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-600 rounded"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full"
               >
                 {copied === 'apikey' ? (
-                  <Check className="w-3 h-3 text-green-400" />
+                  <Check className="w-3 h-3 text-green-500" />
                 ) : (
-                  <Copy className="w-3 h-3 text-slate-400" />
+                  <Copy className="w-3 h-3 text-gray-400" />
                 )}
               </button>
             </div>
@@ -625,23 +624,23 @@ echo $response;`;
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden p-4">
           {/* Request Builder */}
-          <div className="p-4 border-b border-slate-700">
+          <div className="bg-white rounded-[20px] shadow-sm p-5 mb-4">
             {/* URL Bar */}
             <div className="flex gap-2">
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as HttpMethod)}
-                className={`px-4 py-3 rounded-lg font-bold text-white border-0 ${methodColors[method]} focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800`}
+                className={`px-4 py-2.5 rounded-full font-bold text-white border-0 text-sm ${methodColors[method]} focus:ring-2 focus:ring-offset-2`}
               >
                 {httpMethods.map(m => (
-                  <option key={m} value={m} className="bg-slate-800">{m}</option>
+                  <option key={m} value={m} className="bg-gray-800">{m}</option>
                 ))}
               </select>
 
-              <div className="flex-1 flex bg-slate-700 rounded-lg overflow-hidden">
-                <span className="px-3 py-3 text-slate-400 text-sm bg-slate-800 border-r border-slate-600">
+              <div className="flex-1 flex bg-gray-100 rounded-full overflow-hidden">
+                <span className="px-3 py-2.5 text-gray-400 text-xs bg-gray-200">
                   {baseUrl}
                 </span>
                 <input
@@ -649,14 +648,14 @@ echo $response;`;
                   value={endpoint}
                   onChange={(e) => setEndpoint(e.target.value)}
                   placeholder="/endpoint"
-                  className="flex-1 px-3 py-3 bg-transparent border-0 focus:ring-0 font-mono text-sm"
+                  className="flex-1 px-3 py-2.5 bg-transparent border-0 focus:ring-0 font-mono text-xs text-gray-700"
                 />
               </div>
 
               <button
                 onClick={sendRequest}
                 disabled={isLoading}
-                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:opacity-50 rounded-lg font-semibold flex items-center gap-2 transition-all"
+                className="px-6 py-2.5 bg-[#E5FF00] hover:bg-[#d4ee00] disabled:opacity-50 rounded-full font-semibold text-gray-900 flex items-center gap-2 transition-all text-sm"
               >
                 {isLoading ? (
                   <>
@@ -673,34 +672,34 @@ echo $response;`;
 
               <button
                 onClick={saveRequest}
-                className="p-3 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                 title="Save Request"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-4 h-4 text-gray-600" />
               </button>
             </div>
 
             {/* Request Tabs */}
             <div className="mt-4">
-              <div className="flex gap-1 border-b border-slate-700">
+              <div className="flex gap-1 border-b border-gray-200">
                 {(['params', 'headers', 'body', 'auth'] as const).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
+                    className={`px-4 py-2 text-xs font-medium capitalize transition-colors ${
                       activeTab === tab
-                        ? 'text-cyan-400 border-b-2 border-cyan-400'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'text-gray-900 border-b-2 border-[#E5FF00]'
+                        : 'text-gray-400 hover:text-gray-900'
                     }`}
                   >
                     {tab}
                     {tab === 'params' && queryParams.filter(p => p.enabled).length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-cyan-500/20 text-cyan-400 rounded">
+                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-[#E5FF00] text-gray-900 rounded-full">
                         {queryParams.filter(p => p.enabled).length}
                       </span>
                     )}
                     {tab === 'headers' && headers.filter(h => h.enabled).length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-cyan-500/20 text-cyan-400 rounded">
+                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-[#E5FF00] text-gray-900 rounded-full">
                         {headers.filter(h => h.enabled).length}
                       </span>
                     )}
@@ -718,33 +717,33 @@ echo $response;`;
                           type="checkbox"
                           checked={param.enabled}
                           onChange={(e) => updateQueryParam(i, 'enabled', e.target.checked)}
-                          className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-cyan-500"
+                          className="w-4 h-4 rounded border-gray-300 bg-gray-100 text-[#E5FF00] focus:ring-[#E5FF00]"
                         />
                         <input
                           type="text"
                           value={param.key}
                           onChange={(e) => updateQueryParam(i, 'key', e.target.value)}
                           placeholder="Key"
-                          className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 bg-gray-100 border-0 rounded-full text-xs"
                         />
                         <input
                           type="text"
                           value={param.value}
                           onChange={(e) => updateQueryParam(i, 'value', e.target.value)}
                           placeholder="Value"
-                          className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 bg-gray-100 border-0 rounded-full text-xs"
                         />
                         <button
                           onClick={() => removeQueryParam(i)}
-                          className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                         >
-                          <Trash2 className="w-4 h-4 text-slate-400" />
+                          <Trash2 className="w-4 h-4 text-gray-400" />
                         </button>
                       </div>
                     ))}
                     <button
                       onClick={addQueryParam}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:text-gray-900 transition-colors"
                     >
                       <Plus className="w-4 h-4" />
                       Add Parameter
@@ -761,33 +760,33 @@ echo $response;`;
                           type="checkbox"
                           checked={header.enabled}
                           onChange={(e) => updateHeader(i, 'enabled', e.target.checked)}
-                          className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-cyan-500"
+                          className="w-4 h-4 rounded border-gray-300 bg-gray-100 text-[#E5FF00] focus:ring-[#E5FF00]"
                         />
                         <input
                           type="text"
                           value={header.key}
                           onChange={(e) => updateHeader(i, 'key', e.target.value)}
                           placeholder="Header"
-                          className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 bg-gray-100 border-0 rounded-full text-xs"
                         />
                         <input
                           type="text"
                           value={header.value}
                           onChange={(e) => updateHeader(i, 'value', e.target.value)}
                           placeholder="Value"
-                          className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 bg-gray-100 border-0 rounded-full text-xs"
                         />
                         <button
                           onClick={() => removeHeader(i)}
-                          className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                         >
-                          <Trash2 className="w-4 h-4 text-slate-400" />
+                          <Trash2 className="w-4 h-4 text-gray-400" />
                         </button>
                       </div>
                     ))}
                     <button
                       onClick={addHeader}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:text-gray-900 transition-colors"
                     >
                       <Plus className="w-4 h-4" />
                       Add Header
@@ -803,7 +802,7 @@ echo $response;`;
                       onChange={(e) => setBody(e.target.value)}
                       placeholder="Request body (JSON)"
                       rows={6}
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg font-mono text-sm resize-none"
+                      className="w-full px-4 py-3 bg-gray-100 border-0 rounded-[16px] font-mono text-xs resize-none text-gray-700"
                     />
                     <div className="flex justify-end mt-2">
                       <button
@@ -814,7 +813,7 @@ echo $response;`;
                             // Invalid JSON
                           }
                         }}
-                        className="px-3 py-1 text-xs text-slate-400 hover:text-white transition-colors"
+                        className="px-3 py-1 text-xs text-gray-500 hover:text-gray-900 transition-colors"
                       >
                         Format JSON
                       </button>
@@ -827,8 +826,8 @@ echo $response;`;
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
-                        <label className="block text-sm font-medium mb-2">Authentication Type</label>
-                        <select className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg">
+                        <label className="block text-xs font-medium text-gray-700 mb-2">Authentication Type</label>
+                        <select className="w-full px-3 py-2 bg-gray-100 border-0 rounded-full text-xs">
                           <option>Bearer Token</option>
                           <option>API Key</option>
                           <option>Basic Auth</option>
@@ -837,17 +836,17 @@ echo $response;`;
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">Token</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-2">Token</label>
                       <input
                         type="text"
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg font-mono text-sm"
+                        className="w-full px-3 py-2 bg-gray-100 border-0 rounded-full font-mono text-xs"
                         placeholder="Enter your API key"
                       />
                     </div>
-                    <div className="p-3 bg-slate-700/50 rounded-lg text-sm text-slate-400">
-                      The token will be added to the Authorization header as: <code className="text-cyan-400">Bearer {'{token}'}</code>
+                    <div className="p-3 bg-gray-50 rounded-[12px] text-xs text-gray-500">
+                      The token will be added to the Authorization header as: <code className="text-cyan-600">Bearer {'{token}'}</code>
                     </div>
                   </div>
                 )}
@@ -856,24 +855,24 @@ echo $response;`;
           </div>
 
           {/* Response Area */}
-          <div className="flex-1 flex flex-col overflow-hidden p-4">
+          <div className="flex-1 bg-white rounded-[20px] shadow-sm p-5 flex flex-col overflow-hidden">
             {/* Response Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <h2 className="font-semibold">Response</h2>
+                <h2 className="font-semibold text-sm text-gray-900">Response</h2>
                 {responseStatus && (
                   <div className="flex items-center gap-3">
-                    <span className={`px-2 py-1 text-xs font-bold rounded ${
+                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${
                       responseStatus >= 200 && responseStatus < 300
-                        ? 'bg-green-500/20 text-green-400'
+                        ? 'bg-green-100 text-green-600'
                         : responseStatus >= 400
-                        ? 'bg-red-500/20 text-red-400'
-                        : 'bg-amber-500/20 text-amber-400'
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-amber-100 text-amber-600'
                     }`}>
                       {responseStatus} {responseStatus === 200 ? 'OK' : responseStatus === 201 ? 'Created' : ''}
                     </span>
                     {responseTime && (
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <span className="text-xs text-gray-400 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {responseTime}ms
                       </span>
@@ -886,16 +885,16 @@ echo $response;`;
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => copyToClipboard(JSON.stringify(response, null, 2), 'response')}
-                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
                     {copied === 'response' ? (
-                      <Check className="w-4 h-4 text-green-400" />
+                      <Check className="w-4 h-4 text-green-500" />
                     ) : (
-                      <Copy className="w-4 h-4 text-slate-400" />
+                      <Copy className="w-4 h-4 text-gray-400" />
                     )}
                   </button>
-                  <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
-                    <Download className="w-4 h-4 text-slate-400" />
+                  <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <Download className="w-4 h-4 text-gray-400" />
                   </button>
                 </div>
               )}
@@ -903,15 +902,15 @@ echo $response;`;
 
             {/* Response Tabs */}
             {response && (
-              <div className="flex gap-1 border-b border-slate-700 mb-4">
+              <div className="flex gap-1 border-b border-gray-200 mb-4">
                 {(['body', 'headers', 'code'] as const).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setResponseTab(tab)}
-                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
+                    className={`px-4 py-2 text-xs font-medium capitalize transition-colors ${
                       responseTab === tab
-                        ? 'text-cyan-400 border-b-2 border-cyan-400'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'text-gray-900 border-b-2 border-[#E5FF00]'
+                        : 'text-gray-400 hover:text-gray-900'
                     }`}
                   >
                     {tab === 'code' ? 'Code Snippet' : tab}
@@ -923,14 +922,14 @@ echo $response;`;
             {/* Response Content */}
             <div className="flex-1 overflow-auto">
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
                   <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                  <p>Sending request...</p>
+                  <p className="text-sm">Sending request...</p>
                 </div>
               ) : response ? (
                 <>
                   {responseTab === 'body' && (
-                    <pre className="p-4 bg-slate-900 rounded-lg overflow-auto text-sm font-mono text-slate-300 h-full">
+                    <pre className="p-4 bg-gray-900 rounded-[16px] overflow-auto text-xs font-mono text-gray-300 h-full">
                       {JSON.stringify(response, null, 2)}
                     </pre>
                   )}
@@ -938,9 +937,9 @@ echo $response;`;
                   {responseTab === 'headers' && (
                     <div className="space-y-2">
                       {Object.entries(responseHeaders).map(([key, value]) => (
-                        <div key={key} className="flex items-center gap-4 p-3 bg-slate-900 rounded-lg">
-                          <span className="font-medium text-cyan-400 min-w-48">{key}</span>
-                          <span className="text-slate-300 font-mono text-sm">{value}</span>
+                        <div key={key} className="flex items-center gap-4 p-3 bg-gray-50 rounded-[12px]">
+                          <span className="font-medium text-cyan-600 min-w-48 text-xs">{key}</span>
+                          <span className="text-gray-700 font-mono text-xs">{value}</span>
                         </div>
                       ))}
                     </div>
@@ -949,21 +948,21 @@ echo $response;`;
                   {responseTab === 'code' && (
                     <div className="space-y-4">
                       {(['curl', 'nodejs', 'python', 'php'] as const).map(lang => (
-                        <div key={lang} className="bg-slate-900 rounded-lg overflow-hidden">
-                          <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span className="text-sm font-medium capitalize">{lang}</span>
+                        <div key={lang} className="bg-gray-900 rounded-[16px] overflow-hidden">
+                          <div className="flex items-center justify-between px-4 py-2 bg-gray-800">
+                            <span className="text-xs font-medium text-white capitalize">{lang}</span>
                             <button
                               onClick={() => copyToClipboard(generateCodeSnippet(lang), lang)}
-                              className="p-1 hover:bg-slate-700 rounded"
+                              className="p-1 hover:bg-gray-700 rounded-full"
                             >
                               {copied === lang ? (
                                 <Check className="w-4 h-4 text-green-400" />
                               ) : (
-                                <Copy className="w-4 h-4 text-slate-400" />
+                                <Copy className="w-4 h-4 text-gray-400" />
                               )}
                             </button>
                           </div>
-                          <pre className="p-4 text-sm font-mono text-slate-300 overflow-x-auto">
+                          <pre className="p-4 text-xs font-mono text-gray-300 overflow-x-auto">
                             {generateCodeSnippet(lang)}
                           </pre>
                         </div>
@@ -972,10 +971,12 @@ echo $response;`;
                   )}
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                  <Terminal className="w-12 h-12 mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">Ready to send a request</p>
-                  <p className="text-sm">Select an endpoint and click Send to see the response</p>
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <Terminal className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 mb-1">Ready to send a request</p>
+                  <p className="text-xs text-gray-500">Select an endpoint and click Send to see the response</p>
                 </div>
               )}
             </div>
