@@ -214,25 +214,25 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
     <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={onBack}
-              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
               <Users className="w-5 h-5 text-purple-600" />
             </div>
-            <div>
-              <h1 className="text-sm font-semibold text-gray-800">Team Management</h1>
-              <p className="text-xs text-gray-500">Manage members & permissions</p>
+            <div className="min-w-0">
+              <h1 className="text-sm font-semibold text-gray-800 truncate">Team Management</h1>
+              <p className="text-xs text-gray-500 truncate">Manage members & permissions</p>
             </div>
           </div>
           <button
             onClick={() => setShowInviteModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800 transition-colors flex-shrink-0 w-full sm:w-auto"
           >
             <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
               <UserPlus className="w-3 h-3" />
@@ -242,76 +242,76 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="bg-white rounded-[20px] p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-600" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
+          <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{members.length}</div>
-                <div className="text-xs text-gray-500">Team Members</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-[20px] p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                <UserCheck className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{members.filter(m => m.status === 'active').length}</div>
-                <div className="text-xs text-gray-500">Active</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900">{members.length}</div>
+                <div className="text-[10px] sm:text-xs text-gray-500 truncate">Team Members</div>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-[20px] p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <Clock className="w-5 h-5 text-amber-600" />
+          <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{invitations.filter(i => i.status === 'pending').length}</div>
-                <div className="text-xs text-gray-500">Pending Invites</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900">{members.filter(m => m.status === 'active').length}</div>
+                <div className="text-[10px] sm:text-xs text-gray-500 truncate">Active</div>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-[20px] p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <Key className="w-5 h-5 text-purple-600" />
+          <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{members.reduce((a, b) => a + b.apiKeys, 0)}</div>
-                <div className="text-xs text-gray-500">API Keys</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900">{invitations.filter(i => i.status === 'pending').length}</div>
+                <div className="text-[10px] sm:text-xs text-gray-500 truncate">Pending</div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Key className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900">{members.reduce((a, b) => a + b.apiKeys, 0)}</div>
+                <div className="text-[10px] sm:text-xs text-gray-500 truncate">API Keys</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-[20px] p-2 mb-4 shadow-sm flex gap-2">
+        <div className="bg-white rounded-[20px] p-2 mb-4 shadow-sm flex gap-1 sm:gap-2 overflow-x-auto">
           {[
             { id: 'members', label: 'Members', icon: Users, count: members.length },
             { id: 'roles', label: 'Roles', icon: Shield, count: roles.length },
-            { id: 'invitations', label: 'Invitations', icon: Mail, count: invitations.filter(i => i.status === 'pending').length }
+            { id: 'invitations', label: 'Invites', icon: Mail, count: invitations.filter(i => i.status === 'pending').length }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-[16px] text-xs font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 rounded-[16px] text-xs font-medium transition-colors min-w-0 ${
                 activeTab === tab.id
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                 activeTab === tab.id ? 'bg-white/20' : 'bg-gray-100'
               }`}>
                 <tab.icon className="w-3 h-3" />
               </div>
-              {tab.label}
-              <span className={`px-2 py-0.5 text-[10px] rounded-full ${
+              <span className="hidden sm:inline truncate">{tab.label}</span>
+              <span className={`px-1.5 sm:px-2 py-0.5 text-[10px] rounded-full flex-shrink-0 ${
                 activeTab === tab.id ? 'bg-white/20' : 'bg-gray-100'
               }`}>
                 {tab.count}
@@ -325,7 +325,7 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
           <>
             {/* Filters */}
             <div className="bg-white rounded-[20px] p-4 mb-4 shadow-sm">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <div className="flex-1 relative">
                   <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center absolute left-3 top-1/2 -translate-y-1/2">
                     <Search className="w-4 h-4 text-gray-500" />
@@ -338,27 +338,29 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                     className="w-full pl-14 pr-4 py-3 bg-gray-100 rounded-full text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
                   />
                 </div>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="px-4 py-3 bg-gray-100 rounded-full text-xs focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="all">All Roles</option>
-                  <option value="owner">Owner</option>
-                  <option value="admin">Admin</option>
-                  <option value="developer">Developer</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-3 bg-gray-100 rounded-full text-xs focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="suspended">Suspended</option>
-                </select>
+                <div className="flex gap-2 sm:gap-4">
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-3 bg-gray-100 rounded-full text-xs focus:ring-2 focus:ring-purple-500 min-w-0"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="owner">Owner</option>
+                    <option value="admin">Admin</option>
+                    <option value="developer">Developer</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-3 bg-gray-100 rounded-full text-xs focus:ring-2 focus:ring-purple-500 min-w-0"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -515,14 +517,14 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                   const roleStyle = getRoleStyle(invite.role);
                   return (
                     <div key={invite.id} className="p-4 border-t border-gray-100 hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <Mail className="w-5 h-5 text-gray-500" />
                           </div>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-900">{invite.email}</div>
-                            <div className="flex items-center gap-2 mt-1">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-gray-900 truncate">{invite.email}</div>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${roleStyle.bg} ${roleStyle.text}`}>
                                 {invite.role.charAt(0).toUpperCase() + invite.role.slice(1)}
                               </span>
@@ -534,7 +536,7 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
                           {invite.status === 'pending' && (
                             <button
                               onClick={() => copyToClipboard(`https://app.nexusqr.com/invite/${invite.id}`, invite.id)}
