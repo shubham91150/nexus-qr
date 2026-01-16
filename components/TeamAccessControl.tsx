@@ -341,7 +341,7 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-[20px] p-2 mb-4 shadow-sm flex gap-1 sm:gap-2 overflow-x-auto">
+        <div className="bg-white rounded-full p-1.5 mb-4 shadow-sm flex gap-1">
           {[
             { id: 'members', label: 'Members', icon: Users, count: activeMembers.length },
             { id: 'roles', label: 'Roles', icon: Shield, count: roleDefinitions.length },
@@ -350,20 +350,16 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 rounded-[16px] text-xs font-medium transition-colors min-w-0 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 rounded-full text-xs font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#E5FF00] text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                activeTab === tab.id ? 'bg-white/20' : 'bg-gray-100'
-              }`}>
-                <tab.icon className="w-3 h-3" />
-              </div>
-              <span className="hidden sm:inline truncate">{tab.label}</span>
-              <span className={`px-1.5 sm:px-2 py-0.5 text-[10px] rounded-full flex-shrink-0 ${
-                activeTab === tab.id ? 'bg-white/20' : 'bg-gray-100'
+              <tab.icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
+                activeTab === tab.id ? 'bg-gray-900/10' : 'bg-gray-100'
               }`}>
                 {tab.count}
               </span>
@@ -518,14 +514,14 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
             {roleDefinitions.map(role => {
               const roleCounts = getRoleCounts();
               return (
-                <div key={role.id} className="bg-white rounded-[20px] p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center ${role.bgColor}`}>
-                        <role.icon className={`w-8 h-8 ${role.color}`} />
+                <div key={role.id} className="bg-white rounded-[20px] p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${role.bgColor}`}>
+                        <role.icon className={`w-5 h-5 ${role.color}`} />
                       </div>
                       <div>
-                        <div className="text-base font-semibold text-gray-900">{role.name}</div>
+                        <div className="text-sm font-semibold text-gray-900">{role.name}</div>
                         <div className="text-xs text-gray-500">{roleCounts[role.id] || 0} members</div>
                       </div>
                     </div>
@@ -535,16 +531,16 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                           setEditingRole(role);
                           setEditingRolePermissions([...role.permissions]);
                         }}
-                        className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                        className="w-8 h-8 bg-[#E5FF00] hover:bg-[#d4eb00] rounded-full flex items-center justify-center transition-colors"
                       >
-                        <Edit2 className="w-5 h-5 text-gray-600" />
+                        <Edit2 className="w-4 h-4 text-gray-900" />
                       </button>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">{role.description}</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-xs text-gray-600 mb-3">{role.description}</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {role.permissions.map((perm, i) => (
-                      <span key={i} className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
+                      <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
                         {perm === '*' ? 'Full Access' : perm}
                       </span>
                     ))}
@@ -553,11 +549,11 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
               );
             })}
 
-            <button className="bg-white rounded-[20px] p-5 shadow-sm flex flex-col items-center justify-center gap-3 hover:bg-gray-50 transition-colors min-h-[200px]">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                <Shield className="w-8 h-8 text-gray-400" />
+            <button className="bg-white rounded-[20px] p-4 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors min-h-[160px]">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <Shield className="w-5 h-5 text-gray-400" />
               </div>
-              <span className="text-base font-semibold text-gray-900">Create Custom Role</span>
+              <span className="text-sm font-semibold text-gray-900">Create Custom Role</span>
               <span className="text-xs text-gray-500">Define specific permissions</span>
             </button>
           </div>
