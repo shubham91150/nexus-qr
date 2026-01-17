@@ -273,8 +273,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Users className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-semibold text-gray-800 truncate">Team Management</h1>
@@ -296,8 +296,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
           <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#f5f5f5] rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-900" />
               </div>
               <div className="min-w-0">
                 <div className="text-lg sm:text-2xl font-bold text-gray-900">{activeMembers.length}</div>
@@ -307,8 +307,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
           </div>
           <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#f5f5f5] rounded-full flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-gray-900" />
               </div>
               <div className="min-w-0">
                 <div className="text-lg sm:text-2xl font-bold text-gray-900">{activeMembers.filter(m => m.status === 'active').length}</div>
@@ -318,8 +318,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
           </div>
           <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#f5f5f5] rounded-full flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-900" />
               </div>
               <div className="min-w-0">
                 <div className="text-lg sm:text-2xl font-bold text-gray-900">{pendingInvitations.length}</div>
@@ -329,8 +329,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
           </div>
           <div className="bg-white rounded-[20px] p-3 sm:p-4 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Key className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#f5f5f5] rounded-full flex items-center justify-center flex-shrink-0">
+                <Key className="w-4 h-4 sm:w-5 sm:h-5 text-gray-900" />
               </div>
               <div className="min-w-0">
                 <div className="text-lg sm:text-2xl font-bold text-gray-900">{activeMembers.reduce((a, b) => a + b.apiKeys, 0)}</div>
@@ -374,8 +374,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
             <div className="bg-white rounded-[20px] p-4 mb-4 shadow-sm">
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <div className="flex-1 relative">
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center absolute left-3 top-1/2 -translate-y-1/2">
-                    <Search className="w-4 h-4 text-gray-500" />
+                  <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center absolute left-3 top-1/2 -translate-y-1/2">
+                    <Search className="w-4 h-4 text-gray-900" />
                   </div>
                   <input
                     type="text"
@@ -414,8 +414,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
             {/* Members List */}
             <div className="bg-white rounded-[20px] overflow-hidden shadow-sm">
               <div className="p-4 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Users className="w-4 h-4 text-gray-600" />
+                <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                  <Users className="w-4 h-4 text-gray-900" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-gray-900">Team Members</div>
@@ -517,8 +517,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                 <div key={role.id} className="bg-white rounded-[20px] p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${role.bgColor}`}>
-                        <role.icon className={`w-5 h-5 ${role.color}`} />
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#f5f5f5]">
+                        <role.icon className="w-5 h-5 text-gray-900" />
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{role.name}</div>
@@ -550,8 +550,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
             })}
 
             <button className="bg-white rounded-[20px] p-4 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors min-h-[160px]">
-              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                <Shield className="w-5 h-5 text-gray-400" />
+              <div className="w-10 h-10 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <Shield className="w-5 h-5 text-gray-900" />
               </div>
               <span className="text-sm font-semibold text-gray-900">Create Custom Role</span>
               <span className="text-xs text-gray-500">Define specific permissions</span>
@@ -564,8 +564,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
           <div className="bg-white rounded-[20px] overflow-hidden shadow-sm">
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Mail className="w-4 h-4 text-gray-600" />
+                <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                  <Mail className="w-4 h-4 text-gray-900" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-gray-900">Pending Invitations</div>
@@ -668,8 +668,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[20px] max-w-lg w-full p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <UserPlus className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+                <UserPlus className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">Invite Team Member</h3>
@@ -698,16 +698,16 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                       <button
                         key={role}
                         onClick={() => setInviteForm({ ...inviteForm, role })}
-                        className={`flex items-center gap-2 px-3 py-3 rounded-[12px] transition-all ${
+                        className={`flex items-center gap-2 px-3 py-3 rounded-full transition-all ${
                           inviteForm.role === role
                             ? 'bg-gray-900 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          inviteForm.role === role ? 'bg-white/20' : roleData.bgColor
+                          inviteForm.role === role ? 'bg-white/20' : 'bg-[#f5f5f5]'
                         }`}>
-                          <roleData.icon className={`w-3 h-3 ${inviteForm.role === role ? 'text-white' : roleData.color}`} />
+                          <roleData.icon className={`w-3 h-3 ${inviteForm.role === role ? 'text-white' : 'text-gray-900'}`} />
                         </div>
                         <span className="text-xs font-medium">{roleData.name}</span>
                       </button>
@@ -780,16 +780,16 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                       <button
                         key={role}
                         onClick={() => setEditingMember({ ...editingMember, role })}
-                        className={`flex items-center gap-2 px-3 py-3 rounded-[12px] transition-all ${
+                        className={`flex items-center gap-2 px-3 py-3 rounded-full transition-all ${
                           editingMember.role === role
                             ? 'bg-gray-900 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          editingMember.role === role ? 'bg-white/20' : roleData.bgColor
+                          editingMember.role === role ? 'bg-white/20' : 'bg-[#f5f5f5]'
                         }`}>
-                          <roleData.icon className={`w-3 h-3 ${editingMember.role === role ? 'text-white' : roleData.color}`} />
+                          <roleData.icon className={`w-3 h-3 ${editingMember.role === role ? 'text-white' : 'text-gray-900'}`} />
                         </div>
                         <span className="text-xs font-medium">{roleData.name}</span>
                       </button>
@@ -808,19 +808,19 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
                     <button
                       key={status}
                       onClick={() => setEditingMember({ ...editingMember, status })}
-                      className={`flex items-center gap-2 px-3 py-3 rounded-[12px] transition-all ${
+                      className={`flex items-center gap-2 px-3 py-3 rounded-full transition-all ${
                         editingMember.status === status
                           ? status === 'active' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        editingMember.status === status ? 'bg-white/20' : status === 'active' ? 'bg-emerald-100' : 'bg-red-100'
+                        editingMember.status === status ? 'bg-white/20' : 'bg-[#f5f5f5]'
                       }`}>
                         {status === 'active' ? (
-                          <UserCheck className={`w-3 h-3 ${editingMember.status === status ? 'text-white' : 'text-emerald-600'}`} />
+                          <UserCheck className={`w-3 h-3 ${editingMember.status === status ? 'text-white' : 'text-gray-900'}`} />
                         ) : (
-                          <UserX className={`w-3 h-3 ${editingMember.status === status ? 'text-white' : 'text-red-600'}`} />
+                          <UserX className={`w-3 h-3 ${editingMember.status === status ? 'text-white' : 'text-gray-900'}`} />
                         )}
                       </div>
                       <span className="text-xs font-medium">{status.charAt(0).toUpperCase() + status.slice(1)}</span>
@@ -960,8 +960,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
           <div className="bg-white rounded-[20px] max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${editingRole.bgColor}`}>
-                  <editingRole.icon className={`w-7 h-7 ${editingRole.color}`} />
+                <div className="w-14 h-14 rounded-full flex items-center justify-center bg-gray-900">
+                  <editingRole.icon className="w-7 h-7 text-white" />
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-gray-900">Edit {editingRole.name} Role</h3>
@@ -1023,8 +1023,8 @@ export default function TeamAccessControl({ onBack, userId }: TeamAccessControlP
 
             <div className="bg-amber-50 rounded-[12px] p-4 mb-6">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-4 h-4 text-gray-900" />
                 </div>
                 <div>
                   <div className="text-xs font-medium text-amber-800">Note</div>
