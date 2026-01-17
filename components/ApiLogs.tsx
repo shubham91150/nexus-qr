@@ -456,7 +456,7 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
                           <div className="text-xs text-gray-500">{date}</div>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${getMethodColor(log.method)}`}>
+                          <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold ${getMethodColor(log.method)}`}>
                             {log.method}
                           </span>
                         </td>
