@@ -83,8 +83,8 @@ const WebhookModal: React.FC<WebhookModalProps> = ({ isOpen, onClose, onSave, ed
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-[20px] max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-            <Bell className="w-5 h-5 text-purple-600" />
+          <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+            <Bell className="w-5 h-5 text-white" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">
@@ -235,29 +235,29 @@ const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack, onDeliveryLogsClick }
     <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-[1000px] mx-auto pt-6 pb-20 px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <Bell className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+              <Bell className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-sm font-semibold text-gray-800">Webhooks</h1>
-              <p className="text-xs text-gray-500">Real-time notifications</p>
+            <div className="min-w-0">
+              <h1 className="text-sm font-semibold text-gray-800 truncate">Webhooks</h1>
+              <p className="text-xs text-gray-500 truncate">Real-time notifications</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               onClick={onDeliveryLogsClick}
               className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
             >
-              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                <FileText className="w-3 h-3 text-gray-600" />
+              <div className="w-6 h-6 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <FileText className="w-3 h-3 text-gray-900" />
               </div>
               Logs
             </button>
@@ -279,8 +279,8 @@ const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack, onDeliveryLogsClick }
         {/* How Webhooks Work Card */}
         <div className="bg-white rounded-[20px] p-5 mb-4 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <Zap className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+              <Zap className="w-5 h-5 text-gray-900" />
             </div>
             <div>
               <div className="text-sm font-semibold text-gray-900">How Webhooks Work</div>
@@ -303,8 +303,8 @@ X-Nexus-Signature: sha256=xxxxx
         <div className="bg-white rounded-[20px] overflow-hidden shadow-sm">
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <Globe className="w-4 h-4 text-gray-600" />
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <Globe className="w-4 h-4 text-gray-900" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-900">Your Webhooks</div>
@@ -320,8 +320,8 @@ X-Nexus-Signature: sha256=xxxxx
             </div>
           ) : webhooks.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bell className="w-7 h-7 text-purple-600" />
+              <div className="w-14 h-14 bg-[#f5f5f5] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bell className="w-7 h-7 text-gray-900" />
               </div>
               <h3 className="text-sm font-semibold text-gray-900 mb-1">No Webhooks Yet</h3>
               <p className="text-xs text-gray-500 mb-4">Create your first webhook</p>
@@ -421,8 +421,8 @@ X-Nexus-Signature: sha256=xxxxx
         {/* Signature Verification Card */}
         <div className="mt-4 bg-white rounded-[20px] p-5 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-              <Code className="w-5 h-5 text-indigo-600" />
+            <div className="w-10 h-10 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+              <Code className="w-5 h-5 text-gray-900" />
             </div>
             <div>
               <div className="text-sm font-semibold text-gray-900">Verifying Signatures</div>

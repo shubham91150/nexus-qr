@@ -171,6 +171,42 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
     };
   };
 
+  const handleExportLogs = () => {
+    if (filteredLogs.length === 0) {
+      alert('No logs to export');
+      return;
+    }
+
+    // Create CSV content
+    const headers = ['Timestamp', 'Method', 'Endpoint', 'Status', 'Response Time (ms)', 'API Key', 'IP Address', 'Request ID'];
+    const csvRows = [headers.join(',')];
+
+    filteredLogs.forEach(log => {
+      const row = [
+        new Date(log.timestamp).toISOString(),
+        log.method,
+        `"${log.endpoint}"`,
+        log.status,
+        log.responseTime,
+        `"${log.apiKeyName}"`,
+        log.ip,
+        log.requestId
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `api-logs-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center">
@@ -211,7 +247,10 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
             >
               <RefreshCw className="w-4 h-4 text-gray-600" />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-colors">
+            <button
+              onClick={handleExportLogs}
+              className="flex items-center gap-2 px-4 py-2 bg-[#E5FF00] rounded-full text-xs font-medium hover:bg-[#d4ee00] transition-colors"
+            >
               <div className="w-6 h-6 bg-gray-900/10 rounded-full flex items-center justify-center">
                 <Download className="w-3 h-3" />
               </div>
