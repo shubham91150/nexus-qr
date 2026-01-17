@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   FileText, Search, Filter, Download, RefreshCw, ArrowLeft,
   CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Copy,
-  AlertTriangle, Info, ExternalLink
+  AlertTriangle, Info, ExternalLink, X
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { getUserApiKeys } from '../services/apiService';

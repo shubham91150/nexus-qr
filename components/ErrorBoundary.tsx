@@ -94,20 +94,20 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="text-red-600" size={32} />
+        <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[20px] shadow-sm p-8 max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="text-red-500" size={32} />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">
-              कुछ गलत हो गया
+              Something Went Wrong
             </h2>
             <p className="text-gray-500 mb-6 text-sm">
-              एक अनपेक्षित त्रुटि हुई। कृपया पुनः प्रयास करें या पेज रीफ्रेश करें।
+              An unexpected error occurred. Please try again or refresh the page.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="bg-gray-100 rounded-lg p-3 mb-6 text-left overflow-auto max-h-32">
+              <div className="bg-gray-100 rounded-[12px] p-3 mb-6 text-left overflow-auto max-h-32">
                 <code className="text-xs text-red-600 break-all">
                   {this.state.error.toString()}
                 </code>
@@ -117,17 +117,17 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3">
               <button
                 onClick={this.handleRetry}
-                className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
               >
                 <RefreshCw size={18} />
-                पुनः प्रयास करें
+                Retry
               </button>
               <button
                 onClick={this.handleGoHome}
-                className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
               >
                 <Home size={18} />
-                घर जाओ
+                Go Home
               </button>
             </div>
           </div>
