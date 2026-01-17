@@ -1665,31 +1665,28 @@ initPersistentLogging();
 
 // Root App with AuthProvider, SubscriptionProvider and ErrorBoundary
 const App: React.FC = () => {
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(true); // Always enable debug mode
   const [erudaStatus, setErudaStatus] = useState<'loading' | 'loaded' | 'error' | 'idle'>('idle');
 
-  // Initialize Eruda debug console in debug mode
+  // Initialize Eruda debug console - always enabled
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const debugParam = urlParams.get('debug');
 
-    // Save debug preference to localStorage
-    if (debugParam === 'true') {
-      localStorage.setItem('nexus_debug', 'true');
-      // Clean URL after saving preference
+    // Only disable if explicitly set to false
+    if (debugParam === 'false') {
+      localStorage.setItem('nexus_debug', 'false');
+      setDebugMode(false);
       const cleanUrl = window.location.origin + window.location.pathname;
       window.history.replaceState({}, '', cleanUrl);
-    } else if (debugParam === 'false') {
-      localStorage.removeItem('nexus_debug');
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
+      return;
     }
 
-    // Check if debug mode enabled
-    const isDebugMode = debugParam === 'true' || localStorage.getItem('nexus_debug') === 'true';
-    setDebugMode(isDebugMode);
+    // Always enable debug mode unless explicitly disabled
+    localStorage.setItem('nexus_debug', 'true');
+    setDebugMode(true);
 
-    if (isDebugMode && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       // Check if Eruda is already initialized
       if ((window as any).eruda && (window as any).eruda._isInit) {
         console.log('🔧 Eruda already initialized');
