@@ -251,7 +251,7 @@ const ApiWebhooks: React.FC<ApiWebhooksProps> = ({ onBack, onDeliveryLogsClick }
               <p className="text-xs text-gray-500 truncate">Real-time notifications</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="flex items-center justify-center gap-2">
             <button
               onClick={onDeliveryLogsClick}
               className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"

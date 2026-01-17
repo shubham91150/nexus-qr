@@ -463,7 +463,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                           onClick={() => setExpandedDelivery(isExpanded ? null : delivery.id)}
                         >
                           <td className="px-6 py-4">
-                            <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getEventBadge(delivery.eventType)}`}>
+                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getEventBadge(delivery.eventType)}`}>
                               {delivery.eventType}
                             </span>
                           </td>
@@ -472,7 +472,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                             <code className="text-xs text-gray-400 truncate block max-w-xs">{delivery.webhookUrl}</code>
                           </td>
                           <td className="px-4 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusBadge(delivery.status)}`}>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(delivery.status)}`}>
                               {getStatusIcon(delivery.status)}
                               {delivery.status.charAt(0).toUpperCase() + delivery.status.slice(1)}
                             </span>
@@ -570,7 +570,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                                             <div className="text-xs text-red-600 mt-1">{attempt.errorMessage}</div>
                                           )}
                                           {attempt.httpStatus && (
-                                            <span className={`inline-flex mt-1 px-1.5 py-0.5 rounded text-xs ${
+                                            <span className={`inline-flex mt-1 px-2.5 py-0.5 rounded-full text-xs ${
                                               attempt.status === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                                             }`}>
                                               HTTP {attempt.httpStatus}
@@ -650,7 +650,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                                     <>
                                       <div className="mb-3">
                                         <div className="text-xs text-gray-500 mb-1">Status</div>
-                                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-100 text-emerald-700 text-xs font-medium">
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
                                           <CheckCircle className="w-3 h-3" />
                                           {delivery.httpStatus} OK
                                         </span>
@@ -719,10 +719,10 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <div className="flex items-center gap-2 mb-1">
-                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getEventBadge(delivery.eventType)}`}>
+                                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getEventBadge(delivery.eventType)}`}>
                                   {delivery.eventType}
                                 </span>
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getStatusBadge(delivery.status)}`}>
+                                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(delivery.status)}`}>
                                   {getStatusIcon(delivery.status)}
                                   {delivery.status}
                                 </span>
