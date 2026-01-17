@@ -203,13 +203,13 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
 
   const getEventBadge = (event: string) => {
     const colors: Record<string, string> = {
-      'qr.created': 'bg-blue-100 text-blue-700',
-      'qr.scanned': 'bg-purple-100 text-purple-700',
-      'qr.updated': 'bg-amber-100 text-amber-700',
-      'qr.deleted': 'bg-red-100 text-red-700',
-      'scan.milestone': 'bg-emerald-100 text-emerald-700'
+      'qr.created': 'bg-gray-900 text-blue-400',
+      'qr.scanned': 'bg-gray-900 text-purple-400',
+      'qr.updated': 'bg-gray-900 text-amber-400',
+      'qr.deleted': 'bg-gray-900 text-red-400',
+      'scan.milestone': 'bg-gray-900 text-emerald-400'
     };
-    return colors[event] || 'bg-gray-100 text-gray-700';
+    return colors[event] || 'bg-gray-900 text-gray-400';
   };
 
   const copyToClipboard = (text: string, id: string) => {
@@ -250,9 +250,11 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#F0F0F0] flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
+          <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <RefreshCw className="w-5 h-5 animate-spin text-white" />
+          </div>
           <p className="text-gray-500">Loading webhook deliveries...</p>
         </div>
       </div>
@@ -260,7 +262,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -273,28 +275,30 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
             </button>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Webhook className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+                  <Webhook className="w-4 h-4 text-white" />
+                </div>
                 Webhook Delivery Logs
               </h1>
-              <p className="text-gray-500 text-xs sm:text-sm">Monitor and debug webhook deliveries</p>
+              <p className="text-gray-500 text-xs sm:text-sm mt-1">Monitor and debug webhook deliveries</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 ml-12 sm:ml-0">
             {/* View Mode Toggle */}
-            <div className="flex bg-white border border-gray-200 rounded-xl p-1">
+            <div className="flex bg-[#f5f5f5] rounded-full p-1">
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                  viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
+                  viewMode === 'list' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 List
               </button>
               <button
                 onClick={() => setViewMode('timeline')}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                  viewMode === 'timeline' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
+                  viewMode === 'timeline' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 Timeline
@@ -303,12 +307,12 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
 
             <button
               onClick={loadData}
-              className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-xl transition-colors"
+              className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-full transition-colors"
               title="Refresh"
             >
               <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             </button>
-            <button className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-900 text-white rounded-full text-xs sm:text-sm font-medium hover:bg-gray-800">
               <Download className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Export</span>
             </button>
@@ -317,42 +321,50 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
             <div className="text-sm text-gray-500">Total</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
-              <span className="text-2xl font-bold text-emerald-600">{stats.delivered}</span>
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-gray-900" />
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{stats.delivered}</span>
             </div>
             <div className="text-sm text-gray-500">Delivered</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <XCircle className="w-5 h-5 text-red-500" />
-              <span className="text-2xl font-bold text-red-600">{stats.failed}</span>
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-gray-900" />
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{stats.failed}</span>
             </div>
             <div className="text-sm text-gray-500">Failed</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <RotateCcw className="w-5 h-5 text-amber-500" />
-              <span className="text-2xl font-bold text-amber-600">{stats.retrying}</span>
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <RotateCcw className="w-4 h-4 text-gray-900" />
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{stats.retrying}</span>
             </div>
             <div className="text-sm text-gray-500">Retrying</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="bg-white rounded-[20px] p-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-gray-400" />
-              <span className="text-2xl font-bold text-gray-600">{stats.pending}</span>
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <Clock className="w-4 h-4 text-gray-900" />
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{stats.pending}</span>
             </div>
             <div className="text-sm text-gray-500">Pending</div>
           </div>
         </div>
 
         {/* Search & Filters */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="bg-white rounded-[20px] shadow-sm p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -367,8 +379,8 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl font-medium transition-colors ${
-                showFilters ? 'bg-purple-50 border-purple-200 text-purple-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-colors ${
+                showFilters ? 'bg-gray-900 text-white' : 'bg-[#f5f5f5] text-gray-700 hover:bg-gray-200'
               }`}
             >
               <Filter className="w-4 h-4" />
@@ -426,7 +438,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
         </div>
 
         {/* Deliveries List */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
           {viewMode === 'list' ? (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -514,7 +526,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                                     handleRetry(delivery.id);
                                   }}
                                   disabled={retryingId === delivery.id}
-                                  className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50"
+                                  className="p-1.5 bg-gray-900 text-white hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
                                   title="Retry"
                                 >
                                   {retryingId === delivery.id ? (
@@ -676,7 +688,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                                         handleRetry(delivery.id);
                                       }}
                                       disabled={retryingId === delivery.id}
-                                      className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                      className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors disabled:opacity-50"
                                     >
                                       {retryingId === delivery.id ? (
                                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -715,7 +727,7 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
                           'bg-gray-400'
                         }`} />
 
-                        <div className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
+                        <div className="bg-[#f5f5f5] rounded-[16px] p-4 hover:bg-gray-200 transition-colors">
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <div className="flex items-center gap-2 mb-1">
@@ -772,30 +784,32 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
         </div>
 
         {/* Retry Strategy Info */}
-        <div className="mt-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-6 border border-purple-500/20">
+        <div className="mt-6 bg-white rounded-[20px] shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-purple-500" />
+            <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
             Retry Strategy
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white/50 rounded-lg p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-[#f5f5f5] rounded-[12px] p-4">
               <div className="text-2xl font-bold text-gray-900">5</div>
-              <div className="text-sm text-gray-600">Max Attempts</div>
+              <div className="text-sm text-gray-500">Max Attempts</div>
             </div>
-            <div className="bg-white/50 rounded-lg p-4">
+            <div className="bg-[#f5f5f5] rounded-[12px] p-4">
               <div className="text-2xl font-bold text-gray-900">Exponential</div>
-              <div className="text-sm text-gray-600">Backoff Strategy</div>
+              <div className="text-sm text-gray-500">Backoff Strategy</div>
             </div>
-            <div className="bg-white/50 rounded-lg p-4">
+            <div className="bg-[#f5f5f5] rounded-[12px] p-4">
               <div className="text-2xl font-bold text-gray-900">30s → 8m</div>
-              <div className="text-sm text-gray-600">Retry Intervals</div>
+              <div className="text-sm text-gray-500">Retry Intervals</div>
             </div>
-            <div className="bg-white/50 rounded-lg p-4">
+            <div className="bg-[#f5f5f5] rounded-[12px] p-4">
               <div className="text-2xl font-bold text-gray-900">30s</div>
-              <div className="text-sm text-gray-600">Request Timeout</div>
+              <div className="text-sm text-gray-500">Request Timeout</div>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-gray-500 mt-4">
             Failed webhooks are automatically retried with exponential backoff: 30s, 2m, 4m, 8m.
             After 5 failed attempts, the delivery is marked as failed and you can manually retry.
           </p>
