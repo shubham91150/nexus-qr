@@ -135,13 +135,13 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
 
   const getMethodColor = (method: string) => {
     const colors: Record<string, string> = {
-      GET: 'bg-emerald-100 text-emerald-700',
-      POST: 'bg-blue-100 text-blue-700',
-      PUT: 'bg-amber-100 text-amber-700',
-      PATCH: 'bg-orange-100 text-orange-700',
-      DELETE: 'bg-red-100 text-red-700'
+      GET: 'bg-gray-900 text-emerald-400',
+      POST: 'bg-gray-900 text-blue-400',
+      PUT: 'bg-gray-900 text-amber-400',
+      PATCH: 'bg-gray-900 text-orange-400',
+      DELETE: 'bg-gray-900 text-red-400'
     };
-    return colors[method] || 'bg-gray-100 text-gray-700';
+    return colors[method] || 'bg-gray-900 text-gray-400';
   };
 
   const getStatusColor = (status: number) => {
@@ -194,8 +194,8 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
-              <FileText className="w-5 h-5 text-cyan-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+              <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-sm font-semibold text-gray-900">API Request Logs</h1>
@@ -305,14 +305,74 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
               </div>
             </div>
           )}
+
+          {/* Active Filter Tags */}
+          {(selectedMethod !== 'all' || selectedStatus !== 'all' || selectedApiKey !== 'all' || searchQuery) && (
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+              <span className="text-xs text-gray-500">Active filters:</span>
+
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition-colors"
+                >
+                  Search: "{searchQuery.length > 15 ? searchQuery.slice(0, 15) + '...' : searchQuery}"
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+
+              {selectedMethod !== 'all' && (
+                <button
+                  onClick={() => setSelectedMethod('all')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition-colors"
+                >
+                  Method: {selectedMethod}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+
+              {selectedStatus !== 'all' && (
+                <button
+                  onClick={() => setSelectedStatus('all')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition-colors"
+                >
+                  Status: {selectedStatus}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+
+              {selectedApiKey !== 'all' && (
+                <button
+                  onClick={() => setSelectedApiKey('all')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition-colors"
+                >
+                  API Key: {selectedApiKey}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedMethod('all');
+                  setSelectedStatus('all');
+                  setSelectedApiKey('all');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 rounded-full text-xs font-medium text-red-600 transition-colors"
+              >
+                Clear All
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <FileText className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <FileText className="w-4 h-4 text-gray-900" />
               </div>
             </div>
             <div className="text-xl font-bold text-gray-900">{filteredLogs.length}</div>
@@ -320,33 +380,33 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
           </div>
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-gray-900" />
               </div>
             </div>
-            <div className="text-xl font-bold text-emerald-600">
+            <div className="text-xl font-bold text-gray-900">
               {filteredLogs.filter(l => l.status >= 200 && l.status < 300).length}
             </div>
             <div className="text-xs text-gray-500">Successful</div>
           </div>
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <XCircle className="w-4 h-4 text-red-600" />
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-gray-900" />
               </div>
             </div>
-            <div className="text-xl font-bold text-red-600">
+            <div className="text-xl font-bold text-gray-900">
               {filteredLogs.filter(l => l.status >= 400).length}
             </div>
             <div className="text-xs text-gray-500">Errors</div>
           </div>
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <Clock className="w-4 h-4 text-purple-600" />
+              <div className="w-8 h-8 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                <Clock className="w-4 h-4 text-gray-900" />
               </div>
             </div>
-            <div className="text-xl font-bold text-purple-600">
+            <div className="text-xl font-bold text-gray-900">
               {Math.round(filteredLogs.reduce((sum, l) => sum + l.responseTime, 0) / filteredLogs.length || 0)}ms
             </div>
             <div className="text-xs text-gray-500">Avg Response Time</div>
@@ -396,7 +456,7 @@ const ApiLogs: React.FC<ApiLogsProps> = ({ onBack }) => {
                           <div className="text-xs text-gray-500">{date}</div>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-bold ${getMethodColor(log.method)}`}>
+                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${getMethodColor(log.method)}`}>
                             {log.method}
                           </span>
                         </td>
