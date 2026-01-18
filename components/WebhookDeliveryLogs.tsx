@@ -796,8 +796,8 @@ const WebhookDeliveryLogs: React.FC<WebhookDeliveryLogsProps> = ({ onBack }) => 
               <div className="text-2xl font-bold text-gray-900">5</div>
               <div className="text-sm text-gray-500">Max Attempts</div>
             </div>
-            <div className="bg-[#f5f5f5] rounded-[12px] p-4">
-              <div className="text-2xl font-bold text-gray-900">Exponential</div>
+            <div className="bg-[#f5f5f5] rounded-[12px] p-4 overflow-hidden">
+              <div className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Exponential</div>
               <div className="text-sm text-gray-500">Backoff Strategy</div>
             </div>
             <div className="bg-[#f5f5f5] rounded-[12px] p-4">

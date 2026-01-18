@@ -34,26 +34,26 @@ const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
 
 // Tip Box
 const TipBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-4 flex gap-3">
-    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-      <Lightbulb className="w-5 h-5 text-amber-600" />
+  <div className="bg-white rounded-[20px] p-4 flex gap-3 shadow-sm">
+    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+      <Lightbulb className="w-5 h-5 text-white" />
     </div>
     <div className="flex-1 min-w-0">
-      <div className="text-xs font-semibold text-amber-800 mb-1">Tip</div>
-      <div className="text-xs text-amber-700">{children}</div>
+      <div className="text-xs font-semibold text-gray-900 mb-1">Tip</div>
+      <div className="text-xs text-gray-600">{children}</div>
     </div>
   </div>
 );
 
 // Warning Box
 const WarningBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="bg-red-50 border border-red-200 rounded-[20px] p-4 flex gap-3">
-    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-      <AlertTriangle className="w-5 h-5 text-red-600" />
+  <div className="bg-white rounded-[20px] p-4 flex gap-3 shadow-sm">
+    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+      <AlertTriangle className="w-5 h-5 text-white" />
     </div>
     <div className="flex-1 min-w-0">
-      <div className="text-xs font-semibold text-red-800 mb-1">Warning</div>
-      <div className="text-xs text-red-700">{children}</div>
+      <div className="text-xs font-semibold text-gray-900 mb-1">Warning</div>
+      <div className="text-xs text-gray-600">{children}</div>
     </div>
   </div>
 );
@@ -133,8 +133,8 @@ const ApiDocs: React.FC<ApiDocsProps> = ({ onBack }) => {
         {/* Quick Start Card */}
         <div className="bg-white rounded-[20px] p-5 shadow-sm mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-              <Zap className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Quick Start</h2>
@@ -159,8 +159,8 @@ const ApiDocs: React.FC<ApiDocsProps> = ({ onBack }) => {
         {/* Authentication Card */}
         <div className="bg-white rounded-[20px] p-5 shadow-sm mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+              <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Authentication</h2>
@@ -185,8 +185,8 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
         {/* API Endpoints Card */}
         <div className="bg-white rounded-[20px] p-5 shadow-sm mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <Server className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+              <Server className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">API Endpoints</h2>
@@ -221,8 +221,8 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
         {/* Rate Limits Card */}
         <div className="bg-white rounded-[20px] p-5 shadow-sm mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+              <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Rate Limits</h2>
@@ -255,8 +255,8 @@ Authorization: Bearer nxqr_live_xxxxxxxxxxxx`}
         {/* Error Codes Card */}
         <div className="bg-white rounded-[20px] p-5 shadow-sm mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Error Codes</h2>
