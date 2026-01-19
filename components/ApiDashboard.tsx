@@ -142,27 +142,35 @@ const ActivityChart: React.FC<{ data: number[] }> = ({ data }) => {
   );
 };
 
-// Exact Gauge Component matching the reference image (Air Conditioner style)
+// Gauge Component matching Air Conditioner dial style
 const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max }) => {
   const percentage = Math.min((current / max) * 100, 100);
-  const needleAngle = -90 + (percentage * 1.8); // -90 to 90 degrees
+  const needleAngle = -135 + (percentage * 2.7); // -135 to 135 degrees (270 degree arc)
 
-  // Generate tick marks - more like the reference
+  // Color gradient function - from blue to cyan to green to yellow to orange to red
+  const getTickColor = (index: number, total: number) => {
+    const position = index / total;
+    if (position < 0.2) return '#3B82F6'; // Blue
+    if (position < 0.4) return '#06B6D4'; // Cyan
+    if (position < 0.6) return '#10B981'; // Green
+    if (position < 0.75) return '#F59E0B'; // Amber
+    if (position < 0.9) return '#F97316'; // Orange
+    return '#EF4444'; // Red
+  };
+
+  // Generate tick marks
   const ticks = [];
-  for (let i = 0; i <= 40; i++) {
-    const angle = -90 + (i * 4.5); // 180 degrees / 40 ticks
-    const isLarge = i % 10 === 0;
-    const isMedium = i % 5 === 0;
+  const totalTicks = 54;
+  for (let i = 0; i <= totalTicks; i++) {
+    const angle = -135 + (i * (270 / totalTicks)); // 270 degree arc
+    const isLarge = i % 9 === 0;
     const radian = (angle * Math.PI) / 180;
-    const innerR = isLarge ? 58 : isMedium ? 62 : 65;
-    const outerR = 70;
+    const innerR = isLarge ? 62 : 68;
+    const outerR = 78;
     const x1 = 100 + innerR * Math.cos(radian);
     const y1 = 100 + innerR * Math.sin(radian);
     const x2 = 100 + outerR * Math.cos(radian);
     const y2 = 100 + outerR * Math.sin(radian);
-
-    // Color based on position (blue for active, gray for inactive)
-    const isActive = i <= (percentage / 100) * 40;
 
     ticks.push(
       <line
@@ -171,16 +179,22 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
         y1={y1}
         x2={x2}
         y2={y2}
-        stroke={isActive ? '#3B82F6' : '#E5E7EB'}
-        strokeWidth={isLarge ? 2.5 : isMedium ? 2 : 1.5}
+        stroke={getTickColor(i, totalTicks)}
+        strokeWidth={isLarge ? 3 : 2}
         strokeLinecap="round"
       />
     );
   }
 
+  // Calculate needle tip position for the value label
+  const needleRadian = (needleAngle * Math.PI) / 180;
+  const labelRadius = 45;
+  const labelX = 100 + labelRadius * Math.cos(needleRadian);
+  const labelY = 100 + labelRadius * Math.sin(needleRadian);
+
   return (
     <div className="relative pt-2">
-      {/* Timer badge - like "2h" in reference */}
+      {/* Timer badge */}
       <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f5f5] rounded-full">
         <Clock className="w-3.5 h-3.5 text-gray-600" />
         <span className="text-[11px] font-medium text-gray-700">This Month</span>
@@ -188,52 +202,52 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
 
       {/* Auto label with dot indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-1.5">
-        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
         <span className="text-xs text-gray-500">Auto</span>
       </div>
 
-      <svg viewBox="0 0 200 140" className="w-full mt-4">
+      <svg viewBox="0 0 200 160" className="w-full mt-2">
         {/* Tick marks */}
         {ticks}
 
-        {/* Value indicator near needle tip */}
-        <g transform={`translate(${100 + 42 * Math.cos((needleAngle * Math.PI) / 180)}, ${100 + 42 * Math.sin((needleAngle * Math.PI) / 180)})`}>
+        {/* Needle - triangular pointer from center going outward */}
+        <g transform={`rotate(${needleAngle}, 100, 100)`}>
+          {/* Needle body - triangle shape */}
+          <polygon
+            points="100,35 96,100 104,100"
+            fill="#1F2937"
+          />
+          {/* Needle tip circle */}
+          <circle cx="100" cy="35" r="4" fill="#1F2937" />
+          {/* Center hub */}
+          <circle cx="100" cy="100" r="8" fill="#1F2937" />
+          <circle cx="100" cy="100" r="4" fill="white" />
+        </g>
+
+        {/* Value indicator following needle tip */}
+        <g transform={`translate(${labelX}, ${labelY})`}>
+          <circle r="14" fill="white" stroke="#E5E7EB" strokeWidth="1" />
           <text
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-gray-500"
-            style={{ fontSize: '9px', fontWeight: 500 }}
+            className="fill-gray-700"
+            style={{ fontSize: '10px', fontWeight: 600 }}
           >
-            {current}°
+            {current}
           </text>
         </g>
 
-        {/* Needle */}
-        <g transform={`rotate(${needleAngle}, 100, 100)`}>
-          <line
-            x1="100"
-            y1="100"
-            x2="100"
-            y2="50"
-            stroke="#3B82F6"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          <circle cx="100" cy="100" r="5" fill="#3B82F6" />
-          <circle cx="100" cy="100" r="2" fill="white" />
-        </g>
-
-        {/* Center display - large number */}
-        <text x="100" y="100" textAnchor="middle" className="fill-gray-900" style={{ fontSize: '32px', fontWeight: 700 }}>
+        {/* Center display */}
+        <text x="100" y="125" textAnchor="middle" className="fill-gray-900" style={{ fontSize: '28px', fontWeight: 700 }}>
           {current}
         </text>
-        <text x="100" y="118" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '11px' }}>
+        <text x="100" y="142" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>
           Requests
         </text>
 
-        {/* Scale labels */}
-        <text x="28" y="108" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>0</text>
-        <text x="172" y="108" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>{max}</text>
+        {/* Scale labels at edges */}
+        <text x="30" y="130" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>0</text>
+        <text x="170" y="130" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>{max}</text>
       </svg>
     </div>
   );
