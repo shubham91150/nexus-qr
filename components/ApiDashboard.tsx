@@ -3,8 +3,7 @@ import {
   Key, Copy, Eye, EyeOff, Trash2, RefreshCw, Plus,
   Activity, Zap, Shield, ChevronRight, Check,
   Clock, TrendingUp, Globe, ArrowLeft, Play, FileText, Book,
-  Users, Rocket, Code, Sun, Moon, ArrowUpRight,
-  Cpu, Wifi, Monitor, Power
+  Users, Rocket, Code, ArrowUpRight, Power
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import {
@@ -143,23 +142,28 @@ const ActivityChart: React.FC<{ data: number[] }> = ({ data }) => {
   );
 };
 
-// Exact Gauge Component matching the image
+// Exact Gauge Component matching the reference image (Air Conditioner style)
 const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max }) => {
   const percentage = Math.min((current / max) * 100, 100);
   const needleAngle = -90 + (percentage * 1.8); // -90 to 90 degrees
 
-  // Generate tick marks
+  // Generate tick marks - more like the reference
   const ticks = [];
-  for (let i = 0; i <= 30; i++) {
-    const angle = -90 + (i * 6); // 180 degrees / 30 ticks = 6 degrees each
-    const isLarge = i % 5 === 0;
+  for (let i = 0; i <= 40; i++) {
+    const angle = -90 + (i * 4.5); // 180 degrees / 40 ticks
+    const isLarge = i % 10 === 0;
+    const isMedium = i % 5 === 0;
     const radian = (angle * Math.PI) / 180;
-    const innerR = isLarge ? 62 : 66;
-    const outerR = 72;
+    const innerR = isLarge ? 58 : isMedium ? 62 : 65;
+    const outerR = 70;
     const x1 = 100 + innerR * Math.cos(radian);
     const y1 = 100 + innerR * Math.sin(radian);
     const x2 = 100 + outerR * Math.cos(radian);
     const y2 = 100 + outerR * Math.sin(radian);
+
+    // Color based on position (blue for active, gray for inactive)
+    const isActive = i <= (percentage / 100) * 40;
+
     ticks.push(
       <line
         key={i}
@@ -167,39 +171,42 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
         y1={y1}
         x2={x2}
         y2={y2}
-        stroke={i <= (percentage / 100) * 30 ? '#3B82F6' : '#D1D5DB'}
-        strokeWidth={isLarge ? 2 : 1}
+        stroke={isActive ? '#3B82F6' : '#E5E7EB'}
+        strokeWidth={isLarge ? 2.5 : isMedium ? 2 : 1.5}
         strokeLinecap="round"
       />
     );
   }
 
   return (
-    <div className="relative">
-      {/* Timer badge */}
-      <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-lg">
-        <Clock className="w-3 h-3 text-blue-600" />
-        <span className="text-[10px] font-semibold text-blue-600">This Month</span>
+    <div className="relative pt-2">
+      {/* Timer badge - like "2h" in reference */}
+      <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f5f5] rounded-full">
+        <Clock className="w-3.5 h-3.5 text-gray-600" />
+        <span className="text-[11px] font-medium text-gray-700">This Month</span>
       </div>
 
-      {/* Auto label */}
-      <div className="absolute top-2 right-4 flex items-center gap-1">
-        <span className="text-xs text-gray-400">Auto</span>
+      {/* Auto label with dot indicator */}
+      <div className="absolute top-4 right-4 flex items-center gap-1.5">
+        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+        <span className="text-xs text-gray-500">Auto</span>
       </div>
 
-      <svg viewBox="0 0 200 130" className="w-full">
+      <svg viewBox="0 0 200 140" className="w-full mt-4">
         {/* Tick marks */}
         {ticks}
 
-        {/* Current value indicator at needle position */}
-        <text
-          x={100 + 50 * Math.cos((needleAngle * Math.PI) / 180)}
-          y={100 + 50 * Math.sin((needleAngle * Math.PI) / 180)}
-          textAnchor="middle"
-          className="fill-gray-600 text-[8px] font-medium"
-        >
-          {current}
-        </text>
+        {/* Value indicator near needle tip */}
+        <g transform={`translate(${100 + 42 * Math.cos((needleAngle * Math.PI) / 180)}, ${100 + 42 * Math.sin((needleAngle * Math.PI) / 180)})`}>
+          <text
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-gray-500"
+            style={{ fontSize: '9px', fontWeight: 500 }}
+          >
+            {current}°
+          </text>
+        </g>
 
         {/* Needle */}
         <g transform={`rotate(${needleAngle}, 100, 100)`}>
@@ -207,25 +214,26 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
             x1="100"
             y1="100"
             x2="100"
-            y2="45"
+            y2="50"
             stroke="#3B82F6"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
           />
-          <circle cx="100" cy="100" r="4" fill="#3B82F6" />
+          <circle cx="100" cy="100" r="5" fill="#3B82F6" />
+          <circle cx="100" cy="100" r="2" fill="white" />
         </g>
 
-        {/* Center display */}
-        <text x="100" y="95" textAnchor="middle" className="fill-gray-900 text-3xl font-bold" style={{ fontSize: '28px' }}>
+        {/* Center display - large number */}
+        <text x="100" y="100" textAnchor="middle" className="fill-gray-900" style={{ fontSize: '32px', fontWeight: 700 }}>
           {current}
         </text>
-        <text x="100" y="112" textAnchor="middle" className="fill-gray-500 text-xs" style={{ fontSize: '10px' }}>
+        <text x="100" y="118" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '11px' }}>
           Requests
         </text>
 
         {/* Scale labels */}
-        <text x="30" y="105" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '9px' }}>0</text>
-        <text x="170" y="105" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '9px' }}>{max}</text>
+        <text x="28" y="108" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>0</text>
+        <text x="172" y="108" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>{max}</text>
       </svg>
     </div>
   );
@@ -363,7 +371,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
             <RequestGauge current={totalUsage.totalRequests} max={100} />
           </div>
 
-          {/* Stats Card - Like $924.18 card */}
+          {/* Stats Card */}
           <div className="bg-white rounded-[20px] p-5 shadow-sm">
             <div className="flex items-start justify-between mb-1">
               <div className="text-4xl font-bold text-gray-900">{formatNumber(totalUsage.totalRequests)}</div>
@@ -377,18 +385,21 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
             </p>
             <div className="flex items-center justify-between">
               <div className="flex -space-x-2">
-                <div className="w-8 h-8 bg-indigo-500 rounded-full border-2 border-white flex items-center justify-center">
+                <div className="w-8 h-8 bg-gray-900 rounded-full border-2 border-white flex items-center justify-center">
                   <Key className="w-3 h-3 text-white" />
                 </div>
-                <div className="w-8 h-8 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <Zap className="w-3 h-3 text-white" />
+                <div className="w-8 h-8 bg-gray-900 rounded-full border-2 border-white flex items-center justify-center">
+                  <Zap className="w-3 h-3 text-[#E5FF00]" />
                 </div>
-                <div className="w-8 h-8 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center">
+                <div className="w-8 h-8 bg-gray-900 rounded-full border-2 border-white flex items-center justify-center">
                   <Shield className="w-3 h-3 text-white" />
                 </div>
               </div>
-              <button className="px-4 py-2 border border-gray-200 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                SHARE
+              <button
+                onClick={onAnalyticsClick}
+                className="px-4 py-2 bg-gray-900 text-white rounded-full text-xs font-medium hover:bg-gray-800 transition-colors"
+              >
+                View Details
               </button>
             </div>
           </div>
@@ -431,7 +442,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
               <div className="w-1 h-1 bg-gray-800/50 rounded-full" />
             </div>
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mb-3">
-              <Sun className="w-5 h-5 text-gray-800" />
+              <Play className="w-5 h-5 text-gray-800" />
             </div>
             <div className="text-sm font-semibold text-gray-900">API Playground</div>
             <div className="text-xs text-gray-700">{totalUsage.totalKeys} Endpoints</div>
@@ -446,7 +457,7 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
               <div className="w-1 h-1 bg-gray-400 rounded-full" />
             </div>
             <div className="w-10 h-10 bg-[#E5FF00] rounded-full flex items-center justify-center mb-3">
-              <Moon className="w-5 h-5 text-gray-800" />
+              <Book className="w-5 h-5 text-gray-800" />
             </div>
             <div className="text-sm font-semibold text-gray-900">Documentation</div>
             <div className="text-xs text-gray-500">API Guides</div>
@@ -507,9 +518,9 @@ const ApiDashboard: React.FC<ApiDashboardProps> = ({
           </div>
 
           {[
-            { icon: <Sun className="w-4 h-4 text-gray-600" />, name: 'QR Generation', units: '2 unit', metric: '18kWh' },
-            { icon: <Wifi className="w-4 h-4 text-gray-600" />, name: 'API Requests', units: '1 unit', metric: '8kWh' },
-            { icon: <Monitor className="w-4 h-4 text-gray-600" />, name: 'Responses', units: '2 unit', metric: '12kWh' },
+            { icon: <Zap className="w-4 h-4 text-gray-600" />, name: 'QR Generation', units: `${totalUsage.totalKeys} keys`, metric: `${totalUsage.totalRequests} req` },
+            { icon: <Activity className="w-4 h-4 text-gray-600" />, name: 'API Requests', units: 'This month', metric: `${totalUsage.totalRequests} calls` },
+            { icon: <Code className="w-4 h-4 text-gray-600" />, name: 'Responses', units: 'Success rate', metric: '99.9%' },
           ].map((item, idx) => (
             <button
               key={idx}
