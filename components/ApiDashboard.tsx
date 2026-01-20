@@ -142,55 +142,73 @@ const ActivityChart: React.FC<{ data: number[] }> = ({ data }) => {
   );
 };
 
-// Gauge Component matching Air Conditioner dial style
+// Gauge Component - matching reference image exactly
 const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max }) => {
   const percentage = Math.min((current / max) * 100, 100);
-  const needleAngle = -135 + (percentage * 2.7); // -135 to 135 degrees (270 degree arc)
+  // Needle angle: -180 (left/0) to 0 (right/max) for 180 degree arc
+  const needleAngle = -180 + (percentage * 1.8);
 
-  // Color gradient function - from blue to cyan to green to yellow to orange to red
-  const getTickColor = (index: number, total: number) => {
-    const position = index / total;
-    if (position < 0.2) return '#3B82F6'; // Blue
-    if (position < 0.4) return '#06B6D4'; // Cyan
-    if (position < 0.6) return '#10B981'; // Green
-    if (position < 0.75) return '#F59E0B'; // Amber
-    if (position < 0.9) return '#F97316'; // Orange
-    return '#EF4444'; // Red
-  };
-
-  // Generate tick marks
+  // Generate tick marks - 180 degree arc from left to right
   const ticks = [];
-  const totalTicks = 54;
+  const totalTicks = 40;
   for (let i = 0; i <= totalTicks; i++) {
-    const angle = -135 + (i * (270 / totalTicks)); // 270 degree arc
-    const isLarge = i % 9 === 0;
+    const angle = -180 + (i * (180 / totalTicks)); // -180 to 0 degrees
     const radian = (angle * Math.PI) / 180;
-    const innerR = isLarge ? 62 : 68;
-    const outerR = 78;
+    const innerR = 68;
+    const outerR = 82;
     const x1 = 100 + innerR * Math.cos(radian);
     const y1 = 100 + innerR * Math.sin(radian);
     const x2 = 100 + outerR * Math.cos(radian);
     const y2 = 100 + outerR * Math.sin(radian);
 
+    // Blue for active (before needle), gray for inactive (after needle)
+    const isActive = i <= (percentage / 100) * totalTicks;
+
     ticks.push(
       <line
-        key={i}
+        key={`tick-${i}`}
         x1={x1}
         y1={y1}
         x2={x2}
         y2={y2}
-        stroke={getTickColor(i, totalTicks)}
-        strokeWidth={isLarge ? 3 : 2}
+        stroke={isActive ? '#4F7DF3' : '#D1D5DB'}
+        strokeWidth={2.5}
         strokeLinecap="round"
       />
     );
   }
 
-  // Calculate needle tip position for the value label
+  // Generate inner dots
+  const dots = [];
+  const totalDots = 60;
+  for (let i = 0; i <= totalDots; i++) {
+    const angle = -180 + (i * (180 / totalDots));
+    const radian = (angle * Math.PI) / 180;
+    const dotR = 58;
+    const cx = 100 + dotR * Math.cos(radian);
+    const cy = 100 + dotR * Math.sin(radian);
+
+    const isActive = i <= (percentage / 100) * totalDots;
+
+    dots.push(
+      <circle
+        key={`dot-${i}`}
+        cx={cx}
+        cy={cy}
+        r={1.2}
+        fill={isActive ? '#4F7DF3' : '#D1D5DB'}
+      />
+    );
+  }
+
+  // Calculate needle position - needle is OUTSIDE the tick marks
   const needleRadian = (needleAngle * Math.PI) / 180;
-  const labelRadius = 45;
-  const labelX = 100 + labelRadius * Math.cos(needleRadian);
-  const labelY = 100 + labelRadius * Math.sin(needleRadian);
+  const needleLength = 50;
+  const needleStartR = 92; // Start from outside the ticks
+  const needleStartX = 100 + needleStartR * Math.cos(needleRadian);
+  const needleStartY = 100 + needleStartR * Math.sin(needleRadian);
+  const needleEndX = 100 + (needleStartR - needleLength) * Math.cos(needleRadian);
+  const needleEndY = 100 + (needleStartR - needleLength) * Math.sin(needleRadian);
 
   return (
     <div className="relative pt-2">
@@ -202,52 +220,49 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
 
       {/* Auto label with dot indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-1.5">
-        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
         <span className="text-xs text-gray-500">Auto</span>
       </div>
 
-      <svg viewBox="0 0 200 160" className="w-full mt-2">
+      <svg viewBox="0 0 200 140" className="w-full mt-4">
+        {/* Inner dots */}
+        {dots}
+
         {/* Tick marks */}
         {ticks}
 
-        {/* Needle - triangular pointer from center going outward */}
-        <g transform={`rotate(${needleAngle}, 100, 100)`}>
-          {/* Needle body - triangle shape */}
-          <polygon
-            points="100,35 96,100 104,100"
-            fill="#1F2937"
-          />
-          {/* Needle tip circle */}
-          <circle cx="100" cy="35" r="4" fill="#1F2937" />
-          {/* Center hub */}
-          <circle cx="100" cy="100" r="8" fill="#1F2937" />
-          <circle cx="100" cy="100" r="4" fill="white" />
-        </g>
+        {/* Needle - line from outer edge pointing inward with circle at tip */}
+        <line
+          x1={needleStartX}
+          y1={needleStartY}
+          x2={needleEndX}
+          y2={needleEndY}
+          stroke="#4F7DF3"
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+        {/* Circle at needle tip (outer end) */}
+        <circle
+          cx={needleStartX}
+          cy={needleStartY}
+          r={5}
+          fill="white"
+          stroke="#4F7DF3"
+          strokeWidth={2.5}
+        />
 
-        {/* Value indicator following needle tip */}
-        <g transform={`translate(${labelX}, ${labelY})`}>
-          <circle r="14" fill="white" stroke="#E5E7EB" strokeWidth="1" />
-          <text
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-gray-700"
-            style={{ fontSize: '10px', fontWeight: 600 }}
-          >
-            {current}
-          </text>
-        </g>
-
-        {/* Center display */}
-        <text x="100" y="125" textAnchor="middle" className="fill-gray-900" style={{ fontSize: '28px', fontWeight: 700 }}>
-          {current}
-        </text>
-        <text x="100" y="142" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>
-          Requests
+        {/* Center value display */}
+        <text x="100" y="95" textAnchor="middle" className="fill-gray-800" style={{ fontSize: '22px', fontWeight: 600 }}>
+          {current}°
         </text>
 
         {/* Scale labels at edges */}
-        <text x="30" y="130" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>0</text>
-        <text x="170" y="130" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>{max}</text>
+        <text x="15" y="115" textAnchor="middle" className="fill-gray-500" style={{ fontSize: '11px' }}>
+          {Math.round(max * 0.1)}°
+        </text>
+        <text x="185" y="115" textAnchor="middle" className="fill-gray-500" style={{ fontSize: '11px' }}>
+          {Math.round(max * 0.4)}°
+        </text>
       </svg>
     </div>
   );
