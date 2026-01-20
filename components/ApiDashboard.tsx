@@ -150,12 +150,12 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
 
   // Generate tick marks - 180 degree arc from left to right
   const ticks = [];
-  const totalTicks = 40;
+  const totalTicks = 50;
   for (let i = 0; i <= totalTicks; i++) {
     const angle = -180 + (i * (180 / totalTicks)); // -180 to 0 degrees
     const radian = (angle * Math.PI) / 180;
-    const innerR = 68;
-    const outerR = 82;
+    const innerR = 72;
+    const outerR = 80;
     const x1 = 100 + innerR * Math.cos(radian);
     const y1 = 100 + innerR * Math.sin(radian);
     const x2 = 100 + outerR * Math.cos(radian);
@@ -172,7 +172,7 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
         x2={x2}
         y2={y2}
         stroke={isActive ? '#4F7DF3' : '#D1D5DB'}
-        strokeWidth={2.5}
+        strokeWidth={1.5}
         strokeLinecap="round"
       />
     );
