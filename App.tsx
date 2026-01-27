@@ -16,7 +16,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { AuthLoadingScreen, DashboardSkeleton } from './components/auth/AuthLoadingScreen';
 import { DynamicQRDashboard } from './components/dynamic/DynamicQRDashboard';
 import { ErrorBoundary, OfflineBanner } from './components/ErrorBoundary';
-import { ProfileMenu } from './components/ProfileMenu';
+import { SidebarMenu } from './components/SidebarMenu';
 import {
   WelcomeModal,
   TourController,
@@ -536,56 +536,60 @@ const QRGenerator: React.FC<{
     <main className="max-w-[1000px] mx-auto pt-4 sm:pt-6 pb-20 overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 sm:mb-8 px-2 sm:px-4">
+         {/* Left side: Hamburger Menu */}
          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
-              <LayoutGrid size={16} className="sm:hidden" />
-              <LayoutGrid size={20} className="hidden sm:block" />
-           </div>
-           <div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-800">Nexus QR</h1>
-              <p className="text-[10px] sm:text-xs text-gray-500 font-medium">Professional AI Generator</p>
+           <SidebarMenu
+             onLoginClick={() => handleAuthWithStateSave()}
+             onPricingClick={onPricingClick}
+             onDashboardClick={onDashboardClick}
+             onApiClick={onApiClick}
+           />
+           <div className="flex items-center gap-2">
+             <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
+                <LayoutGrid size={16} className="sm:hidden" />
+                <LayoutGrid size={18} className="hidden sm:block" />
+             </div>
+             <div>
+                <h1 className="text-base sm:text-lg font-bold text-gray-800">Nexus QR</h1>
+                <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium hidden sm:block">Professional AI Generator</p>
+             </div>
            </div>
          </div>
 
-         {/* Right side: Dashboard button + Profile */}
-         <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
-           {/* Pricing button - visible to all */}
-           <button
-             onClick={onPricingClick}
-             className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
-           >
-             <Crown size={14} className="sm:hidden" />
-             <Crown size={16} className="hidden sm:block" />
-             <span className="hidden sm:inline">Pricing</span>
-           </button>
-           {user && (
+         {/* Right side: API & Dashboard buttons (logged in) OR Sign Up button (not logged in) */}
+         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+           {user ? (
              <>
+               {/* API button */}
                <button
                  onClick={onApiClick}
-                 className="hidden sm:flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl font-medium text-sm hover:bg-indigo-200 transition-all"
+                 className="flex items-center gap-1 sm:gap-2 bg-indigo-100 text-indigo-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm hover:bg-indigo-200 transition-all"
                >
-                 <Code size={16} />
-                 <span className="hidden md:inline">API</span>
+                 <Code size={14} className="sm:hidden" />
+                 <Code size={16} className="hidden sm:block" />
+                 <span className="hidden sm:inline">API</span>
                </button>
+               {/* Dashboard button */}
                <button
                  onClick={onDashboardClick}
-                 className="flex items-center gap-1 sm:gap-2 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm hover:bg-gray-200 transition-all"
+                 className="flex items-center gap-1 sm:gap-2 bg-gray-900 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm hover:bg-gray-800 transition-all"
                >
                  <BarChart3 size={14} className="sm:hidden" />
                  <BarChart3 size={16} className="hidden sm:block" />
-                 <span className="hidden md:inline">Dashboard</span>
+                 <span className="hidden sm:inline">Dashboard</span>
+               </button>
+             </>
+           ) : (
+             <>
+               {/* Sign Up button for non-logged users */}
+               <button
+                 onClick={() => handleAuthWithStateSave()}
+                 className="flex items-center gap-1.5 sm:gap-2 bg-gray-900 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm hover:bg-gray-800 transition-all"
+               >
+                 <span>Sign Up</span>
                </button>
              </>
            )}
-           {/* Help button to restart tour - hidden on very small screens */}
-           <button
-             onClick={() => setShowTour(true)}
-             className="hidden sm:flex p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500 hover:text-indigo-600"
-             title="App Tour"
-           >
-             <HelpCircle size={20} />
-           </button>
-           <ProfileMenu onLoginClick={() => handleAuthWithStateSave()} />
          </div>
       </div>
 
