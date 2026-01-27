@@ -151,19 +151,20 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
 
   // Generate tick marks - 180 degree arc from left to right
   const ticks = [];
-  const totalTicks = 50;
+  const totalTicks = 60;
   for (let i = 0; i <= totalTicks; i++) {
     const angle = -180 + (i * (180 / totalTicks)); // -180 to 0 degrees
     const radian = (angle * Math.PI) / 180;
-    const innerR = 72;
+    const innerR = 74;
     const outerR = 80;
     const x1 = 100 + innerR * Math.cos(radian);
     const y1 = 100 + innerR * Math.sin(radian);
     const x2 = 100 + outerR * Math.cos(radian);
     const y2 = 100 + outerR * Math.sin(radian);
 
-    // Blue for active (before needle), gray for inactive (after needle)
-    const isActive = i <= (percentage / 100) * totalTicks;
+    // Blue for active ticks based on current value
+    const tickPercentage = (i / totalTicks) * 100;
+    const isActive = tickPercentage <= percentage;
 
     ticks.push(
       <line
@@ -172,40 +173,41 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
         y1={y1}
         x2={x2}
         y2={y2}
-        stroke={isActive ? '#4F7DF3' : '#D1D5DB'}
-        strokeWidth={1.5}
+        stroke={isActive ? '#4F7DF3' : '#E5E7EB'}
+        strokeWidth={0.8}
         strokeLinecap="round"
       />
     );
   }
 
-  // Generate inner dots
+  // Generate inner dots - smaller and fewer
   const dots = [];
-  const totalDots = 60;
+  const totalDots = 40;
   for (let i = 0; i <= totalDots; i++) {
     const angle = -180 + (i * (180 / totalDots));
     const radian = (angle * Math.PI) / 180;
-    const dotR = 58;
+    const dotR = 62;
     const cx = 100 + dotR * Math.cos(radian);
     const cy = 100 + dotR * Math.sin(radian);
 
-    const isActive = i <= (percentage / 100) * totalDots;
+    const dotPercentage = (i / totalDots) * 100;
+    const isActive = dotPercentage <= percentage;
 
     dots.push(
       <circle
         key={`dot-${i}`}
         cx={cx}
         cy={cy}
-        r={1.2}
+        r={0.6}
         fill={isActive ? '#4F7DF3' : '#D1D5DB'}
       />
     );
   }
 
-  // Calculate needle position - needle is OUTSIDE the tick marks (shorter needle)
+  // Calculate needle position - thin needle outside the ticks
   const needleRadian = (needleAngle * Math.PI) / 180;
-  const needleLength = 18; // Shorter needle that stays outside
-  const needleStartR = 92; // Start from outside the ticks
+  const needleLength = 14;
+  const needleStartR = 90;
   const needleStartX = 100 + needleStartR * Math.cos(needleRadian);
   const needleStartY = 100 + needleStartR * Math.sin(needleRadian);
   const needleEndX = 100 + (needleStartR - needleLength) * Math.cos(needleRadian);
@@ -232,24 +234,24 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
         {/* Tick marks */}
         {ticks}
 
-        {/* Needle - line from outer edge pointing inward with circle at tip */}
+        {/* Needle - thin line with small circle */}
         <line
           x1={needleStartX}
           y1={needleStartY}
           x2={needleEndX}
           y2={needleEndY}
           stroke="#4F7DF3"
-          strokeWidth={2.5}
+          strokeWidth={1.5}
           strokeLinecap="round"
         />
-        {/* Circle at needle tip (outer end) */}
+        {/* Small circle at needle tip */}
         <circle
           cx={needleStartX}
           cy={needleStartY}
-          r={4}
+          r={3}
           fill="white"
           stroke="#4F7DF3"
-          strokeWidth={2}
+          strokeWidth={1.5}
         />
 
         {/* Center value display - Used count */}
