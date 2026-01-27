@@ -142,9 +142,10 @@ const ActivityChart: React.FC<{ data: number[] }> = ({ data }) => {
   );
 };
 
-// Gauge Component - matching reference image exactly
+// Gauge Component - showing API calls usage
 const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max }) => {
   const percentage = Math.min((current / max) * 100, 100);
+  const remaining = Math.max(max - current, 0);
   // Needle angle: -180 (left/0) to 0 (right/max) for 180 degree arc
   const needleAngle = -180 + (percentage * 1.8);
 
@@ -201,9 +202,9 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
     );
   }
 
-  // Calculate needle position - needle is OUTSIDE the tick marks
+  // Calculate needle position - needle is OUTSIDE the tick marks (shorter needle)
   const needleRadian = (needleAngle * Math.PI) / 180;
-  const needleLength = 50;
+  const needleLength = 18; // Shorter needle that stays outside
   const needleStartR = 92; // Start from outside the ticks
   const needleStartX = 100 + needleStartR * Math.cos(needleRadian);
   const needleStartY = 100 + needleStartR * Math.sin(needleRadian);
@@ -224,7 +225,7 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
         <span className="text-xs text-gray-500">Auto</span>
       </div>
 
-      <svg viewBox="0 0 200 140" className="w-full mt-4">
+      <svg viewBox="0 0 200 150" className="w-full mt-4">
         {/* Inner dots */}
         {dots}
 
@@ -238,30 +239,41 @@ const RequestGauge: React.FC<{ current: number; max: number }> = ({ current, max
           x2={needleEndX}
           y2={needleEndY}
           stroke="#4F7DF3"
-          strokeWidth={3}
+          strokeWidth={2.5}
           strokeLinecap="round"
         />
         {/* Circle at needle tip (outer end) */}
         <circle
           cx={needleStartX}
           cy={needleStartY}
-          r={5}
+          r={4}
           fill="white"
           stroke="#4F7DF3"
-          strokeWidth={2.5}
+          strokeWidth={2}
         />
 
-        {/* Center value display */}
-        <text x="100" y="95" textAnchor="middle" className="fill-gray-800" style={{ fontSize: '22px', fontWeight: 600 }}>
-          {current}°
+        {/* Center value display - Used count */}
+        <text x="100" y="85" textAnchor="middle" className="fill-gray-800" style={{ fontSize: '24px', fontWeight: 700 }}>
+          {current}
+        </text>
+        <text x="100" y="100" textAnchor="middle" className="fill-gray-500" style={{ fontSize: '10px' }}>
+          Used
         </text>
 
-        {/* Scale labels at edges */}
-        <text x="15" y="115" textAnchor="middle" className="fill-gray-500" style={{ fontSize: '11px' }}>
-          {Math.round(max * 0.1)}°
+        {/* Scale labels - 0 on left, max on right */}
+        <text x="18" y="115" textAnchor="middle" className="fill-gray-500" style={{ fontSize: '11px', fontWeight: 500 }}>
+          0
         </text>
-        <text x="185" y="115" textAnchor="middle" className="fill-gray-500" style={{ fontSize: '11px' }}>
-          {Math.round(max * 0.4)}°
+        <text x="182" y="115" textAnchor="middle" className="fill-gray-500" style={{ fontSize: '11px', fontWeight: 500 }}>
+          {max}
+        </text>
+
+        {/* Bottom info - Remaining and Total */}
+        <text x="100" y="135" textAnchor="middle" className="fill-gray-600" style={{ fontSize: '10px' }}>
+          <tspan className="fill-green-600" style={{ fontWeight: 600 }}>{remaining}</tspan>
+          <tspan> remaining of </tspan>
+          <tspan style={{ fontWeight: 600 }}>{max}</tspan>
+          <tspan> calls</tspan>
         </text>
       </svg>
     </div>
