@@ -63,22 +63,6 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
     }
   };
 
-  const getPlanColor = (tier: PlanTier) => {
-    switch (tier) {
-      case 'free':
-        return 'gray';
-      case 'starter':
-        return 'blue';
-      case 'pro':
-        return 'indigo';
-      case 'business':
-        return 'purple';
-      case 'enterprise':
-        return 'amber';
-      default:
-        return 'gray';
-    }
-  };
 
   const handleSubscribe = async (tier: PlanTier) => {
     if (tier === 'free') return;
@@ -119,18 +103,21 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
+          <span className="inline-block px-4 py-1.5 bg-white text-gray-600 text-xs sm:text-sm font-medium rounded-full mb-4">
+            Pricing
+          </span>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 sm:mb-4">
             Choose Your Plan
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 max-w-2xl mx-auto">
             Start with a 7-day free trial on any paid plan. No credit card required.
           </p>
 
           {/* Billing Toggle */}
-          <div className="inline-flex items-center bg-white rounded-full p-1 shadow-card">
+          <div className="inline-flex items-center bg-white rounded-full p-1.5">
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+              className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                 billingCycle === 'monthly'
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-500 hover:text-gray-800'
@@ -140,15 +127,15 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
             </button>
             <button
               onClick={() => setBillingCycle('yearly')}
-              className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${
+              className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${
                 billingCycle === 'yearly'
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               Yearly
-              <span className="bg-green-500 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
-                Save 25%
+              <span className="bg-gray-800 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
+                -25%
               </span>
             </button>
           </div>
@@ -157,7 +144,6 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
           {plans.map((plan) => {
-            const color = getPlanColor(plan.id);
             const isPopular = plan.popular;
             const isCurrent = isCurrentPlan(plan.id);
             const price = billingCycle === 'monthly'
@@ -167,35 +153,30 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl sm:rounded-[24px] overflow-hidden bg-white ${
-                  isPopular
-                    ? 'ring-2 ring-gray-900'
-                    : ''
-                } ${isCurrent ? 'ring-2 ring-green-500' : ''}`}
+                className="relative rounded-2xl sm:rounded-[24px] overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300"
               >
-                {/* Popular Badge */}
-                {isPopular && (
-                  <div className="absolute top-0 inset-x-0 bg-gray-900 text-white text-center text-xs sm:text-sm font-medium py-1">
-                    Most Popular
-                  </div>
-                )}
-
-                {/* Current Plan Badge */}
-                {isCurrent && (
-                  <div className="absolute top-0 inset-x-0 bg-green-600 text-white text-center text-xs sm:text-sm font-medium py-1">
-                    Current Plan
-                  </div>
-                )}
-
-                <div className={`p-4 sm:p-6 h-full flex flex-col ${isPopular || isCurrent ? 'pt-8 sm:pt-10' : ''}`}>
+                <div className="p-4 sm:p-6 h-full flex flex-col">
                   {/* Plan Icon & Name */}
-                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black flex items-center justify-center text-white">
+                  <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black flex items-center justify-center text-white flex-shrink-0">
                       {getPlanIcon(plan.id)}
                     </div>
-                    <div>
-                      <h3 className="text-base sm:text-lg font-bold text-gray-800">{plan.name}</h3>
-                      <p className="text-xs sm:text-sm text-gray-500">{plan.description}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-800">{plan.name}</h3>
+                        {/* Pill Badges */}
+                        {isCurrent && (
+                          <span className="px-2.5 py-0.5 bg-gray-900 text-white text-[10px] sm:text-xs font-medium rounded-full">
+                            Active
+                          </span>
+                        )}
+                        {isPopular && !isCurrent && (
+                          <span className="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-[10px] sm:text-xs font-medium rounded-full">
+                            Popular
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{plan.description}</p>
                     </div>
                   </div>
 
@@ -206,16 +187,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                         ${price}
                       </span>
                       {plan.pricing.monthly > 0 && (
-                        <span className="text-gray-500 text-sm">/mo</span>
+                        <span className="text-gray-400 text-sm">/mo</span>
                       )}
                     </div>
                     {billingCycle === 'yearly' && plan.pricing.yearly > 0 && (
-                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      <p className="text-xs sm:text-sm text-gray-400 mt-1">
                         ${plan.pricing.yearly} billed annually
                       </p>
                     )}
                     {plan.trialDays > 0 && !isCurrent && (
-                      <p className="text-xs sm:text-sm text-green-600 font-medium mt-1">
+                      <p className="text-xs sm:text-sm text-gray-600 font-medium mt-1">
                         {plan.trialDays}-day free trial
                       </p>
                     )}
@@ -225,7 +206,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                   <button
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={isCurrent || isLoading === plan.id}
-                    className={`w-full py-2.5 sm:py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+                    className={`w-full py-2.5 sm:py-3 px-4 rounded-full font-medium text-sm transition-all flex items-center justify-center gap-2 ${
                       isCurrent
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : isPopular
@@ -249,7 +230,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                   <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3 flex-grow">
                     {plan.features.map((feature, index) => (
                       <div key={index} className="flex items-start gap-2">
-                        <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-700" />
+                        </div>
                         <span className="text-xs sm:text-sm text-gray-600">{feature}</span>
                       </div>
                     ))}
@@ -262,15 +245,20 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
 
         {/* Feature Comparison */}
         <div className="mt-12 sm:mt-20">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center mb-8 sm:mb-12">
-            Compare All Features
-          </h2>
+          <div className="text-center mb-8 sm:mb-12">
+            <span className="inline-block px-4 py-1.5 bg-white text-gray-600 text-xs sm:text-sm font-medium rounded-full mb-4">
+              Features
+            </span>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
+              Compare All Features
+            </h2>
+          </div>
 
-          <div className="bg-white rounded-2xl sm:rounded-[24px] shadow-card overflow-hidden">
+          <div className="bg-white rounded-2xl sm:rounded-[24px] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
+                  <tr className="border-b border-gray-100 bg-[#fafafa]">
                     <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-gray-500 font-medium text-xs sm:text-sm">Features</th>
                     {plans.map((plan) => (
                       <th key={plan.id} className="py-3 sm:py-4 px-3 sm:px-4 text-center">
@@ -284,7 +272,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 </thead>
                 <tbody>
                   {/* QR Code Limits */}
-                  <tr className="bg-gray-50">
+                  <tr className="bg-[#fafafa]">
                     <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
                       <Palette className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                       QR Code Limits
@@ -474,9 +462,14 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
 
         {/* FAQ Section */}
         <div className="mt-12 sm:mt-20 max-w-3xl mx-auto">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center mb-8 sm:mb-12">
-            Frequently Asked Questions
-          </h2>
+          <div className="text-center mb-8 sm:mb-12">
+            <span className="inline-block px-4 py-1.5 bg-white text-gray-600 text-xs sm:text-sm font-medium rounded-full mb-4">
+              FAQ
+            </span>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
+              Frequently Asked Questions
+            </h2>
+          </div>
 
           <div className="space-y-3 sm:space-y-4">
             <FaqItem
@@ -504,16 +497,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
 
         {/* CTA Section */}
         <div className="mt-12 sm:mt-20 text-center">
-          <div className="bg-white rounded-2xl sm:rounded-[24px] shadow-card p-6 sm:p-8 md:p-12">
+          <div className="bg-white rounded-2xl sm:rounded-[24px] p-6 sm:p-8 md:p-12">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">
               Ready to get started?
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Join thousands of businesses using Nexus QR to create dynamic, trackable QR codes.
             </p>
             <button
               onClick={() => handleSubscribe('pro')}
-              className="px-6 sm:px-8 py-3 sm:py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-sm sm:text-base"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-sm sm:text-base"
             >
               Start Your Free Trial
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -556,18 +549,18 @@ const FaqItem: React.FC<{ question: string; answer: string }> = ({ question, ans
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-card overflow-hidden">
+    <div className="bg-white rounded-xl sm:rounded-2xl overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 sm:px-6 py-3 sm:py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <span className="font-medium text-gray-800 text-sm sm:text-base">{question}</span>
-        <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+        <span className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
           <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 rotate-90" />
         </span>
       </button>
       {isOpen && (
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 text-gray-600 text-sm">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 text-gray-500 text-sm">
           {answer}
         </div>
       )}
