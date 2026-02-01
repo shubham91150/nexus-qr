@@ -167,10 +167,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl sm:rounded-[24px] overflow-hidden bg-white shadow-card ${
+                className={`relative rounded-2xl sm:rounded-[24px] overflow-hidden bg-white ${
                   isPopular
                     ? 'ring-2 ring-gray-900'
-                    : 'border border-gray-100'
+                    : ''
                 } ${isCurrent ? 'ring-2 ring-green-500' : ''}`}
               >
                 {/* Popular Badge */}
@@ -190,7 +190,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 <div className={`p-4 sm:p-6 h-full flex flex-col ${isPopular || isCurrent ? 'pt-8 sm:pt-10' : ''}`}>
                   {/* Plan Icon & Name */}
                   <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div className={`p-2 rounded-lg bg-${color}-100 text-${color}-600`}>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black flex items-center justify-center text-white">
                       {getPlanIcon(plan.id)}
                     </div>
                     <div>
