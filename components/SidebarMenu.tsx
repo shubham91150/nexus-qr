@@ -10,13 +10,23 @@ interface SidebarMenuProps {
   onPricingClick: () => void;
   onDashboardClick: () => void;
   onApiClick: () => void;
+  onProfileClick?: () => void;
+  onSettingsClick?: () => void;
+  onNotificationsClick?: () => void;
+  onMessagesClick?: () => void;
+  onHelpClick?: () => void;
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onLoginClick,
   onPricingClick,
   onDashboardClick,
-  onApiClick
+  onApiClick,
+  onProfileClick,
+  onSettingsClick,
+  onNotificationsClick,
+  onMessagesClick,
+  onHelpClick
 }) => {
   const { user, signOut, loading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -236,13 +246,15 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                     icon={Bell}
                     label="Notifications"
                     badge={3}
-                    onClick={() => alert('Notifications coming soon!')}
+                    onClick={onNotificationsClick || (() => {})}
+                    showArrow
                   />
                   <MenuItem
                     icon={Mail}
                     label="Messages"
                     badge={2}
-                    onClick={() => alert('Messages coming soon!')}
+                    onClick={onMessagesClick || (() => {})}
+                    showArrow
                   />
                 </div>
               </div>
@@ -256,22 +268,26 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                   <MenuItem
                     icon={User}
                     label="Profile"
-                    onClick={() => alert('Profile coming soon!')}
+                    onClick={onProfileClick || (() => {})}
+                    showArrow
                   />
                   <MenuItem
                     icon={Settings}
                     label="Settings"
-                    onClick={() => alert('Settings coming soon!')}
+                    onClick={onSettingsClick || (() => {})}
+                    showArrow
                   />
                   <MenuItem
                     icon={CreditCard}
                     label="Billing"
                     onClick={onPricingClick}
+                    showArrow
                   />
                   <MenuItem
                     icon={HelpCircle}
                     label="Help & Support"
-                    onClick={() => alert('Help coming soon!')}
+                    onClick={onHelpClick || (() => {})}
+                    showArrow
                   />
                 </div>
               </div>
@@ -320,33 +336,54 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                   Why Sign Up?
                 </p>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+                  <button
+                    onClick={() => {
+                      onLoginClick();
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
                       <BarChart3 size={14} className="text-white" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium text-gray-800 text-sm">Track Analytics</p>
                       <p className="text-[11px] text-gray-500">See who scans your QR codes</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+                    <ChevronRight size={16} className="text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLoginClick();
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
                       <Zap size={14} className="text-white" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium text-gray-800 text-sm">Dynamic QR Codes</p>
                       <p className="text-[11px] text-gray-500">Edit destination anytime</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+                    <ChevronRight size={16} className="text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLoginClick();
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
                       <Code size={14} className="text-white" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium text-gray-800 text-sm">API Access</p>
                       <p className="text-[11px] text-gray-500">Integrate QR generation</p>
                     </div>
-                  </div>
+                    <ChevronRight size={16} className="text-gray-400" />
+                  </button>
                 </div>
               </div>
 
@@ -375,7 +412,10 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               {/* Help */}
               <div className="px-4 py-3 border-t border-gray-100">
                 <button
-                  onClick={() => alert('Help coming soon!')}
+                  onClick={() => {
+                    if (onHelpClick) onHelpClick();
+                    setIsOpen(false);
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors"
                 >
                   <HelpCircle size={16} />
