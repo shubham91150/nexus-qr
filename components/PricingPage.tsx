@@ -115,39 +115,39 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
   const isCurrentPlan = (tier: PlanTier) => tier === currentPlan;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
+    <div className="min-h-screen bg-[#f5f5f5] py-8 sm:py-12 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 sm:mb-4">
             Choose Your Plan
           </h1>
-          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
             Start with a 7-day free trial on any paid plan. No credit card required.
           </p>
 
           {/* Billing Toggle */}
-          <div className="inline-flex items-center bg-gray-800 rounded-full p-1">
+          <div className="inline-flex items-center bg-white rounded-full p-1 shadow-card">
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                 billingCycle === 'monthly'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingCycle('yearly')}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+              className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${
                 billingCycle === 'yearly'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               Yearly
-              <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+              <span className="bg-green-500 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
                 Save 25%
               </span>
             </button>
@@ -155,7 +155,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
           {plans.map((plan) => {
             const color = getPlanColor(plan.id);
             const isPopular = plan.popular;
@@ -167,55 +167,55 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl overflow-hidden ${
+                className={`relative rounded-2xl sm:rounded-[24px] overflow-hidden bg-white shadow-card ${
                   isPopular
-                    ? 'ring-2 ring-indigo-500 shadow-xl shadow-indigo-500/20'
-                    : 'border border-gray-700'
+                    ? 'ring-2 ring-gray-900'
+                    : 'border border-gray-100'
                 } ${isCurrent ? 'ring-2 ring-green-500' : ''}`}
               >
                 {/* Popular Badge */}
                 {isPopular && (
-                  <div className="absolute top-0 inset-x-0 bg-indigo-600 text-white text-center text-sm font-medium py-1">
+                  <div className="absolute top-0 inset-x-0 bg-gray-900 text-white text-center text-xs sm:text-sm font-medium py-1">
                     Most Popular
                   </div>
                 )}
 
                 {/* Current Plan Badge */}
                 {isCurrent && (
-                  <div className="absolute top-0 inset-x-0 bg-green-600 text-white text-center text-sm font-medium py-1">
+                  <div className="absolute top-0 inset-x-0 bg-green-600 text-white text-center text-xs sm:text-sm font-medium py-1">
                     Current Plan
                   </div>
                 )}
 
-                <div className={`p-6 bg-gray-800 h-full flex flex-col ${isPopular || isCurrent ? 'pt-10' : ''}`}>
+                <div className={`p-4 sm:p-6 h-full flex flex-col ${isPopular || isCurrent ? 'pt-8 sm:pt-10' : ''}`}>
                   {/* Plan Icon & Name */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`p-2 rounded-lg bg-${color}-500/20 text-${color}-400`}>
+                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    <div className={`p-2 rounded-lg bg-${color}-100 text-${color}-600`}>
                       {getPlanIcon(plan.id)}
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                      <p className="text-sm text-gray-400">{plan.description}</p>
+                      <h3 className="text-base sm:text-lg font-bold text-gray-800">{plan.name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-500">{plan.description}</p>
                     </div>
                   </div>
 
                   {/* Price */}
-                  <div className="mb-6">
+                  <div className="mb-4 sm:mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-white">
+                      <span className="text-2xl sm:text-3xl font-bold text-gray-800">
                         ${price}
                       </span>
                       {plan.pricing.monthly > 0 && (
-                        <span className="text-gray-400">/mo</span>
+                        <span className="text-gray-500 text-sm">/mo</span>
                       )}
                     </div>
                     {billingCycle === 'yearly' && plan.pricing.yearly > 0 && (
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
                         ${plan.pricing.yearly} billed annually
                       </p>
                     )}
                     {plan.trialDays > 0 && !isCurrent && (
-                      <p className="text-sm text-green-400 mt-1">
+                      <p className="text-xs sm:text-sm text-green-600 font-medium mt-1">
                         {plan.trialDays}-day free trial
                       </p>
                     )}
@@ -225,16 +225,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                   <button
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={isCurrent || isLoading === plan.id}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                    className={`w-full py-2.5 sm:py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
                       isCurrent
-                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : isPopular
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                        ? 'bg-gray-900 text-white hover:bg-gray-800'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {isLoading === plan.id ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
                     ) : (
                       <>
                         {getButtonText(plan.id)}
@@ -246,11 +246,11 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                   </button>
 
                   {/* Features List */}
-                  <div className="mt-6 space-y-3 flex-grow">
+                  <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3 flex-grow">
                     {plan.features.map((feature, index) => (
                       <div key={index} className="flex items-start gap-2">
-                        <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-300">{feature}</span>
+                        <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-xs sm:text-sm text-gray-600">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -261,34 +261,35 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
         </div>
 
         {/* Feature Comparison */}
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">
+        <div className="mt-12 sm:mt-20">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center mb-8 sm:mb-12">
             Compare All Features
           </h2>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Features</th>
-                  {plans.map((plan) => (
-                    <th key={plan.id} className="py-4 px-4 text-center">
-                      <span className="text-white font-bold">{plan.name}</span>
-                      <div className="text-sm text-gray-400">
-                        ${billingCycle === 'monthly' ? plan.pricing.monthly : plan.pricing.yearlyMonthlyEquivalent}/mo
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {/* QR Code Limits */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <Palette className="w-4 h-4 inline mr-2" />
-                    QR Code Limits
-                  </td>
-                </tr>
+          <div className="bg-white rounded-2xl sm:rounded-[24px] shadow-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-gray-500 font-medium text-xs sm:text-sm">Features</th>
+                    {plans.map((plan) => (
+                      <th key={plan.id} className="py-3 sm:py-4 px-3 sm:px-4 text-center">
+                        <span className="text-gray-800 font-bold text-xs sm:text-sm">{plan.name}</span>
+                        <div className="text-[10px] sm:text-xs text-gray-500">
+                          ${billingCycle === 'monthly' ? plan.pricing.monthly : plan.pricing.yearlyMonthlyEquivalent}/mo
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* QR Code Limits */}
+                  <tr className="bg-gray-50">
+                    <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                      <Palette className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
+                      QR Code Limits
+                    </td>
+                  </tr>
                 <FeatureRow
                   feature="Dynamic QR Codes"
                   values={plans.map((p) => formatLimit(p.limits.dynamicQRCodes))}
@@ -303,9 +304,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
 
                 {/* Bulk Generation */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <FileUp className="w-4 h-4 inline mr-2" />
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                    <FileUp className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                     Bulk Generation
                   </td>
                 </tr>
@@ -319,9 +320,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
 
                 {/* File Upload */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <FileUp className="w-4 h-4 inline mr-2" />
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                    <FileUp className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                     File Upload Limits
                   </td>
                 </tr>
@@ -343,9 +344,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
 
                 {/* Analytics */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <BarChart3 className="w-4 h-4 inline mr-2" />
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                    <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                     Analytics & Tracking
                   </td>
                 </tr>
@@ -375,9 +376,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
 
                 {/* Advanced Features */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <Lock className="w-4 h-4 inline mr-2" />
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                    <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                     Advanced Features
                   </td>
                 </tr>
@@ -403,9 +404,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
 
                 {/* Customization */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <Globe className="w-4 h-4 inline mr-2" />
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                    <Globe className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                     Branding & Customization
                   </td>
                 </tr>
@@ -423,9 +424,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
 
                 {/* Team & API */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <Users className="w-4 h-4 inline mr-2" />
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                    <Users className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                     Team & Integrations
                   </td>
                 </tr>
@@ -447,9 +448,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
 
                 {/* Support */}
-                <tr className="bg-gray-800/50">
-                  <td colSpan={6} className="py-3 px-4 text-indigo-400 font-semibold">
-                    <Headphones className="w-4 h-4 inline mr-2" />
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-800 font-semibold text-xs sm:text-sm">
+                    <Headphones className="w-3 h-3 sm:w-4 sm:h-4 inline mr-2 text-gray-600" />
                     Support
                   </td>
                 </tr>
@@ -467,16 +468,17 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
                 />
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-20 max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">
+        <div className="mt-12 sm:mt-20 max-w-3xl mx-auto">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center mb-8 sm:mb-12">
             Frequently Asked Questions
           </h2>
 
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4">
             <FaqItem
               question="Can I change my plan later?"
               answer="Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll be charged the prorated difference. When downgrading, the change will take effect at the end of your current billing period."
@@ -501,20 +503,20 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
         </div>
 
         {/* CTA Section */}
-        <div className="mt-20 text-center">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 md:p-12">
-            <h2 className="text-3xl font-bold text-white mb-4">
+        <div className="mt-12 sm:mt-20 text-center">
+          <div className="bg-white rounded-2xl sm:rounded-[24px] shadow-card p-6 sm:p-8 md:p-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">
               Ready to get started?
             </h2>
-            <p className="text-lg text-indigo-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Join thousands of businesses using Nexus QR to create dynamic, trackable QR codes.
             </p>
             <button
               onClick={() => handleSubscribe('pro')}
-              className="px-8 py-4 bg-white text-indigo-600 font-bold rounded-lg hover:bg-gray-100 transition-colors inline-flex items-center gap-2"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-sm sm:text-base"
             >
               Start Your Free Trial
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -525,10 +527,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
 
 // Helper components
 const FeatureRow: React.FC<{ feature: string; values: string[] }> = ({ feature, values }) => (
-  <tr className="border-b border-gray-700/50">
-    <td className="py-3 px-4 text-gray-300">{feature}</td>
+  <tr className="border-b border-gray-100">
+    <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-xs sm:text-sm">{feature}</td>
     {values.map((value, index) => (
-      <td key={index} className="py-3 px-4 text-center text-white">
+      <td key={index} className="py-2 sm:py-3 px-3 sm:px-4 text-center text-gray-800 text-xs sm:text-sm font-medium">
         {value}
       </td>
     ))}
@@ -536,14 +538,14 @@ const FeatureRow: React.FC<{ feature: string; values: string[] }> = ({ feature, 
 );
 
 const BooleanFeatureRow: React.FC<{ feature: string; values: boolean[] }> = ({ feature, values }) => (
-  <tr className="border-b border-gray-700/50">
-    <td className="py-3 px-4 text-gray-300">{feature}</td>
+  <tr className="border-b border-gray-100">
+    <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-xs sm:text-sm">{feature}</td>
     {values.map((value, index) => (
-      <td key={index} className="py-3 px-4 text-center">
+      <td key={index} className="py-2 sm:py-3 px-3 sm:px-4 text-center">
         {value ? (
-          <Check className="w-5 h-5 text-green-400 mx-auto" />
+          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mx-auto" />
         ) : (
-          <X className="w-5 h-5 text-gray-600 mx-auto" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300 mx-auto" />
         )}
       </td>
     ))}
@@ -554,18 +556,18 @@ const FaqItem: React.FC<{ question: string; answer: string }> = ({ question, ans
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border border-gray-700 rounded-lg overflow-hidden">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-card overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 text-left flex items-center justify-between bg-gray-800 hover:bg-gray-700 transition-colors"
+        className="w-full px-4 sm:px-6 py-3 sm:py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
-        <span className="font-medium text-white">{question}</span>
+        <span className="font-medium text-gray-800 text-sm sm:text-base">{question}</span>
         <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-          <ArrowRight className="w-5 h-5 text-gray-400 rotate-90" />
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 rotate-90" />
         </span>
       </button>
       {isOpen && (
-        <div className="px-6 py-4 bg-gray-800/50 text-gray-300">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 text-gray-600 text-sm">
           {answer}
         </div>
       )}
