@@ -7,6 +7,7 @@ import {
   Building2,
   Rocket,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   Shield,
   Clock,
@@ -101,6 +102,17 @@ const PricingPage: React.FC<PricingPageProps> = ({ onClose, onAuthRequired }) =>
   return (
     <div className="min-h-screen bg-[#f5f5f5] py-8 sm:py-12 px-4">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="mb-6 flex items-center gap-2 px-4 py-2.5 bg-white rounded-full text-gray-700 font-medium text-sm hover:bg-gray-100 transition-colors shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+        )}
+
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <span className="inline-block px-4 py-1.5 bg-white text-gray-600 text-xs sm:text-sm font-medium rounded-full mb-4">

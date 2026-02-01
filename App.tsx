@@ -322,7 +322,12 @@ const QRGenerator: React.FC<{
   onAuthRequired: () => void;
   onApiClick: () => void;
   onPricingClick: () => void;
-}> = ({ onDashboardClick, onAuthRequired, onApiClick, onPricingClick }) => {
+  onProfileClick?: () => void;
+  onSettingsClick?: () => void;
+  onNotificationsClick?: () => void;
+  onMessagesClick?: () => void;
+  onHelpClick?: () => void;
+}> = ({ onDashboardClick, onAuthRequired, onApiClick, onPricingClick, onProfileClick, onSettingsClick, onNotificationsClick, onMessagesClick, onHelpClick }) => {
   const { user, loading: authLoading, authStatus } = useAuth();
 
   // Standard state initialization
@@ -543,6 +548,11 @@ const QRGenerator: React.FC<{
              onPricingClick={onPricingClick}
              onDashboardClick={onDashboardClick}
              onApiClick={onApiClick}
+             onProfileClick={onProfileClick}
+             onSettingsClick={onSettingsClick}
+             onNotificationsClick={onNotificationsClick}
+             onMessagesClick={onMessagesClick}
+             onHelpClick={onHelpClick}
            />
            <div className="flex items-center gap-2">
              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-300">
@@ -1224,6 +1234,52 @@ const AppContent: React.FC = () => {
     window.history.pushState({}, '', '/');
   };
 
+  // Sidebar navigation handlers
+  const handleProfileClick = () => {
+    if (user) {
+      // Navigate to profile settings or show profile modal
+      setView('dynamic'); // For now, redirect to dashboard which has profile info
+      window.history.pushState({}, '', '/dashboard');
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleSettingsClick = () => {
+    if (user) {
+      // Navigate to settings page - for now redirect to dashboard
+      setView('dynamic');
+      window.history.pushState({}, '', '/dashboard');
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleNotificationsClick = () => {
+    if (user) {
+      // Navigate to notifications - for now redirect to dashboard
+      setView('dynamic');
+      window.history.pushState({}, '', '/dashboard');
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleMessagesClick = () => {
+    if (user) {
+      // Navigate to messages - for now redirect to dashboard
+      setView('dynamic');
+      window.history.pushState({}, '', '/dashboard');
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleHelpClick = () => {
+    // Open help/documentation - could navigate to docs page
+    window.open('https://nexusqr.com/help', '_blank');
+  };
+
   // Show auth loading screen immediately when login starts or during OAuth
   if (authStatus === 'authenticating') {
     return <AuthLoadingScreen status="authenticating" />;
@@ -1563,7 +1619,17 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <QRGenerator onDashboardClick={handleDashboardClick} onAuthRequired={handleAuthRequired} onApiClick={handleApiClick} onPricingClick={handlePricingClick} />
+      <QRGenerator
+        onDashboardClick={handleDashboardClick}
+        onAuthRequired={handleAuthRequired}
+        onApiClick={handleApiClick}
+        onPricingClick={handlePricingClick}
+        onProfileClick={handleProfileClick}
+        onSettingsClick={handleSettingsClick}
+        onNotificationsClick={handleNotificationsClick}
+        onMessagesClick={handleMessagesClick}
+        onHelpClick={handleHelpClick}
+      />
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
