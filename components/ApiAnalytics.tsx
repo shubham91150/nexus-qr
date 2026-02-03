@@ -242,8 +242,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 text-blue-600" />
               </div>
               <span className="hidden sm:flex items-center text-green-600 text-[10px] font-medium bg-green-100 px-2 py-0.5 rounded-full">
                 <TrendingUp className="w-3 h-3 mr-1" />
@@ -258,8 +258,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
+              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
               </div>
               <span className="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium">
                 {getSuccessRate()}%
@@ -273,8 +273,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-red-600" />
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-red-600" />
               </div>
               <span className="hidden sm:flex items-center text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
                 <TrendingDown className="w-3 h-3 mr-1" />
@@ -289,8 +289,8 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
           <div className="bg-white rounded-[20px] shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <Clock className="w-5 h-5 text-purple-600" />
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <Clock className="w-4 h-4 text-purple-600" />
               </div>
               <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-medium">
                 Avg
@@ -379,11 +379,11 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded flex-shrink-0 ${
-                        endpoint.endpoint.startsWith('GET') ? 'bg-emerald-100 text-emerald-700' :
-                        endpoint.endpoint.startsWith('POST') ? 'bg-blue-100 text-blue-700' :
-                        endpoint.endpoint.startsWith('PATCH') ? 'bg-orange-100 text-orange-700' :
-                        'bg-red-100 text-red-700'
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex-shrink-0 bg-black ${
+                        endpoint.endpoint.startsWith('GET') ? 'text-emerald-400' :
+                        endpoint.endpoint.startsWith('POST') ? 'text-blue-400' :
+                        endpoint.endpoint.startsWith('PATCH') ? 'text-orange-400' :
+                        'text-red-400'
                       }`}>
                         {endpoint.endpoint.split(' ')[0]}
                       </span>
