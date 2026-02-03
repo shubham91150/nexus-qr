@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { QRType } from '../types';
 import {
   Type, Link, Wifi, User, Phone, Mail,
@@ -6,7 +6,7 @@ import {
   MessageSquare, Store, Youtube, Bitcoin, Ticket,
   IndianRupee, CreditCard, Send, Music, Camera, Twitter, Briefcase, Video,
   Facebook, Ghost, FileText, UtensilsCrossed, Star, PhoneCall, VideoIcon,
-  Headphones, Film, Images, File
+  Headphones, Film, Images, File, Plus, X, ChevronDown
 } from 'lucide-react';
 
 interface Props {
@@ -14,78 +14,208 @@ interface Props {
   onChange: (tab: QRType) => void;
 }
 
+// All available tabs
+const allTabs: { id: QRType; icon: any; label: string; category: string }[] = [
+  // Essential
+  { id: 'text', icon: Type, label: 'Text', category: 'Essential' },
+  { id: 'url', icon: Link, label: 'URL', category: 'Essential' },
+  { id: 'contact', icon: User, label: 'vCard', category: 'Essential' },
+  { id: 'wifi', icon: Wifi, label: 'WiFi', category: 'Essential' },
+  { id: 'phone', icon: Phone, label: 'Phone', category: 'Essential' },
+  { id: 'email', icon: Mail, label: 'Email', category: 'Essential' },
+  { id: 'event', icon: Calendar, label: 'Event', category: 'Essential' },
+  { id: 'geo', icon: MapPin, label: 'Location', category: 'Essential' },
+  // Social Media
+  { id: 'social', icon: Share2, label: 'Social', category: 'Social' },
+  { id: 'whatsapp', icon: MessageSquare, label: 'WhatsApp', category: 'Social' },
+  { id: 'telegram', icon: Send, label: 'Telegram', category: 'Social' },
+  { id: 'facebook', icon: Facebook, label: 'Facebook', category: 'Social' },
+  { id: 'instagram', icon: Camera, label: 'Instagram', category: 'Social' },
+  { id: 'twitter', icon: Twitter, label: 'Twitter/X', category: 'Social' },
+  { id: 'tiktok', icon: Music, label: 'TikTok', category: 'Social' },
+  { id: 'pinterest', icon: Share2, label: 'Pinterest', category: 'Social' },
+  { id: 'snapchat', icon: Ghost, label: 'Snapchat', category: 'Social' },
+  { id: 'discord', icon: MessageSquare, label: 'Discord', category: 'Social' },
+  { id: 'linkedin', icon: Briefcase, label: 'LinkedIn', category: 'Social' },
+  { id: 'youtube', icon: Youtube, label: 'YouTube', category: 'Social' },
+  { id: 'spotify', icon: Music, label: 'Spotify', category: 'Social' },
+  // Communication
+  { id: 'sms', icon: MessageSquare, label: 'SMS', category: 'Communication' },
+  { id: 'zoom', icon: Video, label: 'Zoom', category: 'Communication' },
+  { id: 'googlemeet', icon: VideoIcon, label: 'Google Meet', category: 'Communication' },
+  { id: 'skype', icon: PhoneCall, label: 'Skype', category: 'Communication' },
+  { id: 'facetime', icon: Video, label: 'FaceTime', category: 'Communication' },
+  // Business
+  { id: 'appstore', icon: Store, label: 'App Store', category: 'Business' },
+  { id: 'pdf', icon: FileText, label: 'PDF/File', category: 'Business' },
+  { id: 'menu', icon: UtensilsCrossed, label: 'Menu', category: 'Business' },
+  { id: 'googlereview', icon: Star, label: 'Google Review', category: 'Business' },
+  // Payment
+  { id: 'upi', icon: IndianRupee, label: 'UPI', category: 'Payment' },
+  { id: 'paypal', icon: CreditCard, label: 'PayPal', category: 'Payment' },
+  { id: 'bitcoin', icon: Bitcoin, label: 'Bitcoin', category: 'Payment' },
+  { id: 'coupon', icon: Ticket, label: 'Coupon', category: 'Payment' },
+  // Media
+  { id: 'audio', icon: Headphones, label: 'Audio', category: 'Media' },
+  { id: 'video', icon: Film, label: 'Video', category: 'Media' },
+  { id: 'images', icon: Images, label: 'Gallery', category: 'Media' },
+  { id: 'document', icon: File, label: 'Document', category: 'Media' },
+  // Special
+  { id: 'ai', icon: Sparkles, label: 'AI Magic', category: 'Special' },
+  { id: 'bulk', icon: Layers, label: 'Bulk QR', category: 'Special' },
+];
+
+// Primary tabs that are always visible (first 7 + More button = 8 items for 4x2 grid)
+const primaryTabIds: QRType[] = ['url', 'contact', 'wifi', 'email', 'phone', 'appstore', 'pdf'];
+
 export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
-  const tabs: { id: QRType; icon: any; label: string }[] = [
-    { id: 'text', icon: Type, label: 'Text' },
-    { id: 'url', icon: Link, label: 'URL' },
-    { id: 'contact', icon: User, label: 'Contact' },
-    { id: 'wifi', icon: Wifi, label: 'WiFi' },
-    { id: 'phone', icon: Phone, label: 'Phone' },
-    { id: 'email', icon: Mail, label: 'Email' },
-    { id: 'event', icon: Calendar, label: 'Event' },
-    { id: 'geo', icon: MapPin, label: 'Geo' },
-    { id: 'social', icon: Share2, label: 'Social' },
-    { id: 'sms', icon: MessageSquare, label: 'SMS' },
-    { id: 'whatsapp', icon: MessageSquare, label: 'WhatsApp' },
-    { id: 'telegram', icon: Send, label: 'Telegram' },
-    { id: 'facebook', icon: Facebook, label: 'Facebook' },
-    { id: 'instagram', icon: Camera, label: 'Instagram' },
-    { id: 'twitter', icon: Twitter, label: 'Twitter/X' },
-    { id: 'tiktok', icon: Music, label: 'TikTok' },
-    { id: 'pinterest', icon: Share2, label: 'Pinterest' },
-    { id: 'snapchat', icon: Ghost, label: 'Snapchat' },
-    { id: 'discord', icon: MessageSquare, label: 'Discord' },
-    { id: 'linkedin', icon: Briefcase, label: 'LinkedIn' },
-    { id: 'youtube', icon: Youtube, label: 'YouTube' },
-    { id: 'spotify', icon: Music, label: 'Spotify' },
-    { id: 'zoom', icon: Video, label: 'Zoom' },
-    { id: 'googlemeet', icon: VideoIcon, label: 'Google Meet' },
-    { id: 'skype', icon: PhoneCall, label: 'Skype' },
-    { id: 'facetime', icon: Video, label: 'FaceTime' },
-    { id: 'appstore', icon: Store, label: 'App Store' },
-    { id: 'pdf', icon: FileText, label: 'PDF/File' },
-    { id: 'menu', icon: UtensilsCrossed, label: 'Menu' },
-    { id: 'googlereview', icon: Star, label: 'Google Review' },
-    { id: 'upi', icon: IndianRupee, label: 'UPI' },
-    { id: 'paypal', icon: CreditCard, label: 'PayPal' },
-    { id: 'bitcoin', icon: Bitcoin, label: 'Bitcoin' },
-    { id: 'coupon', icon: Ticket, label: 'Coupon' },
-    // Media file types
-    { id: 'audio', icon: Headphones, label: 'Audio' },
-    { id: 'video', icon: Film, label: 'Video' },
-    { id: 'images', icon: Images, label: 'Gallery' },
-    { id: 'document', icon: File, label: 'Document' },
-    { id: 'ai', icon: Sparkles, label: 'AI Magic' },
-    { id: 'bulk', icon: Layers, label: 'Bulk QR' },
-  ];
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Close modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setIsModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isModalOpen]);
+
+  // Close modal on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
+  const primaryTabs = allTabs.filter(tab => primaryTabIds.includes(tab.id));
+
+  // Check if active tab is in primary tabs
+  const activeTabInfo = allTabs.find(tab => tab.id === activeTab);
+  const isActiveInPrimary = primaryTabIds.includes(activeTab);
+
+  // Get categories for modal
+  const categories = [...new Set(allTabs.map(tab => tab.category))];
+
+  const handleTabClick = (tabId: QRType) => {
+    onChange(tabId);
+    setIsModalOpen(false);
+  };
 
   return (
-    <div className="w-full overflow-x-auto no-scrollbar pb-2 mb-6">
-      <div className="flex gap-2 min-w-max px-1">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onChange(tab.id)}
-              className={`
-                flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-                ${isActive 
-                  ? 'bg-gray-800 text-white shadow-lg transform scale-105' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
-              `}
-            >
-              <div className={`
-                w-6 h-6 rounded-full flex items-center justify-center text-xs
-                ${isActive ? 'bg-white/20' : 'bg-white'}
-              `}>
-                <tab.icon size={14} />
-              </div>
-              {tab.label}
-            </button>
-          );
-        })}
+    <div className="relative mb-6">
+      {/* Main Grid Container */}
+      <div className="bg-gray-800 rounded-2xl p-3 shadow-lg">
+        <div className="grid grid-cols-4 gap-2">
+          {/* Primary Tabs */}
+          {primaryTabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id)}
+                className={`
+                  flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200
+                  ${isActive
+                    ? 'bg-white text-gray-800'
+                    : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white'}
+                `}
+              >
+                <tab.icon size={22} className="mb-1.5" />
+                <span className="text-[11px] font-medium truncate w-full text-center">{tab.label}</span>
+              </button>
+            );
+          })}
+
+          {/* More Button */}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className={`
+              flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200
+              ${!isActiveInPrimary && activeTabInfo
+                ? 'bg-amber-500 text-white'
+                : 'bg-amber-600 text-white hover:bg-amber-500'}
+            `}
+          >
+            {!isActiveInPrimary && activeTabInfo ? (
+              <>
+                <activeTabInfo.icon size={22} className="mb-1.5" />
+                <span className="text-[11px] font-medium truncate w-full text-center">{activeTabInfo.label}</span>
+              </>
+            ) : (
+              <>
+                <Plus size={22} className="mb-1.5" />
+                <span className="text-[11px] font-medium">More</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Modal/Dropdown */}
+      {isModalOpen && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setIsModalOpen(false)} />
+
+          {/* Modal Content */}
+          <div
+            ref={modalRef}
+            className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl z-50 max-h-[70vh] overflow-hidden animate-slideUp"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
+              <h3 className="text-sm font-semibold text-gray-800">All Content Types</h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 overflow-y-auto max-h-[calc(70vh-50px)]">
+              {categories.map((category) => (
+                <div key={category} className="mb-4 last:mb-0">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">
+                    {category}
+                  </h4>
+                  <div className="grid grid-cols-4 gap-2">
+                    {allTabs
+                      .filter(tab => tab.category === category)
+                      .map((tab) => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => handleTabClick(tab.id)}
+                            className={`
+                              flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 border
+                              ${isActive
+                                ? 'bg-gray-800 text-white border-gray-800'
+                                : 'bg-gray-50 text-gray-600 border-gray-100 hover:bg-gray-100 hover:border-gray-200'}
+                            `}
+                          >
+                            <tab.icon size={20} className="mb-1.5" />
+                            <span className="text-[10px] font-medium truncate w-full text-center">{tab.label}</span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
