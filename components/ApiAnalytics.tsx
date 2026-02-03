@@ -419,11 +419,11 @@ const ApiAnalytics: React.FC<ApiAnalyticsProps> = ({ onBack }) => {
 
                 return (
                   <div key={status.status} className="flex items-center gap-3">
-                    <span className={`text-sm font-mono font-bold px-2 py-1 rounded ${
-                      isSuccess ? 'bg-green-100 text-green-700' :
-                      isClientError ? 'bg-amber-100 text-amber-700' :
-                      isServerError ? 'bg-red-100 text-red-700' :
-                      'bg-gray-100 text-gray-700'
+                    <span className={`text-sm font-mono font-bold px-3 py-1 rounded-full bg-black ${
+                      isSuccess ? 'text-green-400' :
+                      isClientError ? 'text-amber-400' :
+                      isServerError ? 'text-red-400' :
+                      'text-gray-400'
                     }`}>
                       {status.status}
                     </span>
