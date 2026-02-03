@@ -76,7 +76,7 @@ export interface QRContentData {
   geo?: { lat: string; lng: string };
   event?: { title: string; location: string; start: string; end: string };
   bulk?: {
-    items: Array<{ name: string; value: string }>;
+    items: Array<{ name: string; value: string; type: 'url' | 'text' | 'email' | 'phone' | 'wifi' }>;
     rawInput: string;
   };
   sms?: { phone: string; message: string };

@@ -342,17 +342,83 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
     onChange(newData);
   };
 
+  // Auto-detect content type from value
+  const detectContentType = (value: string): 'url' | 'text' | 'email' | 'phone' | 'wifi' => {
+    if (!value) return 'text';
+    const trimmed = value.trim();
+
+    // Check for WiFi format
+    if (trimmed.startsWith('WIFI:')) return 'wifi';
+
+    // Check for email
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return 'email';
+
+    // Check for phone (starts with + or contains mostly digits)
+    if (/^\+?[\d\s\-\(\)]{6,20}$/.test(trimmed.replace(/\s/g, ''))) return 'phone';
+
+    // Check for URL
+    if (/^(https?:\/\/|www\.)/i.test(trimmed) ||
+        /^[\w-]+\.(com|org|net|io|co|app|dev|me|info|biz|edu|gov)/i.test(trimmed)) {
+      return 'url';
+    }
+
+    return 'text';
+  };
+
   const handleBulkTextChange = (text: string) => {
-    const items = text.split('\n').filter(line => line.trim() !== '').map((line, idx) => ({
-        name: `QR-${idx + 1}`,
-        value: line.trim()
-    }));
-    onChange({ 
-        ...data, 
-        bulk: { 
-            rawInput: text, 
-            items: items 
-        } 
+    const items = text.split('\n').filter(line => line.trim() !== '').map((line, idx) => {
+        const value = line.trim();
+        return {
+            name: `QR_${idx + 1}`,
+            value: value,
+            type: detectContentType(value)
+        };
+    });
+    onChange({
+        ...data,
+        bulk: {
+            rawInput: text,
+            items: items
+        }
+    });
+  };
+
+  // Update single bulk item
+  const updateBulkItem = (index: number, field: 'name' | 'value' | 'type', newValue: string) => {
+    const items = [...(data.bulk?.items || [])];
+    if (items[index]) {
+      // @ts-ignore
+      items[index] = { ...items[index], [field]: newValue };
+      // If value changed, auto-detect type (unless user manually set it)
+      if (field === 'value') {
+        items[index].type = detectContentType(newValue);
+      }
+      onChange({
+        ...data,
+        bulk: {
+          items: items,
+          rawInput: items.map(i => i.value).join('\n')
+        }
+      });
+    }
+  };
+
+  // Delete single bulk item
+  const deleteBulkItem = (index: number) => {
+    const items = [...(data.bulk?.items || [])];
+    items.splice(index, 1);
+    // Re-number remaining items
+    items.forEach((item, idx) => {
+      if (item.name.startsWith('QR_')) {
+        item.name = `QR_${idx + 1}`;
+      }
+    });
+    onChange({
+      ...data,
+      bulk: {
+        items: items,
+        rawInput: items.map(i => i.value).join('\n')
+      }
     });
   };
 
@@ -363,36 +429,108 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
     if (window.Papa) {
       window.Papa.parse(file, {
         complete: (results: any) => {
-          const items = results.data
-            .filter((row: any) => row.length > 0)
-            .map((row: any, idx: number) => {
-              if (Array.isArray(row)) {
-                 if (row.length >= 2) return { name: row[0], value: row[1] };
-                 return { name: `Item-${idx + 1}`, value: row[0] };
-              } else if (typeof row === 'object') {
-                 const keys = Object.keys(row);
-                 const nameKey = keys.find(k => k.toLowerCase().includes('name')) || keys[0];
-                 const contentKey = keys.find(k => k.toLowerCase().includes('content') || k.toLowerCase().includes('url') || k.toLowerCase().includes('data')) || keys[1];
-                 return { 
-                    name: row[nameKey] || `Item-${idx + 1}`, 
-                    value: row[contentKey] || row[Object.keys(row)[0]] 
-                 };
+          const rows = results.data.filter((row: any) => {
+            if (Array.isArray(row)) return row.some((cell: any) => cell && String(cell).trim());
+            return row && Object.values(row).some((v: any) => v && String(v).trim());
+          });
+
+          if (rows.length === 0) return;
+
+          // Detect if first row is header
+          const firstRow = rows[0];
+          let hasHeader = false;
+          let nameColIdx = 0;
+          let contentColIdx = 0;
+          let typeColIdx = -1;
+
+          if (Array.isArray(firstRow)) {
+            // Check if first row looks like headers
+            const headerKeywords = ['name', 'title', 'label', 'id', 'content', 'data', 'url', 'value', 'link', 'type'];
+            hasHeader = firstRow.some((cell: any) =>
+              headerKeywords.some(kw => String(cell).toLowerCase().includes(kw))
+            );
+
+            if (hasHeader) {
+              // Find column indices
+              firstRow.forEach((cell: any, idx: number) => {
+                const lower = String(cell).toLowerCase();
+                if (lower.includes('name') || lower.includes('title') || lower.includes('label') || lower.includes('id')) {
+                  nameColIdx = idx;
+                }
+                if (lower.includes('content') || lower.includes('data') || lower.includes('url') || lower.includes('value') || lower.includes('link')) {
+                  contentColIdx = idx;
+                }
+                if (lower === 'type') {
+                  typeColIdx = idx;
+                }
+              });
+              // If name and content point to same column, adjust
+              if (nameColIdx === contentColIdx && firstRow.length > 1) {
+                contentColIdx = nameColIdx === 0 ? 1 : 0;
               }
-              return null;
-            })
-            .filter((i: any) => i && i.value);
+            }
+          }
+
+          const dataRows = hasHeader ? rows.slice(1) : rows;
+
+          const items = dataRows.map((row: any, idx: number) => {
+            let name = `QR_${idx + 1}`;
+            let value = '';
+            let itemType: 'url' | 'text' | 'email' | 'phone' | 'wifi' = 'text';
+
+            if (Array.isArray(row)) {
+              if (row.length >= 2) {
+                name = String(row[nameColIdx] || '').trim() || `QR_${idx + 1}`;
+                value = String(row[contentColIdx] || row[nameColIdx === 0 ? 1 : 0] || '').trim();
+              } else if (row.length === 1) {
+                value = String(row[0] || '').trim();
+              }
+              // Check for type column
+              if (typeColIdx >= 0 && row[typeColIdx]) {
+                const typeVal = String(row[typeColIdx]).toLowerCase().trim();
+                if (['url', 'text', 'email', 'phone', 'wifi'].includes(typeVal)) {
+                  itemType = typeVal as any;
+                }
+              }
+            } else if (typeof row === 'object') {
+              const keys = Object.keys(row);
+              const nameKey = keys.find(k => /name|title|label|id/i.test(k)) || keys[0];
+              const contentKey = keys.find(k => /content|data|url|value|link/i.test(k)) || keys[1] || keys[0];
+              const typeKey = keys.find(k => k.toLowerCase() === 'type');
+
+              name = String(row[nameKey] || '').trim() || `QR_${idx + 1}`;
+              value = String(row[contentKey] || '').trim();
+
+              if (typeKey && row[typeKey]) {
+                const typeVal = String(row[typeKey]).toLowerCase().trim();
+                if (['url', 'text', 'email', 'phone', 'wifi'].includes(typeVal)) {
+                  itemType = typeVal as any;
+                }
+              }
+            }
+
+            // Auto-detect type if not specified
+            if (itemType === 'text') {
+              itemType = detectContentType(value);
+            }
+
+            return { name, value, type: itemType };
+          }).filter((i: any) => i.value);
 
           onChange({
-              ...data,
-              bulk: {
-                  items: items,
-                  rawInput: items.map((i: any) => i.value).join('\n')
-              }
+            ...data,
+            bulk: {
+              items: items,
+              rawInput: items.map((i: any) => i.value).join('\n')
+            }
           });
         },
-        header: false
+        header: false,
+        skipEmptyLines: true
       });
     }
+    // Reset file input
+    e.target.value = '';
   };
 
   switch (type) {
@@ -403,11 +541,16 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
       return <InputWrapper><DebouncedInput placeholder="https://www.example.com" value={data.value} onChange={(v) => update('value', v)} validation="url" /></InputWrapper>;
 
     case 'bulk':
-        const itemCount = data.bulk?.items?.length || 0;
+        const bulkItems = data.bulk?.items || [];
+        const itemCount = bulkItems.length;
+        const validCount = bulkItems.filter(i => i.value.trim()).length;
+        const invalidCount = itemCount - validCount;
+
         return (
             <InputWrapper>
-                <div className="grid grid-cols-2 gap-3 mb-2">
-                    <button 
+                {/* Upload & Stats Row */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                    <button
                        onClick={() => fileInputRef.current?.click()}
                        className="flex items-center justify-center gap-2 py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-gray-800 hover:text-gray-800 transition-colors bg-gray-50"
                     >
@@ -420,27 +563,106 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                     </div>
                     <input type="file" ref={fileInputRef} accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
                 </div>
-                
-                <div className="relative">
-                    <DebouncedInput
-                        isArea
-                        className="min-h-[150px] font-mono text-xs"
-                        placeholder="Or paste links here (one per line)...&#10;https://site1.com&#10;https://site2.com"
-                        value={data.bulk?.rawInput || ''}
-                        onChange={(val) => handleBulkTextChange(val)}
-                    />
-                    {itemCount > 0 && (
-                        <button 
-                           onClick={() => onChange({ ...data, bulk: { items: [], rawInput: '' } })}
-                           className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-gray-200 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
-                           title="Clear all"
-                        >
-                            <X size={14} />
-                        </button>
-                    )}
-                </div>
-                <p className="text-xs text-gray-400 px-1">
-                    Supports simple lists or CSV files. The first item is previewed on the right.
+
+                {/* Data Preview Table or Textarea */}
+                {itemCount > 0 ? (
+                    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                        {/* Table Header */}
+                        <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+                            <span className="text-xs font-semibold text-gray-700">Data Preview ({itemCount} items)</span>
+                            <button
+                               onClick={() => onChange({ ...data, bulk: { items: [], rawInput: '' } })}
+                               className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50"
+                            >
+                                Clear Data
+                            </button>
+                        </div>
+
+                        {/* Table Content */}
+                        <div className="max-h-[280px] overflow-y-auto">
+                            <table className="w-full text-xs">
+                                <thead className="sticky top-0 bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th className="text-left px-3 py-2 font-medium text-gray-600 w-20">QR Name</th>
+                                        <th className="text-left px-3 py-2 font-medium text-gray-600">Content Data</th>
+                                        <th className="text-left px-3 py-2 font-medium text-gray-600 w-20">Type</th>
+                                        <th className="text-center px-2 py-2 font-medium text-gray-600 w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {bulkItems.map((item, idx) => (
+                                        <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="text"
+                                                    value={item.name}
+                                                    onChange={(e) => updateBulkItem(idx, 'name', e.target.value)}
+                                                    className="w-full px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white"
+                                                />
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="text"
+                                                    value={item.value}
+                                                    onChange={(e) => updateBulkItem(idx, 'value', e.target.value)}
+                                                    className="w-full px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white font-mono truncate"
+                                                    title={item.value}
+                                                />
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                <select
+                                                    value={item.type}
+                                                    onChange={(e) => updateBulkItem(idx, 'type', e.target.value)}
+                                                    className="w-full px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white appearance-none cursor-pointer"
+                                                >
+                                                    <option value="url">URL</option>
+                                                    <option value="text">Text</option>
+                                                    <option value="email">Email</option>
+                                                    <option value="phone">Phone</option>
+                                                    <option value="wifi">WiFi</option>
+                                                </select>
+                                            </td>
+                                            <td className="px-2 py-2 text-center">
+                                                <button
+                                                    onClick={() => deleteBulkItem(idx)}
+                                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                                    title="Delete item"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Stats Footer */}
+                        <div className="flex items-center gap-4 px-3 py-2 bg-gray-50 border-t border-gray-200">
+                            <span className="text-xs text-gray-500">
+                                <span className="font-medium text-green-600">Valid: {validCount}</span>
+                            </span>
+                            {invalidCount > 0 && (
+                                <span className="text-xs text-gray-500">
+                                    <span className="font-medium text-red-500">Invalid: {invalidCount}</span>
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="relative">
+                        <DebouncedInput
+                            isArea
+                            className="min-h-[150px] font-mono text-xs"
+                            placeholder="Or paste content here (one per line)...&#10;https://google.com&#10;contact@example.com&#10;+91-9876543210"
+                            value={data.bulk?.rawInput || ''}
+                            onChange={(val) => handleBulkTextChange(val)}
+                        />
+                    </div>
+                )}
+
+                <p className="text-xs text-gray-400 px-1 mt-2">
+                    Upload CSV with columns: Name, Content, Type (optional). Auto-detects URLs, emails, and phone numbers.
                 </p>
             </InputWrapper>
         );
