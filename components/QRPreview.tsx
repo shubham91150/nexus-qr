@@ -10,6 +10,30 @@ import { AnalyticsOptions } from '../App';
 // Users can update files but not change the destination URL
 const LANDING_PAGE_TYPES: QRType[] = ['pdf', 'menu', 'audio', 'video', 'images', 'document', 'coupon', 'text'];
 
+// Helper to format bulk item value based on content type
+const formatBulkItemPayload = (value: string, type: 'url' | 'text' | 'email' | 'phone' | 'wifi'): string => {
+  switch (type) {
+    case 'url':
+      // Ensure URL has protocol
+      if (!value.startsWith('http://') && !value.startsWith('https://')) {
+        return `https://${value}`;
+      }
+      return value;
+    case 'email':
+      return `mailto:${value.replace('mailto:', '')}`;
+    case 'phone':
+      return `tel:${value.replace('tel:', '').replace(/[^0-9+]/g, '')}`;
+    case 'wifi':
+      // If already in WIFI format, return as-is
+      if (value.startsWith('WIFI:')) return value;
+      // Otherwise treat as plain text
+      return value;
+    case 'text':
+    default:
+      return value;
+  }
+};
+
 // Clean Toast Component - Dark theme with amber accent
 const Toast: React.FC<{ message: string; type: 'error' | 'success' | 'warning'; onClose: () => void }> = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -88,7 +112,7 @@ interface Props {
   data: string;
   config: QRStyleConfig;
   className?: string;
-  bulkItems?: Array<{name: string, value: string}>;
+  bulkItems?: Array<{name: string, value: string, type: 'url' | 'text' | 'email' | 'phone' | 'wifi'}>;
   onConfigChange?: (config: QRStyleConfig) => void;
   // Dynamic QR props
   isDynamic?: boolean;
@@ -324,7 +348,8 @@ export const QRPreview: React.FC<Props> = ({
           
           for (let i = 0; i < total; i++) {
               const item = bulkItems[i];
-              const svgString = tempRenderer.render(item.value);
+              const payload = formatBulkItemPayload(item.value, item.type || 'text');
+              const svgString = tempRenderer.render(payload);
               await new Promise<void>((resolve) => {
                   const img = new Image();
                   const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
