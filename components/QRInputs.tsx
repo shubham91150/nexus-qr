@@ -317,6 +317,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAiGenerate = async () => {
@@ -422,115 +423,183 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
     });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Process rows into bulk items (shared by CSV and Excel parsing)
+  const processRowsIntoBulkItems = (rows: any[]) => {
+    const filteredRows = rows.filter((row: any) => {
+      if (Array.isArray(row)) return row.some((cell: any) => cell && String(cell).trim());
+      return row && Object.values(row).some((v: any) => v && String(v).trim());
+    });
 
+    if (filteredRows.length === 0) return;
+
+    // Detect if first row is header
+    const firstRow = filteredRows[0];
+    let hasHeader = false;
+    let nameColIdx = 0;
+    let contentColIdx = 0;
+    let typeColIdx = -1;
+
+    if (Array.isArray(firstRow)) {
+      const headerKeywords = ['name', 'title', 'label', 'id', 'content', 'data', 'url', 'value', 'link', 'type'];
+      hasHeader = firstRow.some((cell: any) =>
+        headerKeywords.some(kw => String(cell).toLowerCase().includes(kw))
+      );
+
+      if (hasHeader) {
+        firstRow.forEach((cell: any, idx: number) => {
+          const lower = String(cell).toLowerCase();
+          if (lower.includes('name') || lower.includes('title') || lower.includes('label') || lower.includes('id')) {
+            nameColIdx = idx;
+          }
+          if (lower.includes('content') || lower.includes('data') || lower.includes('url') || lower.includes('value') || lower.includes('link')) {
+            contentColIdx = idx;
+          }
+          if (lower === 'type') {
+            typeColIdx = idx;
+          }
+        });
+        if (nameColIdx === contentColIdx && firstRow.length > 1) {
+          contentColIdx = nameColIdx === 0 ? 1 : 0;
+        }
+      }
+    }
+
+    const dataRows = hasHeader ? filteredRows.slice(1) : filteredRows;
+
+    const items = dataRows.map((row: any, idx: number) => {
+      let name = `QR_${idx + 1}`;
+      let value = '';
+      let itemType: 'url' | 'text' | 'email' | 'phone' | 'wifi' = 'text';
+
+      if (Array.isArray(row)) {
+        if (row.length >= 2) {
+          name = String(row[nameColIdx] || '').trim() || `QR_${idx + 1}`;
+          value = String(row[contentColIdx] || row[nameColIdx === 0 ? 1 : 0] || '').trim();
+        } else if (row.length === 1) {
+          value = String(row[0] || '').trim();
+        }
+        if (typeColIdx >= 0 && row[typeColIdx]) {
+          const typeVal = String(row[typeColIdx]).toLowerCase().trim();
+          if (['url', 'text', 'email', 'phone', 'wifi'].includes(typeVal)) {
+            itemType = typeVal as any;
+          }
+        }
+      } else if (typeof row === 'object') {
+        const keys = Object.keys(row);
+        const nameKey = keys.find(k => /name|title|label|id/i.test(k)) || keys[0];
+        const contentKey = keys.find(k => /content|data|url|value|link/i.test(k)) || keys[1] || keys[0];
+        const typeKey = keys.find(k => k.toLowerCase() === 'type');
+
+        name = String(row[nameKey] || '').trim() || `QR_${idx + 1}`;
+        value = String(row[contentKey] || '').trim();
+
+        if (typeKey && row[typeKey]) {
+          const typeVal = String(row[typeKey]).toLowerCase().trim();
+          if (['url', 'text', 'email', 'phone', 'wifi'].includes(typeVal)) {
+            itemType = typeVal as any;
+          }
+        }
+      }
+
+      if (itemType === 'text') {
+        itemType = detectContentType(value);
+      }
+
+      return { name, value, type: itemType };
+    }).filter((i: any) => i.value);
+
+    onChange({
+      ...data,
+      bulk: {
+        items: items,
+        rawInput: items.map((i: any) => i.value).join('\n')
+      }
+    });
+  };
+
+  // Parse Excel file using SheetJS
+  const parseExcelFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const arrayBuffer = e.target?.result;
+        const workbook = window.XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rows = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        processRowsIntoBulkItems(rows);
+      } catch (err) {
+        console.error('Error parsing Excel file:', err);
+        alert('Error parsing Excel file. Please check the file format.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // Parse CSV file using PapaParse
+  const parseCSVFile = (file: File) => {
     if (window.Papa) {
       window.Papa.parse(file, {
         complete: (results: any) => {
-          const rows = results.data.filter((row: any) => {
-            if (Array.isArray(row)) return row.some((cell: any) => cell && String(cell).trim());
-            return row && Object.values(row).some((v: any) => v && String(v).trim());
-          });
-
-          if (rows.length === 0) return;
-
-          // Detect if first row is header
-          const firstRow = rows[0];
-          let hasHeader = false;
-          let nameColIdx = 0;
-          let contentColIdx = 0;
-          let typeColIdx = -1;
-
-          if (Array.isArray(firstRow)) {
-            // Check if first row looks like headers
-            const headerKeywords = ['name', 'title', 'label', 'id', 'content', 'data', 'url', 'value', 'link', 'type'];
-            hasHeader = firstRow.some((cell: any) =>
-              headerKeywords.some(kw => String(cell).toLowerCase().includes(kw))
-            );
-
-            if (hasHeader) {
-              // Find column indices
-              firstRow.forEach((cell: any, idx: number) => {
-                const lower = String(cell).toLowerCase();
-                if (lower.includes('name') || lower.includes('title') || lower.includes('label') || lower.includes('id')) {
-                  nameColIdx = idx;
-                }
-                if (lower.includes('content') || lower.includes('data') || lower.includes('url') || lower.includes('value') || lower.includes('link')) {
-                  contentColIdx = idx;
-                }
-                if (lower === 'type') {
-                  typeColIdx = idx;
-                }
-              });
-              // If name and content point to same column, adjust
-              if (nameColIdx === contentColIdx && firstRow.length > 1) {
-                contentColIdx = nameColIdx === 0 ? 1 : 0;
-              }
-            }
-          }
-
-          const dataRows = hasHeader ? rows.slice(1) : rows;
-
-          const items = dataRows.map((row: any, idx: number) => {
-            let name = `QR_${idx + 1}`;
-            let value = '';
-            let itemType: 'url' | 'text' | 'email' | 'phone' | 'wifi' = 'text';
-
-            if (Array.isArray(row)) {
-              if (row.length >= 2) {
-                name = String(row[nameColIdx] || '').trim() || `QR_${idx + 1}`;
-                value = String(row[contentColIdx] || row[nameColIdx === 0 ? 1 : 0] || '').trim();
-              } else if (row.length === 1) {
-                value = String(row[0] || '').trim();
-              }
-              // Check for type column
-              if (typeColIdx >= 0 && row[typeColIdx]) {
-                const typeVal = String(row[typeColIdx]).toLowerCase().trim();
-                if (['url', 'text', 'email', 'phone', 'wifi'].includes(typeVal)) {
-                  itemType = typeVal as any;
-                }
-              }
-            } else if (typeof row === 'object') {
-              const keys = Object.keys(row);
-              const nameKey = keys.find(k => /name|title|label|id/i.test(k)) || keys[0];
-              const contentKey = keys.find(k => /content|data|url|value|link/i.test(k)) || keys[1] || keys[0];
-              const typeKey = keys.find(k => k.toLowerCase() === 'type');
-
-              name = String(row[nameKey] || '').trim() || `QR_${idx + 1}`;
-              value = String(row[contentKey] || '').trim();
-
-              if (typeKey && row[typeKey]) {
-                const typeVal = String(row[typeKey]).toLowerCase().trim();
-                if (['url', 'text', 'email', 'phone', 'wifi'].includes(typeVal)) {
-                  itemType = typeVal as any;
-                }
-              }
-            }
-
-            // Auto-detect type if not specified
-            if (itemType === 'text') {
-              itemType = detectContentType(value);
-            }
-
-            return { name, value, type: itemType };
-          }).filter((i: any) => i.value);
-
-          onChange({
-            ...data,
-            bulk: {
-              items: items,
-              rawInput: items.map((i: any) => i.value).join('\n')
-            }
-          });
+          processRowsIntoBulkItems(results.data);
         },
         header: false,
         skipEmptyLines: true
       });
     }
-    // Reset file input
+  };
+
+  // Handle file upload (both CSV and Excel)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFile(file);
     e.target.value = '';
+  };
+
+  // Process file based on extension
+  const processFile = (file: File) => {
+    const fileName = file.name.toLowerCase();
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      if (window.XLSX) {
+        parseExcelFile(file);
+      } else {
+        alert('Excel support is loading. Please try again.');
+      }
+    } else {
+      parseCSVFile(file);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const fileName = file.name.toLowerCase();
+      if (fileName.endsWith('.csv') || fileName.endsWith('.txt') ||
+          fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        processFile(file);
+      } else {
+        alert('Please upload a CSV, TXT, or Excel file (.xlsx, .xls)');
+      }
+    }
   };
 
   switch (type) {
@@ -548,28 +617,72 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
 
         return (
             <InputWrapper>
-                {/* Upload & Stats Row */}
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                    <button
-                       onClick={() => fileInputRef.current?.click()}
-                       className="flex items-center justify-center gap-2 py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-gray-800 hover:text-gray-800 transition-colors bg-gray-50"
-                    >
-                        <Upload size={18} />
-                        <span className="text-sm font-medium">Upload CSV</span>
-                    </button>
-                    <div className="flex flex-col justify-center items-center bg-gray-50 rounded-xl border border-gray-100 p-2">
-                        <span className="text-2xl font-bold text-gray-800">{itemCount}</span>
-                        <span className="text-xs text-gray-500 font-medium">Items Loaded</span>
+                {/* Drag & Drop Upload Area */}
+                <div
+                    className={`relative mb-3 rounded-xl border-2 border-dashed transition-all duration-200 ${
+                        isDragOver
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                >
+                    <div className="p-6 flex flex-col items-center justify-center">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
+                            isDragOver ? 'bg-blue-100' : 'bg-gray-100'
+                        }`}>
+                            <Upload size={24} className={isDragOver ? 'text-blue-500' : 'text-gray-500'} />
+                        </div>
+                        <p className={`text-sm font-medium mb-1 ${isDragOver ? 'text-blue-600' : 'text-gray-700'}`}>
+                            {isDragOver ? 'Drop file here' : 'Drag & drop your file here'}
+                        </p>
+                        <p className="text-xs text-gray-500 mb-3">or</p>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                        >
+                            Browse Files
+                        </button>
+                        <p className="text-xs text-gray-400 mt-3">
+                            Supports CSV, TXT, Excel (.xlsx, .xls)
+                        </p>
                     </div>
-                    <input type="file" ref={fileInputRef} accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept=".csv,.txt,.xlsx,.xls"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                    />
                 </div>
+
+                {/* Items Loaded Counter */}
+                {itemCount > 0 && (
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl font-bold text-gray-800">{itemCount}</span>
+                            <span className="text-xs text-gray-500">Items Loaded</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                                Valid: {validCount}
+                            </span>
+                            {invalidCount > 0 && (
+                                <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full font-medium">
+                                    Invalid: {invalidCount}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Data Preview Table or Textarea */}
                 {itemCount > 0 ? (
                     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
                         {/* Table Header */}
                         <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
-                            <span className="text-xs font-semibold text-gray-700">Data Preview ({itemCount} items)</span>
+                            <span className="text-xs font-semibold text-gray-700">Data Preview</span>
                             <button
                                onClick={() => onChange({ ...data, bulk: { items: [], rawInput: '' } })}
                                className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50"
@@ -579,7 +692,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                         </div>
 
                         {/* Table Content */}
-                        <div className="max-h-[280px] overflow-y-auto">
+                        <div className="max-h-[240px] overflow-y-auto">
                             <table className="w-full text-xs">
                                 <thead className="sticky top-0 bg-gray-50 border-b border-gray-200">
                                     <tr>
@@ -636,24 +749,12 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                                 </tbody>
                             </table>
                         </div>
-
-                        {/* Stats Footer */}
-                        <div className="flex items-center gap-4 px-3 py-2 bg-gray-50 border-t border-gray-200">
-                            <span className="text-xs text-gray-500">
-                                <span className="font-medium text-green-600">Valid: {validCount}</span>
-                            </span>
-                            {invalidCount > 0 && (
-                                <span className="text-xs text-gray-500">
-                                    <span className="font-medium text-red-500">Invalid: {invalidCount}</span>
-                                </span>
-                            )}
-                        </div>
                     </div>
                 ) : (
                     <div className="relative">
                         <DebouncedInput
                             isArea
-                            className="min-h-[150px] font-mono text-xs"
+                            className="min-h-[120px] font-mono text-xs"
                             placeholder="Or paste content here (one per line)...&#10;https://google.com&#10;contact@example.com&#10;+91-9876543210"
                             value={data.bulk?.rawInput || ''}
                             onChange={(val) => handleBulkTextChange(val)}
@@ -662,7 +763,7 @@ export const QRInputs: React.FC<Props> = ({ type, data, onChange }) => {
                 )}
 
                 <p className="text-xs text-gray-400 px-1 mt-2">
-                    Upload CSV with columns: Name, Content, Type (optional). Auto-detects URLs, emails, and phone numbers.
+                    CSV/Excel columns: Name, Content, Type (optional). Auto-detects URLs, emails & phones.
                 </p>
             </InputWrapper>
         );

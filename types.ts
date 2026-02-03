@@ -124,5 +124,6 @@ declare global {
     JSZip: any;
     Papa: any;
     QRCodeStyling: any;
+    XLSX: any; // SheetJS for Excel file parsing
   }
 }
