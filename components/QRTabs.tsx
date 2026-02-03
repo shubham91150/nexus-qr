@@ -6,7 +6,7 @@ import {
   MessageSquare, Store, Youtube, Bitcoin, Ticket,
   IndianRupee, CreditCard, Send, Music, Camera, Twitter, Briefcase, Video,
   Facebook, Ghost, FileText, UtensilsCrossed, Star, PhoneCall, VideoIcon,
-  Headphones, Film, Images, File, Plus, X, ChevronDown
+  Headphones, Film, Images, File, Plus, X
 } from 'lucide-react';
 
 interface Props {
@@ -65,7 +65,7 @@ const allTabs: { id: QRType; icon: any; label: string; category: string }[] = [
   { id: 'bulk', icon: Layers, label: 'Bulk QR', category: 'Special' },
 ];
 
-// Primary tabs that are always visible (first 7 + More button = 8 items for 4x2 grid)
+// Primary tabs that are always visible (7 items + More button = 8 items for 4x2 grid)
 const primaryTabIds: QRType[] = ['url', 'contact', 'wifi', 'email', 'phone', 'appstore', 'pdf'];
 
 export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
@@ -111,9 +111,19 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
 
   return (
     <div className="relative mb-6">
-      {/* Main Grid Container */}
-      <div className="bg-gray-800 rounded-2xl p-3 shadow-lg">
-        <div className="grid grid-cols-4 gap-2">
+      {/* Main Grid Container - White background */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Layers size={14} className="text-gray-600" />
+            </div>
+            Pick a Content Type
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
           {/* Primary Tabs */}
           {primaryTabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -122,10 +132,10 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
                 className={`
-                  flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200
+                  flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200
                   ${isActive
-                    ? 'bg-white text-gray-800'
-                    : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white'}
+                    ? 'bg-gray-800 text-white shadow-md'
+                    : 'bg-[#f5f5f5] text-gray-600 hover:bg-gray-200'}
                 `}
               >
                 <tab.icon size={22} className="mb-1.5" />
@@ -138,10 +148,10 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
           <button
             onClick={() => setIsModalOpen(true)}
             className={`
-              flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200
+              flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200
               ${!isActiveInPrimary && activeTabInfo
-                ? 'bg-amber-500 text-white'
-                : 'bg-amber-600 text-white hover:bg-amber-500'}
+                ? 'bg-amber-500 text-white shadow-md'
+                : 'bg-amber-500 text-white hover:bg-amber-600 shadow-md'}
             `}
           >
             {!isActiveInPrimary && activeTabInfo ? (
@@ -185,7 +195,7 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
             <div className="p-4 overflow-y-auto max-h-[calc(70vh-50px)]">
               {categories.map((category) => (
                 <div key={category} className="mb-4 last:mb-0">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">
                     {category}
                   </h4>
                   <div className="grid grid-cols-4 gap-2">
@@ -198,10 +208,10 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
                             key={tab.id}
                             onClick={() => handleTabClick(tab.id)}
                             className={`
-                              flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 border
+                              flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200
                               ${isActive
-                                ? 'bg-gray-800 text-white border-gray-800'
-                                : 'bg-gray-50 text-gray-600 border-gray-100 hover:bg-gray-100 hover:border-gray-200'}
+                                ? 'bg-gray-800 text-white'
+                                : 'bg-[#f5f5f5] text-gray-600 hover:bg-gray-200'}
                             `}
                           >
                             <tab.icon size={20} className="mb-1.5" />
