@@ -1040,18 +1040,19 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
           </div>
 
           {/* Step Indicators */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between overflow-x-auto">
             {steps.map((step, index) => (
               <React.Fragment key={step.id}>
                 <button
                   onClick={() => step.isCompleted && setCurrentStep(step.id)}
                   disabled={!step.isCompleted && step.id !== currentStep}
-                  className={`flex flex-col items-center gap-2 transition-all ${
+                  className={`flex flex-col items-center gap-2 transition-all min-w-0 flex-shrink-0 ${
                     step.isCompleted ? 'cursor-pointer' : step.id === currentStep ? 'cursor-default' : 'cursor-not-allowed opacity-50'
                   }`}
+                  style={{ maxWidth: '60px' }}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
                       step.isCompleted
                         ? 'bg-green-500'
                         : step.id === currentStep
@@ -1065,15 +1066,20 @@ curl -X POST "https://api.nexusqr.com/v1/qr-codes" \\
                       <step.icon className={`w-5 h-5 ${step.id === currentStep ? 'text-gray-900' : 'text-gray-400'}`} />
                     )}
                   </div>
-                  <div className="text-center">
-                    <div className={`text-xs font-medium ${step.id === currentStep ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {step.title}
+                  <div className="text-center w-full">
+                    <div className={`text-[10px] leading-tight font-medium break-words ${step.id === currentStep ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {step.title.split(' ').map((word, i) => (
+                        <React.Fragment key={i}>
+                          {word}
+                          {i < step.title.split(' ').length - 1 && <br />}
+                        </React.Fragment>
+                      ))}
                     </div>
                   </div>
                 </button>
 
                 {index < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-2 ${
+                  <div className={`flex-1 h-0.5 mx-1 min-w-[8px] ${
                     steps[index + 1].isCompleted || step.isCompleted ? 'bg-green-500' : 'bg-gray-200'
                   }`} />
                 )}
