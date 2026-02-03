@@ -112,17 +112,7 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
   return (
     <div className="relative mb-6">
       {/* Main Grid Container - White background */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Layers size={14} className="text-gray-600" />
-            </div>
-            Pick a Content Type
-          </h3>
-        </div>
-
+      <div className="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100">
         <div className="grid grid-cols-4 gap-3">
           {/* Primary Tabs */}
           {primaryTabs.map((tab) => {
@@ -132,7 +122,7 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
                 className={`
-                  flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200
+                  flex flex-col items-center justify-center p-3 rounded-[16px] transition-all duration-200
                   ${isActive
                     ? 'bg-gray-800 text-white shadow-md'
                     : 'bg-[#f5f5f5] text-gray-600 hover:bg-gray-200'}
@@ -148,9 +138,9 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
           <button
             onClick={() => setIsModalOpen(true)}
             className={`
-              flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200
+              flex flex-col items-center justify-center p-3 rounded-[16px] transition-all duration-200
               ${!isActiveInPrimary && activeTabInfo
-                ? 'bg-amber-500 text-white shadow-md'
+                ? 'bg-gray-800 text-white shadow-md'
                 : 'bg-amber-500 text-white hover:bg-amber-600 shadow-md'}
             `}
           >
@@ -208,7 +198,7 @@ export const QRTabs: React.FC<Props> = ({ activeTab, onChange }) => {
                             key={tab.id}
                             onClick={() => handleTabClick(tab.id)}
                             className={`
-                              flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200
+                              flex flex-col items-center justify-center p-3 rounded-[16px] transition-all duration-200
                               ${isActive
                                 ? 'bg-gray-800 text-white'
                                 : 'bg-[#f5f5f5] text-gray-600 hover:bg-gray-200'}
